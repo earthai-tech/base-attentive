@@ -46,10 +46,11 @@ __all__ = [
     "TSPositionalEncoding",
     "MultiModalEmbedding",
 ]
+SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="Activation"
+    SERIALIZATION_PACKAGE, name="Activation"
 )
 class Activation(Layer, NNLearner):
     r"""
@@ -243,7 +244,7 @@ class Activation(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="PositionwiseFeedForward"
+    SERIALIZATION_PACKAGE, name="PositionwiseFeedForward"
 )
 class PositionwiseFeedForward(Layer, NNLearner):
     """Implements the Position-wise Feed-Forward Network (FFN) layer.
@@ -377,7 +378,7 @@ class PositionwiseFeedForward(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components",
+    SERIALIZATION_PACKAGE,
     name="PositionalEncoding",
 )
 class PositionalEncoding(Layer, NNLearner):
@@ -565,7 +566,7 @@ class PositionalEncoding(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="PositionalEncoding"
+    SERIALIZATION_PACKAGE, name="PositionalEncoding"
 )
 class _PositionalEncoding(Layer, NNLearner):
     r"""Injects positional information into an input tensor.
@@ -808,7 +809,7 @@ class _PositionalEncoding(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="TSPositionalEncoding"
+    SERIALIZATION_PACKAGE, name="TSPositionalEncoding"
 )
 class TSPositionalEncoding(Layer, NNLearner):
     """
@@ -935,7 +936,7 @@ class TSPositionalEncoding(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="MultiModalEmbedding"
+    SERIALIZATION_PACKAGE, name="MultiModalEmbedding"
 )
 class MultiModalEmbedding(Layer, NNLearner):
     r"""

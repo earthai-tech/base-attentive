@@ -1,5 +1,14 @@
 # BaseAttentive
 
+[![Tests](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml)
+[![Documentation](https://github.com/earthai-tech/base-attentive/actions/workflows/documentation.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/documentation.yml)
+[![Code Quality](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml)
+[![Release](https://img.shields.io/github/v/release/earthai-tech/base-attentive?display_name=tag)](https://github.com/earthai-tech/base-attentive/releases)
+[![License](https://img.shields.io/github/license/earthai-tech/base-attentive)](https://github.com/earthai-tech/base-attentive/blob/main/LICENSE)
+[![Coverage](https://codecov.io/gh/earthai-tech/base-attentive/branch/main/graph/badge.svg)](https://codecov.io/gh/earthai-tech/base-attentive)
+[![Code Style](https://img.shields.io/badge/code%20style-ruff-46a758.svg)](https://docs.astral.sh/ruff/)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+
 A foundational blueprint for building powerful, data-driven, sequence-to-sequence time series forecasting models with advanced attention mechanisms.
 
 ## Overview
@@ -27,7 +36,7 @@ It fuses these inputs using a modular stack of attention mechanisms and serves a
 - Quantile distribution modeling for uncertainty quantification
 
 🔧 **Production-Ready**
-- Keras/TensorFlow backed
+- Keras 3 backed with configurable runtimes
 - Serializable (save/load models)
 - Input validation and parameter checking
 - Extensive logging and debugging support
@@ -43,8 +52,30 @@ pip install base-attentive
 ```bash
 git clone https://github.com/earthai-tech/base-attentive.git
 cd base-attentive
-pip install -e ".[dev]"
+pip install -e ".[dev,tensorflow]"
 ```
+
+### Backend extras
+```bash
+pip install ".[tensorflow]"   # Recommended today
+pip install ".[jax]"          # Experimental runtime path
+pip install ".[torch]"        # Experimental runtime path
+```
+
+## Development Setup
+
+If you use `make` (Linux, macOS, WSL, or Git Bash on Windows), the repository
+now includes a `Makefile` with common development commands:
+
+```bash
+make install-tensorflow   # editable install with dev + TensorFlow extras
+make test-fast            # quick local pytest pass
+make lint                 # Ruff lint + format check
+make format               # apply Ruff fixes and formatting
+make build                # build wheel and sdist
+```
+
+Run `make help` to see the full command list.
 
 ## Quick Start
 
@@ -134,5 +165,5 @@ Contributions are welcome! Please open issues or submit pull requests.
 
 ## Acknowledgments
 
-- Built on TensorFlow/Keras
+- Built on Keras 3 with TensorFlow-first support and experimental JAX/Torch paths
 - Inspired by state-of-the-art time series forecasting research

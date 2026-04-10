@@ -29,10 +29,11 @@ __all__ = [
     "aggregate_multiscale_on_3d",
     "aggregate_time_window_output",
 ]
+SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="aggregate_multiscale"
+    SERIALIZATION_PACKAGE, name="aggregate_multiscale"
 )
 def aggregate_multiscale(lstm_output, mode="auto"):
     r"""Aggregate multi-scale LSTM outputs using
@@ -359,7 +360,7 @@ def aggregate_multiscale_on_3d(
 
 
 @register_keras_serializable(
-    "geoprior.nn.components",
+    SERIALIZATION_PACKAGE,
     name="aggregate_time_window_output",
 )
 def aggregate_time_window_output(
