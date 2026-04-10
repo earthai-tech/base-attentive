@@ -1263,34 +1263,11 @@ class BaseAttentive(Model, NNLearner):
 
 
 BaseAttentive.__doc__ = rf"""
-Base Attentive Model.
+BaseAttentive forecasting model.
 
-A foundational blueprint for building powerful, data-driven,
-sequence-to-sequence time series forecasting models.
-
-This class provides a sophisticated and highly configurable
-encoder-decoder architecture. It is designed to process three
-distinct types of inputs—static, dynamic past, and known future
-features—and fuse them using a modular stack of attention
-mechanisms. It serves as the core engine for models like ``HALNet``
-and ``PIHALNet``.
-
-A **data-driven** model architecture that can be used for both hybrid 
-and transformer-based forecasting models. This model processes static, 
-dynamic, and future input features through separate paths and applies 
-multi-head attention mechanisms in the decoder block to produce forecasts. 
-The model supports multi-horizon forecasting, uncertainty quantification 
-using quantiles, and dynamic time warping (DTW) for time-series alignment.
-
-The model offers flexibility through various options for configuration, 
-residual connections, and feature selection mechanisms, making it suitable 
-for both statistical and physics-informed settings.
-
-The architecture can be configured to operate as a hybrid model,
-combining the temporal feature extraction power of LSTMs with
-attention, or as a pure transformer model.
-
-See more in :ref:`User Guide <user_guide>`.
+BaseAttentive is a configurable encoder-decoder model for multi-horizon
+forecasting from static, dynamic historical, and known future features.
+The model supports both point forecasting and quantile forecasting.
 
 Parameters
 ----------
@@ -1298,46 +1275,24 @@ Parameters
 {_param_docs.base.dynamic_input_dim}
 {_param_docs.base.future_input_dim}
 
-output_dim : int, default 1  
-    Number of target variables produced at each forecast step. The model 
-    outputs a tensor of shape :math:`(B, \, H, \, Q, \, \text{{output\_dim}})` 
-    when *quantiles* are provided, or :math:`(B, \, H, \, \text{{output\_dim}})` 
-    for point forecasts, where  
+output_dim : int, default 1
+    Number of target variables predicted at each forecast step.
 
-    .. math::  
-       B = \text{{batch size}},\qquad  
-       H = \text{{forecast horizon}},\qquad  
-       Q = |\text{{quantiles}}|.  
+forecast_horizon : int, default 1
+    Number of future steps predicted by the decoder.
 
-forecast_horizon : int, default 1  
-    Length of the prediction window into the future. The dynamic encoder 
-    ingests *max_window_size* past steps and the decoder emits :math:`H` 
-    steps ahead, where :math:`H=\text{{forecast_horizon}}`. Setting :math:`H > 1` 
-    enables multi‑horizon sequence‑to‑sequence forecasts.  
+mode : {{'pihal_like', 'tft_like'}} or None, default None
+    Controls how future covariates are interpreted. ``'pihal_like'`` expects
+    future features with exactly ``forecast_horizon`` steps. ``'tft_like'``
+    expects encoder plus decoder spans in the future tensor.
 
-mode : {{'pihal_like', 'tft_like'}}, default 'tft_like'  
-    Controls how *future_features* are sliced and routed.  
-    ``'pihal_like'`` expects ``future_input.shape[1] == forecast_horizon`` 
-    and feeds the tensor only to the decoder.  
-    ``'tft_like'`` expects ``time_steps + forecast_horizon`` rows, 
-    sending the first *time_steps* rows to the encoder and the remaining 
-    rows to the decoder, emulating the Temporal Fusion Transformer.
-    
-num_encoder_layers : int, default=2
-    The number of self-attention blocks to stack in the encoder when
-    using the `'transformer'` architecture.
-    
-quantiles : list[float] or None, default None  
-    Optional quantile levels :math:`0 < q_1 < \dots < q_Q < 1`. When supplied, 
-    a :class:`geoprior.models.components.QuantileDistributionModeling` head scales 
-    the point forecast :math:`\hat{{y}}` into quantile estimates  
+num_encoder_layers : int, default 2
+    Number of encoder self-attention blocks used in transformer-style paths.
 
-    .. math::  
-       \hat{{y}}^{{(q)}} = \hat{{y}} + \sigma \,\Phi^{{-1}}(q),  
+quantiles : list[float] or None, default None
+    Optional quantile levels such as ``[0.1, 0.5, 0.9]``. When provided, the
+    model returns quantile-aware outputs.
 
-    where :math:`\sigma` is a learned spread parameter and :math:`\Phi^{{-1}}` 
-    is the probit function. Omit or set to *None* to obtain deterministic forecasts.  
-    
 {_param_docs.base.embed_dim}
 {_param_docs.base.hidden_units}
 {_param_docs.base.lstm_units}
@@ -1354,187 +1309,57 @@ quantiles : list[float] or None, default None
 {_param_docs.base.use_vsn}
 {_param_docs.base.vsn_units}
 
-use_batch_norm : bool, default=False
-    If ``True``, applies batch normalization.
-    
-apply_dtw : bool, default True  
-    Whether to apply **Dynamic Time Warping (DTW)** for time-series alignment.  
-    DTW is a technique used to align sequences that may be misaligned 
-    in time. It is particularly useful when the time steps in the dynamic 
-    and future features are not synchronized. Setting this to **True** 
-    enables DTW, while setting it to **False** disables it.
-    If ``True``, applies a `DynamicTimeWindow` layer to the encoder
-    output, allowing the model to learn an optimal, data-dependent
-    lookback window.
-    
-attention_levels : str or list[str], optional
-    Legacy parameter. Controls the attention layers used in the
-    decoder. It is recommended to use
-    `architecture_config={{'decoder_attention_stack': [...]}}` instead.
+use_batch_norm : bool, default False
+    If ``True``, batch normalization layers are enabled where supported.
 
-objective : {{'hybrid', 'transformer'}}, default ``'hybrid'``  
-    Legacy parameter. Defines the underlying architecture of the model. 
-    The configuration  can be either 'hybrid' 
-    (combining LSTM and attention mechanisms) or 'transformer' 
-    (using only transformer-based attention mechanisms).It is
-    recommended to use `architecture_config={{'encoder_type': 'hybrid'}}`
-    instead.
+apply_dtw : bool, default True
+    If ``True``, apply dynamic time window alignment in the encoder path.
 
-    Selects the backbone architecture that processes dynamic-past  
-    and (optionally) known-future covariates before the decoding stage.  
+attention_levels : str or list[str] or None, default None
+    Legacy shortcut for selecting decoder attention layers. Prefer
+    ``architecture_config={{'decoder_attention_stack': [...]}}``.
 
-    * ``'hybrid'`` – **Multi-scale LSTM -> Transformer**.  
-      The encoder first extracts multi-resolution temporal features  
-      with a stack of LSTMs (one per *scale*), then refines these  
-      features with hierarchical/cross attention blocks.  
-      This configuration balances the strong sequence-memory capability  
-      of recurrent networks with the global-context modelling power of  
-      Transformers and is recommended for most tabular time-series data.  
+objective : {{'hybrid', 'transformer'}}, default 'hybrid'
+    Legacy shortcut for selecting the encoder backbone. Prefer
+    ``architecture_config={{'encoder_type': ...}}``.
 
-    * ``'transformer'`` – **Pure Transformer**.  
-      Bypasses the LSTM stack and feeds the embeddings directly into the  
-      attention encoder, resulting in a lightweight, fully self-attention  
-      model.  Choose this if your data exhibit long-range dependencies  
-      for which an LSTM adds little benefit, or when you need faster  
-      training/inference at the cost of some short-term pattern capture.  
+architecture_config : dict or None, default None
+    Fine-grained architectural configuration. Common keys include
+    ``encoder_type``, ``decoder_attention_stack``, and
+    ``feature_processing``.
 
-    In future release: 
-        
-    Shortcut for common loss presets.  Should be recognised:  
-    * ``'nse'`` – Nash–Sutcliffe model-efficiency score.  
-    * ``'rmse'`` – root-mean-square error.  
-    When *None* we will supply losses via :py:meth:`compile`
-    
-architecture_config : dict, optional
-    A dictionary for fine-grained control over the model's internal
-    architecture. This is the recommended way to configure the model.
-    See the Notes section for details on keys like ``encoder_type``,
-    ``decoder_attention_stack``, and ``feature_processing``.
-    
-name : str, default "BaseAttentiveModel"  
-    Model identifier passed to :pyclass:`tf.keras.Model`. Appears in weight 
-    filenames and TensorBoard scopes.  
+verbose : int, default 0
+    Verbosity level used for model-side logging.
 
-**kwargs  
-    Additional keyword arguments forwarded verbatim to the 
-    :pyclass:`tf.keras.Model` constructor—e.g. ``dtype="float64"`` or 
-    ``run_eagerly=True``.
+name : str, default "BaseAttentiveModel"
+    Model name passed to the base Keras model constructor.
 
-Notes  
+**kwargs
+    Additional keyword arguments forwarded to the base Keras model.
+
+Notes
 -----
-- The composite latent size produced by the cross‑attention block is 
-  :math:`d_\text{{model}} = \text{{attention\_units}}`. For stable training, 
-  ensure :math:`d_\text{{model}}` is divisible by *num_heads*.
-  
-- The model configuration supports both hybrid and transformer-based designs. 
-  The hybrid configuration combines LSTM with attention mechanisms, while 
-  the transformer configuration exclusively uses self-attention mechanisms.
-  
-- The attention mechanism allows for both cross-attention (between encoder 
-  and decoder) and self-attention within the decoder.
+- Inputs are expected in the order ``[static, dynamic, future]``.
+- Point forecasts typically have shape ``(batch, horizon, output_dim)``.
+- Quantile forecasts typically have shape
+  ``(batch, horizon, num_quantiles, output_dim)``.
+- ``architecture_config`` overrides legacy shortcuts such as ``objective`` and
+  ``attention_levels``.
 
-
-**Smart Configuration**
-
-The recommended way to define the model's structure is via the
-``architecture_config`` dictionary. It provides clear, explicit
-control over the most important architectural choices:
-
-* **`encoder_type`**: Defines the encoder's core mechanism.
-    * ``'hybrid'`` (default): Uses the ``MultiScaleLSTM`` for rich
-      temporal feature extraction.
-    * ``'transformer'``: Uses a pure self-attention stack, ideal for
-      capturing very long-range dependencies.
-
-* **`decoder_attention_stack`**: A ``list`` of strings that defines
-    the sequence of attention layers in the decoder. The available
-    layers are:
-    * ``'cross'``: The crucial cross-attention between decoder
-      queries and encoder memory.
-    * ``'hierarchical'``: A self-attention layer that helps find
-      structural patterns in the context.
-    * ``'memory'``: A memory-augmented self-attention layer for
-      long-term dependencies.
-    * Example: ``['cross', 'hierarchical']`` creates a simpler decoder.
-
-* **`feature_processing`**: Controls the initial feature embedding.
-    * ``'vsn'`` (default): Uses ``VariableSelectionNetwork`` for
-      learnable feature selection.
-    * ``'dense'``: Uses standard ``Dense`` layers.
-
-The legacy parameters (`objective`, `use_vsn`, `attention_levels`)
-are maintained for backward compatibility but will be overridden by
-any settings provided in ``architecture_config``.
-
-
-See Also  
---------
-* :class:`geoprior.models.pinn.PIHALNet` – physics-informed extension.  
-* :func:`geoprior.utils.data_utils.widen_temporal_columns` – prepares 
-  wide data frames for plotting forecasts.
-  
 Examples
 --------
->>> from geoprior.models._base_attentive import BaseAttentive  
->>> model = BaseAttentive(  
-...     static_input_dim=4, dynamic_input_dim=8, future_input_dim=6,  
-...     output_dim=2, forecast_horizon=24, quantiles=[0.1, 0.5, 0.9],  
-...     scales=[1, 3], multi_scale_agg="concat", final_agg="last",  
-...     attention_units=64, num_heads=8, dropout_rate=0.15,  
-... )  
->>> x_static  = tf.random.normal([32, 4])              # B × S  
->>> x_dynamic = tf.random.normal([32, 10, 8])          # B × T × D  
->>> x_future  = tf.random.normal([32, 24, 6])          # B × H × F  
->>> y_hat = model( [x_static, x_dynamic,  x_future, ]
-... )  
->>> y_hat.shape  
-TensorShape([32, 24, 3, 2])  # B × H × Q × output_dim
-
->>> from geoprior.models import BaseAttentive
->>> import tensorflow as tf
-
->>> # Example using the recommended architecture_config
->>> transformer_config = {{
-...     'encoder_type': 'transformer',
-...     'decoder_attention_stack': ['cross', 'hierarchical'],
-...     'feature_processing': 'dense'
-... }}
+>>> from base_attentive import BaseAttentive
 >>> model = BaseAttentive(
 ...     static_input_dim=4,
 ...     dynamic_input_dim=8,
 ...     future_input_dim=6,
 ...     output_dim=2,
 ...     forecast_horizon=24,
-...     max_window_size=10,
-...     mode='tft_like',
 ...     quantiles=[0.1, 0.5, 0.9],
-...     architecture_config=transformer_config
 ... )
 
->>> # Prepare dummy input data
->>> BATCH_SIZE = 32
->>> x_static  = tf.random.normal([BATCH_SIZE, 4])
->>> x_dynamic = tf.random.normal([BATCH_SIZE, 10, 8])
->>> x_future  = tf.random.normal([BATCH_SIZE, 10 + 24, 6])
-
->>> # Get model output
->>> y_hat = model([x_static, x_dynamic, x_future])
->>> y_hat.shape
-TensorShape([32, 24, 3, 2])
-
-See Also
---------
-geoprior.models.components.MultiScaleLSTM
-    The multi-resolution LSTM component used in the hybrid encoder.
-geoprior.models.components.VariableSelectionNetwork
-    The learnable feature-selection component.
-fusionlab.nn.models.HALNet
-    A direct, data-driven implementation of ``BaseAttentive``.
-
-References  
-----------
-.. [1] Vaswani et al., “Attention Is All You Need,” *NeurIPS 2017*.  
-.. [2] Lim et al., “Temporal Fusion Transformers for Interpretable  
-       Multi‑Horizon Time Series Forecasting,” *IJCAI 2021*.  
+>>> transformer_model = model.reconfigure(
+...     {{"encoder_type": "transformer"}}
+... )
 """
 

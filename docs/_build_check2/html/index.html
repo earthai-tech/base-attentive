@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>BaseAttentive Documentation &#8212; BaseAttentive 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="baseattentive-documentation">
+<h1>BaseAttentive Documentation<a class="headerlink" href="#baseattentive-documentation" title="Link to this heading">¶</a></h1>
+<p>BaseAttentive is a configurable kernel for probabilistic forecasting with
+attentive sequence-to-sequence models. The project focuses on flexible model
+composition, backend-aware runtime selection, and practical forecasting
+workflows for static, dynamic, and known-future features.</p>
+<section id="what-you-will-find-here">
+<h2>What you will find here<a class="headerlink" href="#what-you-will-find-here" title="Link to this heading">¶</a></h2>
+<p>The documentation is organized around the public user workflow:</p>
+<ul class="simple">
+<li><p>installation and backend selection</p></li>
+<li><p>architecture and data-shape expectations</p></li>
+<li><p>usage patterns for the main <code class="docutils literal notranslate"><span class="pre">BaseAttentive</span></code> model</p></li>
+<li><p>API reference for runtime helpers, validation utilities, and learner mixins</p></li>
+<li><p>development and documentation build guidance</p></li>
+</ul>
+</section>
+<section id="public-api-at-a-glance">
+<h2>Public API at a glance<a class="headerlink" href="#public-api-at-a-glance" title="Link to this heading">¶</a></h2>
+<p>The main public entry points are:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">base_attentive</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseAttentive</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">base_attentive</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_backend</span><span class="p">,</span> <span class="n">set_backend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">base_attentive</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_available_backends</span><span class="p">,</span>
+    <span class="n">get_backend_capabilities</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">BaseAttentive</span></code> is the primary model class. The backend helpers let you
+inspect and control the active Keras runtime, while the validation helpers
+in <code class="docutils literal notranslate"><span class="pre">base_attentive.validation</span></code> provide lightweight tensor-shape utilities.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#runtime-extras">Runtime extras</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#backend-selection">Backend selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#sanity-check-your-install">Sanity check your install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#build-the-documentation-locally">Build the documentation locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#notes">Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="backends.html">Backend Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="backends.html#support-status">Support status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backends.html#selecting-a-backend">Selecting a backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backends.html#how-backend-resolution-works">How backend resolution works</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backends.html#current-recommendation">Current recommendation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#conceptual-flow">Conceptual flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#core-configuration-knobs">Core configuration knobs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#encoder-modes">Encoder modes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#feature-processing">Feature processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#decoder-attention-stack">Decoder attention stack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#output-modes">Output modes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#quick-start">Quick start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#input-contract">Input contract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#output-shapes">Output shapes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#architecture-configuration">Architecture configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#common-options">Common options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#serialization-and-reconfiguration">Serialization and reconfiguration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#validation-helpers">Validation helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#development-workflow">Development workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="development.html#repository-workflow">Repository workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development.html#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development.html#documentation-workflow">Documentation workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="development.html#contribution-focus">Contribution focus</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#public-package-entry-points">Public package entry points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-base_attentive">Top-level package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-base_attentive.backend">Backend utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-base_attentive.api.property">Learner mixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-base_attentive.validation">Validation helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#core-model">Core model</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">BaseAttentive</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="backends.html">Backend Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="installation.html" title="next chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, LKouadio.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

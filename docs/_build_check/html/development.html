@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Development &#8212; BaseAttentive 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=8d563738"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api_reference.html" />
+    <link rel="prev" title="Usage" href="usage.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="development">
+<h1>Development<a class="headerlink" href="#development" title="Link to this heading">¶</a></h1>
+<section id="repository-workflow">
+<h2>Repository workflow<a class="headerlink" href="#repository-workflow" title="Link to this heading">¶</a></h2>
+<p>The repository includes a top-level <code class="docutils literal notranslate"><span class="pre">Makefile</span></code> with common development
+targets:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>install-tensorflow
+make<span class="w"> </span>test-fast
+make<span class="w"> </span>lint
+make<span class="w"> </span>format
+make<span class="w"> </span>build
+make<span class="w"> </span>docs
+</pre></div>
+</div>
+</section>
+<section id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Link to this heading">¶</a></h2>
+<p>For a focused local test run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/test_base_attentive_main.py<span class="w"> </span>-q
+pytest<span class="w"> </span>tests/test_backend.py<span class="w"> </span>-q
+pytest<span class="w"> </span>tests/test_validation.py<span class="w"> </span>-q
+</pre></div>
+</div>
+<p>For a full repository check:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/<span class="w"> </span>-q
+</pre></div>
+</div>
+</section>
+<section id="documentation-workflow">
+<h2>Documentation workflow<a class="headerlink" href="#documentation-workflow" title="Link to this heading">¶</a></h2>
+<p>The repository uses Sphinx for documentation and provides both local and CI
+build paths.</p>
+<p>Local build:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>sphinx<span class="w"> </span>-b<span class="w"> </span>html<span class="w"> </span>docs<span class="w"> </span>docs/_build/html
+</pre></div>
+</div>
+<p>GitHub Actions:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">.github/workflows/documentation.yml</span></code> builds the docs on pushes and pull
+requests</p></li>
+<li><p>the built site is uploaded as a workflow artifact</p></li>
+</ul>
+<p>Read the Docs:</p>
+<ul class="simple">
+<li><p>the repository can also be connected to Read the Docs through the
+root-level <code class="docutils literal notranslate"><span class="pre">.readthedocs.yaml</span></code> configuration file</p></li>
+</ul>
+</section>
+<section id="contribution-focus">
+<h2>Contribution focus<a class="headerlink" href="#contribution-focus" title="Link to this heading">¶</a></h2>
+<p>Documentation contributions are especially valuable in these areas:</p>
+<ul class="simple">
+<li><p>runnable examples</p></li>
+<li><p>backend compatibility notes</p></li>
+<li><p>model configuration recipes</p></li>
+<li><p>serialization and deployment guidance</p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">BaseAttentive</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="backends.html">Backend Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#repository-workflow">Repository workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#documentation-workflow">Documentation workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contribution-focus">Contribution focus</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="usage.html" title="previous chapter">Usage</a></li>
+      <li>Next: <a href="api_reference.html" title="next chapter">API Reference</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, LKouadio.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/development.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
