@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "base-attentive"
 version = "1.0.0"
-description = "BASE-ATTENTIVE kernel for probabilistic forecasting with attentive sequence models."
+description = "Kernel for probabilistic forecasting with attentive sequence models."
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "Apache-2.0"}
 authors = [
