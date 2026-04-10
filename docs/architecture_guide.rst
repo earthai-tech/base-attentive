@@ -4,11 +4,38 @@ Architecture Guide
 Overview
 --------
 
-BaseAttentive is an encoder-decoder architecture designed for sequence-to-sequence forecasting with three input types:
+BaseAttentive is an encoder-decoder neural network architecture designed for 
+sequence-to-sequence time series forecasting. It combines three distinct feature streams 
+into a unified forecasting kernel:
 
-1. **Static features** - Time-invariant properties
-2. **Dynamic features** - Historical time series
-3. **Future features** - Known exogenous variables
+1. **Static features** - Time-invariant properties (shape: ``batch_size, static_dim``)
+   
+   Examples: geographical coordinates, site elevation, installation date
+   
+2. **Dynamic features** - Historical time series data (shape: ``batch_size, history_steps, dynamic_dim``)
+   
+   Examples: sensor readings, temperature, humidity, historical observations
+   
+3. **Future features** - Known exogenous variables for forecast period (shape: ``batch_size, forecast_horizon, future_dim``)
+   
+   Examples: weather forecasts, calendar features, scheduled maintenance
+
+The architecture processes these three input streams through a configurable encoder-decoder 
+pipeline that supports multiple architectural choices, attention mechanisms, and output modes.
+
+Conceptual Flow
+---------------
+
+At a high level, the model follows this processing path:
+
+1. **Ingest** - Accept static, historical, and future feature tensors
+2. **Project** - Transform features into a shared embedding space
+3. **Encode** - Process temporal context with hybrid or transformer-style encoder
+4. **Attend** - Apply configured decoder attention stack (cross, hierarchical, memory)
+5. **Forecast** - Generate point or probabilistic forecasts over horizon
+
+This flow ensures that all feature types are properly utilized while maintaining 
+flexibility in how the temporal encoding and fusion occur.
 
 Input/Output Contract
 ---------------------
@@ -41,33 +68,94 @@ Where:
 - H = forecast horizon
 - Q = quantiles
 
-Core Components
----------------
+Core Configuration Parameters
+------------------------------
 
-Feature Extraction
-~~~~~~~~~~~~~~~~~~
+BaseAttentive exposes most architectural choices directly on the model constructor.
 
-Processes raw inputs into embeddings:
+**Required Parameters:**
 
-- **Variable Selection Network (VSN)**: Learns feature importance dynamically
-- **Dense Processing**: Simple linear transformation
+- ``static_input_dim`` - Number of static features
+- ``dynamic_input_dim`` - Number of dynamic features
+- ``future_input_dim`` - Number of future features
+- ``output_dim`` - Number of output variables
+- ``forecast_horizon`` - Forecast length in time steps
+
+**Important Hyperparameters:**
+
+- ``embed_dim`` - Embedding dimension (default: 32)
+- ``attention_units`` - Attention mechanism dimension (default: 64)
+- ``num_heads`` - Multi-head attention heads (default: 4)
+- ``dropout_rate`` - Dropout probability (default: 0.2)
+- ``quantiles`` - Quantiles for probabilistic output (default: None)
+
+**Architecture-level choices** live in the ``architecture_config`` dictionary:
 
 .. code-block:: python
 
-   # Enable VSN (default)
+   architecture_config = {
+       "encoder_type": "hybrid",  # or "transformer"
+       "decoder_attention_stack": ["cross", "hierarchical", "memory"],
+       "feature_processing": "vsn",  # or "dense"
+   }
+
+   model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=2,
+       forecast_horizon=24,
+       architecture_config=architecture_config,
+       embed_dim=32,
+       attention_units=64,
+       num_heads=8,
+       dropout_rate=0.2,
+   )
+
+Core Components
+---------------
+
+Feature Extraction & Processing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Raw input features are first projected into a shared embedding space using one of two methods:
+
+**Variable Selection Network (VSN)** - Default method
+
+Dynamically learns feature importance:
+
+.. code-block:: python
+
    model = BaseAttentive(
        use_vsn=True,  # Learns which features matter
        ...
    )
 
-   # Or use simple dense
+- Uses gating mechanisms to weight features
+- Better for high-dimensional inputs
+- Slightly more parameters and computation
+- Improves interpretability
+
+**Dense Processing** - Alternative method
+
+Simple linear transformation:
+
+.. code-block:: python
+
    model = BaseAttentive(
-       use_vsn=False,  # Linear embedding
+       use_vsn=False,  # Simple linear embedding
        ...
    )
 
-Encoder Types
-~~~~~~~~~~~~~
+- Standard dense layer projection
+- Fewer parameters
+- Faster training and inference
+- Less interpretable but simpler
+
+Encoder Architecture
+~~~~~~~~~~~~~~~~~~~~
+
+The encoder processes temporal context with one of two architectural approaches:
 
 **Hybrid Mode** (Default)
 
@@ -232,6 +320,56 @@ Example Configuration Merging
    # - embed_dim: 64 (from keyword argument)
    # - encoder_type: 'transformer' (from architecture_config)
    # - decoder_attention_stack: ["cross", "hierarchical", "memory"] (from default)
+
+Output Modes
+~~~~~~~~~~~~
+
+The model supports two output modes depending on the ``quantiles`` parameter:
+
+**Point Forecast** (Default)
+
+When ``quantiles`` is not set, returns single point predictions:
+
+.. code-block:: python
+
+   model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=2,
+       forecast_horizon=24,
+       # quantiles not specified
+   )
+
+   predictions = model([static, dynamic, future])
+   # Shape: (batch_size, forecast_horizon, output_dim)
+   # Example: (32, 24, 2)
+
+Use when you need a single deterministic forecast.
+
+**Probabilistic Forecast** (Quantile-based)
+
+When ``quantiles`` are specified, returns uncertainty estimates:
+
+.. code-block:: python
+
+   model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=2,
+       forecast_horizon=24,
+       quantiles=[0.1, 0.5, 0.9],  # Lower, median, upper
+   )
+
+   predictions = model([static, dynamic, future])
+   # Shape: (batch_size, forecast_horizon, num_quantiles, output_dim)
+   # Example: (32, 24, 3, 2)
+   # predictions[:, :, 0, :] = 10th percentile (lower bound)
+   # predictions[:, :, 1, :] = 50th percentile (median)
+   # predictions[:, :, 2, :] = 90th percentile (upper bound)
+
+Use when you need confidence intervals and uncertainty quantification.
 
 Advanced Features
 ------------------
