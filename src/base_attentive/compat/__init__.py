@@ -4,13 +4,40 @@ try:
     from sklearn.utils._param_validation import (
         Interval,
         StrOptions,
+        validate_params,
     )
 except ImportError:
     # Fallback for older scikit-learn versions
-    from sklearn.utils.validation import (
-        Interval,
-        StrOptions,
-    )
+    try:
+        from sklearn.utils.validation import (
+            Interval,
+            StrOptions,
+        )
+        def validate_params(params):
+            """Fallback decorator for parameter validation."""
+            def decorator(func):
+                return func
+            return decorator
+    except ImportError:
+        # Even older versions - provide stubs
+        class Interval:
+            """Placeholder validator for parameter ranges."""
+            def __init__(self, type_, left, right, *, closed="right"):
+                self.type_ = type_
+                self.left = left
+                self.right = right
+                self.closed = closed
+
+        class StrOptions:
+            """Placeholder validator for string options."""
+            def __init__(self, options):
+                self.options = set(options) if not isinstance(options, set) else options
+
+        def validate_params(params):
+            """Fallback decorator for parameter validation."""
+            def decorator(func):
+                return func
+            return decorator
 
 try:
     from sklearn.utils.validation import check_is_fitted
@@ -22,5 +49,6 @@ except ImportError:
 __all__ = [
     "Interval",
     "StrOptions",
+    "validate_params",
     "check_is_fitted",
 ]
