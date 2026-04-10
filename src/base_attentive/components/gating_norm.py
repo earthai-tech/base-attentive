@@ -52,10 +52,11 @@ __all__ = [
     "LearnedNormalization",
     "StaticEnrichmentLayer",
 ]
+SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="GatedResidualNetwork"
+    SERIALIZATION_PACKAGE, name="GatedResidualNetwork"
 )
 @param_deprecated_message(
     conditions_params_mappings=[
@@ -419,7 +420,7 @@ class GatedResidualNetwork(Layer):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="VariableSelectionNetwork"
+    SERIALIZATION_PACKAGE, name="VariableSelectionNetwork"
 )
 class VariableSelectionNetwork(Layer, NNLearner):
     """Applies GRN to each variable and learns importance weights."""
@@ -843,7 +844,7 @@ class VariableSelectionNetwork(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="LearnedNormalization"
+    SERIALIZATION_PACKAGE, name="LearnedNormalization"
 )
 class LearnedNormalization(Layer, NNLearner):
     r"""
@@ -992,7 +993,7 @@ class LearnedNormalization(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="StaticEnrichmentLayer"
+    SERIALIZATION_PACKAGE, name="StaticEnrichmentLayer"
 )
 class StaticEnrichmentLayer(Layer, NNLearner):
     r"""

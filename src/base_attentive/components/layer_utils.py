@@ -51,10 +51,11 @@ __all__ = [
     "apply_residual",
     "drop_path",
 ]
+SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="ResidualAdd"
+    SERIALIZATION_PACKAGE, name="ResidualAdd"
 )
 class ResidualAdd(Layer, NNLearner):
     """Y = X + F(X). Assumes shapes match."""
@@ -67,7 +68,7 @@ class ResidualAdd(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="LayerScale"
+    SERIALIZATION_PACKAGE, name="LayerScale"
 )
 class LayerScale(Layer, NNLearner):
     """
@@ -106,7 +107,7 @@ class LayerScale(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="StochasticDepth"
+    SERIALIZATION_PACKAGE, name="StochasticDepth"
 )
 class StochasticDepth(Layer, NNLearner):
     """
@@ -133,7 +134,7 @@ class StochasticDepth(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="SqueezeExcite1D"
+    SERIALIZATION_PACKAGE, name="SqueezeExcite1D"
 )
 class SqueezeExcite1D(Layer, NNLearner):
     """
@@ -180,7 +181,7 @@ class SqueezeExcite1D(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="Gate"
+    SERIALIZATION_PACKAGE, name="Gate"
 )
 class Gate(Layer, NNLearner):
     """
@@ -387,10 +388,10 @@ def drop_path(
     # uniform in [0,1)
     if hasattr(K, "random"):
         rnd = K.random.uniform(shape)
-    else:  # fallback
-        from tensorflow.random import uniform as tf_uniform
-
-        rnd = tf_uniform(shape, dtype=tf_float32)
+    else:
+        raise RuntimeError(
+            "drop_path requires a backend random.uniform implementation."
+        )
 
     mask = tf_cast(rnd < keep_prob, tf_float32)
     # rescale to preserve expected value

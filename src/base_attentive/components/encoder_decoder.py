@@ -47,10 +47,11 @@ __all__ = [
 ]
 
 _EPSILON = 1e-6
+SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(
-    "geoprior.models.components",
+    SERIALIZATION_PACKAGE,
     name="TransformerEncoderBlock",
 )
 class TransformerEncoderBlock(Layer):
@@ -190,7 +191,7 @@ class TransformerEncoderBlock(Layer):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="TransformerDecoderBlock"
+    SERIALIZATION_PACKAGE, name="TransformerDecoderBlock"
 )
 class TransformerDecoderBlock(Layer):
     """
@@ -359,7 +360,7 @@ class TransformerDecoderBlock(Layer):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="TransformerEncoderLayer"
+    SERIALIZATION_PACKAGE, name="TransformerEncoderLayer"
 )
 class TransformerEncoderLayer(Layer, NNLearner):
     """
@@ -458,7 +459,7 @@ class TransformerEncoderLayer(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="TransformerDecoderLayer"
+    SERIALIZATION_PACKAGE, name="TransformerDecoderLayer"
 )
 class TransformerDecoderLayer(Layer, NNLearner):
     """
@@ -570,7 +571,7 @@ class TransformerDecoderLayer(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="MultiDecoder"
+    SERIALIZATION_PACKAGE, name="MultiDecoder"
 )
 class MultiDecoder(Layer, NNLearner):
     r"""

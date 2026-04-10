@@ -30,10 +30,11 @@ __all__ = [
     "MultiScaleLSTM",
     "DynamicTimeWindow",
 ]
+SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="MultiScaleLSTM"
+    SERIALIZATION_PACKAGE, name="MultiScaleLSTM"
 )
 class MultiScaleLSTM(Layer, NNLearner):
     r"""
@@ -224,7 +225,7 @@ class MultiScaleLSTM(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="DynamicTimeWindow"
+    SERIALIZATION_PACKAGE, name="DynamicTimeWindow"
 )
 class DynamicTimeWindow(Layer, NNLearner):
     r"""

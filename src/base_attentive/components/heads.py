@@ -52,12 +52,13 @@ __all__ = [
     "CombinedHeadLoss",
     "QuantileDistributionModeling",
 ]
+SERIALIZATION_PACKAGE = __name__
 
 _PI = 3.141592653589793
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="GaussianHead"
+    SERIALIZATION_PACKAGE, name="GaussianHead"
 )
 class GaussianHead(Layer, NNLearner):
     """
@@ -156,7 +157,7 @@ class GaussianHead(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="MixtureDensityHead"
+    SERIALIZATION_PACKAGE, name="MixtureDensityHead"
 )
 class MixtureDensityHead(Layer, NNLearner):
     """
@@ -324,7 +325,7 @@ class MixtureDensityHead(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="PointForecastHead"
+    SERIALIZATION_PACKAGE, name="PointForecastHead"
 )
 class PointForecastHead(Layer, NNLearner):
     r"""
@@ -366,7 +367,7 @@ class PointForecastHead(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="QuantileHead"
+    SERIALIZATION_PACKAGE, name="QuantileHead"
 )
 class QuantileHead(Layer, NNLearner):
     r"""
@@ -447,7 +448,7 @@ class QuantileHead(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="CombinedHeadLoss"
+    SERIALIZATION_PACKAGE, name="CombinedHeadLoss"
 )
 class CombinedHeadLoss(Loss, NNLearner):
     """
@@ -565,7 +566,7 @@ class CombinedHeadLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components",
+    SERIALIZATION_PACKAGE,
     name="QuantileDistributionModeling",
 )
 class QuantileDistributionModeling(Layer, NNLearner):

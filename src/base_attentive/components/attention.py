@@ -47,10 +47,11 @@ __all__ = [
     "ExplainableAttention",
     "MultiResolutionAttentionFusion",
 ]
+SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="TemporalAttentionLayer"
+    SERIALIZATION_PACKAGE, name="TemporalAttentionLayer"
 )
 class TemporalAttentionLayer(Layer):
     """Temporal Attention Layer conditioning query with context."""
@@ -270,7 +271,7 @@ class TemporalAttentionLayer(Layer):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="CrossAttention_"
+    SERIALIZATION_PACKAGE, name="CrossAttention_"
 )
 class CrossAttention_(Layer, NNLearner):
     r"""
@@ -444,7 +445,7 @@ class CrossAttention_(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="CrossAttention"
+    SERIALIZATION_PACKAGE, name="CrossAttention"
 )
 class CrossAttention(Layer, NNLearner):
     r"""
@@ -566,7 +567,7 @@ class CrossAttention(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="MemoryAugmentedAttention"
+    SERIALIZATION_PACKAGE, name="MemoryAugmentedAttention"
 )
 class MemoryAugmentedAttention(Layer, NNLearner):
     r"""Memory-augmented attention with optional masking."""
@@ -656,7 +657,7 @@ class MemoryAugmentedAttention(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="HierarchicalAttention_"
+    SERIALIZATION_PACKAGE, name="HierarchicalAttention_"
 )
 class HierarchicalAttention_(Layer, NNLearner):
     r"""
@@ -844,7 +845,7 @@ class HierarchicalAttention_(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="HierarchicalAttention"
+    SERIALIZATION_PACKAGE, name="HierarchicalAttention"
 )
 class HierarchicalAttention(Layer, NNLearner):
     r"""Short/long-term MHA with optional masks."""
@@ -926,7 +927,7 @@ class HierarchicalAttention(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="ExplainableAttention"
+    SERIALIZATION_PACKAGE, name="ExplainableAttention"
 )
 class ExplainableAttention(Layer, NNLearner):
     r"""
@@ -1084,7 +1085,7 @@ class ExplainableAttention(Layer, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components",
+    SERIALIZATION_PACKAGE,
     name="MultiResolutionAttentionFusion",
 )
 class MultiResolutionAttentionFusion(Layer, NNLearner):

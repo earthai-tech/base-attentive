@@ -35,10 +35,11 @@ __all__ = [
     "compute_loss_with_reduction",
     "compute_quantile_loss",
 ]
+SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(
-    "fusionlab.nn.components", name="MeanSquaredErrorLoss"
+    SERIALIZATION_PACKAGE, name="MeanSquaredErrorLoss"
 )
 class MeanSquaredErrorLoss(Loss, NNLearner):
     """
@@ -69,7 +70,7 @@ class MeanSquaredErrorLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(
-    "fusionlab.nn.components", name="QuantileLoss"
+    SERIALIZATION_PACKAGE, name="QuantileLoss"
 )
 class QuantileLoss(Loss, NNLearner):
     """
@@ -115,7 +116,7 @@ class QuantileLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(
-    "fusionlab.nn.components", name="HuberLoss"
+    SERIALIZATION_PACKAGE, name="HuberLoss"
 )
 class HuberLoss(Loss, NNLearner):
     """
@@ -161,7 +162,7 @@ class HuberLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(
-    "fusionlab.nn.components", name="WeightedLoss"
+    SERIALIZATION_PACKAGE, name="WeightedLoss"
 )
 class WeightedLoss(Loss, NNLearner):
     """
