@@ -9,6 +9,35 @@ from typing import Optional
 _LOGGER = None
 
 
+class OncePerMessageFilter(logging.Filter):
+    """Filter to log each unique message only once."""
+
+    def __init__(self):
+        """Initialize the filter with a set of seen messages."""
+        super().__init__()
+        self.seen = set()
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Filter to allow each unique message only once.
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            The log record to filter.
+
+        Returns
+        -------
+        bool
+            True if message hasn't been seen before, False otherwise.
+        """
+        msg = record.getMessage()
+        if msg not in self.seen:
+            self.seen.add(msg)
+            return True
+        return False
+
+
 def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
     """Get or create a logger for the module.
 
@@ -36,4 +65,4 @@ def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
     return logger
 
 
-__all__ = ["get_logger"]
+__all__ = ["get_logger", "OncePerMessageFilter"]

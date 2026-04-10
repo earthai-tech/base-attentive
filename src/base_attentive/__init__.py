@@ -46,11 +46,33 @@ def dependency_message(module_name: str) -> str:
     )
 
 
+# Import backend utilities for framework flexibility
+from .backend import (
+    get_backend,
+    set_backend,
+    get_available_backends,
+)
+
 try:
     from base_attentive.core import BaseAttentive
-    __all__ = ["BaseAttentive", "KERAS_BACKEND", "KERAS_DEPS", "dependency_message"]
+    __all__ = [
+        "BaseAttentive",
+        "KERAS_BACKEND",
+        "KERAS_DEPS",
+        "dependency_message",
+        "get_backend",
+        "set_backend",
+        "get_available_backends",
+    ]
 except Exception as e:
-    __all__ = ["KERAS_BACKEND", "KERAS_DEPS", "dependency_message"]
+    __all__ = [
+        "KERAS_BACKEND",
+        "KERAS_DEPS",
+        "dependency_message",
+        "get_backend",
+        "set_backend",
+        "get_available_backends",
+    ]
     import warnings
     warnings.warn(
         f"Failed to import BaseAttentive: {e}. Ensure TensorFlow/Keras is installed.",
