@@ -1,8 +1,16 @@
 name: PyPI Release
 
 on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - "pyproject.toml"
+      - "README.md"
+      - "src/**"
+      - ".github/workflows/pypi-release.yml"
+  workflow_dispatch:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   deploy:
@@ -29,10 +37,10 @@ jobs:
       with:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
-      if: github.event.release.prerelease == true
+      if: github.event_name == 'release' && github.event.release.prerelease == true
     
     - name: Publish to PyPI (Production)
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
-      if: github.event.release.prerelease == false
+      if: github.event_name == 'release' && github.event.release.prerelease == false

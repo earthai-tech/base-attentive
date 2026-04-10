@@ -6,7 +6,6 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-from ..compat.types import TensorLike
 from ..logging import get_logger
 
 try:
@@ -28,6 +27,23 @@ def _has_runtime() -> bool:
     return bool(KERAS_BACKEND and KERAS_DEPS is not None)
 
 
+def _normalize_inputs(
+    inputs: Union[Any, np.ndarray, list, tuple, None],
+) -> list[Optional[Any]]:
+    """Normalize caller inputs into a fixed ``[static, dynamic, future]`` list."""
+    if inputs is None:
+        return [None, None, None]
+
+    if isinstance(inputs, (list, tuple)):
+        normalized = list(inputs[:3])
+    else:
+        normalized = [inputs]
+
+    while len(normalized) < 3:
+        normalized.append(None)
+    return normalized[:3]
+
+
 def validate_model_inputs(
     inputs: Union[Any, np.ndarray, list],
     static_input_dim: Optional[int] = None,
@@ -47,22 +63,16 @@ def validate_model_inputs(
     This entrypoint intentionally stays lightweight: it normalizes the input
     container shape and converts values into the active Keras runtime tensor
     type when a runtime is available. When no Keras runtime is configured, the
-    raw values are returned unchanged.
+    raw values are returned unchanged. ``None`` inputs are normalized to
+    ``(None, None, None)``.
     """
+    normalized_inputs = _normalize_inputs(inputs)
+
     if not _has_runtime():
-        if isinstance(inputs, (list, tuple)) and len(inputs) == 3:
-            return inputs[0], inputs[1], inputs[2]
-        return inputs, None, None
-
-    if not isinstance(inputs, (list, tuple)):
-        inputs = [inputs]
-
-    while len(inputs) < 3:
-        inputs.append(None)
-    inputs = inputs[:3]
+        return tuple(normalized_inputs)
 
     tensors = []
-    for inp in inputs:
+    for inp in normalized_inputs:
         if inp is None:
             tensors.append(None)
             continue

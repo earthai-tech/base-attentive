@@ -1,119 +1,146 @@
-"""Test validation module."""
+"""Tests for backend-agnostic validation helpers."""
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 
+class _FakeKerasDeps:
+    """Small numpy-backed stand-in for Keras ops used by validation helpers."""
+
+    float32 = np.float32
+
+    @staticmethod
+    def convert_to_tensor(value):
+        if isinstance(value, str) and value == "__boom__":
+            raise TypeError("boom")
+        return np.asarray(value)
+
+    @staticmethod
+    def reduce_mean(value, axis):
+        return np.mean(np.asarray(value), axis=axis)
+
+    @staticmethod
+    def reduce_sum(value, axis):
+        return np.sum(np.asarray(value), axis=axis)
+
+    @staticmethod
+    def expand_dims(value, axis=-1):
+        return np.expand_dims(np.asarray(value), axis=axis)
+
+    @staticmethod
+    def cast(value, dtype):
+        return np.asarray(value, dtype=dtype)
+
+
+@pytest.fixture
+def validation_module():
+    """Import the validation module once for monkeypatch-driven tests."""
+    import base_attentive.validation as validation_module
+
+    return validation_module
+
+
+@pytest.fixture
+def fake_runtime(validation_module, monkeypatch):
+    """Patch validation helpers to use a lightweight fake runtime."""
+    monkeypatch.setattr(validation_module, "_has_runtime", lambda: True)
+    monkeypatch.setattr(validation_module, "KERAS_DEPS", _FakeKerasDeps())
+    return validation_module
+
+
 class TestValidationModule:
-    """Test tensor validation utilities."""
+    """Test tensor validation utilities without importing TensorFlow."""
 
-    def test_validate_model_inputs_none(self):
-        """Test validate_model_inputs with None inputs."""
-        from base_attentive.validation import validate_model_inputs
+    def test_validate_model_inputs_none_returns_empty_triplet(
+        self, validation_module
+    ):
+        """None inputs should normalize to a predictable empty triplet."""
+        static, dynamic, future = validation_module.validate_model_inputs(None)
 
-        static, dynamic, future = validate_model_inputs(None)
-        assert static is not None or dynamic is not None or future is not None
+        assert (static, dynamic, future) == (None, None, None)
 
-    def test_validate_model_inputs_list(self):
-        """Test validate_model_inputs with list."""
-        try:
-            import tensorflow as tf
-        except ImportError:
-            pytest.skip("TensorFlow not installed")
+    def test_validate_model_inputs_passthrough_without_runtime(
+        self, validation_module, monkeypatch
+    ):
+        """Without a runtime, triplet inputs should be returned unchanged."""
+        raw_inputs = [object(), object(), object()]
+        monkeypatch.setattr(validation_module, "_has_runtime", lambda: False)
 
-        from base_attentive.validation import validate_model_inputs
+        static, dynamic, future = validation_module.validate_model_inputs(
+            raw_inputs
+        )
 
+        assert static is raw_inputs[0]
+        assert dynamic is raw_inputs[1]
+        assert future is raw_inputs[2]
+
+    def test_validate_model_inputs_converts_runtime_values(
+        self, fake_runtime
+    ):
+        """The active runtime should convert each non-empty input slot."""
         inputs = [
-            tf.random.normal([32, 4]),  # static
-            tf.random.normal([32, 10, 8]),  # dynamic
-            tf.random.normal([32, 24, 6]),  # future
+            [[1.0, 2.0], [3.0, 4.0]],
+            np.ones((2, 3, 4)),
+            np.zeros((2, 5, 6)),
         ]
-        static, dynamic, future = validate_model_inputs(inputs)
-        assert static is not None
-        assert dynamic is not None
-        assert future is not None
 
-    def test_validate_model_inputs_single_tensor(self):
-        """Test validate_model_inputs with single tensor."""
-        try:
-            import tensorflow as tf
-        except ImportError:
-            pytest.skip("TensorFlow not installed")
+        static, dynamic, future = fake_runtime.validate_model_inputs(inputs)
 
-        from base_attentive.validation import validate_model_inputs
+        assert isinstance(static, np.ndarray)
+        assert static.shape == (2, 2)
+        assert dynamic.shape == (2, 3, 4)
+        assert future.shape == (2, 5, 6)
 
-        single_input = tf.random.normal([32, 10, 8])
-        result = validate_model_inputs(single_input)
-        assert result is not None
+    def test_validate_model_inputs_single_tensor_expands_triplet(
+        self, fake_runtime
+    ):
+        """Single inputs should be mapped to the static slot."""
+        static, dynamic, future = fake_runtime.validate_model_inputs(
+            np.ones((4, 8))
+        )
 
-    def test_maybe_reduce_quantiles_bh_passthrough(self):
-        """Test maybe_reduce_quantiles_bh with 2D tensor."""
-        try:
-            import tensorflow as tf
-        except ImportError:
-            pytest.skip("TensorFlow not installed")
+        assert static.shape == (4, 8)
+        assert dynamic is None
+        assert future is None
 
-        from base_attentive.validation import maybe_reduce_quantiles_bh
+    def test_validate_model_inputs_wraps_conversion_errors(
+        self, fake_runtime
+    ):
+        """Conversion failures should surface as validation errors."""
+        with pytest.raises(ValueError, match="Could not convert input"):
+            fake_runtime.validate_model_inputs("__boom__")
 
-        # 2D tensor should pass through unchanged
-        x = tf.random.normal([32, 10])
-        result = maybe_reduce_quantiles_bh(x)
+    def test_maybe_reduce_quantiles_bh_passthrough(self, fake_runtime):
+        """Two-dimensional arrays should remain unchanged."""
+        x = np.ones((32, 10))
+
+        result = fake_runtime.maybe_reduce_quantiles_bh(x)
+
         assert result.shape == x.shape
 
-    def test_maybe_reduce_quantiles_bh_reduction_3d(self):
-        """Test maybe_reduce_quantiles_bh reduces 3D with Q > 1."""
-        try:
-            import tensorflow as tf
-        except ImportError:
-            pytest.skip("TensorFlow not installed")
+    def test_maybe_reduce_quantiles_bh_reduction_3d(self, fake_runtime):
+        """Three-dimensional arrays with Q > 1 should be reduced."""
+        x = np.arange(32 * 10 * 5, dtype=np.float32).reshape(32, 10, 5)
 
-        from base_attentive.validation import maybe_reduce_quantiles_bh
+        result = fake_runtime.maybe_reduce_quantiles_bh(x, reduction="mean")
 
-        # (B, H, Q) with Q > 1 should be reduced
-        x = tf.random.normal([32, 10, 5])  # Q = 5
-        result = maybe_reduce_quantiles_bh(x, reduction="mean")
-        assert result.shape[-1] != 5 or len(result.shape) == 2
+        assert result.shape == (32, 10)
 
-    def test_ensure_bh1_2d_to_3d(self):
-        """Test ensure_bh1 converts 2D to 3D."""
-        try:
-            import tensorflow as tf
-        except ImportError:
-            pytest.skip("TensorFlow not installed")
+    def test_ensure_bh1_2d_to_3d_and_cast(self, fake_runtime):
+        """Two-dimensional arrays should become ``(B, H, 1)``."""
+        x = np.ones((32, 10), dtype=np.float64)
 
-        from base_attentive.validation import ensure_bh1
+        result = fake_runtime.ensure_bh1(x, dtype=np.float32)
 
-        # (B, H) -> (B, H, 1)
-        x = tf.random.normal([32, 10])
-        result = ensure_bh1(x)
-        assert len(result.shape) == 3
-        assert result.shape[-1] == 1
+        assert result.shape == (32, 10, 1)
+        assert result.dtype == np.float32
 
-    def test_ensure_bh1_already_3d(self):
-        """Test ensure_bh1 preserves 3D."""
-        try:
-            import tensorflow as tf
-        except ImportError:
-            pytest.skip("TensorFlow not installed")
+    def test_ensure_bh1_preserves_rank_3(self, fake_runtime):
+        """Existing ``(B, H, 1)`` arrays should keep their trailing axis."""
+        x = np.ones((32, 10, 1), dtype=np.float32)
 
-        from base_attentive.validation import ensure_bh1
+        result = fake_runtime.ensure_bh1(x)
 
-        # (B, H, 1) should remain unchanged
-        x = tf.random.normal([32, 10, 1])
-        result = ensure_bh1(x)
-        assert len(result.shape) == 3
-        assert result.shape[-1] == 1
-
-    def test_ensure_bh1_dtype_cast(self):
-        """Test ensure_bh1 casts dtype."""
-        try:
-            import tensorflow as tf
-        except ImportError:
-            pytest.skip("TensorFlow not installed")
-
-        from base_attentive.validation import ensure_bh1
-
-        x = tf.random.normal([32, 10])
-        result = ensure_bh1(x, dtype=tf.float32)
-        assert result.dtype == tf.float32
+        assert result.shape == (32, 10, 1)
