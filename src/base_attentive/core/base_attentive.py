@@ -11,12 +11,16 @@ like HALNet and PIHALNet and more.
 
 from __future__ import annotations
 
+import copy
 import warnings
 from numbers import Integral, Real
 from typing import Any
 
+from ..api.docs import (
+    DocstringComponents,
+    _halnet_core_params,
+)
 from ..api.property import NNLearner
-from ..api import docs as docs_stub
 from ..compat.sklearn import (
     Interval,
     StrOptions,
@@ -70,14 +74,9 @@ tf_assert_equal = KERAS_DEPS.debugging.assert_equal
 logger = get_logger(__name__)
 
 DEP_MSG = dependency_message("models")
-
-# NOTE: DocstringComponents import is stubbed - not available in standalone version
-# You can extend this by providing proper docstring definitions
-DocstringComponents = type('DocstringComponents', (), {
-    'from_nested_components': lambda **k: None
-})
-_halnet_core_params = {}
-_param_docs = None
+_param_docs = DocstringComponents.from_nested_components(
+    base=DocstringComponents(_halnet_core_params),
+)
 
 DEFAULT_ARCHITECTURE = {
     "encoder_type": "hybrid",
@@ -88,10 +87,11 @@ DEFAULT_ARCHITECTURE = {
     ],
     "feature_processing": "vsn",
 }
+SERIALIZATION_PACKAGE = __name__
 
 
 @KERAS_DEPS.register_keras_serializable(
-    "geoprior.models", name="BaseAttentive"
+    SERIALIZATION_PACKAGE, name="BaseAttentive"
 )
 class BaseAttentive(Model, NNLearner):
     @validate_params(
@@ -348,9 +348,20 @@ class BaseAttentive(Model, NNLearner):
 
         # The `attention_levels` kwarg sets the `decoder_attention_stack`.
 
-        final_config["decoder_attention_stack"] = (
-            resolve_attention_levels(attention_levels)
+        resolved_attention_levels = resolve_attention_levels(
+            attention_levels
         )
+        if isinstance(resolved_attention_levels, dict):
+            final_config["decoder_attention_stack"] = list(
+                resolved_attention_levels.get(
+                    "decoder_attention_stack",
+                    final_config["decoder_attention_stack"],
+                )
+            )
+        else:
+            final_config["decoder_attention_stack"] = list(
+                resolved_attention_levels
+            )
 
         # 2. Merge and override with the user-provided dictionary.
         if architecture_config:
@@ -1087,21 +1098,34 @@ class BaseAttentive(Model, NNLearner):
         else:  # pihal_like
             expected_future_span = self.forecast_horizon
 
-        actual_future_span = tf_shape(future_p)[1]
-        expected_span_tensor = tf_convert_to_tensor(
-            expected_future_span,
-            dtype=actual_future_span.dtype,
+        static_future_span = None
+        future_shape = getattr(future_p, "shape", None)
+        try:
+            static_future_span = future_shape[1]
+        except Exception:
+            static_future_span = None
+
+        error_message = (
+            f"Incorrect 'future_features' tensor length for "
+            f"mode='{self.mode}'. Expected time dimension of "
+            f"{expected_future_span}, but got "
+            f"{static_future_span if static_future_span is not None else 'an unknown value'}."
         )
 
-        tf_assert_equal(
-            actual_future_span,
-            expected_span_tensor,
-            message=(
-                f"Incorrect 'future_features' tensor length for "
-                f"mode='{self.mode}'. Expected time dimension of "
-                f"{expected_future_span}, but got {actual_future_span}."
-            ),
-        )
+        if static_future_span is not None:
+            if static_future_span != expected_future_span:
+                raise AssertionError(error_message)
+        else:
+            actual_future_span = tf_shape(future_p)[1]
+            expected_span_tensor = tf_convert_to_tensor(
+                expected_future_span,
+                dtype=actual_future_span.dtype,
+            )
+            tf_assert_equal(
+                actual_future_span,
+                expected_span_tensor,
+                message=error_message,
+            )
 
         final_features = self.run_encoder_decoder_core(
             static_input=static_p,
@@ -1179,7 +1203,9 @@ class BaseAttentive(Model, NNLearner):
                 "apply_dtw": self.apply_dtw,
                 "attention_levels": self.attention_levels,
                 "use_batch_norm": self.use_batch_norm,
-                "architecture_config": self.architecture_config,
+                "architecture_config": copy.deepcopy(
+                    self.architecture_config
+                ),
                 "verbose": self.verbose,
                 "name": self.name,
             }
@@ -1193,6 +1219,7 @@ class BaseAttentive(Model, NNLearner):
         This method is the reverse of get_config, capable of handling
         the nested architecture_config dictionary.
         """
+        config = copy.deepcopy(config)
         # Separate architecture_config from the main config
         arch_config = config.pop("architecture_config", None)
         # Re-add it as a keyword argument for __init__
@@ -1221,6 +1248,9 @@ class BaseAttentive(Model, NNLearner):
         """
         # 1. Get the full configuration of the existing model
         config = self.get_config()
+        config["architecture_config"] = copy.deepcopy(
+            config.get("architecture_config", {})
+        )
 
         # 2. Update the architecture configuration
         # get_config will have stored it as a nested dictionary

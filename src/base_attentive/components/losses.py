@@ -55,10 +55,11 @@ __all__ = [
     "MultiObjectiveLoss",
     "CRPSLoss",
 ]
+SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="CRPSLoss"
+    SERIALIZATION_PACKAGE, name="CRPSLoss"
 )
 class CRPSLoss(Loss, NNLearner):
     r"""
@@ -358,7 +359,7 @@ class CRPSLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="AdaptiveQuantileLoss"
+    SERIALIZATION_PACKAGE, name="AdaptiveQuantileLoss"
 )
 class AdaptiveQuantileLoss(Loss, NNLearner):
     r"""
@@ -519,7 +520,7 @@ class AdaptiveQuantileLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="AnomalyLoss"
+    SERIALIZATION_PACKAGE, name="AnomalyLoss"
 )
 class AnomalyLoss(Loss, NNLearner):
     r"""
@@ -652,7 +653,7 @@ class AnomalyLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="MultiObjectiveLoss"
+    SERIALIZATION_PACKAGE, name="MultiObjectiveLoss"
 )
 class MultiObjectiveLoss(Loss, NNLearner):
     r"""
@@ -843,7 +844,7 @@ class MultiObjectiveLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(
-    "geoprior.nn.components", name="CRPSLossWrapper"
+    SERIALIZATION_PACKAGE, name="CRPSLossWrapper"
 )
 class CRPSLossWrapper(Loss, NNLearner):
     r"""
