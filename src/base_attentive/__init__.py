@@ -115,6 +115,7 @@ class _KerasDeps:
 
     _OP_ALIASES = {
         "concat": "concatenate",
+        "floordiv": "floor_divide",
         "reduce_mean": "mean",
         "reduce_sum": "sum",
         "reduce_max": "max",

@@ -3,7 +3,7 @@
 [![Tests](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml)
 [![Documentation](https://github.com/earthai-tech/base-attentive/actions/workflows/documentation.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/documentation.yml)
 [![Code Quality](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml)
-[![PyPI Release](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg)](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml)
+[![Publish](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml)
 [![Version](https://img.shields.io/github/v/release/earthai-tech/base-attentive?display_name=tag)](https://github.com/earthai-tech/base-attentive/releases)
 [![License](https://img.shields.io/github/license/earthai-tech/base-attentive)](https://github.com/earthai-tech/base-attentive/blob/main/LICENSE)
 [![Coverage](https://codecov.io/gh/earthai-tech/base-attentive/branch/main/graph/badge.svg)](https://codecov.io/gh/earthai-tech/base-attentive)
@@ -23,12 +23,12 @@ It fuses these inputs using a modular stack of attention mechanisms and serves a
 
 ## Key Features
 
-✨ **Flexible Architecture**
+**Flexible Architecture**
 - Hybrid mode: Multi-scale LSTM + Attention
 - Transformer mode: Pure self-attention
 - Configurable attention stack (cross, hierarchical, memory-augmented)
 
-📊 **Advanced Components**
+**Advanced Components**
 - Variable Selection Networks (VSN) for learnable feature selection
 - Multi-scale LSTM for hierarchical temporal patterns
 - Cross-attention for encoder-decoder interaction
@@ -36,7 +36,7 @@ It fuses these inputs using a modular stack of attention mechanisms and serves a
 - Dynamic time warping (DTW) for time-series alignment
 - Quantile distribution modeling for uncertainty quantification
 
-🔧 **Production-Ready**
+**Production-Ready**
 - Keras 3 backed with configurable runtimes
 - Serializable (save/load models)
 - Input validation and parameter checking

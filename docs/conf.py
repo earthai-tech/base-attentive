@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import re
 import sys
 from datetime import date
@@ -37,6 +38,9 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinx.ext.mathjax",
+    "sphinx_rtd_theme",
+    "sphinx.ext.coverage",
 ]
 
 root_doc = "index"
@@ -72,6 +76,29 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable/", None),
 }
 
-html_theme = "sphinx_rtd_theme"
+html_theme = (
+    "sphinx_rtd_theme"
+    if importlib.util.find_spec("sphinx_rtd_theme") is not None
+    else "alabaster"
+)
 html_title = f"{project} {release} documentation"
 html_static_path: list[str] = []
+
+# RTD theme options
+html_theme_options = {
+    "display_version": True,
+    "prev_next_buttons_location": "bottom",
+    "style_external_links": False,
+    "vcs_pageview_mode": "view",
+    "style_nav_header_background": "#2c3e50",
+    "collapse_navigation": True,
+    "sticky_navigation": True,
+    "navigation_depth": 4,
+    "includehidden": True,
+    "titles_only": False,
+}
+
+# Sidebars configuration
+html_sidebars = {
+    "**": ["localtoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
+}
