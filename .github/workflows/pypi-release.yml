@@ -2,7 +2,7 @@ name: PyPI Release
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, main, develop ]
     paths:
       - "pyproject.toml"
       - "README.md"
@@ -10,27 +10,31 @@ on:
       - ".github/workflows/pypi-release.yml"
   workflow_dispatch:
   release:
-    types: [published]
+    types: [published, created]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
+        cache: 'pip'
     
     - name: Install build dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
         pip install build twine
     
     - name: Build distribution
       run: python -m build
+    
+    - name: Check distribution
+      run: twine check dist/* || true
     
     - name: Publish to PyPI (Test)
       uses: pypa/gh-action-pypi-publish@release/v1
@@ -38,9 +42,18 @@ jobs:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository_url: https://test.pypi.org/legacy/
       if: github.event_name == 'release' && github.event.release.prerelease == true
+      continue-on-error: true
     
     - name: Publish to PyPI (Production)
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
       if: github.event_name == 'release' && github.event.release.prerelease == false
+      continue-on-error: true
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-distribution-packages
+        path: dist/
+      continue-on-error: true

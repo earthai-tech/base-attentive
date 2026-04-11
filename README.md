@@ -1,14 +1,14 @@
 # BaseAttentive
 
-[![Tests](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml)
-[![Documentation](https://readthedocs.org/projects/base-attentive/badge/?version=latest)](https://base-attentive.readthedocs.io/)
-[![Code Quality](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml)
-[![Publish](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml)
-[![Version](https://img.shields.io/github/v/release/earthai-tech/base-attentive?display_name=tag)](https://github.com/earthai-tech/base-attentive/releases)
-[![License](https://img.shields.io/github/license/earthai-tech/base-attentive)](https://github.com/earthai-tech/base-attentive/blob/main/LICENSE)
-[![Coverage](https://codecov.io/gh/earthai-tech/base-attentive/branch/main/graph/badge.svg)](https://codecov.io/gh/earthai-tech/base-attentive)
+[![Tests](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml/badge.svg?branch=develop)](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml?query=branch%3Adevelop)
+[![Documentation](https://readthedocs.org/projects/base-attentive/badge/?version=latest)](https://base-attentive.readthedocs.io/en/latest/)
+[![Code Quality](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml/badge.svg?branch=develop)](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml?query=branch%3Adevelop)
+[![Publish](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg?branch=master)](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml?query=branch%3Amaster)
+[![Version](https://img.shields.io/github/v/release/earthai-tech/base-attentive?display_name=tag&sort=semver)](https://github.com/earthai-tech/base-attentive/releases)
+[![License](https://img.shields.io/github/license/earthai-tech/base-attentive)](https://github.com/earthai-tech/base-attentive/blob/master/LICENSE)
+[![Coverage](https://codecov.io/gh/earthai-tech/base-attentive/branch/develop/graph/badge.svg)](https://codecov.io/gh/earthai-tech/base-attentive)
 [![Code Style](https://img.shields.io/badge/code%20style-ruff-46a758.svg)](https://docs.astral.sh/ruff/)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 
 A foundational blueprint for building powerful, data-driven, sequence-to-sequence time series forecasting models with advanced attention mechanisms.
 
