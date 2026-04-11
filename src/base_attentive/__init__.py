@@ -19,9 +19,12 @@ from typing import Any
 import numpy as np
 
 from .backend import (
+    ensure_default_backend,
     get_available_backends,
     get_backend,
     get_backend_capabilities,
+    normalize_backend_name,
+    select_best_backend,
     set_backend,
 )
 
@@ -29,15 +32,34 @@ from .backend import (
 
 
 def _normalize_configured_backend(name: str | None) -> str:
-    normalized = (name or "tensorflow").strip().lower()
-    if normalized == "pytorch":
-        return "torch"
+    normalized = normalize_backend_name(name)
     return normalized or "tensorflow"
 
 
-KERAS_BACKEND = _normalize_configured_backend(
-    os.environ.get("KERAS_BACKEND") or os.environ.get("BASE_ATTENTIVE_BACKEND")
-)
+def _resolve_runtime_backend() -> str:
+    configured = os.environ.get("BASE_ATTENTIVE_BACKEND")
+    if configured:
+        return _normalize_configured_backend(configured)
+
+    configured = os.environ.get("KERAS_BACKEND")
+    if configured:
+        return _normalize_configured_backend(configured)
+
+    detected = select_best_backend(require_supported=False)
+    if detected:
+        return _normalize_configured_backend(detected)
+
+    return _normalize_configured_backend(
+        ensure_default_backend(
+            auto_install=True,
+            install_tensorflow=True,
+        )
+    )
+
+
+KERAS_BACKEND = _resolve_runtime_backend()
+os.environ["BASE_ATTENTIVE_BACKEND"] = KERAS_BACKEND
+os.environ["KERAS_BACKEND"] = KERAS_BACKEND
 
 
 def _safe_import(module_name: str):
@@ -311,18 +333,29 @@ __all__ = [
     "set_backend",
     "get_available_backends",
     "get_backend_capabilities",
+    "make_fast_predict_fn",
 ]
 
 
 def __getattr__(name: str):
     """Lazily expose heavy package exports."""
-    if name != "BaseAttentive":
+    lazy_exports = {
+        "BaseAttentive": ("base_attentive.core", "BaseAttentive"),
+        "make_fast_predict_fn": (
+            "base_attentive.runtime",
+            "make_fast_predict_fn",
+        ),
+    }
+
+    if name not in lazy_exports:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
     try:
-        from base_attentive.core import BaseAttentive as _BaseAttentive
+        module_name, export_name = lazy_exports[name]
+        module = importlib.import_module(module_name)
+        value = getattr(module, export_name)
     except Exception as exc:
         raise AttributeError(name) from exc
 
-    globals()["BaseAttentive"] = _BaseAttentive
-    return _BaseAttentive
+    globals()[name] = value
+    return value

@@ -67,3 +67,25 @@ Use TensorFlow for training, testing, and model serialization at the moment.
 JAX and Torch can be useful for backend experiments, but the full
 ``BaseAttentive`` model should still be treated as exploratory on those
 runtimes.
+
+Accelerated Inference on TensorFlow
+-----------------------------------
+
+If you are serving forecasts repeatedly, you can create a traced inference
+callable with ``make_fast_predict_fn``:
+
+.. code-block:: python
+
+   from base_attentive import BaseAttentive, make_fast_predict_fn
+
+   model = BaseAttentive(...)
+   fast_predict = make_fast_predict_fn(
+       model,
+       warmup_inputs=[x_static, x_dynamic, x_future],
+   )
+
+   predictions = fast_predict([x_static, x_dynamic, x_future])
+
+This helper wraps inference with ``tf.function`` and uses ``training=False``.
+For best results, keep batch and sequence shapes relatively stable. For
+training workloads, you can also try ``model.compile(..., jit_compile="auto")``.
