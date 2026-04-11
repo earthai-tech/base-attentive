@@ -20,6 +20,7 @@ except ImportError:
             Interval as sklearn_Interval,
             StrOptions,
         )
+
         sklearn_validate_params = None
     except ImportError:
         sklearn_Interval = None
@@ -29,6 +30,7 @@ except ImportError:
 try:
     from sklearn.utils.validation import check_is_fitted
 except ImportError:
+
     def check_is_fitted(estimator, attributes, *, msg=None, all_or_any=all):
         """Simple fallback for check_is_fitted."""
         pass
@@ -38,16 +40,16 @@ class Interval:
     """
     Compatibility wrapper for scikit-learn's Interval class to handle
     versions that use different parameter interfaces.
-    
+
     This wrapper converts `int` type to `numbers.Integral` to match
     scikit-learn's expected parameter types, and handles the `inclusive`
     parameter for newer versions.
     """
-    
+
     def __new__(cls, type_, left, right, *, closed="right", inclusive=None):
         """
         Create a compatible Interval object based on the scikit-learn version.
-        
+
         Parameters
         ----------
         type_ : type
@@ -66,16 +68,18 @@ class Interval:
             raise ImportError(
                 "scikit-learn is not installed or does not have Interval support"
             )
-        
+
         # Convert int to numbers.Integral for newer sklearn versions
         if type_ is int:
             type_ = numbers.Integral
-        
+
         # Check if 'inclusive' is a parameter in sklearn_Interval
         signature = inspect.signature(sklearn_Interval.__init__)
         if "inclusive" in signature.parameters:
             # Newer version - use inclusive parameter
-            return sklearn_Interval(type_, left, right, closed=closed, inclusive=inclusive)
+            return sklearn_Interval(
+                type_, left, right, closed=closed, inclusive=inclusive
+            )
         else:
             # Older version - don't use inclusive parameter
             return sklearn_Interval(type_, left, right, closed=closed)
@@ -90,7 +94,7 @@ def validate_params(
     """
     Compatibility wrapper for scikit-learn's validate_params decorator
     to handle versions that require the prefer_skip_nested_validation argument.
-    
+
     Parameters
     ----------
     params : dict
@@ -104,14 +108,15 @@ def validate_params(
         # Fallback - return identity decorator
         def decorator(func):
             return func
+
         return decorator
-    
+
     # Check if prefer_skip_nested_validation is required
     sig = inspect.signature(sklearn_validate_params)
     if "prefer_skip_nested_validation" in sig.parameters:
         # Newer version - pass the parameter
         kwargs["prefer_skip_nested_validation"] = prefer_skip_nested_validation
-    
+
     # Call the actual validate_params
     return sklearn_validate_params(params, *args, **kwargs)
 

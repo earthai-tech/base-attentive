@@ -29,8 +29,7 @@ def _normalize_configured_backend(name: str | None) -> str:
 
 
 KERAS_BACKEND = _normalize_configured_backend(
-    os.environ.get("KERAS_BACKEND")
-    or os.environ.get("BASE_ATTENTIVE_BACKEND")
+    os.environ.get("KERAS_BACKEND") or os.environ.get("BASE_ATTENTIVE_BACKEND")
 )
 
 
@@ -59,9 +58,7 @@ def _get_static_value(value: Any) -> Any:
 
     tensor = _safe_import("tensorflow")
     if tensor is not None:
-        get_static_value = getattr(
-            tensor, "get_static_value", None
-        )
+        get_static_value = getattr(tensor, "get_static_value", None)
         if callable(get_static_value):
             try:
                 return get_static_value(value)
@@ -74,6 +71,7 @@ class _KerasAutographExperimental:
     @staticmethod
     def do_not_convert(func=None, **kwargs):
         if func is None:
+
             def decorator(inner):
                 return inner
 
@@ -217,9 +215,7 @@ class _KerasDeps:
         if name == "register_keras_serializable":
             for namespace_name in ("saving", "utils"):
                 namespace = self._load_namespace(keras, namespace_name)
-                value = getattr(
-                    namespace, "register_keras_serializable", None
-                )
+                value = getattr(namespace, "register_keras_serializable", None)
                 if value is not None:
                     return value
 

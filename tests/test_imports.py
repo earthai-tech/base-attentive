@@ -9,6 +9,7 @@ def test_import_base_attentive():
     """Test that BaseAttentive can be imported."""
     try:
         from base_attentive import BaseAttentive
+
         assert BaseAttentive is not None
     except ImportError as e:
         pytest.skip(f"Cannot import BaseAttentive: {e}")
@@ -17,6 +18,7 @@ def test_import_base_attentive():
 def test_package_metadata():
     """Test package metadata."""
     import base_attentive
+
     assert hasattr(base_attentive, "__version__")
     assert hasattr(base_attentive, "__author__")
     assert isinstance(base_attentive.__version__, str)
@@ -32,6 +34,7 @@ class TestCoreImports:
             set_backend,
             get_available_backends,
         )
+
         assert callable(get_backend)
         assert callable(set_backend)
         assert callable(get_available_backends)
@@ -39,6 +42,7 @@ class TestCoreImports:
     def test_import_api(self):
         """Test API module imports."""
         from base_attentive.api import NNLearner
+
         assert NNLearner is not None
 
     def test_import_compat(self):
@@ -48,6 +52,7 @@ class TestCoreImports:
             StrOptions,
             validate_params,
         )
+
         assert Interval is not None
         assert StrOptions is not None
         assert callable(validate_params)
@@ -55,6 +60,7 @@ class TestCoreImports:
     def test_import_logging(self):
         """Test logging module imports."""
         from base_attentive.logging import get_logger, OncePerMessageFilter
+
         assert callable(get_logger)
         assert OncePerMessageFilter is not None
 
@@ -65,6 +71,7 @@ class TestCoreImports:
             maybe_reduce_quantiles_bh,
             ensure_bh1,
         )
+
         assert callable(validate_model_inputs)
         assert callable(maybe_reduce_quantiles_bh)
         assert callable(ensure_bh1)
@@ -73,6 +80,7 @@ class TestCoreImports:
         """Test models module imports."""
         from base_attentive.models.comp_utils import resolve_attention_levels
         from base_attentive.models.utils import set_default_params
+
         assert callable(resolve_attention_levels)
         assert callable(set_default_params)
 
@@ -80,6 +88,6 @@ class TestCoreImports:
         """Test utils module imports."""
         from base_attentive.utils.deps_utils import ensure_pkg
         from base_attentive.utils.generic_utils import select_mode
+
         assert callable(ensure_pkg)
         assert callable(select_mode)
-

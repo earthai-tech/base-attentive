@@ -33,9 +33,7 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="MultiScaleLSTM"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="MultiScaleLSTM")
 class MultiScaleLSTM(Layer, NNLearner):
     r"""
     MultiScaleLSTM layer applying multiple LSTMs
@@ -88,8 +86,7 @@ class MultiScaleLSTM(Layer, NNLearner):
     >>> import tensorflow as tf
     >>> x = tf.random.normal((32, 20, 16))  # (B, T, D)
     >>> # Instantiating a multi-scale LSTM
-    >>> mslstm = MultiScaleLSTM(lstm_units=32,
-    ...     scales=[1, 2], return_sequences=False)
+    >>> mslstm = MultiScaleLSTM(lstm_units=32, scales=[1, 2], return_sequences=False)
     >>> y = mslstm(x)  # shape => (32, 64)
     >>> # because scale=1 and scale=2 each produce 32 units,
     ... # which are concatenated => 64
@@ -124,9 +121,7 @@ class MultiScaleLSTM(Layer, NNLearner):
         if scales is None or scales == "auto":
             scales = [1]
         # Validate that scales is a list of int
-        scales = validate_nested_param(
-            scales, list[int], "scales"
-        )
+        scales = validate_nested_param(scales, list[int], "scales")
 
         self.lstm_units = lstm_units
         self.scales = scales
@@ -134,10 +129,7 @@ class MultiScaleLSTM(Layer, NNLearner):
 
         # Create an LSTM for each scale
         self.lstm_layers = [
-            LSTM(
-                lstm_units, return_sequences=return_sequences
-            )
-            for _ in scales
+            LSTM(lstm_units, return_sequences=return_sequences) for _ in scales
         ]
 
     @tf_autograph.experimental.do_not_convert
@@ -165,13 +157,9 @@ class MultiScaleLSTM(Layer, NNLearner):
               on the scale sub-sampling.
         """
         outputs = []
-        for scale, lstm in zip(
-            self.scales, self.lstm_layers, strict=False
-        ):
+        for scale, lstm in zip(self.scales, self.lstm_layers, strict=False):
             scaled_input = inputs[:, ::scale, :]
-            lstm_output = lstm(
-                scaled_input, training=training
-            )
+            lstm_output = lstm(scaled_input, training=training)
             outputs.append(lstm_output)
 
         # If return_sequences=False:
@@ -224,9 +212,7 @@ class MultiScaleLSTM(Layer, NNLearner):
         return cls(**config)
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="DynamicTimeWindow"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="DynamicTimeWindow")
 class DynamicTimeWindow(Layer, NNLearner):
     r"""
     DynamicTimeWindow layer that slices the last
@@ -334,9 +320,7 @@ class DynamicTimeWindow(Layer, NNLearner):
             Contains 'max_window_size'.
         """
         config = super().get_config().copy()
-        config.update(
-            {"max_window_size": self.max_window_size}
-        )
+        config.update({"max_window_size": self.max_window_size})
         return config
 
     @classmethod
@@ -356,4 +340,3 @@ class DynamicTimeWindow(Layer, NNLearner):
             A new instance of this layer.
         """
         return cls(**config)
-

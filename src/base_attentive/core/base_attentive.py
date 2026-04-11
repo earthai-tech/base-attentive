@@ -58,9 +58,7 @@ Tensor = KERAS_DEPS.Tensor
 MultiHeadAttention = KERAS_DEPS.MultiHeadAttention
 Layer = KERAS_DEPS.Layer
 LayerNormalization = KERAS_DEPS.LayerNormalization
-register_keras_serializable = (
-    KERAS_DEPS.register_keras_serializable
-)
+register_keras_serializable = KERAS_DEPS.register_keras_serializable
 LSTM = KERAS_DEPS.LSTM
 Model = KERAS_DEPS.Model
 tf_shape = KERAS_DEPS.shape
@@ -90,36 +88,18 @@ DEFAULT_ARCHITECTURE = {
 SERIALIZATION_PACKAGE = __name__
 
 
-@KERAS_DEPS.register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="BaseAttentive"
-)
+@KERAS_DEPS.register_keras_serializable(SERIALIZATION_PACKAGE, name="BaseAttentive")
 class BaseAttentive(Model, NNLearner):
     @validate_params(
         {
-            "static_input_dim": [
-                Interval(Integral, 0, None, closed="left")
-            ],
-            "dynamic_input_dim": [
-                Interval(Integral, 1, None, closed="left")
-            ],
-            "future_input_dim": [
-                Interval(Integral, 0, None, closed="left")
-            ],
-            "output_dim": [
-                Interval(Integral, 1, None, closed="left")
-            ],
-            "forecast_horizon": [
-                Interval(Integral, 1, None, closed="left")
-            ],
-            "embed_dim": [
-                Interval(Integral, 1, None, closed="left")
-            ],
-            "num_heads": [
-                Interval(Integral, 1, None, closed="left")
-            ],
-            "dropout_rate": [
-                Interval(Real, 0, 1, closed="both")
-            ],
+            "static_input_dim": [Interval(Integral, 0, None, closed="left")],
+            "dynamic_input_dim": [Interval(Integral, 1, None, closed="left")],
+            "future_input_dim": [Interval(Integral, 0, None, closed="left")],
+            "output_dim": [Interval(Integral, 1, None, closed="left")],
+            "forecast_horizon": [Interval(Integral, 1, None, closed="left")],
+            "embed_dim": [Interval(Integral, 1, None, closed="left")],
+            "num_heads": [Interval(Integral, 1, None, closed="left")],
+            "dropout_rate": [Interval(Real, 0, 1, closed="both")],
             "attention_units": [
                 "array-like",
                 Interval(Integral, 1, None, closed="left"),
@@ -169,9 +149,7 @@ class BaseAttentive(Model, NNLearner):
                 bool,
                 Interval(Integral, 0, 1, closed="both"),
             ],
-            "final_agg": [
-                StrOptions({"last", "average", "flatten"})
-            ],
+            "final_agg": [StrOptions({"last", "average", "flatten"})],
             "mode": [
                 StrOptions(
                     {
@@ -251,25 +229,17 @@ class BaseAttentive(Model, NNLearner):
         self.max_window_size = max_window_size
         self.memory_size = memory_size
         self.final_agg = final_agg
-        self.activation_fn_str = Activation(
-            activation
-        ).activation_str
+        self.activation_fn_str = Activation(activation).activation_str
         self.use_residuals = use_residuals
         self.use_vsn = use_vsn
         self.use_batch_norm = use_batch_norm
-        self.vsn_units = (
-            vsn_units
-            if vsn_units is not None
-            else self.hidden_units
-        )
+        self.vsn_units = vsn_units if vsn_units is not None else self.hidden_units
 
         (
             self.quantiles,
             self.scales,
             self.lstm_return_sequences,
-        ) = set_default_params(
-            quantiles, scales, multi_scale_agg
-        )
+        ) = set_default_params(quantiles, scales, multi_scale_agg)
         self.lstm_return_sequences = True
         self.multi_scale_agg_mode = multi_scale_agg
         self.apply_dtw = apply_dtw
@@ -280,13 +250,11 @@ class BaseAttentive(Model, NNLearner):
         # This single call handles all architectural logic.
         self.objective = objective
         self.attention_levels = attention_levels
-        self.architecture_config = (
-            self._configure_architecture(
-                objective=objective,
-                use_vsn=use_vsn,
-                attention_levels=attention_levels,
-                architecture_config=architecture_config,
-            )
+        self.architecture_config = self._configure_architecture(
+            objective=objective,
+            use_vsn=use_vsn,
+            attention_levels=attention_levels,
+            architecture_config=architecture_config,
         )
         self.verbose = verbose
         # ---------------------------------------------------
@@ -348,9 +316,7 @@ class BaseAttentive(Model, NNLearner):
 
         # The `attention_levels` kwarg sets the `decoder_attention_stack`.
 
-        resolved_attention_levels = resolve_attention_levels(
-            attention_levels
-        )
+        resolved_attention_levels = resolve_attention_levels(attention_levels)
         if isinstance(resolved_attention_levels, dict):
             final_config["decoder_attention_stack"] = list(
                 resolved_attention_levels.get(
@@ -359,9 +325,7 @@ class BaseAttentive(Model, NNLearner):
                 )
             )
         else:
-            final_config["decoder_attention_stack"] = list(
-                resolved_attention_levels
-            )
+            final_config["decoder_attention_stack"] = list(resolved_attention_levels)
 
         # 2. Merge and override with the user-provided dictionary.
         if architecture_config:
@@ -377,19 +341,13 @@ class BaseAttentive(Model, NNLearner):
                     stacklevel=2,
                 )
                 # The new key takes precedence.
-                user_config["encoder_type"] = user_config.pop(
-                    "objective"
-                )
+                user_config["encoder_type"] = user_config.pop("objective")
 
             final_config.update(user_config)
 
         # 3. Final validation and reconciliation.
         # Ensure `feature_processing` is consistent with `use_vsn`.
-        if (
-            not use_vsn
-            and final_config.get("feature_processing")
-            == "vsn"
-        ):
+        if not use_vsn and final_config.get("feature_processing") == "vsn":
             logger.info(
                 "`use_vsn=False` was passed, but `architecture_config` specified"
                 " `feature_processing='vsn'`. Reverting to 'dense'."
@@ -443,10 +401,7 @@ class BaseAttentive(Model, NNLearner):
         """
 
         # VSN Layers
-        if (
-            self.architecture_config.get("feature_processing")
-            == "vsn"
-        ):
+        if self.architecture_config.get("feature_processing") == "vsn":
             if self.static_input_dim > 0:
                 self.static_vsn = VariableSelectionNetwork(
                     num_inputs=self.static_input_dim,
@@ -527,10 +482,7 @@ class BaseAttentive(Model, NNLearner):
         )
 
         # These layers are only created if VSN is NOT used.
-        if (
-            self.architecture_config.get("feature_processing")
-            == "dense"
-        ):
+        if self.architecture_config.get("feature_processing") == "dense":
             if self.static_input_dim > 0:
                 self.static_dense = Dense(
                     self.hidden_units,
@@ -538,13 +490,11 @@ class BaseAttentive(Model, NNLearner):
                 )
                 # This GRN is specifically for the non-VSN static path. Its
                 # dimensionality matches the static context (`hidden_units`).
-                self.grn_static_non_vsn = (
-                    GatedResidualNetwork(
-                        units=self.hidden_units,
-                        dropout_rate=self.dropout_rate,
-                        activation=self.activation_fn_str,
-                        name="grn_static_non_vsn",
-                    )
+                self.grn_static_non_vsn = GatedResidualNetwork(
+                    units=self.hidden_units,
+                    dropout_rate=self.dropout_rate,
+                    activation=self.activation_fn_str,
+                    name="grn_static_non_vsn",
                 )
             else:
                 self.static_dense = None
@@ -561,10 +511,7 @@ class BaseAttentive(Model, NNLearner):
             self.future_dense = None
 
         # Encoder-specific Layers
-        if (
-            self.architecture_config["encoder_type"]
-            == "hybrid"
-        ):
+        if self.architecture_config["encoder_type"] == "hybrid":
             self.multi_scale_lstm = MultiScaleLSTM(
                 lstm_units=self.lstm_units,
                 scales=self.scales,
@@ -572,10 +519,7 @@ class BaseAttentive(Model, NNLearner):
             )
             self.encoder_self_attention = None
 
-        elif (
-            self.architecture_config["encoder_type"]
-            == "transformer"
-        ):
+        elif self.architecture_config["encoder_type"] == "transformer":
             self.encoder_self_attention = [
                 (
                     MultiHeadAttention(
@@ -605,18 +549,14 @@ class BaseAttentive(Model, NNLearner):
             units=self.attention_units,
             num_heads=self.num_heads,
         )
-        self.memory_augmented_attention = (
-            MemoryAugmentedAttention(
-                units=self.attention_units,
-                memory_size=self.memory_size,
-                num_heads=self.num_heads,
-            )
+        self.memory_augmented_attention = MemoryAugmentedAttention(
+            units=self.attention_units,
+            memory_size=self.memory_size,
+            num_heads=self.num_heads,
         )
-        self.multi_resolution_attention_fusion = (
-            MultiResolutionAttentionFusion(
-                units=self.attention_units,
-                num_heads=self.num_heads,
-            )
+        self.multi_resolution_attention_fusion = MultiResolutionAttentionFusion(
+            units=self.attention_units,
+            num_heads=self.num_heads,
         )
         self.dynamic_time_window = DynamicTimeWindow(
             max_window_size=self.max_window_size
@@ -625,11 +565,9 @@ class BaseAttentive(Model, NNLearner):
             output_dim=self.output_dim,
             num_horizons=self.forecast_horizon,
         )
-        self.quantile_distribution_modeling = (
-            QuantileDistributionModeling(
-                quantiles=self.quantiles,
-                output_dim=self.output_dim,
-            )
+        self.quantile_distribution_modeling = QuantileDistributionModeling(
+            quantiles=self.quantiles,
+            output_dim=self.output_dim,
         )
 
         # --- 4. Layers for Residual Connections (Conditional) ---
@@ -700,11 +638,11 @@ class BaseAttentive(Model, NNLearner):
         - Attention mechanisms are applied in the decoder block. The
           specific attention types and their order are controlled via the
           `att_levels` parameter, which can include:
-              
+
           - 'cross' for cross attention.
           - 'hierarchical' for hierarchical attention.
           - 'memory' for memory-augmented attention.
-          
+
         - If multiple attention mechanisms are chosen, they are applied
           sequentially.
         - The time dimension is collapsed in the final output, resulting
@@ -730,37 +668,20 @@ class BaseAttentive(Model, NNLearner):
         )
 
         # 1. Initial Feature Processing
-        if (
-            self.architecture_config.get("feature_processing")
-            == "vsn"
-        ):
+        if self.architecture_config.get("feature_processing") == "vsn":
             if self.static_vsn is not None:
-                vsn_static_out = self.static_vsn(
-                    static_input, training=training
-                )
-                static_context = self.static_vsn_grn(
-                    vsn_static_out, training=training
-                )
+                vsn_static_out = self.static_vsn(static_input, training=training)
+                static_context = self.static_vsn_grn(vsn_static_out, training=training)
             if self.dynamic_vsn is not None:
-                dyn_context = self.dynamic_vsn(
-                    dynamic_input, training=training
-                )
-                dyn_proc = self.dynamic_vsn_grn(
-                    dyn_context, training=training
-                )
+                dyn_context = self.dynamic_vsn(dynamic_input, training=training)
+                dyn_proc = self.dynamic_vsn_grn(dyn_context, training=training)
             if self.future_vsn is not None:
-                fut_context = self.future_vsn(
-                    future_input, training=training
-                )
-                fut_proc = self.future_vsn_grn(
-                    fut_context, training=training
-                )
+                fut_context = self.future_vsn(future_input, training=training)
+                fut_proc = self.future_vsn_grn(fut_context, training=training)
 
         else:  # Non-VSN path
             if self.static_dense is not None:
-                processed_static = self.static_dense(
-                    static_input
-                )
+                processed_static = self.static_dense(static_input)
                 # Note: here the GRN's output dim might differ from the
                 # VSN path. This is handled by the decoder_input_projection.
                 static_context = self.grn_static_non_vsn(
@@ -785,30 +706,17 @@ class BaseAttentive(Model, NNLearner):
             encoder_input_parts.append(fut_enc_proc)
 
         encoder_raw = tf_concat(encoder_input_parts, axis=-1)
-        encoder_input = self.encoder_positional_encoding(
-            encoder_raw
-        )
+        encoder_input = self.encoder_positional_encoding(encoder_raw)
 
-        if (
-            self.architecture_config["encoder_type"]
-            == "hybrid"
-        ):
-            lstm_out = self.multi_scale_lstm(
-                encoder_input, training=training
-            )
-            encoder_sequences = aggregate_multiscale_on_3d(
-                lstm_out, mode="concat"
-            )
+        if self.architecture_config["encoder_type"] == "hybrid":
+            lstm_out = self.multi_scale_lstm(encoder_input, training=training)
+            encoder_sequences = aggregate_multiscale_on_3d(lstm_out, mode="concat")
 
         else:  # transformer
             encoder_sequences = encoder_input
             for mha, norm in self.encoder_self_attention:
-                attn_out = mha(
-                    encoder_sequences, encoder_sequences
-                )
-                encoder_sequences = norm(
-                    encoder_sequences + attn_out
-                )
+                attn_out = mha(encoder_sequences, encoder_sequences)
+                encoder_sequences = norm(encoder_sequences + attn_out)
 
         if self.apply_dtw:
             if self.dynamic_time_window is not None:
@@ -816,9 +724,7 @@ class BaseAttentive(Model, NNLearner):
                     encoder_sequences, training=training
                 )
 
-        logger.debug(
-            f"Encoder sequences shape: {encoder_sequences.shape}"
-        )
+        logger.debug(f"Encoder sequences shape: {encoder_sequences.shape}")
 
         # 3. Decoder Path
         if self._mode == "tft_like":
@@ -829,18 +735,12 @@ class BaseAttentive(Model, NNLearner):
 
         decoder_parts = []
         if static_context is not None:
-            static_expanded = tf_expand_dims(
-                static_context, 1
-            )
-            static_expanded = tf_tile(
-                static_expanded, [1, self.forecast_horizon, 1]
-            )
+            static_expanded = tf_expand_dims(static_context, 1)
+            static_expanded = tf_tile(static_expanded, [1, self.forecast_horizon, 1])
             decoder_parts.append(static_expanded)
 
         if self.future_input_dim > 0:
-            future_with_pos = (
-                self.decoder_positional_encoding(fut_dec_proc)
-            )
+            future_with_pos = self.decoder_positional_encoding(fut_dec_proc)
             decoder_parts.append(future_with_pos)
 
         if not decoder_parts:
@@ -853,18 +753,11 @@ class BaseAttentive(Model, NNLearner):
                 )
             )
         else:
-            raw_decoder_input = tf_concat(
-                decoder_parts, axis=-1
-            )
+            raw_decoder_input = tf_concat(decoder_parts, axis=-1)
 
         # Project the raw decoder input to a consistent feature dimension.
-        projected_decoder_input = (
-            self.decoder_input_projection(raw_decoder_input)
-        )
-        logger.debug(
-            f"Projected decoder input shape: "
-            f"{projected_decoder_input.shape}"
-        )
+        projected_decoder_input = self.decoder_input_projection(raw_decoder_input)
+        logger.debug(f"Projected decoder input shape: {projected_decoder_input.shape}")
 
         # 4. Attention Fusion & Final Processing
         # --- 4. Attention-based Fusion (Encoder-Decoder Interaction) ---
@@ -875,14 +768,10 @@ class BaseAttentive(Model, NNLearner):
             # att_levels= self.architecture_config['decoder_attention_stack']
         )
 
-        logger.debug(
-            f"Shape after final fusion: {final_features.shape}"
-        )
+        logger.debug(f"Shape after final fusion: {final_features.shape}")
 
         # Collapse the time dimension to get a single vector per sample.
-        return aggregate_time_window_output(
-            final_features, self.final_agg
-        )
+        return aggregate_time_window_output(final_features, self.final_agg)
 
     def apply_attention_levels(
         self,
@@ -909,7 +798,7 @@ class BaseAttentive(Model, NNLearner):
 
         att_levels : str, list of str, int, or None
             Specifies the attention mechanisms to apply and the order:
-                
+
             - If None or 'use_all' or '*', use all attention mechanisms.
             - If 'hier_att' or 'hierarchical_attention', apply
               hierarchical attention.
@@ -937,32 +826,20 @@ class BaseAttentive(Model, NNLearner):
 
         # Step 4: Attention Fusion (Encoder-Decoder Interaction)
 
-        if (
-            "cross"
-            in self.architecture_config[
-                "decoder_attention_stack"
-            ]
-        ):
+        if "cross" in self.architecture_config["decoder_attention_stack"]:
             cross_att_out = self.cross_attention(
                 [projected_decoder_input, encoder_sequences],
                 training=training,
             )
 
-            att_proc = self.attention_processing_grn(
-                cross_att_out, training=training
-            )
+            att_proc = self.attention_processing_grn(cross_att_out, training=training)
 
             # Apply residual connection if enabled
-            if (
-                self.use_residuals
-                and self.decoder_add_norm is not None
-            ):
+            if self.use_residuals and self.decoder_add_norm is not None:
                 context_att = self.decoder_add_norm[0](
                     [projected_decoder_input, att_proc]
                 )
-                context_att = self.decoder_add_norm[1](
-                    context_att
-                )
+                context_att = self.decoder_add_norm[1](context_att)
             else:
                 context_att = att_proc
 
@@ -971,58 +848,35 @@ class BaseAttentive(Model, NNLearner):
             context_att = projected_decoder_input
 
         # Apply hierarchical attention if needed
-        if (
-            "hierarchical"
-            in self.architecture_config[
-                "decoder_attention_stack"
-            ]
-        ):
-            hierarchical_att_output = (
-                self.hierarchical_attention(
-                    [context_att, context_att],
-                    training=training,
-                )
+        if "hierarchical" in self.architecture_config["decoder_attention_stack"]:
+            hierarchical_att_output = self.hierarchical_attention(
+                [context_att, context_att],
+                training=training,
             )
         else:
             # If no hierarchical attention, pass through
             hierarchical_att_output = context_att
 
         # Apply memory-augmented attention if needed
-        if (
-            "memory"
-            in self.architecture_config[
-                "decoder_attention_stack"
-            ]
-        ):
-            memory_attention_output = (
-                self.memory_augmented_attention(
-                    hierarchical_att_output, training=training
-                )
+        if "memory" in self.architecture_config["decoder_attention_stack"]:
+            memory_attention_output = self.memory_augmented_attention(
+                hierarchical_att_output, training=training
             )
         else:
             # If no memory attention, pass through
             memory_attention_output = hierarchical_att_output
 
         # Apply final fusion using multi-resolution attention fusion
-        final_features = (
-            self.multi_resolution_attention_fusion(
-                memory_attention_output, training=training
-            )
+        final_features = self.multi_resolution_attention_fusion(
+            memory_attention_output, training=training
         )
 
         # Apply final residual connection and normalization if enabled
-        if (
-            self.use_residuals
-            and self.final_add_norm is not None
-        ):
+        if self.use_residuals and self.final_add_norm is not None:
             # The residual_base must have the same dimension as final_features
             res_base = self.residual_dense(context_att)
-            final_features = self.final_add_norm[0](
-                [final_features, res_base]
-            )
-            final_features = self.final_add_norm[1](
-                final_features
-            )
+            final_features = self.final_add_norm[0]([final_features, res_base])
+            final_features = self.final_add_norm[1](final_features)
 
         return final_features
 
@@ -1092,9 +946,7 @@ class BaseAttentive(Model, NNLearner):
 
         # ***  Validate future_p shape based on mode ***
         if self._mode == "tft_like":
-            expected_future_span = (
-                self.max_window_size + self.forecast_horizon
-            )
+            expected_future_span = self.max_window_size + self.forecast_horizon
         else:  # pihal_like
             expected_future_span = self.forecast_horizon
 
@@ -1134,26 +986,18 @@ class BaseAttentive(Model, NNLearner):
             training=training,
         )
         # Get mean predictions from the multi-horizon decoder (usefull for PDE)
-        self._decoded_outputs = self.multi_decoder(
-            final_features, training=training
-        )
-        logger.debug(
-            "Shape of decoded outputs (means):"
-            f" {self._decoded_outputs.shape}"
-        )
+        self._decoded_outputs = self.multi_decoder(final_features, training=training)
+        logger.debug(f"Shape of decoded outputs (means): {self._decoded_outputs.shape}")
 
         # Get final predictions (potentially with quantiles, for data loss)
         predictions_final_targets = self._decoded_outputs
         if self.quantiles is not None:
-            predictions_final_targets = (
-                self.quantile_distribution_modeling(
-                    self._decoded_outputs, training=training
-                )
+            predictions_final_targets = self.quantile_distribution_modeling(
+                self._decoded_outputs, training=training
             )
 
         logger.debug(
-            "Shape of final quantile outputs:"
-            f" {predictions_final_targets.shape}"
+            f"Shape of final quantile outputs: {predictions_final_targets.shape}"
         )
         return predictions_final_targets
 
@@ -1203,9 +1047,7 @@ class BaseAttentive(Model, NNLearner):
                 "apply_dtw": self.apply_dtw,
                 "attention_levels": self.attention_levels,
                 "use_batch_norm": self.use_batch_norm,
-                "architecture_config": copy.deepcopy(
-                    self.architecture_config
-                ),
+                "architecture_config": copy.deepcopy(self.architecture_config),
                 "verbose": self.verbose,
                 "name": self.name,
             }
@@ -1225,9 +1067,7 @@ class BaseAttentive(Model, NNLearner):
         # Re-add it as a keyword argument for __init__
         return cls(**config, architecture_config=arch_config)
 
-    def reconfigure(
-        self, architecture_config: dict[str, Any]
-    ) -> BaseAttentive:
+    def reconfigure(self, architecture_config: dict[str, Any]) -> BaseAttentive:
         """Creates a new model instance with a modified architecture.
 
         This method takes the configuration of the current model, updates
@@ -1254,9 +1094,7 @@ class BaseAttentive(Model, NNLearner):
 
         # 2. Update the architecture configuration
         # get_config will have stored it as a nested dictionary
-        config["architecture_config"].update(
-            architecture_config
-        )
+        config["architecture_config"].update(architecture_config)
 
         # 3. Create a new model from the modified config
         return self.__class__.from_config(config)
@@ -1362,4 +1200,3 @@ Examples
 ...     {{"encoder_type": "transformer"}}
 ... )
 """
-

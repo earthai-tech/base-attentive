@@ -50,18 +50,14 @@ def resolve_attention_levels(
 
         resolved = aliases.get(normalized, normalized)
         if resolved not in default_attention["decoder_attention_stack"]:
-            raise ValueError(
-                f"Unknown attention level: {architecture_config}"
-            )
+            raise ValueError(f"Unknown attention level: {architecture_config}")
         return [resolved]
 
     if isinstance(architecture_config, (list, tuple)):
         resolved_stack = []
         for level in architecture_config:
             if not isinstance(level, str):
-                raise TypeError(
-                    "Attention levels must contain only string values."
-                )
+                raise TypeError("Attention levels must contain only string values.")
             normalized = aliases.get(level.strip().lower(), level.strip().lower())
             if normalized not in default_attention["decoder_attention_stack"]:
                 raise ValueError(f"Unknown attention level: {level}")

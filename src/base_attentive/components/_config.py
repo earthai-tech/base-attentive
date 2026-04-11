@@ -71,9 +71,7 @@ Constant = KERAS_DEPS.Constant
 TensorShape = KERAS_DEPS.TensorShape
 Reduction = KERAS_DEPS.Reduction
 
-register_keras_serializable = (
-    KERAS_DEPS.register_keras_serializable
-)
+register_keras_serializable = KERAS_DEPS.register_keras_serializable
 get_loss = KERAS_DEPS.get
 
 tf_Assert = KERAS_DEPS.Assert
@@ -221,4 +219,3 @@ __all__ = [
     "KERAS_DEPS",
     "KERAS_BACKEND",
 ]
-
