@@ -229,7 +229,7 @@ class CRPSLoss(Loss, NNLearner):
             keepdims=True,
         )
 
-        B, H, K, O = [tf_shape(mu)[i] for i in range(4)]
+        B, H, K, output_dim = [tf_shape(mu)[i] for i in range(4)]
 
         # --- Sample indices from categorical weights
         # We sample 'mc_samples' draws per (B,H).
@@ -274,16 +274,16 @@ class CRPSLoss(Loss, NNLearner):
         # We need a helper to gather along K; easiest: reshape then tf.gather with batch dims.
         # Simpler path: flatten (B*H) then gather.
         BH = B * H
-        mu_r = tf_reshape(mu, [BH, K, O])
-        sig_r = tf_reshape(sig, [BH, K, O])
+        mu_r = tf_reshape(mu, [BH, K, output_dim])
+        sig_r = tf_reshape(sig, [BH, K, output_dim])
 
         idxs_r = tf_reshape(idxs, [BH, self.mc_samples, 1])
         # gather over axis=1
         mu_s = tf_gather(mu_r, idxs_r, batch_dims=1)  # (BH,S,1,O)
         sig_s = tf_gather(sig_r, idxs_r, batch_dims=1)  # (BH,S,1,O)
 
-        mu_s = tf_reshape(mu_s, [B, H, self.mc_samples, O])
-        sig_s = tf_reshape(sig_s, [B, H, self.mc_samples, O])
+        mu_s = tf_reshape(mu_s, [B, H, self.mc_samples, output_dim])
+        sig_s = tf_reshape(sig_s, [B, H, self.mc_samples, output_dim])
 
         # Sample from Gaussian N(mu_s, sig_s)
         eps = tf_random.normal(tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32)

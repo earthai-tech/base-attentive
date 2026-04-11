@@ -7,8 +7,8 @@ r"""Utility helpers for reusable model components."""
 import warnings
 from typing import Any
 
-from ..logging import get_logger
 from ...utils.generic_utils import select_mode
+from ..logging import get_logger
 
 DEFAULT_ARCHITECTURE = {
     "encoder_type": "hybrid",

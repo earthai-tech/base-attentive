@@ -30,9 +30,9 @@ class TestCoreImports:
     def test_import_backend(self):
         """Test backend module imports."""
         from base_attentive.backend import (
+            get_available_backends,
             get_backend,
             set_backend,
-            get_available_backends,
         )
 
         assert callable(get_backend)
@@ -59,7 +59,7 @@ class TestCoreImports:
 
     def test_import_logging(self):
         """Test logging module imports."""
-        from base_attentive.logging import get_logger, OncePerMessageFilter
+        from base_attentive.logging import OncePerMessageFilter, get_logger
 
         assert callable(get_logger)
         assert OncePerMessageFilter is not None
@@ -67,9 +67,9 @@ class TestCoreImports:
     def test_import_validation(self):
         """Test validation module imports."""
         from base_attentive.validation import (
-            validate_model_inputs,
-            maybe_reduce_quantiles_bh,
             ensure_bh1,
+            maybe_reduce_quantiles_bh,
+            validate_model_inputs,
         )
 
         assert callable(validate_model_inputs)

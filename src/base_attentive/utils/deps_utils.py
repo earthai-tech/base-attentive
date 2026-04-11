@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import functools
 import importlib
-import sys
-from typing import Any, Callable, TypeVar
+from typing import Callable, TypeVar
 
 _T = TypeVar("_T")
 

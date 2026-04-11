@@ -16,6 +16,7 @@ import warnings
 from numbers import Integral, Real
 from typing import Any
 
+from .. import KERAS_BACKEND, KERAS_DEPS, dependency_message
 from ..api.docs import (
     DocstringComponents,
     _halnet_core_params,
@@ -27,13 +28,11 @@ from ..compat.sklearn import (
     validate_params,
 )
 from ..logging import get_logger
+from ..models.comp_utils import resolve_attention_levels
 from ..utils.deps_utils import ensure_pkg
 from ..utils.generic_utils import select_mode
-from .. import KERAS_BACKEND, KERAS_DEPS, dependency_message
-from ..models.comp_utils import resolve_attention_levels
 
 if KERAS_BACKEND:
-    from ..validation import validate_model_inputs
     from ..components import (
         Activation,
         CrossAttention,
@@ -51,6 +50,7 @@ if KERAS_BACKEND:
         aggregate_time_window_output,
     )
     from ..models.utils import set_default_params
+    from ..validation import validate_model_inputs
 
 Add = KERAS_DEPS.Add
 Dense = KERAS_DEPS.Dense

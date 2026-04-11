@@ -28,9 +28,9 @@ Exports:
 This file assumes `KERAS_BACKEND` was resolved upstream.
 """
 
+from .. import KERAS_BACKEND, KERAS_DEPS, dependency_message
 from ..compat.tf import standalone_keras
 from ..logging import get_logger
-from .. import KERAS_BACKEND, KERAS_DEPS, dependency_message
 
 if KERAS_BACKEND:
     try:
@@ -39,16 +39,16 @@ if KERAS_BACKEND:
     except (ImportError, AttributeError) as e:
         try:
             activations = standalone_keras("activations")
-        except:
-            raise ImportError(str(e))
-    except:
+        except Exception as exc:
+            raise ImportError(str(e)) from exc
+    except Exception as exc:
         raise ImportError(
             "Module 'activations' could not be"
             " imported from either tensorflow.keras"
             " or standalone keras. Ensure that TensorFlow "
             "or standalone Keras is installed and the"
             " module exists."
-        )
+        ) from exc
 
 LSTM = KERAS_DEPS.LSTM
 LayerNormalization = KERAS_DEPS.LayerNormalization

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import inspect
+from collections import defaultdict
 from typing import Any
 
 
@@ -74,8 +75,4 @@ class NNLearner:
                 sub_object.set_params(**sub_params)
 
         return self
-
-
-from collections import defaultdict
-
 __all__ = ["NNLearner"]

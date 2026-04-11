@@ -2,19 +2,14 @@
 # Author: LKouadio <etanoyau@gmail.com>
 """Comprehensive tests for PyTorch backend functionality."""
 
+import importlib.util
 import sys
-from typing import Optional
 from unittest import mock
 
 import pytest
 
 # Check if torch is available (don't mock it, just detect)
-try:
-    import torch
-
-    torch_available = True
-except ImportError:
-    torch_available = False
+torch_available = importlib.util.find_spec("torch") is not None
 
 
 @pytest.fixture
@@ -275,12 +270,12 @@ class TestTorchDeviceManager:
 
         manager = TorchDeviceManager()
         # Set a device
-        device1 = manager.device
+        manager.device
         assert manager._device is not None
 
         # Create new manager to test different device
         manager2 = TorchDeviceManager(prefer="cpu")
-        device2 = manager2.device
+        manager2.device
         assert manager2.prefer == "cpu"
 
     def test_reset_preference(self):
@@ -341,7 +336,7 @@ class TestTorchBackendIntegration:
 
     def test_backend_set_to_torch(self):
         """Test setting backend to torch."""
-        from base_attentive.backend import set_backend, get_backend
+        from base_attentive.backend import set_backend
 
         try:
             backend = set_backend("torch")

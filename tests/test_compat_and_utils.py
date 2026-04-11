@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestCompatModule:
     """Test compatibility layer."""
@@ -57,6 +55,7 @@ class TestLoggingModule:
     def test_once_per_message_filter(self):
         """Test OncePerMessageFilter."""
         import logging
+
         from base_attentive.logging import OncePerMessageFilter
 
         filter_obj = OncePerMessageFilter()

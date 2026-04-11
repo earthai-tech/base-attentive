@@ -18,6 +18,13 @@ from typing import Any
 
 import numpy as np
 
+from .backend import (
+    get_available_backends,
+    get_backend,
+    get_backend_capabilities,
+    set_backend,
+)
+
 # Resolve Keras backend
 
 
@@ -294,15 +301,6 @@ def dependency_message(module_name: str) -> str:
         f"Install a runtime such as `tensorflow`, `keras jax jaxlib`, "
         f"or `keras torch`."
     )
-
-
-# Import backend utilities for framework flexibility
-from .backend import (
-    get_backend,
-    set_backend,
-    get_available_backends,
-    get_backend_capabilities,
-)
 
 __all__ = [
     "BaseAttentive",

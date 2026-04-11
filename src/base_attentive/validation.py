@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-from .compat.types import TensorLike
 from .logging import get_logger
 
 __all__ = [

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Type, Union, get_args, get_origin
+from typing import Any, Type, get_args, get_origin
 
 __all__ = ["validate_nested_param"]
 

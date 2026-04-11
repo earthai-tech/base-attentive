@@ -119,8 +119,12 @@ from typing import Any, Optional, Type
 
 from .base import Backend
 from .detector import (
-    _has_module,
-    _import_module,
+    _has_module as _has_module,
+)
+from .detector import (
+    _import_module as _import_module,
+)
+from .detector import (
     detect_available_backends,
     ensure_default_backend,
     get_available_backends,
@@ -133,19 +137,18 @@ from .implementations import (
     TensorFlowBackend,
     TorchBackend,
 )
+from .torch_utils import (
+    TorchDeviceManager,
+    get_torch_device,
+    get_torch_version,
+    torch_is_available,
+)
 from .version_check import (
     check_tensorflow_compatibility,
     check_torch_compatibility,
     get_backend_version,
     parse_version,
     version_at_least,
-)
-from .torch_utils import (
-    TorchDeviceManager,
-    check_torch_compatibility as _check_torch_compat,
-    get_torch_device,
-    get_torch_version,
-    torch_is_available,
 )
 
 __all__ = [
