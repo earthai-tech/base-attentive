@@ -53,9 +53,7 @@ def fake_runtime(validation_module, monkeypatch):
 class TestValidationModule:
     """Test tensor validation utilities without importing TensorFlow."""
 
-    def test_validate_model_inputs_none_returns_empty_triplet(
-        self, validation_module
-    ):
+    def test_validate_model_inputs_none_returns_empty_triplet(self, validation_module):
         """None inputs should normalize to a predictable empty triplet."""
         static, dynamic, future = validation_module.validate_model_inputs(None)
 
@@ -68,17 +66,13 @@ class TestValidationModule:
         raw_inputs = [object(), object(), object()]
         monkeypatch.setattr(validation_module, "_has_runtime", lambda: False)
 
-        static, dynamic, future = validation_module.validate_model_inputs(
-            raw_inputs
-        )
+        static, dynamic, future = validation_module.validate_model_inputs(raw_inputs)
 
         assert static is raw_inputs[0]
         assert dynamic is raw_inputs[1]
         assert future is raw_inputs[2]
 
-    def test_validate_model_inputs_converts_runtime_values(
-        self, fake_runtime
-    ):
+    def test_validate_model_inputs_converts_runtime_values(self, fake_runtime):
         """The active runtime should convert each non-empty input slot."""
         inputs = [
             [[1.0, 2.0], [3.0, 4.0]],
@@ -93,21 +87,15 @@ class TestValidationModule:
         assert dynamic.shape == (2, 3, 4)
         assert future.shape == (2, 5, 6)
 
-    def test_validate_model_inputs_single_tensor_expands_triplet(
-        self, fake_runtime
-    ):
+    def test_validate_model_inputs_single_tensor_expands_triplet(self, fake_runtime):
         """Single inputs should be mapped to the static slot."""
-        static, dynamic, future = fake_runtime.validate_model_inputs(
-            np.ones((4, 8))
-        )
+        static, dynamic, future = fake_runtime.validate_model_inputs(np.ones((4, 8)))
 
         assert static.shape == (4, 8)
         assert dynamic is None
         assert future is None
 
-    def test_validate_model_inputs_wraps_conversion_errors(
-        self, fake_runtime
-    ):
+    def test_validate_model_inputs_wraps_conversion_errors(self, fake_runtime):
         """Conversion failures should surface as validation errors."""
         with pytest.raises(ValueError, match="Could not convert input"):
             fake_runtime.validate_model_inputs("__boom__")

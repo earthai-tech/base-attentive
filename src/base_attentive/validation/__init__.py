@@ -80,9 +80,7 @@ def validate_model_inputs(
             tensors.append(KERAS_DEPS.convert_to_tensor(inp))
         except Exception as exc:
             if error == "raise":
-                raise ValueError(
-                    f"Could not convert input to tensor: {exc}"
-                ) from exc
+                raise ValueError(f"Could not convert input to tensor: {exc}") from exc
             tensors.append(inp)
 
     static, dynamic, future = tensors

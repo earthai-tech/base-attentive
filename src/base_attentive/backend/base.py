@@ -52,6 +52,7 @@ def _read_loaded_keras_backend() -> Optional[str]:
         backend_fn = getattr(backend_ns, "backend", None)
         if callable(backend_fn):
             from .detector import normalize_backend_name
+
             return normalize_backend_name(backend_fn())
     except Exception:
         return None
@@ -89,9 +90,7 @@ class Backend:
         """Verify that the required framework is installed."""
         for module_name in self.required_modules:
             if not _has_module(module_name):
-                raise ImportError(
-                    f"Backend '{self.name}' requires '{module_name}'."
-                )
+                raise ImportError(f"Backend '{self.name}' requires '{module_name}'.")
         return True
 
     def _initialize_imports(self):

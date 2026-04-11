@@ -11,6 +11,7 @@ import pytest
 # Check if torch is available (don't mock it, just detect)
 try:
     import torch
+
     torch_available = True
 except ImportError:
     torch_available = False
@@ -70,8 +71,9 @@ class TestTorchIsAvailable:
         with mock.patch.dict(sys.modules, {"torch": None}):
             # Reimport to test handling of torch not available
             import importlib
+
             importlib.reload(torch_utils)
-            
+
             # This test is complex; better to test with actual torch availability
             result = torch_utils.torch_is_available()
             assert isinstance(result, bool)
@@ -237,7 +239,7 @@ class TestTorchDeviceManager:
 
         manager = TorchDeviceManager()
         info = manager.get_device_info()
-        
+
         assert isinstance(info, dict)
         # Should contain standard keys (available for CPU at minimum)
         assert "current_device" in info or "available_devices" in info
@@ -251,7 +253,7 @@ class TestTorchDeviceManager:
 
         manager = TorchDeviceManager()
         info = manager.get_device_info()
-        
+
         assert isinstance(info, dict)
         # Check for expected keys
         assert "current_device" in info or "available_devices" in info
@@ -262,7 +264,7 @@ class TestTorchDeviceManager:
 
         manager = TorchDeviceManager()
         devices = manager.get_available_devices()
-        
+
         assert isinstance(devices, dict)
         assert "cpu" in devices
         assert devices["cpu"] is True  # CPU should always be available
@@ -275,7 +277,7 @@ class TestTorchDeviceManager:
         # Set a device
         device1 = manager.device
         assert manager._device is not None
-        
+
         # Create new manager to test different device
         manager2 = TorchDeviceManager(prefer="cpu")
         device2 = manager2.device
@@ -286,7 +288,7 @@ class TestTorchDeviceManager:
         from base_attentive.backend.torch_utils import TorchDeviceManager
 
         manager = TorchDeviceManager(prefer="cuda")
-        
+
         # Try to set to CPU
         try:
             device = manager.set_device("cpu")
@@ -303,7 +305,7 @@ class TestTorchDeviceManager:
 
         manager = TorchDeviceManager()
         devices = manager.get_available_devices()
-        
+
         # CPU should always be available
         assert devices["cpu"] is True
 
@@ -334,7 +336,7 @@ class TestTorchBackendIntegration:
 
         manager = TorchDeviceManager(prefer="cuda")
         device = manager.device
-        
+
         assert isinstance(device, str)
 
     def test_backend_set_to_torch(self):
