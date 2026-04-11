@@ -55,6 +55,7 @@ def ensure_pkg(
                     raise ImportError(msg) from e
                 elif error == "warn":
                     import warnings
+
                     warnings.warn(msg, UserWarning, stacklevel=2)
                 # else: ignore
 

@@ -47,7 +47,9 @@ def param_deprecated_message(
                 for mapping in conditions_params_mappings:
                     param_name = mapping.get("param")
                     condition = mapping.get("condition")
-                    message = mapping.get("message", f"Parameter '{param_name}' is deprecated.")
+                    message = mapping.get(
+                        "message", f"Parameter '{param_name}' is deprecated."
+                    )
 
                     if param_name in kwargs:
                         value = kwargs[param_name]
@@ -70,7 +72,9 @@ def param_deprecated_message(
                 for mapping in conditions_params_mappings:
                     param_name = mapping.get("param")
                     condition = mapping.get("condition")
-                    message = mapping.get("message", f"Parameter '{param_name}' is deprecated.")
+                    message = mapping.get(
+                        "message", f"Parameter '{param_name}' is deprecated."
+                    )
 
                     if param_name in kwargs:
                         value = kwargs[param_name]

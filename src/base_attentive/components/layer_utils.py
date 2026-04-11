@@ -54,22 +54,16 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="ResidualAdd"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="ResidualAdd")
 class ResidualAdd(Layer, NNLearner):
     """Y = X + F(X). Assumes shapes match."""
 
-    def call(
-        self, inputs: tuple[Tensor, Tensor], training=False
-    ) -> Tensor:
+    def call(self, inputs: tuple[Tensor, Tensor], training=False) -> Tensor:
         x, f = inputs
         return tf_add(x, f)
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="LayerScale"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="LayerScale")
 class LayerScale(Layer, NNLearner):
     """
     Per-channel trainable scale vector (like ConvNeXt).
@@ -90,9 +84,7 @@ class LayerScale(Layer, NNLearner):
         self.gamma = self.add_weight(
             "gamma",
             shape=gamma_shape,
-            initializer=lambda s, d=None: (
-                tf_float32.as_numpy_dtype(self.init_value)
-            ),
+            initializer=lambda s, d=None: tf_float32.as_numpy_dtype(self.init_value),
             trainable=True,
         )
         super().build(input_shape)
@@ -106,9 +98,7 @@ class LayerScale(Layer, NNLearner):
         return cfg
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="StochasticDepth"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="StochasticDepth")
 class StochasticDepth(Layer, NNLearner):
     """
     Wrap a branch with DropPath (stochastic depth).
@@ -133,9 +123,7 @@ class StochasticDepth(Layer, NNLearner):
         return cfg
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="SqueezeExcite1D"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="SqueezeExcite1D")
 class SqueezeExcite1D(Layer, NNLearner):
     """
     Simple SE block for (B,T,C) or (B,C).
@@ -154,12 +142,8 @@ class SqueezeExcite1D(Layer, NNLearner):
     def build(self, input_shape):
         c = input_shape[-1]
         mid = max(c // self.ratio, 1)
-        self.fc1 = Dense(
-            mid, activation="relu", name="se_fc1"
-        )
-        self.fc2 = Dense(
-            c, activation="sigmoid", name="se_fc2"
-        )
+        self.fc1 = Dense(mid, activation="relu", name="se_fc1")
+        self.fc2 = Dense(c, activation="sigmoid", name="se_fc2")
         super().build(input_shape)
 
     def call(self, x: Tensor, training=False) -> Tensor:
@@ -180,9 +164,7 @@ class SqueezeExcite1D(Layer, NNLearner):
         return cfg
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="Gate"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="Gate")
 class Gate(Layer, NNLearner):
     """
     Generic gating layer: y = x * σ(Wx + b).
@@ -206,11 +188,7 @@ class Gate(Layer, NNLearner):
         self.use_bias = use_bias
 
     def build(self, input_shape):
-        feat = (
-            input_shape[-1]
-            if self.units is None
-            else self.units
-        )
+        feat = input_shape[-1] if self.units is None else self.units
         self.proj = Dense(
             feat,
             activation="sigmoid",
@@ -225,18 +203,14 @@ class Gate(Layer, NNLearner):
 
     def get_config(self):
         cfg = super().get_config()
-        cfg.update(
-            {"units": self.units, "use_bias": self.use_bias}
-        )
+        cfg.update({"units": self.units, "use_bias": self.use_bias})
         return cfg
 
 
 # ------------------------- Helper functions -----------------------
 
 
-def maybe_expand_time(
-    x: Tensor, ref: Tensor, axis: int = 1
-) -> Tensor:
+def maybe_expand_time(x: Tensor, ref: Tensor, axis: int = 1) -> Tensor:
     """
     If `x` lacks a time dim but `ref` has one, expand `x` on that axis.
 
@@ -316,9 +290,7 @@ def _broadcast_like(x: Tensor, target: Tensor) -> Tensor:
     # repeat along mismatching axes
     reps = []
     for i in range(tf_rank(target)):
-        reps_i = tf_where(
-            t_shape[i] == x_shape[i], 1, t_shape[i]
-        )
+        reps_i = tf_where(t_shape[i] == x_shape[i], 1, t_shape[i])
         reps.append(reps_i)
     reps = tf_cast(
         reps,
@@ -329,9 +301,7 @@ def _broadcast_like(x: Tensor, target: Tensor) -> Tensor:
     return tf_tile(x, reps)
 
 
-def ensure_rank_at_least(
-    x: Tensor, min_rank: int, axis_to_expand: int = -1
-) -> Tensor:
+def ensure_rank_at_least(x: Tensor, min_rank: int, axis_to_expand: int = -1) -> Tensor:
     """
     Pad dimensions (=1) until rank >= min_rank.
 
@@ -361,9 +331,7 @@ def apply_residual(x: Tensor, y: Tensor) -> Tensor:
 
 
 @tf_autograph.experimental.do_not_convert
-def drop_path(
-    x: Tensor, drop_prob: float, training: bool
-) -> Tensor:
+def drop_path(x: Tensor, drop_prob: float, training: bool) -> Tensor:
     """
     Stochastic depth on residual branches. If training, randomly
     zero the entire sample (per-batch item) path with prob p.
@@ -396,4 +364,3 @@ def drop_path(
     mask = tf_cast(rnd < keep_prob, tf_float32)
     # rescale to preserve expected value
     return x * mask / keep_prob
-

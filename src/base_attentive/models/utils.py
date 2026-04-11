@@ -42,14 +42,14 @@ def set_default_params(
     multi_scale_agg = args[1] if len(args) > 1 else "last"
 
     normalized_quantiles = (
-        list(model_params)
-        if isinstance(model_params, (list, tuple))
-        else model_params
+        list(model_params) if isinstance(model_params, (list, tuple)) else model_params
     )
     normalized_scales = (
         list(scales)
         if isinstance(scales, (list, tuple))
-        else [1] if scales in (None, "auto") else scales
+        else [1]
+        if scales in (None, "auto")
+        else scales
     )
     lstm_return_sequences = multi_scale_agg != "last"
 

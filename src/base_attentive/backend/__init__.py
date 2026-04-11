@@ -40,15 +40,16 @@ Usage Examples
 Basic usage::
 
     from base_attentive.backend import get_backend, set_backend
-    
+
     # Automatically select best available backend
     backend = get_backend()
-    
+
     # Or specify a backend explicitly
     backend = set_backend("tensorflow")
-    
+
     # Query backend capabilities
     from base_attentive.backend import get_backend_capabilities
+
     caps = get_backend_capabilities()
     print(caps["version"])  # e.g., "2.15.0"
 
@@ -60,17 +61,17 @@ Advanced usage::
         ensure_default_backend,
         check_tensorflow_compatibility,
     )
-    
+
     # Detect all available backends
     backends = detect_available_backends()
     print(backends["tensorflow"]["version"])
-    
+
     # Intelligently select the best backend
     best = select_best_backend(prefer="jax")
-    
+
     # Ensure a backend is available (auto-install if needed)
     backend_name = ensure_default_backend(auto_install=True)
-    
+
     # Check version compatibility
     is_compatible, msg = check_tensorflow_compatibility()
 
@@ -80,7 +81,7 @@ Control backend selection via environment variables::
 
     # Highest priority: BaseAttentive-specific
     export BASE_ATTENTIVE_BACKEND=tensorflow
-    
+
     # Fallback: Keras standard
     export KERAS_BACKEND=jax
 
@@ -99,11 +100,11 @@ Supported Backends
 - **TensorFlow** (✅ Fully Supported)
   - Status: Production ready
   - Required: TensorFlow ≥ 2.10.0
-  
+
 - **JAX** (⚠️ Experimental)
   - Status: Limited feature parity
   - Required: Keras 3 + JAX
-  
+
 - **PyTorch** (⚠️ Experimental)
   - Status: Limited feature parity
   - Required: Keras 3 + PyTorch
@@ -221,7 +222,7 @@ def get_backend(name: Optional[str] = None) -> Backend:
     --------
     >>> # Use default backend (auto-detected)
     >>> backend = get_backend()
-    
+
     >>> # Explicitly request TensorFlow
     >>> backend = get_backend("tensorflow")
     """
@@ -232,11 +233,11 @@ def get_backend(name: Optional[str] = None) -> Backend:
         env_name = os.environ.get("BASE_ATTENTIVE_BACKEND")
         if env_name is None:
             env_name = os.environ.get("KERAS_BACKEND")
-        
+
         # Use current if already set
         if env_name is None and _CURRENT_BACKEND is not None:
             return _CURRENT_BACKEND
-        
+
         # Auto-detect if not specified
         if env_name is None:
             name = select_best_backend(require_supported=True)
@@ -282,7 +283,7 @@ def get_backend_capabilities(
     --------
     >>> caps = get_backend_capabilities("tensorflow")
     >>> print(caps["supported"])  # True/False
-    >>> print(caps["version"])    # "2.15.0"
+    >>> print(caps["version"])  # "2.15.0"
     """
     if name is None:
         try:
@@ -306,7 +307,17 @@ def get_backend_capabilities(
     except Exception as e:
         return {
             "name": normalized,
+            "framework": getattr(_BACKENDS[normalized], "framework", normalized),
             "available": False,
+            "uses_keras_runtime": getattr(
+                _BACKENDS[normalized], "uses_keras_runtime", False
+            ),
+            "experimental": getattr(_BACKENDS[normalized], "experimental", False),
+            "supports_base_attentive": getattr(
+                _BACKENDS[normalized], "supports_base_attentive", False
+            ),
+            "blockers": list(getattr(_BACKENDS[normalized], "blockers", ())),
+            "version": get_backend_version(normalized),
             "error": str(e),
         }
 
@@ -338,15 +349,16 @@ def set_backend(name: str) -> Backend:
     global _CURRENT_BACKEND
 
     normalized = normalize_backend_name(name)
-    
+
     # Check version compatibility for TensorFlow
     if normalized == "tensorflow":
         is_compatible, msg = check_tensorflow_compatibility()
         if not is_compatible:
             warnings.warn(msg, RuntimeWarning, stacklevel=2)
-    
+
     # Warn if Keras already loaded
     from .base import _read_loaded_keras_backend
+
     loaded_backend = _read_loaded_keras_backend()
     if loaded_backend and loaded_backend != normalized:
         warnings.warn(
@@ -370,19 +382,19 @@ def _auto_initialize():
         # Check if already set
         if "BASE_ATTENTIVE_BACKEND" in os.environ:
             return
-        
+
         # Try to auto-select best backend
         best = select_best_backend(require_supported=True)
         if best:
             os.environ["BASE_ATTENTIVE_BACKEND"] = best
             return
-        
+
         # Fall back to any available
         available = select_best_backend(require_supported=False)
         if available:
             os.environ["BASE_ATTENTIVE_BACKEND"] = available
             return
-        
+
         # Will trigger auto-install on first get_backend() call
     except Exception:
         pass
