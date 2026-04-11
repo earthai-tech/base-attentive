@@ -12,8 +12,21 @@ from typing import Any, Optional
 __all__ = ["Backend"]
 
 
+def _get_backend_helper(name: str):
+    """Return helper overrides from ``base_attentive.backend`` when present."""
+    backend_module = sys.modules.get("base_attentive.backend")
+    helper = getattr(backend_module, name, None) if backend_module else None
+    current = globals().get(name)
+    if callable(helper) and helper is not current:
+        return helper
+    return None
+
+
 def _has_module(module_name: str) -> bool:
     """Return whether a module appears importable without importing it."""
+    helper = _get_backend_helper("_has_module")
+    if helper is not None:
+        return helper(module_name)
     try:
         return importlib.util.find_spec(module_name) is not None
     except (ImportError, ValueError):
@@ -22,6 +35,9 @@ def _has_module(module_name: str) -> bool:
 
 def _import_module(module_name: str):
     """Import a module by name."""
+    helper = _get_backend_helper("_import_module")
+    if helper is not None:
+        return helper(module_name)
     return importlib.import_module(module_name)
 
 

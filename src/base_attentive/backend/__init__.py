@@ -306,7 +306,19 @@ def get_backend_capabilities(
     except Exception as e:
         return {
             "name": normalized,
+            "framework": getattr(_BACKENDS[normalized], "framework", normalized),
             "available": False,
+            "uses_keras_runtime": getattr(
+                _BACKENDS[normalized], "uses_keras_runtime", False
+            ),
+            "experimental": getattr(
+                _BACKENDS[normalized], "experimental", False
+            ),
+            "supports_base_attentive": getattr(
+                _BACKENDS[normalized], "supports_base_attentive", False
+            ),
+            "blockers": list(getattr(_BACKENDS[normalized], "blockers", ())),
+            "version": get_backend_version(normalized),
             "error": str(e),
         }
 

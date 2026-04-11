@@ -4,9 +4,7 @@
 
 from __future__ import annotations
 
-import importlib
-
-from .base import Backend
+from .base import Backend, _import_module
 
 __all__ = [
     "TensorFlowBackend",
@@ -20,13 +18,6 @@ _MULTI_BACKEND_BLOCKERS = (
     "The compat.tf helpers are still TensorFlow-specific.",
     "Some runtime shape/assert checks still assume TensorFlow graph semantics.",
 )
-
-
-def _import_module(module_name: str):
-    """Import a module by name."""
-    return importlib.import_module(module_name)
-
-
 class TensorFlowBackend(Backend):
     """TensorFlow-backed runtime."""
 

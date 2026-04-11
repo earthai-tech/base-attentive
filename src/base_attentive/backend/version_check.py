@@ -4,8 +4,10 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 import importlib.util
 import logging
+import sys
 from typing import Optional, Tuple
 
 __all__ = [
@@ -95,11 +97,24 @@ def get_backend_version(backend_name: str) -> Optional[str]:
     if importlib.util.find_spec(module_name) is None:
         return None
     
-    try:
-        module = __import__(module_name)
-        return getattr(module, "__version__", None)
-    except Exception:
-        return None
+    loaded_module = sys.modules.get(module_name)
+    if loaded_module is not None:
+        return getattr(loaded_module, "__version__", None)
+
+    distribution_map = {
+        "tensorflow": ("tensorflow", "tensorflow-cpu", "tensorflow-intel"),
+        "jax": ("jax",),
+        "torch": ("torch",),
+    }
+
+    for dist_name in distribution_map.get(module_name, (module_name,)):
+        try:
+            return importlib.metadata.version(dist_name)
+        except importlib.metadata.PackageNotFoundError:
+            continue
+        except Exception:
+            return None
+    return None
 
 
 def check_tensorflow_compatibility(

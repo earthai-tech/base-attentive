@@ -41,6 +41,7 @@ _BACKENDS: dict[str, Type[Backend]] = {
     "pytorch": PyTorchBackend,
 }
 
+_CANONICAL_BACKENDS = ("tensorflow", "jax", "torch")
 _BACKEND_PREFERENCES = ["tensorflow", "jax", "torch"]
 
 
@@ -90,15 +91,14 @@ def detect_available_backends() -> dict[str, dict]:
     """
     backends_info = {}
     
-    for backend_name, backend_cls in _BACKENDS.items():
+    for backend_name in _CANONICAL_BACKENDS:
+        backend_cls = _BACKENDS[backend_name]
         try:
             backend = backend_cls(load_runtime=False)
             is_available = backend.is_available()
-            version = get_backend_version(backend_name)
-            
             backends_info[backend_name] = {
                 "available": is_available,
-                "version": version,
+                "version": get_backend_version(backend_name),
                 "supported": backend.supports_base_attentive,
                 "experimental": backend.experimental,
                 "class": backend_cls,
@@ -243,7 +243,8 @@ def ensure_default_backend(
 def get_available_backends() -> list[str]:
     """Get the installed backends that can be imported."""
     available = []
-    for name, backend_cls in _BACKENDS.items():
+    for name in _CANONICAL_BACKENDS:
+        backend_cls = _BACKENDS[name]
         try:
             backend = backend_cls(load_runtime=False)
             if backend.is_available():
