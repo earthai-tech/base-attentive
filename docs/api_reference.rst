@@ -9,6 +9,7 @@ These are the main public imports most users interact with:
 .. code-block:: python
 
    from base_attentive import BaseAttentive
+   from base_attentive import make_fast_predict_fn
    from base_attentive import get_backend, set_backend
    from base_attentive import (
        get_available_backends,

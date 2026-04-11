@@ -228,6 +228,74 @@ BaseAttentive as a Kernel in Larger Models
 Beyond standalone forecasting, BaseAttentive can also be used as a kernel
 component within larger neural networks and decision pipelines.
 
+Robust Kernel-Centric Systems
+-----------------------------
+
+One of the strongest deployment patterns is to treat ``BaseAttentive`` as the
+reliable temporal kernel and place domain-specific logic around it. In that
+setup, the kernel handles sequence modeling and multi-horizon forecasting,
+while the outer model adds robustness features such as:
+
+- residual correction heads
+- risk or anomaly scoring
+- rule-based safety adjustments
+- physics or conservation penalties
+- task-specific outputs for downstream decisions
+
+This separation is useful because it keeps the forecasting core stable while
+letting you iterate on application logic more safely.
+
+.. code-block:: python
+
+    import keras
+    from base_attentive import BaseAttentive
+
+    class RobustGridForecaster(keras.Model):
+        def __init__(self, forecast_horizon=48):
+            super().__init__()
+            self.kernel = BaseAttentive(
+                static_input_dim=5,
+                dynamic_input_dim=6,
+                future_input_dim=4,
+                output_dim=1,
+                forecast_horizon=forecast_horizon,
+            )
+            self.bias_head = keras.layers.Dense(1)
+            self.risk_gate = keras.layers.Dense(1, activation="sigmoid")
+
+        def call(self, inputs, training=False):
+            _, dynamic_x, _ = inputs
+
+            base_forecast = self.kernel(inputs, training=training)
+            context = keras.ops.mean(dynamic_x, axis=1)
+
+            bias = self.bias_head(context)
+            bias = keras.ops.expand_dims(bias, axis=1)
+
+            gate = self.risk_gate(context)
+            gate = keras.ops.expand_dims(gate, axis=1)
+
+            return base_forecast + gate * bias
+
+In practice, this kind of wrapper gives you a reusable forecasting kernel that
+can be shared across projects while the outer layers stay tied to the business
+problem. When the custom behavior must live inside one model class, you can
+also derive a custom subclass from ``BaseAttentive`` directly.
+
+Choosing the Extension Path
+---------------------------
+
+- Wrap ``BaseAttentive`` when you want extra heads, safety logic, or fusion
+  with other models.
+- Derive a custom subclass when the new behavior should remain part of the
+  same serialized model API.
+- Keep the kernel focused on forecasting and keep application rules outside it
+  whenever possible.
+- Check output shapes carefully if you enable quantile forecasts.
+
+See :doc:`usage` for a step-by-step wrapper example and a direct inheritance
+pattern that extends ``call`` and ``get_config``.
+
 Ensemble Methods
 ----------------
 

@@ -13,10 +13,15 @@ __all__ = [
     "PyTorchBackend",
 ]
 
-_MULTI_BACKEND_BLOCKERS = (
+_LEGACY_MULTI_BACKEND_BLOCKERS = (
     "BaseAttentive still contains TensorFlow-oriented compatibility paths.",
     "The compat.tf helpers are still TensorFlow-specific.",
     "Some runtime shape/assert checks still assume TensorFlow graph semantics.",
+)
+
+_V2_PORTING_BLOCKERS = (
+    "Advanced encoder-decoder blocks are still being ported through the V2 registry path.",
+    "Cross-backend serialization parity for the full V2 model is still under validation.",
 )
 
 
@@ -28,6 +33,7 @@ class TensorFlowBackend(Backend):
     required_modules = ("tensorflow",)
     uses_keras_runtime = True
     supports_base_attentive = True
+    supports_base_attentive_v2 = True
 
     def _initialize_imports(self):
         tf = _import_module("tensorflow")
@@ -63,7 +69,9 @@ class JaxBackend(Backend):
     uses_keras_runtime = True
     experimental = True
     supports_base_attentive = False
-    blockers = _MULTI_BACKEND_BLOCKERS
+    supports_base_attentive_v2 = True
+    blockers = _LEGACY_MULTI_BACKEND_BLOCKERS
+    v2_blockers = _V2_PORTING_BLOCKERS
 
     def _initialize_imports(self):
         keras = _import_module("keras")
@@ -93,7 +101,9 @@ class TorchBackend(Backend):
     uses_keras_runtime = True
     experimental = True
     supports_base_attentive = False
-    blockers = _MULTI_BACKEND_BLOCKERS
+    supports_base_attentive_v2 = True
+    blockers = _LEGACY_MULTI_BACKEND_BLOCKERS
+    v2_blockers = _V2_PORTING_BLOCKERS
 
     def _initialize_imports(self):
         keras = _import_module("keras")
