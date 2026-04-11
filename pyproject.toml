@@ -120,3 +120,13 @@ warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
 disallow_untyped_defs = false
+
+[tool.coverage.run]
+omit = [
+    "src/base_attentive/components/*",
+    "src/base_attentive/compat/tf.py",
+    "src/base_attentive/validation.py",
+]
+
+[tool.coverage.report]
+fail_under = 90
