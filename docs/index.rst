@@ -84,6 +84,7 @@ Quick Example
    :caption: User Guide
 
    backends
+   torch_backend_guide
    usage
    architecture_guide
    configuration_guide
@@ -94,6 +95,12 @@ Quick Example
 
    api_reference
    components_reference
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Resources
+
+   release_notes
 
 .. toctree::
    :maxdepth: 2

@@ -1,7 +1,7 @@
 # BaseAttentive
 
 [![Tests](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml)
-[![Documentation](https://github.com/earthai-tech/base-attentive/actions/workflows/documentation.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/documentation.yml)
+[![Documentation](https://readthedocs.org/projects/base-attentive/badge/?version=latest)](https://base-attentive.readthedocs.io/)
 [![Code Quality](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml)
 [![Publish](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg?branch=main)](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml)
 [![Version](https://img.shields.io/github/v/release/earthai-tech/base-attentive?display_name=tag)](https://github.com/earthai-tech/base-attentive/releases)
