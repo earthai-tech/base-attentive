@@ -88,6 +88,7 @@ Quick Example
    usage
    architecture_guide
    configuration_guide
+   applications
 
 .. toctree::
    :maxdepth: 2
