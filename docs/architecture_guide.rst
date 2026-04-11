@@ -34,8 +34,8 @@ At a high level, the model follows this processing path:
 4. **Attend** - Apply configured decoder attention stack (cross, hierarchical, memory)
 5. **Forecast** - Generate point or probabilistic forecasts over horizon
 
-This flow ensures that all feature types are properly utilized while maintaining 
-flexibility in how the temporal encoding and fusion occur.
+This flow keeps the three feature types available throughout the model while
+allowing different temporal encoding and fusion choices.
 
 Input/Output Contract
 ---------------------
@@ -132,9 +132,9 @@ Dynamically learns feature importance:
    )
 
 - Uses gating mechanisms to weight features
-- Better for high-dimensional inputs
+- Often useful for high-dimensional inputs
 - Slightly more parameters and computation
-- Improves interpretability
+- Can make feature weighting easier to inspect
 
 **Dense Processing** - Alternative method
 
@@ -149,8 +149,8 @@ Simple linear transformation:
 
 - Standard dense layer projection
 - Fewer parameters
-- Faster training and inference
-- Less interpretable but simpler
+- Lower computational cost
+- Simpler structure with fewer moving parts
 
 Encoder Architecture
 ~~~~~~~~~~~~~~~~~~~~
@@ -170,10 +170,10 @@ Combines Multi-Scale LSTM with attention:
        ...
    )
 
-Features:
+Typical characteristics:
 - Multi-scale LSTM captures hierarchical patterns
 - Lower computational cost than pure attention
-- Good for long sequences
+- Often used for longer sequences
 
 **Transformer Mode**
 
@@ -188,9 +188,9 @@ Pure self-attention based:
        ...
    )
 
-Features:
+Typical characteristics:
 - Full temporal dependency modeling
-- Better for shorter sequences
+- Often used for shorter sequences
 - Parallelizable computation
 
 Attention Types
@@ -381,7 +381,7 @@ When ``quantiles`` are specified, returns uncertainty estimates:
    # predictions[:, :, 1, :] = 50th percentile (median)
    # predictions[:, :, 2, :] = 90th percentile (upper bound)
 
-Use when you need confidence intervals and uncertainty quantification.
+Use when you need quantile ranges and uncertainty estimates.
 
 Optional Features
 -----------------
@@ -398,10 +398,10 @@ Skip connections for gradient flow:
        ...
    )
 
-Benefits:
+Typical effects:
 - Easier training of deep models
 - Mitigates vanishing gradient
-- Faster convergence
+- Can improve optimization stability
 
 Batch Normalization
 ~~~~~~~~~~~~~~~~~~~
@@ -415,9 +415,9 @@ Normalize layer activations:
        ...
    )
 
-Benefits:
+Typical effects:
 - Faster training
-- Better generalization
+- May improve optimization stability
 - Reduced internal covariate shift
 
 Quantile Modeling

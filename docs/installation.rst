@@ -87,7 +87,7 @@ The generated HTML lives in ``docs/_build/html``.
 Notes
 -----
 
-- TensorFlow is the recommended runtime today.
+- TensorFlow is the current full runtime path used in the examples and tests.
 - JAX and Torch are available through the backend abstraction layer, but the
   full ``BaseAttentive`` execution path is still experimental on those
   runtimes.

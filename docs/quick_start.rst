@@ -4,7 +4,7 @@ Quick Start Guide
 Installation
 ------------
 
-Install with TensorFlow backend (recommended):
+Install with the TensorFlow backend:
 
 .. code-block:: bash
 
@@ -21,7 +21,7 @@ Or from source for development:
 Your First Model
 ----------------
 
-Here's a minimal example to get started:
+This minimal example covers model creation, fitting, and prediction:
 
 .. code-block:: python
 
@@ -142,12 +142,12 @@ Include quantiles for uncertainty estimates:
        quantiles=[0.1, 0.5, 0.9],  # Lower, median, upper
    )
 
-   predictions = model([static, dynamic, future])
+   predictions = model_quantile([static, dynamic, future])
    print(predictions.shape)  # (32, 24, 3, 2)
    #                          (batch, horizon, quantiles, output_dim)
 
    lower = predictions[:, :, 0, :]    # 10th percentile
-   median = predictions[:, :, 1, :]   # 50th percentile (mean)
+   median = predictions[:, :, 1, :]   # 50th percentile
    upper = predictions[:, :, 2, :]    # 90th percentile
 
 Model Modes
@@ -156,7 +156,7 @@ Model Modes
 Hybrid Mode (Default)
 ~~~~~~~~~~~~~~~~~~~~~
 
-Combines LSTM with attention for efficiency:
+Combines an LSTM encoder with attention:
 
 .. code-block:: python
 
@@ -172,15 +172,15 @@ Combines LSTM with attention for efficiency:
        }
    )
 
-Best for:
+Often used for:
 - Long time series (1000+ steps)
-- Real-time inference
-- Resource-constrained environments
+- lower compute budgets
+- resource-constrained environments
 
 Transformer Mode
 ~~~~~~~~~~~~~~~~
 
-Pure attention-based architecture:
+Uses a self-attention encoder:
 
 .. code-block:: python
 
@@ -196,10 +196,10 @@ Pure attention-based architecture:
        }
    )
 
-Best for:
+Often used for:
 - Short to medium sequences (< 500 steps)
-- Maximum expressiveness
-- Non-temporal patterns
+- full self-attention interactions
+- settings where parallel evaluation is useful
 
 Serialization
 --------------
@@ -266,8 +266,8 @@ Multi-Step Training
    loss, mae = model.evaluate(X_test, y_test)
    print(f"Test Loss: {loss:.4f}, MAE: {mae:.4f}")
 
-Prediction with Confidence Intervals
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Prediction with Quantile Intervals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -315,9 +315,10 @@ Backend Selection
    from base_attentive import BaseAttentive
 
 Supported backends:
-- ``tensorflow`` (recommended) ✅
-- ``jax`` (experimental) 🔶
-- ``torch`` (experimental) 🔶
+
+- ``tensorflow``: current full model path
+- ``jax``: experimental
+- ``torch``: experimental
 
 Next Steps
 ----------
