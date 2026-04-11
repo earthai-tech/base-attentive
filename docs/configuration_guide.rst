@@ -179,7 +179,7 @@ Feature Processing Parameters
 
 .. list-table:: Feature Processing Parameters
    :header-rows: 1
-   :widths: 20 12 12 15 41
+   :widths: 20 13 12 15 40
 
    * - Parameter
      - Type

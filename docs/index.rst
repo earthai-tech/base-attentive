@@ -9,8 +9,6 @@ BaseAttentive Documentation
 
 A foundational blueprint for building powerful, data-driven, sequence-to-sequence time series forecasting models with advanced attention mechanisms.
 
-Documentation maintained by `Laurent Kouadio <https://lkouadio.com/>`_.
-
 **BaseAttentive** is a sophisticated encoder-decoder architecture designed to process three distinct types of inputs:
 
 - **Static features** — constant across time (e.g., geographical coordinates, site properties)
