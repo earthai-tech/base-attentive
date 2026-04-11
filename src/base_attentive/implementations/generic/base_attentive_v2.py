@@ -297,6 +297,11 @@ def ensure_generic_v2_registered(
 
     component_defs = [
         (
+            "projection.dense",
+            _build_dense_projection,
+            "Generic dense projection layer (fallback for all backends).",
+        ),
+        (
             "projection.static",
             _build_dense_projection,
             "Static feature projection layer.",
