@@ -47,15 +47,17 @@ jobs:
       id: pytest_cov
       continue-on-error: true
       run: |
-        python -m pytest tests/ -v --tb=short --cov=src/base_attentive --cov-report=xml -x
+        python -m coverage run -m pytest tests/ -v --tb=short -x
+        python -m coverage xml
+        python -m coverage report
 
     - name: Fallback test without coverage
-      if: steps.pytest_cov.outcome == 'failure'
+      if: steps.pytest_cov.outcome == 'failure' && hashFiles('coverage.xml') == ''
       run: |
         python -m pytest tests/ -v --tb=short
     
     - name: Upload coverage to Codecov
-      if: steps.pytest_cov.outcome == 'success'
+      if: hashFiles('coverage.xml') != ''
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -64,6 +66,11 @@ jobs:
         name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
         fail_ci_if_error: false
       continue-on-error: true
+
+    - name: Enforce coverage threshold
+      if: hashFiles('coverage.xml') != ''
+      run: |
+        python -m coverage report
 
   build:
     runs-on: ubuntu-latest

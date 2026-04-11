@@ -9,8 +9,6 @@ applications, integration patterns, and deployment considerations.
    :local:
    :depth: 2
 
----
-
 Standalone Forecasting Applications
 ====================================
 
@@ -223,8 +221,6 @@ Traffic Flow Prediction
 - Traffic signal control optimization
 - Public transit prioritization
 - Emergency vehicle routing
-
----
 
 BaseAttentive as a Kernel in Larger Models
 ==========================================
@@ -441,8 +437,6 @@ Multi-Task Learning
 - Supporting tasks: 0.5-1.0 weight
 - Adjust based on task importance and data availability
 
----
-
 Domain-Specific Applications
 =============================
 
@@ -528,8 +522,6 @@ Healthcare and Epidemiology
 3. **Seasonal Disease Incidence**
    - Respiratory infections, allergies, etc.
    - Enable resource allocation and public health messaging
-
----
 
 Integration Patterns and Deployment Notes
 =========================================
@@ -651,8 +643,6 @@ Evaluation Metrics Framework
 - **F1-score:** Balance precision and recall
 - **Coverage at Risk Threshold:** How many true events caught?
 
----
-
 References and Further Reading
 =======================================
 
@@ -677,8 +667,6 @@ References and Further Reading
 
 - Makridakis et al., 2018: "The M4 Competition" (benchmark study)
 - Hyndman & Athanasopoulos: "Forecasting: Principles and Practice" (free online textbook)
-
----
 
 Getting Started
 ===============
