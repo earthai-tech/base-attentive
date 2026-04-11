@@ -18,6 +18,8 @@ _MULTI_BACKEND_BLOCKERS = (
     "The compat.tf helpers are still TensorFlow-specific.",
     "Some runtime shape/assert checks still assume TensorFlow graph semantics.",
 )
+
+
 class TensorFlowBackend(Backend):
     """TensorFlow-backed runtime."""
 
@@ -46,16 +48,10 @@ class TensorFlowBackend(Backend):
         self.Sequential = getattr(keras, "Sequential", None)
         self.Dense = getattr(layers, "Dense", None)
         self.LSTM = getattr(layers, "LSTM", None)
-        self.MultiHeadAttention = getattr(
-            layers, "MultiHeadAttention", None
-        )
-        self.LayerNormalization = getattr(
-            layers, "LayerNormalization", None
-        )
+        self.MultiHeadAttention = getattr(layers, "MultiHeadAttention", None)
+        self.LayerNormalization = getattr(layers, "LayerNormalization", None)
         self.Dropout = getattr(layers, "Dropout", None)
-        self.BatchNormalization = getattr(
-            layers, "BatchNormalization", None
-        )
+        self.BatchNormalization = getattr(layers, "BatchNormalization", None)
 
 
 class JaxBackend(Backend):
@@ -82,16 +78,10 @@ class JaxBackend(Backend):
         self.Sequential = getattr(keras, "Sequential", None)
         self.Dense = getattr(self.layers, "Dense", None)
         self.LSTM = getattr(self.layers, "LSTM", None)
-        self.MultiHeadAttention = getattr(
-            self.layers, "MultiHeadAttention", None
-        )
-        self.LayerNormalization = getattr(
-            self.layers, "LayerNormalization", None
-        )
+        self.MultiHeadAttention = getattr(self.layers, "MultiHeadAttention", None)
+        self.LayerNormalization = getattr(self.layers, "LayerNormalization", None)
         self.Dropout = getattr(self.layers, "Dropout", None)
-        self.BatchNormalization = getattr(
-            self.layers, "BatchNormalization", None
-        )
+        self.BatchNormalization = getattr(self.layers, "BatchNormalization", None)
 
 
 class TorchBackend(Backend):
@@ -118,16 +108,10 @@ class TorchBackend(Backend):
         self.Sequential = getattr(keras, "Sequential", None)
         self.Dense = getattr(self.layers, "Dense", None)
         self.LSTM = getattr(self.layers, "LSTM", None)
-        self.MultiHeadAttention = getattr(
-            self.layers, "MultiHeadAttention", None
-        )
-        self.LayerNormalization = getattr(
-            self.layers, "LayerNormalization", None
-        )
+        self.MultiHeadAttention = getattr(self.layers, "MultiHeadAttention", None)
+        self.LayerNormalization = getattr(self.layers, "LayerNormalization", None)
         self.Dropout = getattr(self.layers, "Dropout", None)
-        self.BatchNormalization = getattr(
-            self.layers, "BatchNormalization", None
-        )
+        self.BatchNormalization = getattr(self.layers, "BatchNormalization", None)
 
 
 class PyTorchBackend(TorchBackend):

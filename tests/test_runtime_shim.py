@@ -39,9 +39,7 @@ def test_keras_deps_resolves_symbols_from_standalone_keras(
         normal="normal-rng",
     )
     fake_keras = types.ModuleType("keras")
-    fake_keras.backend = types.SimpleNamespace(
-        backend=lambda: "jax"
-    )
+    fake_keras.backend = types.SimpleNamespace(backend=lambda: "jax")
     fake_keras.layers = types.SimpleNamespace(
         Dense=fake_dense,
         Layer=fake_layer,
@@ -56,9 +54,7 @@ def test_keras_deps_resolves_symbols_from_standalone_keras(
             NONE="none",
         ),
     )
-    fake_keras.initializers = types.SimpleNamespace(
-        Constant=object()
-    )
+    fake_keras.initializers = types.SimpleNamespace(Constant=object())
     fake_keras.saving = types.SimpleNamespace(
         register_keras_serializable=register_keras_serializable
     )
@@ -81,14 +77,9 @@ def test_keras_deps_resolves_symbols_from_standalone_keras(
     assert base_attentive.KERAS_DEPS.Dense is fake_dense
     assert base_attentive.KERAS_DEPS.Layer is fake_layer
     assert base_attentive.KERAS_DEPS.Model is fake_model
-    assert (
-        base_attentive.KERAS_DEPS.Sequential
-        is fake_sequential
-    )
+    assert base_attentive.KERAS_DEPS.Sequential is fake_sequential
     assert base_attentive.KERAS_DEPS.concat == "concat-op"
-    assert (
-        base_attentive.KERAS_DEPS.reduce_mean == "mean-op"
-    )
+    assert base_attentive.KERAS_DEPS.reduce_mean == "mean-op"
     assert base_attentive.KERAS_DEPS.reduce_sum == "sum-op"
     assert base_attentive.KERAS_DEPS.reduce_max == "max-op"
     assert base_attentive.KERAS_DEPS.range == "range-op"

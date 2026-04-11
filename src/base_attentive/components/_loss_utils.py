@@ -38,9 +38,7 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="MeanSquaredErrorLoss"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="MeanSquaredErrorLoss")
 class MeanSquaredErrorLoss(Loss, NNLearner):
     """
     Mean Squared Error (MSE) loss function.
@@ -50,9 +48,7 @@ class MeanSquaredErrorLoss(Loss, NNLearner):
       'auto', 'sum', 'mean', or 'none'.
     """
 
-    def __init__(
-        self, reduction: str = "auto", name: str = "MSELoss"
-    ):
+    def __init__(self, reduction: str = "auto", name: str = "MSELoss"):
         super().__init__(reduction=reduction, name=name)
 
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
@@ -69,9 +65,7 @@ class MeanSquaredErrorLoss(Loss, NNLearner):
         return tf_reduce_mean(tf_square(y_true - y_pred))
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="QuantileLoss"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="QuantileLoss")
 class QuantileLoss(Loss, NNLearner):
     """
     Adaptive Quantile Loss layer that computes quantile loss for given
@@ -107,17 +101,11 @@ class QuantileLoss(Loss, NNLearner):
         err = y_true_exp - y_pred
 
         # Pinball loss calculation: max(q*e, (q-1)*e)
-        pinball_loss = tf_maximum(
-            self._qs * err, (self._qs - 1.0) * err
-        )
-        return tf_reduce_mean(
-            (2.0 / float(self.q)) * pinball_loss, axis=2
-        )
+        pinball_loss = tf_maximum(self._qs * err, (self._qs - 1.0) * err)
+        return tf_reduce_mean((2.0 / float(self.q)) * pinball_loss, axis=2)
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="HuberLoss"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="HuberLoss")
 class HuberLoss(Loss, NNLearner):
     """
     Huber loss function which is less sensitive to outliers in data.
@@ -152,18 +140,12 @@ class HuberLoss(Loss, NNLearner):
         # Huber loss formula
         condition = abs_error <= self.delta
         squared_loss = tf_square(error) / 2
-        linear_loss = self.delta * (
-            abs_error - (self.delta / 2)
-        )
+        linear_loss = self.delta * (abs_error - (self.delta / 2))
 
-        return tf_reduce_mean(
-            tf_where(condition, squared_loss, linear_loss)
-        )
+        return tf_reduce_mean(tf_where(condition, squared_loss, linear_loss))
 
 
-@register_keras_serializable(
-    SERIALIZATION_PACKAGE, name="WeightedLoss"
-)
+@register_keras_serializable(SERIALIZATION_PACKAGE, name="WeightedLoss")
 class WeightedLoss(Loss, NNLearner):
     """
     Weighted loss function to apply different weights for each sample.
@@ -192,9 +174,7 @@ class WeightedLoss(Loss, NNLearner):
         Returns:
         - Tensor: Computed weighted loss value
         """
-        return self.weight * tf_reduce_mean(
-            tf_square(y_true - y_pred)
-        )
+        return self.weight * tf_reduce_mean(tf_square(y_true - y_pred))
 
 
 ### Utility Functions for Losses ###
@@ -224,9 +204,7 @@ def compute_loss_with_reduction(
     elif reduction == "none":
         return loss_value
     else:
-        raise ValueError(
-            f"Invalid reduction type: {reduction}"
-        )
+        raise ValueError(f"Invalid reduction type: {reduction}")
 
 
 def compute_quantile_loss(
@@ -247,4 +225,3 @@ def compute_quantile_loss(
     error = y_true - y_pred
     pinball_loss = tf_maximum(qs * error, (qs - 1.0) * error)
     return tf_reduce_mean(pinball_loss, axis=2)
-

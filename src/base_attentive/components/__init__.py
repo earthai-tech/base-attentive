@@ -143,4 +143,3 @@ __all__ = [
     "aggregate_multiscale_on_3d",
     "aggregate_time_window_output",
 ]
-

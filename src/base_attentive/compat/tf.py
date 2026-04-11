@@ -8,6 +8,7 @@ import warnings
 # Check if TensorFlow is available
 try:
     import tensorflow as tf
+
     HAS_TF = True
 except ImportError:
     HAS_TF = False
@@ -43,11 +44,13 @@ def standalone_keras(module_name: str):
     try:
         # Try importing from tensorflow.keras
         import tensorflow.keras as tf_keras
+
         return getattr(tf_keras, module_name)
     except (ImportError, AttributeError):
         try:
             # Fallback to standalone keras
             import keras
+
             return getattr(keras, module_name)
         except (ImportError, AttributeError):
             raise ImportError(
@@ -67,11 +70,17 @@ def suppress_tf_warnings():
 
 def optional_tf_function(*args, **kwargs):
     """Optional tf.function decorator that works even if TF is not available."""
+
     def decorator(func):
         if HAS_TF:
             return tf.function(*args, **kwargs)(func)
         return func
-    return decorator if callable(args[0].__class__ if args else None) or not args else decorator
+
+    return (
+        decorator
+        if callable(args[0].__class__ if args else None) or not args
+        else decorator
+    )
 
 
 def tf_debugging_assert_equal(x, y, message="", name="assert_equal"):

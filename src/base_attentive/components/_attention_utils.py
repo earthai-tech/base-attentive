@@ -50,9 +50,7 @@ def create_causal_mask(size: int | Tensor) -> Tensor:
     col_idxs = tf_expand_dims(idxs, 0)  # [1,size]
 
     # mask2d[i,j] = True if j > i, else False
-    mask2d = tf_greater(
-        col_idxs, row_idxs
-    )  # [size,size], dtype=bool
+    mask2d = tf_greater(col_idxs, row_idxs)  # [size,size], dtype=bool
 
     # Cast to float (1.0 for masked positions, 0.0 elsewhere)
     mask2d = tf_cast(mask2d, tf_float32)  # [size,size]
@@ -85,9 +83,7 @@ def create_causal_mask_(size: int | Tensor) -> Tensor:
     col = tf_expand_dims(idxs, 0)  # [1,L]
     mask2d = tf_greater(col, row)  # True if j > i
     mask2d = tf_cast(mask2d, tf_float32)  # [L,L]
-    return tf_expand_dims(
-        tf_expand_dims(mask2d, 0), 1
-    )  # [1,1,L,L]
+    return tf_expand_dims(tf_expand_dims(mask2d, 0), 1)  # [1,1,L,L]
 
 
 def combine_masks(
@@ -166,9 +162,7 @@ def combine_masks(
 
 def _create_causal_mask(size: int | Tensor) -> Tensor:
     """Creates a causal attention mask for the decoder."""
-    mask = 1 - tf_linalg.band_part(
-        tf_ones((size, size)), -1, 0
-    )
+    mask = 1 - tf_linalg.band_part(tf_ones((size, size)), -1, 0)
     # Add batch and head dimensions for broadcasting
     return mask[
         tf_expand_dims(tf_range(size), 0), :
@@ -180,4 +174,3 @@ def _create_causal_mask(size: int | Tensor) -> Tensor:
     # # For causal, query_length == key_length == size
     # return tf_expand_dims(tf_expand_dims(
     #     1 - tf_linalg.band_part(tf_ones((size, size)), -1, 0), axis=0), axis=0)
-

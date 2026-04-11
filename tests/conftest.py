@@ -19,18 +19,18 @@ def sample_inputs():
         import tensorflow as tf
     except ImportError:
         pytest.skip("TensorFlow not installed")
-    
+
     batch_size = 32
     static_dim = 4
     dynamic_dim = 8
     future_dim = 6
     time_steps = 10
     forecast_horizon = 24
-    
+
     static = tf.random.normal([batch_size, static_dim])
     dynamic = tf.random.normal([batch_size, time_steps, dynamic_dim])
     future = tf.random.normal([batch_size, forecast_horizon, future_dim])
-    
+
     return (static, dynamic, future)
 
 
@@ -38,6 +38,7 @@ def sample_inputs():
 def base_attentive_module():
     """Fixture to import base_attentive module."""
     import base_attentive
+
     return base_attentive
 
 
@@ -49,6 +50,7 @@ def backend_module():
         set_backend,
         get_available_backends,
     )
+
     return {
         "get_backend": get_backend,
         "set_backend": set_backend,
@@ -64,6 +66,7 @@ def validation_module():
         maybe_reduce_quantiles_bh,
         ensure_bh1,
     )
+
     return {
         "validate_model_inputs": validate_model_inputs,
         "maybe_reduce_quantiles_bh": maybe_reduce_quantiles_bh,
@@ -79,6 +82,7 @@ def compat_module():
         StrOptions,
         validate_params,
     )
+
     return {
         "Interval": Interval,
         "StrOptions": StrOptions,
@@ -90,6 +94,7 @@ def compat_module():
 def logging_module():
     """Fixture to import logging module."""
     from base_attentive.logging import get_logger, OncePerMessageFilter
+
     return {
         "get_logger": get_logger,
         "OncePerMessageFilter": OncePerMessageFilter,
@@ -100,4 +105,5 @@ def logging_module():
 def api_module():
     """Fixture to import api.property module."""
     from base_attentive.api import NNLearner
+
     return {"NNLearner": NNLearner}

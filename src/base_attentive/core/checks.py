@@ -7,9 +7,7 @@ from typing import Any, Type, Union, get_args, get_origin
 __all__ = ["validate_nested_param"]
 
 
-def validate_nested_param(
-    value: Any, expected_type: Type, param_name: str
-) -> Any:
+def validate_nested_param(value: Any, expected_type: Type, param_name: str) -> Any:
     """
     Validate nested parameter type.
 
@@ -38,9 +36,7 @@ def validate_nested_param(
     # Handle list[T] types
     if origin is list:
         if not isinstance(value, list):
-            raise TypeError(
-                f"{param_name} must be a list, got {type(value).__name__}"
-            )
+            raise TypeError(f"{param_name} must be a list, got {type(value).__name__}")
         if args:
             expected_element_type = args[0]
             for i, item in enumerate(value):
@@ -51,8 +47,7 @@ def validate_nested_param(
                     )
     elif not isinstance(value, expected_type):
         raise TypeError(
-            f"{param_name} must be {expected_type.__name__}, "
-            f"got {type(value).__name__}"
+            f"{param_name} must be {expected_type.__name__}, got {type(value).__name__}"
         )
 
     return value
