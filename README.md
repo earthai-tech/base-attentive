@@ -5,7 +5,7 @@
 [![Code Quality](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml/badge.svg?branch=develop)](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml?query=branch%3Adevelop)
 [![Publish](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg?branch=master)](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml?query=branch%3Amaster)
 [![Version](https://img.shields.io/github/v/release/earthai-tech/base-attentive?display_name=tag&sort=semver)](https://github.com/earthai-tech/base-attentive/releases)
-[![License](https://img.shields.io/github/license/earthai-tech/base-attentive)](https://github.com/earthai-tech/base-attentive/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Coverage](https://codecov.io/gh/earthai-tech/base-attentive/branch/develop/graph/badge.svg)](https://codecov.io/gh/earthai-tech/base-attentive)
 [![Code Style](https://img.shields.io/badge/code%20style-ruff-46a758.svg)](https://docs.astral.sh/ruff/)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)

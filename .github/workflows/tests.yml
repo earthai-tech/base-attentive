@@ -43,13 +43,22 @@ jobs:
         mypy src/ --ignore-missing-imports || true
       continue-on-error: true
     
-    - name: Test with pytest
+    - name: Test with pytest and coverage
+      id: pytest_cov
+      continue-on-error: true
       run: |
-        pytest tests/ -v --tb=short --cov=src/base_attentive --cov-report=xml -x 2>/dev/null || pytest tests/ -v --tb=short
+        python -m pytest tests/ -v --tb=short --cov=src/base_attentive --cov-report=xml -x
+
+    - name: Fallback test without coverage
+      if: steps.pytest_cov.outcome == 'failure'
+      run: |
+        python -m pytest tests/ -v --tb=short
     
     - name: Upload coverage to Codecov
+      if: steps.pytest_cov.outcome == 'success'
       uses: codecov/codecov-action@v4
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
         flags: unittests
         name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
