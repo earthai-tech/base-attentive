@@ -120,7 +120,9 @@ class TestBackendModule:
         assert capabilities["name"] == "jax"
         assert capabilities["experimental"] is True
         assert capabilities["supports_base_attentive"] is False
+        assert capabilities["supports_base_attentive_v2"] is True
         assert capabilities["blockers"]
+        assert capabilities["v2_blockers"]
 
     def test_set_backend_warns_when_keras_runtime_is_already_loaded(self, monkeypatch):
         """Switching after Keras is loaded should emit a restart warning."""

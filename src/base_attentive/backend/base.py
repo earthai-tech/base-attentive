@@ -68,7 +68,9 @@ class Backend:
     uses_keras_runtime: bool = False
     experimental: bool = False
     supports_base_attentive: bool = False
+    supports_base_attentive_v2: bool = False
     blockers: tuple[str, ...] = ()
+    v2_blockers: tuple[str, ...] = ()
 
     Tensor: Any = None
     Layer: Any = None
@@ -113,6 +115,8 @@ class Backend:
             "uses_keras_runtime": self.uses_keras_runtime,
             "experimental": self.experimental,
             "supports_base_attentive": self.supports_base_attentive,
+            "supports_base_attentive_v2": self.supports_base_attentive_v2,
             "blockers": list(self.blockers),
+            "v2_blockers": list(self.v2_blockers),
             "loaded_keras_backend": _read_loaded_keras_backend(),
         }

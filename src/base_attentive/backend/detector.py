@@ -98,6 +98,7 @@ def detect_available_backends() -> dict[str, dict]:
                 "available": is_available,
                 "version": get_backend_version(backend_name),
                 "supported": backend.supports_base_attentive,
+                "supports_base_attentive_v2": backend.supports_base_attentive_v2,
                 "experimental": backend.experimental,
                 "class": backend_cls,
             }
@@ -106,6 +107,7 @@ def detect_available_backends() -> dict[str, dict]:
                 "available": False,
                 "version": None,
                 "supported": False,
+                "supports_base_attentive_v2": False,
                 "experimental": False,
                 "error": str(e),
             }
