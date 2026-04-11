@@ -81,7 +81,10 @@ html_theme = (
     else "alabaster"
 )
 html_title = f"{project} {release} documentation"
-html_static_path: list[str] = []
+html_logo = "_static/base-attentive-logo.svg"
+html_favicon = "_static/base-attentive.ico"
+html_static_path: list[str] = ["_static"]
+html_css_files: list[str] = ["custom.css"]
 html_theme_options = {}
 html_context = {
     "author_name": author,
