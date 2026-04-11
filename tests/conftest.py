@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add src to path for imports
 SRC_PATH = Path(__file__).parent.parent / "src"
@@ -46,9 +47,9 @@ def base_attentive_module():
 def backend_module():
     """Fixture to import backend module."""
     from base_attentive.backend import (
+        get_available_backends,
         get_backend,
         set_backend,
-        get_available_backends,
     )
 
     return {
@@ -62,9 +63,9 @@ def backend_module():
 def validation_module():
     """Fixture to import validation module."""
     from base_attentive.validation import (
-        validate_model_inputs,
-        maybe_reduce_quantiles_bh,
         ensure_bh1,
+        maybe_reduce_quantiles_bh,
+        validate_model_inputs,
     )
 
     return {
@@ -93,7 +94,7 @@ def compat_module():
 @pytest.fixture
 def logging_module():
     """Fixture to import logging module."""
-    from base_attentive.logging import get_logger, OncePerMessageFilter
+    from base_attentive.logging import OncePerMessageFilter, get_logger
 
     return {
         "get_logger": get_logger,

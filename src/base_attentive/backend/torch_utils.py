@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import logging
 from typing import Literal, Optional
 
@@ -26,12 +27,7 @@ def torch_is_available() -> bool:
     bool
         True if PyTorch is available.
     """
-    try:
-        import torch
-
-        return True
-    except ImportError:
-        return False
+    return importlib.util.find_spec("torch") is not None
 
 
 def get_torch_version() -> Optional[str]:

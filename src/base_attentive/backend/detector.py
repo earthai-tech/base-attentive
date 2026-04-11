@@ -14,7 +14,7 @@ from typing import Optional, Type
 
 from .base import Backend
 from .implementations import JaxBackend, PyTorchBackend, TensorFlowBackend, TorchBackend
-from .version_check import check_tensorflow_compatibility, get_backend_version
+from .version_check import get_backend_version
 
 __all__ = [
     "normalize_backend_name",

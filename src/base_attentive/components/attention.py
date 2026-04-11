@@ -799,7 +799,7 @@ class HierarchicalAttention(Layer, NNLearner):
         short_term, long_term = inputs
 
         s = self.short_term_dense(short_term)
-        l = self.long_term_dense(long_term)
+        long_proj = self.long_term_dense(long_term)
 
         # Build masks to (B, T, T) if provided as (B,T)
         def _expand_mask(m):
@@ -822,9 +822,9 @@ class HierarchicalAttention(Layer, NNLearner):
             training=training,
         )
         l_att = self.long_term_attention(
-            query=l,
-            key=l,
-            value=l,
+            query=long_proj,
+            key=long_proj,
+            value=long_proj,
             attention_mask=l_mask,
             use_causal_mask=use_causal_mask,
             training=training,

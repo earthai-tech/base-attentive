@@ -648,7 +648,7 @@ class QuantileDistributionModeling(Layer, NNLearner):
             # TF tensors support set_shape
             if inputs.shape.rank is not None and inputs.shape[-1] is None:
                 inputs.set_shape(inputs.shape[:-1].concatenate([self.output_dim]))
-        except:
+        except Exception:
             pass
 
         # No quantiles => deterministic

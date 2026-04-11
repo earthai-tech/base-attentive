@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-
 SRC_ROOT = Path(__file__).parent.parent / "src" / "base_attentive"
 SERIALIZABLE_MODULES = [
     SRC_ROOT / "core" / "base_attentive.py",

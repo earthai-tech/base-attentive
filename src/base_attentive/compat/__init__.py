@@ -8,6 +8,8 @@ import numbers
 try:
     from sklearn.utils._param_validation import (
         Interval as sklearn_Interval,
+    )
+    from sklearn.utils._param_validation import (
         StrOptions,
     )
     from sklearn.utils._param_validation import (
@@ -18,6 +20,8 @@ except ImportError:
     try:
         from sklearn.utils.validation import (
             Interval as sklearn_Interval,
+        )
+        from sklearn.utils.validation import (
             StrOptions,
         )
 
