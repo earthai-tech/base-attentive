@@ -4,10 +4,12 @@
 # Modified for GeoPrior-v3 API.
 r"""Utility helpers for reusable model components."""
 
+from __future__ import annotations
+
 import warnings
 from typing import Any
 
-from ...utils.generic_utils import select_mode
+from ..utils.generic_utils import select_mode
 from ..logging import get_logger
 
 DEFAULT_ARCHITECTURE = {
