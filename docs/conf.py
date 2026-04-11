@@ -27,7 +27,7 @@ def _read_version() -> str:
 
 
 project = "BaseAttentive"
-author = "LKouadio"
+author = "Laurent Kouadio"
 copyright = f"{date.today().year}, {author}"
 version = _read_version()
 release = version
@@ -39,7 +39,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
-    "sphinx_rtd_theme",
     "sphinx.ext.coverage",
 ]
 
@@ -83,20 +82,7 @@ html_theme = (
 )
 html_title = f"{project} {release} documentation"
 html_static_path: list[str] = []
-
-# RTD theme options
-html_theme_options = {
-    "display_version": True,
-    "prev_next_buttons_location": "bottom",
-    "style_external_links": False,
-    "vcs_pageview_mode": "view",
-    "style_nav_header_background": "#2c3e50",
-    "collapse_navigation": True,
-    "sticky_navigation": True,
-    "navigation_depth": 4,
-    "includehidden": True,
-    "titles_only": False,
-}
+html_theme_options = {}
 
 # Sidebars configuration
 html_sidebars = {

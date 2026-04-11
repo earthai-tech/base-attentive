@@ -1,0 +1,640 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architecture Guide &mdash; BaseAttentive 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Configuration Guide" href="configuration_guide.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2c3e50" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            BaseAttentive
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="backends.html">Backend Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#conceptual-flow">Conceptual Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-output-contract">Input/Output Contract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#core-configuration-parameters">Core Configuration Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#core-components">Core Components</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#feature-extraction-processing">Feature Extraction &amp; Processing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#encoder-architecture">Encoder Architecture</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#attention-types">Attention Types</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#data-flow">Data Flow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-hierarchy">Configuration Hierarchy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example-configuration-merging">Example Configuration Merging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-modes">Output Modes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-features">Advanced Features</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#residual-connections">Residual Connections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#batch-normalization">Batch Normalization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#quantile-modeling">Quantile Modeling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#performance-characteristics">Performance Characteristics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#computational-complexity">Computational Complexity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#memory-usage">Memory Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#extensibility">Extensibility</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#custom-encoders">Custom Encoders</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom-loss-functions">Custom Loss Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="configuration_guide.html">Configuration Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components_reference.html">Components Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development &amp; Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guidelines</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #2c3e50" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BaseAttentive</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Architecture Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/architecture_guide.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="architecture-guide">
+<h1>Architecture Guide<a class="headerlink" href="#architecture-guide" title="Link to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>BaseAttentive is an encoder-decoder neural network architecture designed for
+sequence-to-sequence time series forecasting. It combines three distinct feature streams
+into a unified forecasting kernel:</p>
+<ol class="arabic">
+<li><p><strong>Static features</strong> - Time-invariant properties (shape: <code class="docutils literal notranslate"><span class="pre">batch_size,</span> <span class="pre">static_dim</span></code>)</p>
+<p>Examples: geographical coordinates, site elevation, installation date</p>
+</li>
+<li><p><strong>Dynamic features</strong> - Historical time series data (shape: <code class="docutils literal notranslate"><span class="pre">batch_size,</span> <span class="pre">history_steps,</span> <span class="pre">dynamic_dim</span></code>)</p>
+<p>Examples: sensor readings, temperature, humidity, historical observations</p>
+</li>
+<li><p><strong>Future features</strong> - Known exogenous variables for forecast period (shape: <code class="docutils literal notranslate"><span class="pre">batch_size,</span> <span class="pre">forecast_horizon,</span> <span class="pre">future_dim</span></code>)</p>
+<p>Examples: weather forecasts, calendar features, scheduled maintenance</p>
+</li>
+</ol>
+<p>The architecture processes these three input streams through a configurable encoder-decoder
+pipeline that supports multiple architectural choices, attention mechanisms, and output modes.</p>
+</section>
+<section id="conceptual-flow">
+<h2>Conceptual Flow<a class="headerlink" href="#conceptual-flow" title="Link to this heading"></a></h2>
+<p>At a high level, the model follows this processing path:</p>
+<ol class="arabic simple">
+<li><p><strong>Ingest</strong> - Accept static, historical, and future feature tensors</p></li>
+<li><p><strong>Project</strong> - Transform features into a shared embedding space</p></li>
+<li><p><strong>Encode</strong> - Process temporal context with hybrid or transformer-style encoder</p></li>
+<li><p><strong>Attend</strong> - Apply configured decoder attention stack (cross, hierarchical, memory)</p></li>
+<li><p><strong>Forecast</strong> - Generate point or probabilistic forecasts over horizon</p></li>
+</ol>
+<p>This flow ensures that all feature types are properly utilized while maintaining
+flexibility in how the temporal encoding and fusion occur.</p>
+</section>
+<section id="input-output-contract">
+<h2>Input/Output Contract<a class="headerlink" href="#input-output-contract" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>┌─────────────────────────────────────┐
+│           Inputs (3 types)          │
+├─────────────────────────────────────┤
+│ static:   (batch, static_dim)       │
+│ dynamic:  (batch, T, dynamic_dim)   │
+│ future:   (batch, H, future_dim)    │
+└────────────────┬────────────────────┘
+                 │
+                 ▼
+        ┌─────────────────────┐
+        │   Encoder-Decoder   │
+        │   Architecture      │
+        └────────────┬────────┘
+                     │
+             ┌───────┴────────┐
+             │                │
+             ▼                ▼
+        Point Forecast      With Quantiles
+      (B, H, output_dim)  (B, H, Q, output_dim)
+</pre></div>
+</div>
+<p>Where:
+- B = batch size
+- T = time steps (history)
+- H = forecast horizon
+- Q = quantiles</p>
+</section>
+<section id="core-configuration-parameters">
+<h2>Core Configuration Parameters<a class="headerlink" href="#core-configuration-parameters" title="Link to this heading"></a></h2>
+<p>BaseAttentive exposes most architectural choices directly on the model constructor.</p>
+<p><strong>Required Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">static_input_dim</span></code> - Number of static features</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dynamic_input_dim</span></code> - Number of dynamic features</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">future_input_dim</span></code> - Number of future features</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output_dim</span></code> - Number of output variables</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">forecast_horizon</span></code> - Forecast length in time steps</p></li>
+</ul>
+<p><strong>Important Hyperparameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">embed_dim</span></code> - Embedding dimension (default: 32)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">attention_units</span></code> - Attention mechanism dimension (default: 64)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">num_heads</span></code> - Multi-head attention heads (default: 4)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dropout_rate</span></code> - Dropout probability (default: 0.2)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">quantiles</span></code> - Quantiles for probabilistic output (default: None)</p></li>
+</ul>
+<p><strong>Architecture-level choices</strong> live in the <code class="docutils literal notranslate"><span class="pre">architecture_config</span></code> dictionary:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">architecture_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;encoder_type&quot;</span><span class="p">:</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">,</span>  <span class="c1"># or &quot;transformer&quot;</span>
+    <span class="s2">&quot;decoder_attention_stack&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;cross&quot;</span><span class="p">,</span> <span class="s2">&quot;hierarchical&quot;</span><span class="p">,</span> <span class="s2">&quot;memory&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;feature_processing&quot;</span><span class="p">:</span> <span class="s2">&quot;vsn&quot;</span><span class="p">,</span>  <span class="c1"># or &quot;dense&quot;</span>
+<span class="p">}</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">static_input_dim</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">dynamic_input_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">future_input_dim</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+    <span class="n">output_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">forecast_horizon</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+    <span class="n">architecture_config</span><span class="o">=</span><span class="n">architecture_config</span><span class="p">,</span>
+    <span class="n">embed_dim</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+    <span class="n">attention_units</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+    <span class="n">num_heads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">dropout_rate</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="core-components">
+<h2>Core Components<a class="headerlink" href="#core-components" title="Link to this heading"></a></h2>
+<section id="feature-extraction-processing">
+<h3>Feature Extraction &amp; Processing<a class="headerlink" href="#feature-extraction-processing" title="Link to this heading"></a></h3>
+<p>Raw input features are first projected into a shared embedding space using one of two methods:</p>
+<p><strong>Variable Selection Network (VSN)</strong> - Default method</p>
+<p>Dynamically learns feature importance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">use_vsn</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Learns which features matter</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Uses gating mechanisms to weight features</p></li>
+<li><p>Better for high-dimensional inputs</p></li>
+<li><p>Slightly more parameters and computation</p></li>
+<li><p>Improves interpretability</p></li>
+</ul>
+<p><strong>Dense Processing</strong> - Alternative method</p>
+<p>Simple linear transformation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">use_vsn</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Simple linear embedding</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Standard dense layer projection</p></li>
+<li><p>Fewer parameters</p></li>
+<li><p>Faster training and inference</p></li>
+<li><p>Less interpretable but simpler</p></li>
+</ul>
+</section>
+<section id="encoder-architecture">
+<h3>Encoder Architecture<a class="headerlink" href="#encoder-architecture" title="Link to this heading"></a></h3>
+<p>The encoder processes temporal context with one of two architectural approaches:</p>
+<p><strong>Hybrid Mode</strong> (Default)</p>
+<p>Combines Multi-Scale LSTM with attention:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">architecture_config</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;encoder_type&quot;</span><span class="p">:</span> <span class="s2">&quot;hybrid&quot;</span>
+    <span class="p">},</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Features:
+- Multi-scale LSTM captures hierarchical patterns
+- Lower computational cost than pure attention
+- Good for long sequences</p>
+<p><strong>Transformer Mode</strong></p>
+<p>Pure self-attention based:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">architecture_config</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;encoder_type&quot;</span><span class="p">:</span> <span class="s2">&quot;transformer&quot;</span>
+    <span class="p">},</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Features:
+- Full temporal dependency modeling
+- Better for shorter sequences
+- Parallelizable computation</p>
+</section>
+<section id="attention-types">
+<h3>Attention Types<a class="headerlink" href="#attention-types" title="Link to this heading"></a></h3>
+<p>The decoder can stack different attention mechanisms:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 30.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Type</p></th>
+<th class="head"><p>Purpose</p></th>
+<th class="head"><p>Use Case</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Cross-Attention</p></td>
+<td><p>Bridge encoder-decoder</p></td>
+<td><p>Always included by default</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hierarchical</p></td>
+<td><p>Multi-level aggregation</p></td>
+<td><p>Seasonal patterns</p></td>
+</tr>
+<tr class="row-even"><td><p>Memory-Augmented</p></td>
+<td><p>Historical pattern retrieval</p></td>
+<td><p>Long-range dependencies</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use all attention types</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">architecture_config</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;decoder_attention_stack&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;cross&quot;</span><span class="p">,</span> <span class="s2">&quot;hierarchical&quot;</span><span class="p">,</span> <span class="s2">&quot;memory&quot;</span><span class="p">]</span>
+    <span class="p">},</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="data-flow">
+<h2>Data Flow<a class="headerlink" href="#data-flow" title="Link to this heading"></a></h2>
+<p>Complete processing pipeline:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Input tensors
+     │
+     ├─► Static (B, S_dim) ──┐
+     ├─► Dynamic (B, T, D_dim) ──┬─► Feature Extraction (VSN or Dense)
+     └─► Future (B, H, F_dim) ──┘
+                             │
+                     ┌───────▼────────┐
+                     │ Embedded Input │
+                     └───────┬────────┘
+                             │
+             ┌───────────────┼───────────────┐
+             │               │               │
+     ┌───────▼──────┐  ┌─────▼──────┐  ┌───▼──────────┐
+     │Static Encoder│ │Dyn Encoder│ │Future Context│
+     │(Dense)       │ │(LSTM/Attn)│ │(Dense)       │
+     └───────┬──────┘  └─────┬──────┘  └───┬──────────┘
+             │               │            │
+             └───────────────┼────────────┘
+                             │
+             ┌───────────────▼────────────┐
+             │  Attention Stack          │
+             │ • Cross-attention         │
+             │ • Hierarchical-attention  │
+             │ • Memory-attention        │
+             └───────────────┬────────────┘
+                             │
+                     ┌───────▼──────┐
+                     │ Time Agg.    │
+                     │ Last/Avg     │
+                     └───────┬──────┘
+                             │
+                     ┌───────▼──────┐
+                     │ Multi-Decoder│
+                     │ Per-horizon  │
+                     │ heads        │
+                     └───────┬──────┘
+                             │
+                 ┌───────────┴──────────┐
+                 │                      │
+      Point Forecast          Quantile Modeling
+         (B,H,D)                (B,H,Q,D)
+</pre></div>
+</div>
+</section>
+<section id="configuration-hierarchy">
+<h2>Configuration Hierarchy<a class="headerlink" href="#configuration-hierarchy" title="Link to this heading"></a></h2>
+<p>Parameters are applied in order of precedence:</p>
+<ol class="arabic">
+<li><p><strong>architecture_config</strong> dict (highest)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">architecture_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;encoder_type&quot;</span><span class="p">:</span> <span class="s2">&quot;transformer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;decoder_attention_stack&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;cross&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Explicit keyword arguments</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">embed_dim</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>  <span class="c1"># Overrides default</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Default values</strong> (lowest)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DEFAULT_ARCHITECTURE</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;encoder_type&quot;</span><span class="p">:</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;decoder_attention_stack&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;cross&quot;</span><span class="p">,</span> <span class="s2">&quot;hierarchical&quot;</span><span class="p">,</span> <span class="s2">&quot;memory&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;feature_processing&quot;</span><span class="p">:</span> <span class="s2">&quot;vsn&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<section id="example-configuration-merging">
+<h3>Example Configuration Merging<a class="headerlink" href="#example-configuration-merging" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># User configuration</span>
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;static_input_dim&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s1">&#39;dynamic_input_dim&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="s1">&#39;future_input_dim&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="s1">&#39;output_dim&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s1">&#39;forecast_horizon&#39;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>
+    <span class="s1">&#39;embed_dim&#39;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>  <span class="c1"># Overrides default (32)</span>
+    <span class="s1">&#39;architecture_config&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;encoder_type&#39;</span><span class="p">:</span> <span class="s1">&#39;transformer&#39;</span>  <span class="c1"># Overrides default (hybrid)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span><span class="o">**</span><span class="n">config</span><span class="p">)</span>
+
+<span class="c1"># Result:</span>
+<span class="c1"># - embed_dim: 64 (from keyword argument)</span>
+<span class="c1"># - encoder_type: &#39;transformer&#39; (from architecture_config)</span>
+<span class="c1"># - decoder_attention_stack: [&quot;cross&quot;, &quot;hierarchical&quot;, &quot;memory&quot;] (from default)</span>
+</pre></div>
+</div>
+</section>
+<section id="output-modes">
+<h3>Output Modes<a class="headerlink" href="#output-modes" title="Link to this heading"></a></h3>
+<p>The model supports two output modes depending on the <code class="docutils literal notranslate"><span class="pre">quantiles</span></code> parameter:</p>
+<p><strong>Point Forecast</strong> (Default)</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">quantiles</span></code> is not set, returns single point predictions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">static_input_dim</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">dynamic_input_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">future_input_dim</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+    <span class="n">output_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">forecast_horizon</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+    <span class="c1"># quantiles not specified</span>
+<span class="p">)</span>
+
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">([</span><span class="n">static</span><span class="p">,</span> <span class="n">dynamic</span><span class="p">,</span> <span class="n">future</span><span class="p">])</span>
+<span class="c1"># Shape: (batch_size, forecast_horizon, output_dim)</span>
+<span class="c1"># Example: (32, 24, 2)</span>
+</pre></div>
+</div>
+<p>Use when you need a single deterministic forecast.</p>
+<p><strong>Probabilistic Forecast</strong> (Quantile-based)</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">quantiles</span></code> are specified, returns uncertainty estimates:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">static_input_dim</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">dynamic_input_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">future_input_dim</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+    <span class="n">output_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">forecast_horizon</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+    <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span>  <span class="c1"># Lower, median, upper</span>
+<span class="p">)</span>
+
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="p">([</span><span class="n">static</span><span class="p">,</span> <span class="n">dynamic</span><span class="p">,</span> <span class="n">future</span><span class="p">])</span>
+<span class="c1"># Shape: (batch_size, forecast_horizon, num_quantiles, output_dim)</span>
+<span class="c1"># Example: (32, 24, 3, 2)</span>
+<span class="c1"># predictions[:, :, 0, :] = 10th percentile (lower bound)</span>
+<span class="c1"># predictions[:, :, 1, :] = 50th percentile (median)</span>
+<span class="c1"># predictions[:, :, 2, :] = 90th percentile (upper bound)</span>
+</pre></div>
+</div>
+<p>Use when you need confidence intervals and uncertainty quantification.</p>
+</section>
+</section>
+<section id="advanced-features">
+<h2>Advanced Features<a class="headerlink" href="#advanced-features" title="Link to this heading"></a></h2>
+<section id="residual-connections">
+<h3>Residual Connections<a class="headerlink" href="#residual-connections" title="Link to this heading"></a></h3>
+<p>Skip connections for gradient flow:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">use_residuals</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Default</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Benefits:
+- Easier training of deep models
+- Mitigates vanishing gradient
+- Faster convergence</p>
+</section>
+<section id="batch-normalization">
+<h3>Batch Normalization<a class="headerlink" href="#batch-normalization" title="Link to this heading"></a></h3>
+<p>Normalize layer activations:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">use_batch_norm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Default: False</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Benefits:
+- Faster training
+- Better generalization
+- Reduced internal covariate shift</p>
+</section>
+<section id="quantile-modeling">
+<h3>Quantile Modeling<a class="headerlink" href="#quantile-modeling" title="Link to this heading"></a></h3>
+<p>Probabilistic forecasts with uncertainty:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+    <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span>  <span class="c1"># Default: None (point forecast)</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Output:
+- Shape: (batch, horizon, num_quantiles, output_dim)
+- Allows confidence intervals
+- Useful for risk-aware applications</p>
+</section>
+</section>
+<section id="performance-characteristics">
+<h2>Performance Characteristics<a class="headerlink" href="#performance-characteristics" title="Link to this heading"></a></h2>
+<section id="computational-complexity">
+<h3>Computational Complexity<a class="headerlink" href="#computational-complexity" title="Link to this heading"></a></h3>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Performance Characteristics by Architecture</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 19.5%" />
+<col style="width: 26.0%" />
+<col style="width: 26.0%" />
+<col style="width: 28.6%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Mode</p></th>
+<th class="head"><p>Encoder</p></th>
+<th class="head"><p>Complexity</p></th>
+<th class="head"><p>Time/Inference</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Hybrid</p></td>
+<td><p>MultiScale LSTM</p></td>
+<td><p>O(T·h²)</p></td>
+<td><p>~10ms (RTX 3090, batch=32)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Transformer</p></td>
+<td><p>Self-Attention</p></td>
+<td><p>O(T²·h)</p></td>
+<td><p>~25ms (RTX 3090, batch=32)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="memory-usage">
+<h3>Memory Usage<a class="headerlink" href="#memory-usage" title="Link to this heading"></a></h3>
+<p>Per batch (batch_size=32, embed_dim=64):</p>
+<ul class="simple">
+<li><p>Model weights: ~2-5 MB</p></li>
+<li><p>Activations: ~10-20 MB</p></li>
+<li><p>Attention matrices: ~1-10 MB</p></li>
+</ul>
+<p>Total: ~15-35 MB per batch</p>
+</section>
+</section>
+<section id="extensibility">
+<h2>Extensibility<a class="headerlink" href="#extensibility" title="Link to this heading"></a></h2>
+<section id="custom-encoders">
+<h3>Custom Encoders<a class="headerlink" href="#custom-encoders" title="Link to this heading"></a></h3>
+<p>Implement custom encoder logic:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keras</span><span class="w"> </span><span class="kn">import</span> <span class="n">layers</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomEncoder</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="c1"># Your encoding logic</span>
+        <span class="k">return</span> <span class="n">encoded</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-loss-functions">
+<h3>Custom Loss Functions<a class="headerlink" href="#custom-loss-functions" title="Link to this heading"></a></h3>
+<p>Plug in custom loss:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keras</span><span class="w"> </span><span class="kn">import</span> <span class="n">losses</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantileLoss</span><span class="p">(</span><span class="n">losses</span><span class="o">.</span><span class="n">Loss</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">):</span>
+        <span class="c1"># Quantile-specific loss</span>
+        <span class="k">return</span> <span class="n">loss</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="n">QuantileLoss</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="configuration_guide.html"><span class="doc">Configuration Guide</span></a> - Detailed parameter reference</p></li>
+<li><p><a class="reference internal" href="api_reference.html"><span class="doc">API Reference</span></a> - Complete API documentation</p></li>
+<li><p><a class="reference internal" href="usage.html"><span class="doc">Usage</span></a> - Advanced usage patterns</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="configuration_guide.html" class="btn btn-neutral float-right" title="Configuration Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Laurent Kouadio.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

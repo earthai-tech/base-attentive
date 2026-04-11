@@ -1,0 +1,134 @@
+Usage
+=====
+
+Quick start
+-----------
+
+.. code-block:: python
+
+   import tensorflow as tf
+   from base_attentive import BaseAttentive
+
+   model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=2,
+       forecast_horizon=24,
+       quantiles=[0.1, 0.5, 0.9],
+       embed_dim=32,
+       attention_units=64,
+       num_heads=8,
+       dropout_rate=0.15,
+   )
+
+   batch_size = 32
+   x_static = tf.random.normal([batch_size, 4])
+   x_dynamic = tf.random.normal([batch_size, 10, 8])
+   x_future = tf.random.normal([batch_size, 24, 6])
+
+   predictions = model([x_static, x_dynamic, x_future])
+
+Input contract
+--------------
+
+``BaseAttentive`` expects up to three inputs in this order:
+
+1. static features
+2. dynamic historical features
+3. known future covariates
+
+The common shape contract is:
+
+- static: ``(batch, static_input_dim)``
+- dynamic: ``(batch, past_steps, dynamic_input_dim)``
+- future: ``(batch, forecast_horizon, future_input_dim)``
+
+If you pass a single tensor to the validation helpers, it is treated as the
+static slot and the missing slots are normalized to ``None``.
+
+Output shapes
+-------------
+
+Point-forecast output typically has shape:
+
+.. code-block:: text
+
+   (batch, forecast_horizon, output_dim)
+
+Quantile output typically has shape:
+
+.. code-block:: text
+
+   (batch, forecast_horizon, num_quantiles, output_dim)
+
+Architecture configuration
+--------------------------
+
+The model can be configured through ``architecture_config``:
+
+.. code-block:: python
+
+   transformer_config = {
+       "encoder_type": "transformer",
+       "decoder_attention_stack": ["cross", "hierarchical"],
+       "feature_processing": "dense",
+   }
+
+   model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=2,
+       forecast_horizon=24,
+       architecture_config=transformer_config,
+   )
+
+Common options
+--------------
+
+- ``encoder_type``: ``"hybrid"`` or ``"transformer"``
+- ``decoder_attention_stack``: attention layers such as
+  ``["cross", "hierarchical", "memory"]``
+- ``feature_processing``: ``"vsn"`` or ``"dense"``
+
+Serialization and reconfiguration
+---------------------------------
+
+The model exposes a standard Keras-style configuration API:
+
+.. code-block:: python
+
+   config = model.get_config()
+   cloned = BaseAttentive.from_config(config)
+
+To experiment with architecture changes without mutating the original
+instance, use ``reconfigure``:
+
+.. code-block:: python
+
+   transformer_model = model.reconfigure(
+       {"encoder_type": "transformer"}
+   )
+
+Validation helpers
+------------------
+
+The ``base_attentive.validation`` module provides small backend-aware helpers
+that are useful when preparing or post-processing model inputs:
+
+- ``validate_model_inputs`` normalizes the three-slot input structure
+- ``maybe_reduce_quantiles_bh`` reduces a quantile axis when present
+- ``ensure_bh1`` reshapes outputs into ``(batch, horizon, 1)``
+
+Development workflow
+--------------------
+
+The repository ships with a top-level ``Makefile`` for common tasks:
+
+.. code-block:: bash
+
+   make test-fast
+   make lint
+   make format
+   make build

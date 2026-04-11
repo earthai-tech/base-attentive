@@ -1,0 +1,1095 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Reference &mdash; BaseAttentive 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Components Reference" href="components_reference.html" />
+    <link rel="prev" title="Configuration Guide" href="configuration_guide.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2c3e50" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            BaseAttentive
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quick Start Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="backends.html">Backend Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture_guide.html">Architecture Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration_guide.html">Configuration Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#public-package-entry-points">Public package entry points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-base_attentive">Top-level package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.dependency_message"><code class="docutils literal notranslate"><span class="pre">dependency_message()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.get_backend"><code class="docutils literal notranslate"><span class="pre">get_backend()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.set_backend"><code class="docutils literal notranslate"><span class="pre">set_backend()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.get_available_backends"><code class="docutils literal notranslate"><span class="pre">get_available_backends()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.get_backend_capabilities"><code class="docutils literal notranslate"><span class="pre">get_backend_capabilities()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-base_attentive.backend">Backend utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.Backend"><code class="docutils literal notranslate"><span class="pre">Backend</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.name"><code class="docutils literal notranslate"><span class="pre">Backend.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.framework"><code class="docutils literal notranslate"><span class="pre">Backend.framework</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.required_modules"><code class="docutils literal notranslate"><span class="pre">Backend.required_modules</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.uses_keras_runtime"><code class="docutils literal notranslate"><span class="pre">Backend.uses_keras_runtime</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.experimental"><code class="docutils literal notranslate"><span class="pre">Backend.experimental</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.supports_base_attentive"><code class="docutils literal notranslate"><span class="pre">Backend.supports_base_attentive</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.blockers"><code class="docutils literal notranslate"><span class="pre">Backend.blockers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.Tensor"><code class="docutils literal notranslate"><span class="pre">Backend.Tensor</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.Layer"><code class="docutils literal notranslate"><span class="pre">Backend.Layer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.Model"><code class="docutils literal notranslate"><span class="pre">Backend.Model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.Sequential"><code class="docutils literal notranslate"><span class="pre">Backend.Sequential</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.Dense"><code class="docutils literal notranslate"><span class="pre">Backend.Dense</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.LSTM"><code class="docutils literal notranslate"><span class="pre">Backend.LSTM</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.MultiHeadAttention"><code class="docutils literal notranslate"><span class="pre">Backend.MultiHeadAttention</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.LayerNormalization"><code class="docutils literal notranslate"><span class="pre">Backend.LayerNormalization</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.Dropout"><code class="docutils literal notranslate"><span class="pre">Backend.Dropout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.BatchNormalization"><code class="docutils literal notranslate"><span class="pre">Backend.BatchNormalization</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.is_available"><code class="docutils literal notranslate"><span class="pre">Backend.is_available()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.Backend.get_capabilities"><code class="docutils literal notranslate"><span class="pre">Backend.get_capabilities()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.TensorFlowBackend"><code class="docutils literal notranslate"><span class="pre">TensorFlowBackend</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TensorFlowBackend.name"><code class="docutils literal notranslate"><span class="pre">TensorFlowBackend.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TensorFlowBackend.framework"><code class="docutils literal notranslate"><span class="pre">TensorFlowBackend.framework</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TensorFlowBackend.required_modules"><code class="docutils literal notranslate"><span class="pre">TensorFlowBackend.required_modules</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TensorFlowBackend.uses_keras_runtime"><code class="docutils literal notranslate"><span class="pre">TensorFlowBackend.uses_keras_runtime</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TensorFlowBackend.supports_base_attentive"><code class="docutils literal notranslate"><span class="pre">TensorFlowBackend.supports_base_attentive</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.JaxBackend"><code class="docutils literal notranslate"><span class="pre">JaxBackend</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.JaxBackend.name"><code class="docutils literal notranslate"><span class="pre">JaxBackend.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.JaxBackend.framework"><code class="docutils literal notranslate"><span class="pre">JaxBackend.framework</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.JaxBackend.required_modules"><code class="docutils literal notranslate"><span class="pre">JaxBackend.required_modules</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.JaxBackend.uses_keras_runtime"><code class="docutils literal notranslate"><span class="pre">JaxBackend.uses_keras_runtime</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.JaxBackend.experimental"><code class="docutils literal notranslate"><span class="pre">JaxBackend.experimental</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.JaxBackend.supports_base_attentive"><code class="docutils literal notranslate"><span class="pre">JaxBackend.supports_base_attentive</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.JaxBackend.blockers"><code class="docutils literal notranslate"><span class="pre">JaxBackend.blockers</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.TorchBackend"><code class="docutils literal notranslate"><span class="pre">TorchBackend</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TorchBackend.name"><code class="docutils literal notranslate"><span class="pre">TorchBackend.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TorchBackend.framework"><code class="docutils literal notranslate"><span class="pre">TorchBackend.framework</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TorchBackend.required_modules"><code class="docutils literal notranslate"><span class="pre">TorchBackend.required_modules</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TorchBackend.uses_keras_runtime"><code class="docutils literal notranslate"><span class="pre">TorchBackend.uses_keras_runtime</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TorchBackend.experimental"><code class="docutils literal notranslate"><span class="pre">TorchBackend.experimental</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TorchBackend.supports_base_attentive"><code class="docutils literal notranslate"><span class="pre">TorchBackend.supports_base_attentive</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.backend.TorchBackend.blockers"><code class="docutils literal notranslate"><span class="pre">TorchBackend.blockers</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.PyTorchBackend"><code class="docutils literal notranslate"><span class="pre">PyTorchBackend</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.get_backend"><code class="docutils literal notranslate"><span class="pre">get_backend()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.set_backend"><code class="docutils literal notranslate"><span class="pre">set_backend()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.get_available_backends"><code class="docutils literal notranslate"><span class="pre">get_available_backends()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.get_backend_capabilities"><code class="docutils literal notranslate"><span class="pre">get_backend_capabilities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.backend.normalize_backend_name"><code class="docutils literal notranslate"><span class="pre">normalize_backend_name()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-base_attentive.api.property">Learner mixin</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.api.property.NNLearner"><code class="docutils literal notranslate"><span class="pre">NNLearner</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.api.property.NNLearner.get_params"><code class="docutils literal notranslate"><span class="pre">NNLearner.get_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.api.property.NNLearner.set_params"><code class="docutils literal notranslate"><span class="pre">NNLearner.set_params()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-base_attentive.validation">Validation helpers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.validation.validate_model_inputs"><code class="docutils literal notranslate"><span class="pre">validate_model_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.validation.maybe_reduce_quantiles_bh"><code class="docutils literal notranslate"><span class="pre">maybe_reduce_quantiles_bh()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.validation.ensure_bh1"><code class="docutils literal notranslate"><span class="pre">ensure_bh1()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#core-model">Core model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#base_attentive.core.base_attentive.BaseAttentive"><code class="docutils literal notranslate"><span class="pre">BaseAttentive</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.core.base_attentive.BaseAttentive.run_encoder_decoder_core"><code class="docutils literal notranslate"><span class="pre">BaseAttentive.run_encoder_decoder_core()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.core.base_attentive.BaseAttentive.apply_attention_levels"><code class="docutils literal notranslate"><span class="pre">BaseAttentive.apply_attention_levels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.core.base_attentive.BaseAttentive.call"><code class="docutils literal notranslate"><span class="pre">BaseAttentive.call()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.core.base_attentive.BaseAttentive.get_config"><code class="docutils literal notranslate"><span class="pre">BaseAttentive.get_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.core.base_attentive.BaseAttentive.from_config"><code class="docutils literal notranslate"><span class="pre">BaseAttentive.from_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#base_attentive.core.base_attentive.BaseAttentive.reconfigure"><code class="docutils literal notranslate"><span class="pre">BaseAttentive.reconfigure()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="components_reference.html">Components Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development &amp; Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guidelines</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #2c3e50" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">BaseAttentive</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api_reference.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<section id="public-package-entry-points">
+<h2>Public package entry points<a class="headerlink" href="#public-package-entry-points" title="Link to this heading"></a></h2>
+<p>These are the main public imports most users interact with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">base_attentive</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseAttentive</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">base_attentive</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_backend</span><span class="p">,</span> <span class="n">set_backend</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">base_attentive</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_available_backends</span><span class="p">,</span>
+    <span class="n">get_backend_capabilities</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="module-base_attentive">
+<span id="top-level-package"></span><h2>Top-level package<a class="headerlink" href="#module-base_attentive" title="Link to this heading"></a></h2>
+<p>base_attentive: A foundational blueprint for sequence-to-sequence
+time series forecasting models with attention mechanisms.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.dependency_message">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.</span></span><span class="sig-name descname"><span class="pre">dependency_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive.html#dependency_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.dependency_message" title="Link to this definition"></a></dt>
+<dd><p>Return a dependency message for missing packages.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>module_name</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.get_backend">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.</span></span><span class="sig-name descname"><span class="pre">get_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#get_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.get_backend" title="Link to this definition"></a></dt>
+<dd><p>Get the current or requested backend runtime.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">name</span></code> is omitted, the lookup order is:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BASE_ATTENTIVE_BACKEND</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KERAS_BACKEND</span></code></p></li>
+<li><p>the previously set in-process backend</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tensorflow</span></code></p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#base_attentive.backend.Backend" title="base_attentive.backend.Backend"><em>Backend</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.set_backend">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.</span></span><span class="sig-name descname"><span class="pre">set_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#set_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.set_backend" title="Link to this definition"></a></dt>
+<dd><p>Set the default backend.</p>
+<p class="rubric">Notes</p>
+<p>For Keras 3 multi-backend runtimes, the backend should ideally be set
+before importing <code class="docutils literal notranslate"><span class="pre">keras</span></code>. If Keras is already loaded with a different
+runtime, a restart is recommended.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#base_attentive.backend.Backend" title="base_attentive.backend.Backend"><em>Backend</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.get_available_backends">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.</span></span><span class="sig-name descname"><span class="pre">get_available_backends</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#get_available_backends"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.get_available_backends" title="Link to this definition"></a></dt>
+<dd><p>Get the installed backends that can be imported.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.get_backend_capabilities">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.</span></span><span class="sig-name descname"><span class="pre">get_backend_capabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#get_backend_capabilities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.get_backend_capabilities" title="Link to this definition"></a></dt>
+<dd><p>Return a capability report for the current or requested backend.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-base_attentive.backend">
+<span id="backend-utilities"></span><h2>Backend utilities<a class="headerlink" href="#module-base_attentive.backend" title="Link to this heading"></a></h2>
+<p>Backend runtime abstraction for TensorFlow, JAX, and Torch.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">Backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load_runtime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#Backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.Backend" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for runtime backend descriptors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>load_runtime</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'base'</span></em><a class="headerlink" href="#base_attentive.backend.Backend.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.framework">
+<span class="sig-name descname"><span class="pre">framework</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'unknown'</span></em><a class="headerlink" href="#base_attentive.backend.Backend.framework" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.required_modules">
+<span class="sig-name descname"><span class="pre">required_modules</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></em><a class="headerlink" href="#base_attentive.backend.Backend.required_modules" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.uses_keras_runtime">
+<span class="sig-name descname"><span class="pre">uses_keras_runtime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#base_attentive.backend.Backend.uses_keras_runtime" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.experimental">
+<span class="sig-name descname"><span class="pre">experimental</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#base_attentive.backend.Backend.experimental" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.supports_base_attentive">
+<span class="sig-name descname"><span class="pre">supports_base_attentive</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#base_attentive.backend.Backend.supports_base_attentive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.blockers">
+<span class="sig-name descname"><span class="pre">blockers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></em><a class="headerlink" href="#base_attentive.backend.Backend.blockers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.Tensor">
+<span class="sig-name descname"><span class="pre">Tensor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.Tensor" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.Layer">
+<span class="sig-name descname"><span class="pre">Layer</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.Layer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.Model">
+<span class="sig-name descname"><span class="pre">Model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.Model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.Sequential">
+<span class="sig-name descname"><span class="pre">Sequential</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.Sequential" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.Dense">
+<span class="sig-name descname"><span class="pre">Dense</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.Dense" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.LSTM">
+<span class="sig-name descname"><span class="pre">LSTM</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.LSTM" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.MultiHeadAttention">
+<span class="sig-name descname"><span class="pre">MultiHeadAttention</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.MultiHeadAttention" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.LayerNormalization">
+<span class="sig-name descname"><span class="pre">LayerNormalization</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.LayerNormalization" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.Dropout">
+<span class="sig-name descname"><span class="pre">Dropout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.Dropout" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.BatchNormalization">
+<span class="sig-name descname"><span class="pre">BatchNormalization</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#base_attentive.backend.Backend.BatchNormalization" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.is_available">
+<span class="sig-name descname"><span class="pre">is_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#Backend.is_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.Backend.is_available" title="Link to this definition"></a></dt>
+<dd><p>Check whether the backend can be imported.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.backend.Backend.get_capabilities">
+<span class="sig-name descname"><span class="pre">get_capabilities</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#Backend.get_capabilities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.Backend.get_capabilities" title="Link to this definition"></a></dt>
+<dd><p>Return a capability summary for the backend.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="base_attentive.backend.TensorFlowBackend">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">TensorFlowBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load_runtime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#TensorFlowBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.TensorFlowBackend" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#base_attentive.backend.Backend" title="base_attentive.backend.Backend"><code class="xref py py-class docutils literal notranslate"><span class="pre">Backend</span></code></a></p>
+<p>TensorFlow-backed runtime.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>load_runtime</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TensorFlowBackend.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'tensorflow'</span></em><a class="headerlink" href="#base_attentive.backend.TensorFlowBackend.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TensorFlowBackend.framework">
+<span class="sig-name descname"><span class="pre">framework</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'tensorflow'</span></em><a class="headerlink" href="#base_attentive.backend.TensorFlowBackend.framework" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TensorFlowBackend.required_modules">
+<span class="sig-name descname"><span class="pre">required_modules</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('tensorflow',)</span></em><a class="headerlink" href="#base_attentive.backend.TensorFlowBackend.required_modules" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TensorFlowBackend.uses_keras_runtime">
+<span class="sig-name descname"><span class="pre">uses_keras_runtime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#base_attentive.backend.TensorFlowBackend.uses_keras_runtime" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TensorFlowBackend.supports_base_attentive">
+<span class="sig-name descname"><span class="pre">supports_base_attentive</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#base_attentive.backend.TensorFlowBackend.supports_base_attentive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="base_attentive.backend.JaxBackend">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">JaxBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load_runtime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#JaxBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.JaxBackend" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#base_attentive.backend.Backend" title="base_attentive.backend.Backend"><code class="xref py py-class docutils literal notranslate"><span class="pre">Backend</span></code></a></p>
+<p>Keras-on-JAX runtime descriptor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>load_runtime</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.JaxBackend.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'jax'</span></em><a class="headerlink" href="#base_attentive.backend.JaxBackend.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.JaxBackend.framework">
+<span class="sig-name descname"><span class="pre">framework</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'jax'</span></em><a class="headerlink" href="#base_attentive.backend.JaxBackend.framework" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.JaxBackend.required_modules">
+<span class="sig-name descname"><span class="pre">required_modules</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('keras',</span> <span class="pre">'jax')</span></em><a class="headerlink" href="#base_attentive.backend.JaxBackend.required_modules" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.JaxBackend.uses_keras_runtime">
+<span class="sig-name descname"><span class="pre">uses_keras_runtime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#base_attentive.backend.JaxBackend.uses_keras_runtime" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.JaxBackend.experimental">
+<span class="sig-name descname"><span class="pre">experimental</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#base_attentive.backend.JaxBackend.experimental" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.JaxBackend.supports_base_attentive">
+<span class="sig-name descname"><span class="pre">supports_base_attentive</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#base_attentive.backend.JaxBackend.supports_base_attentive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.JaxBackend.blockers">
+<span class="sig-name descname"><span class="pre">blockers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('BaseAttentive</span> <span class="pre">still</span> <span class="pre">contains</span> <span class="pre">TensorFlow-oriented</span> <span class="pre">compatibility</span> <span class="pre">paths.',</span> <span class="pre">'The</span> <span class="pre">compat.tf</span> <span class="pre">helpers</span> <span class="pre">are</span> <span class="pre">still</span> <span class="pre">TensorFlow-specific.',</span> <span class="pre">'Some</span> <span class="pre">runtime</span> <span class="pre">shape/assert</span> <span class="pre">checks</span> <span class="pre">still</span> <span class="pre">assume</span> <span class="pre">TensorFlow</span> <span class="pre">graph</span> <span class="pre">semantics.')</span></em><a class="headerlink" href="#base_attentive.backend.JaxBackend.blockers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="base_attentive.backend.TorchBackend">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">TorchBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load_runtime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#TorchBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.TorchBackend" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#base_attentive.backend.Backend" title="base_attentive.backend.Backend"><code class="xref py py-class docutils literal notranslate"><span class="pre">Backend</span></code></a></p>
+<p>Keras-on-Torch runtime descriptor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>load_runtime</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TorchBackend.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'torch'</span></em><a class="headerlink" href="#base_attentive.backend.TorchBackend.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TorchBackend.framework">
+<span class="sig-name descname"><span class="pre">framework</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'torch'</span></em><a class="headerlink" href="#base_attentive.backend.TorchBackend.framework" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TorchBackend.required_modules">
+<span class="sig-name descname"><span class="pre">required_modules</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('keras',</span> <span class="pre">'torch')</span></em><a class="headerlink" href="#base_attentive.backend.TorchBackend.required_modules" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TorchBackend.uses_keras_runtime">
+<span class="sig-name descname"><span class="pre">uses_keras_runtime</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#base_attentive.backend.TorchBackend.uses_keras_runtime" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TorchBackend.experimental">
+<span class="sig-name descname"><span class="pre">experimental</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#base_attentive.backend.TorchBackend.experimental" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TorchBackend.supports_base_attentive">
+<span class="sig-name descname"><span class="pre">supports_base_attentive</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#base_attentive.backend.TorchBackend.supports_base_attentive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="base_attentive.backend.TorchBackend.blockers">
+<span class="sig-name descname"><span class="pre">blockers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('BaseAttentive</span> <span class="pre">still</span> <span class="pre">contains</span> <span class="pre">TensorFlow-oriented</span> <span class="pre">compatibility</span> <span class="pre">paths.',</span> <span class="pre">'The</span> <span class="pre">compat.tf</span> <span class="pre">helpers</span> <span class="pre">are</span> <span class="pre">still</span> <span class="pre">TensorFlow-specific.',</span> <span class="pre">'Some</span> <span class="pre">runtime</span> <span class="pre">shape/assert</span> <span class="pre">checks</span> <span class="pre">still</span> <span class="pre">assume</span> <span class="pre">TensorFlow</span> <span class="pre">graph</span> <span class="pre">semantics.')</span></em><a class="headerlink" href="#base_attentive.backend.TorchBackend.blockers" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="base_attentive.backend.PyTorchBackend">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">PyTorchBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">load_runtime</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#PyTorchBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.PyTorchBackend" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#base_attentive.backend.TorchBackend" title="base_attentive.backend.TorchBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">TorchBackend</span></code></a></p>
+<p>Backward-compatible alias for the Torch runtime.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>load_runtime</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.backend.get_backend">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">get_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#get_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.get_backend" title="Link to this definition"></a></dt>
+<dd><p>Get the current or requested backend runtime.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">name</span></code> is omitted, the lookup order is:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BASE_ATTENTIVE_BACKEND</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">KERAS_BACKEND</span></code></p></li>
+<li><p>the previously set in-process backend</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tensorflow</span></code></p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#base_attentive.backend.Backend" title="base_attentive.backend.Backend"><em>Backend</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.backend.set_backend">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">set_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#set_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.set_backend" title="Link to this definition"></a></dt>
+<dd><p>Set the default backend.</p>
+<p class="rubric">Notes</p>
+<p>For Keras 3 multi-backend runtimes, the backend should ideally be set
+before importing <code class="docutils literal notranslate"><span class="pre">keras</span></code>. If Keras is already loaded with a different
+runtime, a restart is recommended.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#base_attentive.backend.Backend" title="base_attentive.backend.Backend"><em>Backend</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.backend.get_available_backends">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">get_available_backends</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#get_available_backends"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.get_available_backends" title="Link to this definition"></a></dt>
+<dd><p>Get the installed backends that can be imported.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.backend.get_backend_capabilities">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">get_backend_capabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#get_backend_capabilities"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.get_backend_capabilities" title="Link to this definition"></a></dt>
+<dd><p>Return a capability report for the current or requested backend.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.backend.normalize_backend_name">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.backend.</span></span><span class="sig-name descname"><span class="pre">normalize_backend_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/backend.html#normalize_backend_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.backend.normalize_backend_name" title="Link to this definition"></a></dt>
+<dd><p>Normalize user-facing backend aliases to canonical names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-base_attentive.api.property">
+<span id="learner-mixin"></span><h2>Learner mixin<a class="headerlink" href="#module-base_attentive.api.property" title="Link to this heading"></a></h2>
+<p>Property and base class definitions for NN learners.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="base_attentive.api.property.NNLearner">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base_attentive.api.property.</span></span><span class="sig-name descname"><span class="pre">NNLearner</span></span><a class="reference internal" href="_modules/base_attentive/api/property.html#NNLearner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.api.property.NNLearner" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for neural network learners.</p>
+<p>Provides parameter management and introspection for NN components.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.api.property.NNLearner.get_params">
+<span class="sig-name descname"><span class="pre">get_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/api/property.html#NNLearner.get_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.api.property.NNLearner.get_params" title="Link to this definition"></a></dt>
+<dd><p>Get the parameters for this learner.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>deep</strong> (<em>bool</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.api.property.NNLearner.set_params">
+<span class="sig-name descname"><span class="pre">set_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/api/property.html#NNLearner.set_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.api.property.NNLearner.set_params" title="Link to this definition"></a></dt>
+<dd><p>Set the parameters of this learner.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>params</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#base_attentive.api.property.NNLearner" title="base_attentive.api.property.NNLearner"><em>NNLearner</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-base_attentive.validation">
+<span id="validation-helpers"></span><h2>Validation helpers<a class="headerlink" href="#module-base_attentive.validation" title="Link to this heading"></a></h2>
+<p>Utilities for backend-agnostic tensor validation.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.validation.validate_model_inputs">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.validation.</span></span><span class="sig-name descname"><span class="pre">validate_model_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">static_input_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_input_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">future_covariate_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_horizon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'raise'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'strict'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deep_check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/validation.html#validate_model_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.validation.validate_model_inputs" title="Link to this definition"></a></dt>
+<dd><p>Validate and homogenize input tensors for model workflows.</p>
+<p>This entrypoint intentionally stays lightweight: it normalizes the input
+container shape and converts values into the active Keras runtime tensor
+type when a runtime is available. When no Keras runtime is configured, the
+raw values are returned unchanged. <code class="docutils literal notranslate"><span class="pre">None</span></code> inputs are normalized to
+<code class="docutils literal notranslate"><span class="pre">(None,</span> <span class="pre">None,</span> <span class="pre">None)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputs</strong> (<em>Any</em><em> | </em><em>ndarray</em><em> | </em><em>list</em>)</p></li>
+<li><p><strong>static_input_dim</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>dynamic_input_dim</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>future_covariate_dim</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>forecast_horizon</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>error</strong> (<em>str</em>)</p></li>
+<li><p><strong>mode</strong> (<em>str</em>)</p></li>
+<li><p><strong>deep_check</strong> (<em>bool</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>model_name</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>verbose</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[<em>Any</em> | None, <em>Any</em> | None, <em>Any</em> | None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.validation.maybe_reduce_quantiles_bh">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.validation.</span></span><span class="sig-name descname"><span class="pre">maybe_reduce_quantiles_bh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tensor'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/validation.html#maybe_reduce_quantiles_bh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.validation.maybe_reduce_quantiles_bh" title="Link to this definition"></a></dt>
+<dd><p>Reduce a quantile axis when a backend tensor carries one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Any</em>)</p></li>
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>axis</strong> (<em>int</em>)</p></li>
+<li><p><strong>reduction</strong> (<em>str</em><em> | </em><em>callable</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="base_attentive.validation.ensure_bh1">
+<span class="sig-prename descclassname"><span class="pre">base_attentive.validation.</span></span><span class="sig-name descname"><span class="pre">ensure_bh1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tensor'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_rank1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/validation.html#ensure_bh1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.validation.ensure_bh1" title="Link to this definition"></a></dt>
+<dd><p>Ensure a tensor-like value has shape <code class="docutils literal notranslate"><span class="pre">(B,</span> <span class="pre">H,</span> <span class="pre">1)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Any</em>)</p></li>
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>dtype</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>reduce_axis</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>reduction</strong> (<em>str</em><em> | </em><em>callable</em>)</p></li>
+<li><p><strong>allow_rank1</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="core-model">
+<h2>Core model<a class="headerlink" href="#core-model" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="base_attentive.core.base_attentive.BaseAttentive">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">base_attentive.core.base_attentive.</span></span><span class="sig-name descname"><span class="pre">BaseAttentive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/core/base_attentive.html#BaseAttentive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.core.base_attentive.BaseAttentive" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>, <a class="reference internal" href="#base_attentive.api.property.NNLearner" title="base_attentive.api.property.NNLearner"><code class="xref py py-class docutils literal notranslate"><span class="pre">NNLearner</span></code></a></p>
+<p>BaseAttentive forecasting model.</p>
+<p>BaseAttentive is a configurable encoder-decoder model for multi-horizon
+forecasting from static, dynamic historical, and known future features.
+The model supports both point forecasting and quantile forecasting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>static_input_dim</strong> (<em>int</em>) – Dimensionality of the static (time-invariant) input features.
+These are features that do not change over time for a given
+sample, such as a sensor location, soil type, or product
+category. If 0, no static features are used.</p></li>
+<li><p><strong>dynamic_input_dim</strong> (<em>int</em>) – Dimensionality of the dynamic (time-varying) input features
+known over the historical lookback window. This usually includes
+lagged target values and past covariates such as rainfall,
+temperature, or sales history.</p></li>
+<li><p><strong>future_input_dim</strong> (<em>int</em>) – Dimensionality of the time-varying features whose values are
+known in advance for the forecast period, such as holidays,
+planned promotions, or calendar indicators. If 0, no future
+features are used.</p></li>
+<li><p><strong>output_dim</strong> (<em>int</em><em>, </em><em>default 1</em>) – Number of target variables predicted at each forecast step.</p></li>
+<li><p><strong>forecast_horizon</strong> (<em>int</em><em>, </em><em>default 1</em>) – Number of future steps predicted by the decoder.</p></li>
+<li><p><strong>mode</strong> (<em>{'pihal_like'</em><em>, </em><em>'tft_like'}</em><em> or </em><em>None</em><em>, </em><em>default None</em>) – Controls how future covariates are interpreted. <code class="docutils literal notranslate"><span class="pre">'pihal_like'</span></code> expects
+future features with exactly <code class="docutils literal notranslate"><span class="pre">forecast_horizon</span></code> steps. <code class="docutils literal notranslate"><span class="pre">'tft_like'</span></code>
+expects encoder plus decoder spans in the future tensor.</p></li>
+<li><p><strong>num_encoder_layers</strong> (<em>int</em><em>, </em><em>default 2</em>) – Number of encoder self-attention blocks used in transformer-style paths.</p></li>
+<li><p><strong>quantiles</strong> (<em>list</em><em>[</em><em>float</em><em>] or </em><em>None</em><em>, </em><em>default None</em>) – Optional quantile levels such as <code class="docutils literal notranslate"><span class="pre">[0.1,</span> <span class="pre">0.5,</span> <span class="pre">0.9]</span></code>. When provided, the
+model returns quantile-aware outputs.</p></li>
+<li><p><strong>embed_dim</strong> (<em>int</em><em>, </em><em>default 32</em>) – Base dimensionality of the internal feature space. Static,
+dynamic, and future inputs are projected into this shared
+representation before they are processed by recurrent and
+attention layers.</p></li>
+<li><p><strong>hidden_units</strong> (<em>int</em><em>, </em><em>default 64</em>) – Number of hidden units used in the Gated Residual Networks
+throughout the architecture. Increasing this value raises the
+capacity of the model’s non-linear transformations.</p></li>
+<li><p><strong>lstm_units</strong> (<em>int</em><em>, </em><em>default 64</em>) – Number of hidden units in each LSTM inside the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">MultiScaleLSTM</span></code>
+encoder block.</p></li>
+<li><p><strong>attention_units</strong> (<em>int</em><em>, </em><em>default 32</em>) – Output dimensionality used by the attention mechanisms. This
+corresponds to the model dimension used for cross-attention,
+hierarchical attention, and memory-augmented attention. It
+should be divisible by <cite>num_heads</cite>.</p></li>
+<li><p><strong>num_heads</strong> (<em>int</em><em>, </em><em>default 4</em>) – Number of attention heads in each multi-head attention layer.
+Multiple heads allow the model to attend to different
+representation subspaces in parallel.</p></li>
+<li><p><strong>dropout_rate</strong> (<em>float</em><em>, </em><em>default 0.1</em>) – Dropout rate applied inside several layers such as GRNs and
+attention blocks to reduce overfitting. Must be between 0 and 1.</p></li>
+<li><p><strong>max_window_size</strong> (<em>int</em><em>, </em><em>default 10</em>) – Number of past time steps in the lookback window. This should
+match the temporal span used when preparing the historical
+dynamic inputs.</p></li>
+<li><p><strong>memory_size</strong> (<em>int</em><em>, </em><em>default 100</em>) – Number of memory slots used by the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">MemoryAugmentedAttention</span></code>
+layer for modeling longer-range dependencies.</p></li>
+<li><p><strong>scales</strong> (<em>list</em><em> of </em><em>int</em><em>, </em><em>optional</em>) – Scale factors used by
+<code class="xref py py-class docutils literal notranslate"><span class="pre">MultiScaleLSTM</span></code>.
+Each scale <cite>s</cite> processes every <cite>s</cite>-th time step. If <cite>None</cite> or
+<code class="docutils literal notranslate"><span class="pre">'auto'</span></code>, the default scale list is <cite>[1]</cite>.</p></li>
+<li><p><strong>multi_scale_agg</strong> (<em>{'last'</em><em>, </em><em>'average'</em><em>, </em><em>'concat'</em><em>, </em><em>...</em><em>}</em><em>, </em><em>default 'last'</em>) – Strategy used to combine the outputs from the multi-scale LSTM
+encoder. <code class="docutils literal notranslate"><span class="pre">'concat'</span></code> preserves a richer sequence view for later
+attention layers, while <code class="docutils literal notranslate"><span class="pre">'last'</span></code> and related reductions produce
+a compact context vector.</p></li>
+<li><p><strong>final_agg</strong> (<em>{'last'</em><em>, </em><em>'average'</em><em>, </em><em>'flatten'}</em><em>, </em><em>default 'last'</em>) – Aggregation strategy used to collapse the final temporal feature
+map into a single feature vector before decoding.</p></li>
+<li><p><strong>activation</strong> (<em>str</em><em>, </em><em>default 'relu'</em>) – Activation function used in Dense layers and Gated Residual
+Networks throughout the model.</p></li>
+<li><p><strong>use_residuals</strong> (<em>bool</em><em>, </em><em>default True</em>) – If <cite>True</cite>, enables residual add-and-normalize connections after
+key sublayers. These shortcuts improve optimization and help
+preserve gradient flow in deeper models.</p></li>
+<li><p><strong>use_vsn</strong> (<em>bool</em><em>, </em><em>default True</em>) – If <cite>True</cite>, Variable Selection Networks are used for input feature
+processing. If <cite>False</cite>, simpler Dense projections are used instead.</p></li>
+<li><p><strong>vsn_units</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of units used inside the internal GRNs of the Variable
+Selection Networks. If <cite>None</cite>, the model falls back to a value
+derived from <cite>hidden_units</cite>.</p></li>
+<li><p><strong>use_batch_norm</strong> (<em>bool</em><em>, </em><em>default False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, batch normalization layers are enabled where supported.</p></li>
+<li><p><strong>apply_dtw</strong> (<em>bool</em><em>, </em><em>default True</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, apply dynamic time window alignment in the encoder path.</p></li>
+<li><p><strong>attention_levels</strong> (<em>str</em><em> or </em><em>list</em><em>[</em><em>str</em><em>] or </em><em>None</em><em>, </em><em>default None</em>) – Legacy shortcut for selecting decoder attention layers. Prefer
+<code class="docutils literal notranslate"><span class="pre">architecture_config={'decoder_attention_stack':</span> <span class="pre">[...]}</span></code>.</p></li>
+<li><p><strong>objective</strong> (<em>{'hybrid'</em><em>, </em><em>'transformer'}</em><em>, </em><em>default 'hybrid'</em>) – Legacy shortcut for selecting the encoder backbone. Prefer
+<code class="docutils literal notranslate"><span class="pre">architecture_config={'encoder_type':</span> <span class="pre">...}</span></code>.</p></li>
+<li><p><strong>architecture_config</strong> (<em>dict</em><em> or </em><em>None</em><em>, </em><em>default None</em>) – Fine-grained architectural configuration. Common keys include
+<code class="docutils literal notranslate"><span class="pre">encoder_type</span></code>, <code class="docutils literal notranslate"><span class="pre">decoder_attention_stack</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">feature_processing</span></code>.</p></li>
+<li><p><strong>verbose</strong> (<em>int</em><em>, </em><em>default 0</em>) – Verbosity level used for model-side logging.</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>default &quot;BaseAttentiveModel&quot;</em>) – Model name passed to the base Keras model constructor.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments forwarded to the base Keras model.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Inputs are expected in the order <code class="docutils literal notranslate"><span class="pre">[static,</span> <span class="pre">dynamic,</span> <span class="pre">future]</span></code>.</p></li>
+<li><p>Point forecasts typically have shape <code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">horizon,</span> <span class="pre">output_dim)</span></code>.</p></li>
+<li><p>Quantile forecasts typically have shape
+<code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">horizon,</span> <span class="pre">num_quantiles,</span> <span class="pre">output_dim)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">architecture_config</span></code> overrides legacy shortcuts such as <code class="docutils literal notranslate"><span class="pre">objective</span></code> and
+<code class="docutils literal notranslate"><span class="pre">attention_levels</span></code>.</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">base_attentive</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseAttentive</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">BaseAttentive</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">static_input_dim</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">dynamic_input_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">future_input_dim</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">forecast_horizon</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">transformer_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">reconfigure</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="p">{</span><span class="s2">&quot;encoder_type&quot;</span><span class="p">:</span> <span class="s2">&quot;transformer&quot;</span><span class="p">}</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.core.base_attentive.BaseAttentive.run_encoder_decoder_core">
+<span class="sig-name descname"><span class="pre">run_encoder_decoder_core</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">static_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">future_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/core/base_attentive.html#BaseAttentive.run_encoder_decoder_core"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.core.base_attentive.BaseAttentive.run_encoder_decoder_core" title="Link to this definition"></a></dt>
+<dd><p>Executes the data-driven pipeline with a selectable encoder
+architecture, processing static, dynamic, and future inputs through
+the encoder-decoder interaction. Attention mechanisms are applied in
+the decoder block, with flexibility to select which types of attention
+to use via the <cite>att_levels</cite> parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>static_input</strong> (<em>Tensor</em>) – The input tensor containing static features, which remain constant
+over time (e.g., environmental data, geographical features).</p></li>
+<li><p><strong>dynamic_input</strong> (<em>Tensor</em>) – The input tensor containing dynamic features, which vary over time
+(e.g., sensor readings, time-series data).</p></li>
+<li><p><strong>future_input</strong> (<em>Tensor</em>) – The input tensor representing future features, typically used for
+forecasting or projection purposes.</p></li>
+<li><p><strong>training</strong> (<em>bool</em>) – A flag indicating whether the model is in training mode. This flag
+controls the use of training-specific operations, such as dropout
+and batch normalization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The final output tensor, which has undergone attention fusion and
+time-based aggregation. This tensor is used for further tasks such
+as classification, regression, or forecasting.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The method processes static, dynamic, and future inputs through
+separate paths before combining them for the encoder.</p></li>
+<li><p>Attention mechanisms are applied in the decoder block. The
+specific attention types and their order are controlled via the
+<cite>att_levels</cite> parameter, which can include:</p>
+<ul>
+<li><p>‘cross’ for cross attention.</p></li>
+<li><p>‘hierarchical’ for hierarchical attention.</p></li>
+<li><p>‘memory’ for memory-augmented attention.</p></li>
+</ul>
+</li>
+<li><p>If multiple attention mechanisms are chosen, they are applied
+sequentially.</p></li>
+<li><p>The time dimension is collapsed in the final output, resulting
+in a single vector per sample.</p></li>
+</ul>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><p>Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L.,
+Gomez, A., Kaiser, Ł., Polosukhin, I. (2017). Attention is all you
+need. <em>NeurIPS 2017</em>, 30, 6000-6010.</p></li>
+<li><p>Bahdanau, D., Cho, K., &amp; Bengio, Y. (2015). Neural Machine
+Translation by Jointly Learning to Align and Translate. <em>ICLR 2015</em>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.core.base_attentive.BaseAttentive.apply_attention_levels">
+<span class="sig-name descname"><span class="pre">apply_attention_levels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">projected_decoder_input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_sequences</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/core/base_attentive.html#BaseAttentive.apply_attention_levels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.core.base_attentive.BaseAttentive.apply_attention_levels" title="Link to this definition"></a></dt>
+<dd><p>Applies attention mechanisms in the order specified by <cite>att_levels</cite>,
+using the provided attention methods such as cross attention,
+hierarchical attention, and memory-augmented attention.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>projected_decoder_input</strong> (<em>Tensor</em>) – The input tensor to be used in the attention mechanisms.</p></li>
+<li><p><strong>encoder_sequences</strong> (<em>Tensor</em>) – The encoder output sequences used in attention.</p></li>
+<li><p><strong>training</strong> (<em>bool</em>) – A flag indicating whether the model is in training mode.</p></li>
+<li><p><strong>att_levels</strong> (<em>str</em><em>, </em><em>list</em><em> of </em><em>str</em><em>, </em><em>int</em><em>, or </em><em>None</em>) – <p>Specifies the attention mechanisms to apply and the order:</p>
+<ul>
+<li><p>If None or ‘use_all’ or ‘*’, use all attention mechanisms.</p></li>
+<li><p>If ‘hier_att’ or ‘hierarchical_attention’, apply
+hierarchical attention.</p></li>
+<li><p>If ‘memo_aug_att’ or ‘memory_augmented_attention’,
+apply memory-augmented attention.</p></li>
+<li><p>If a list of strings, apply attention types in the provided order.</p></li>
+<li><p>If an integer (1, 2, 3), map it to cross attention (1),
+hierarchical attention (2),
+or memory-augmented attention (3).</p></li>
+</ul>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The final output tensor after applying attention mechanisms in order.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The order of attention mechanisms is determined by the provided
+<cite>att_levels</cite> list.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.core.base_attentive.BaseAttentive.call">
+<span class="sig-name descname"><span class="pre">call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/core/base_attentive.html#BaseAttentive.call"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.core.base_attentive.BaseAttentive.call" title="Link to this definition"></a></dt>
+<dd><p>Forward pass for the attentive model.</p>
+<p>This method processes the input data, validates the dimensions,
+and then performs the forward pass through the encoder-decoder
+network. The model applies attention mechanisms in the decoder
+phase and performs quantile distribution modeling if enabled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputs</strong> (<em>Tensor</em>) – A tensor containing the input data. It includes the static,
+dynamic, and future covariate features required for the model.</p></li>
+<li><p><strong>training</strong> (<em>bool</em><em>, </em><em>optional</em><em>, </em><em>default=False</em>) – A flag indicating whether the model is in training mode.
+This flag controls operations such as dropout and batch
+normalization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The final output tensor after passing through the model,
+which may include quantile distribution modeling depending
+on the configuration of the model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The method first validates the input dimensions for static,
+dynamic, and future features using <cite>validate_model_inputs</cite>.</p></li>
+<li><p>The model then asserts that the future input tensor has the
+correct time span using <cite>tf_assert_equal</cite>.</p></li>
+<li><p>The forward pass is completed by invoking the encoder-decoder
+core method (<cite>run_encoder_decoder_core</cite>), followed by the
+multi-decoder and quantile distribution modeling (if enabled).</p></li>
+</ul>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><p>Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L.,
+Gomez, A., Kaiser, Ł., Polosukhin, I. (2017). Attention is all
+you need. <em>NeurIPS 2017</em>, 30, 6000-6010.</p></li>
+<li><p>Bahdanau, D., Cho, K., &amp; Bengio, Y. (2015). Neural Machine
+Translation by Jointly Learning to Align and Translate.
+<em>ICLR 2015</em>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.core.base_attentive.BaseAttentive.get_config">
+<span class="sig-name descname"><span class="pre">get_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/core/base_attentive.html#BaseAttentive.get_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.core.base_attentive.BaseAttentive.get_config" title="Link to this definition"></a></dt>
+<dd><p>Returns the configuration of the model as a dictionary.</p>
+<p>This method retrieves the configuration of the model,
+including all the hyperparameters and settings that define
+the model’s behavior. The returned dictionary can be used for
+saving, reproducing, or inspecting the model’s configuration.</p>
+<p>The method overrides the default <cite>get_config</cite> method from
+the parent class and includes specific attributes of the
+<cite>BaseAttentive</cite> model, such as the input dimensions, architecture
+type, attention mechanisms, and regularization settings. The
+configuration can be serialized and used to recreate the model
+with the same parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.core.base_attentive.BaseAttentive.from_config">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/core/base_attentive.html#BaseAttentive.from_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.core.base_attentive.BaseAttentive.from_config" title="Link to this definition"></a></dt>
+<dd><p>Creates a model from its config.</p>
+<p>This method is the reverse of get_config, capable of handling
+the nested architecture_config dictionary.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="base_attentive.core.base_attentive.BaseAttentive.reconfigure">
+<span class="sig-name descname"><span class="pre">reconfigure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">architecture_config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/base_attentive/core/base_attentive.html#BaseAttentive.reconfigure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#base_attentive.core.base_attentive.BaseAttentive.reconfigure" title="Link to this definition"></a></dt>
+<dd><p>Creates a new model instance with a modified architecture.</p>
+<p>This method takes the configuration of the current model, updates
+the architectural components with the provided dictionary, and
+returns a new, un-trained model instance with the specified
+changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>(</strong><strong>Dict</strong><strong>[</strong><strong>str</strong> (<em>architecture_config</em>) – A dictionary with new architectural settings, such as
+{‘encoder_type’: ‘transformer’}.</p></li>
+<li><p><strong>Any</strong><strong>]</strong><strong>)</strong> – A dictionary with new architectural settings, such as
+{‘encoder_type’: ‘transformer’}.</p></li>
+<li><p><strong>architecture_config</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new model instance with the updated architecture.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#base_attentive.core.base_attentive.BaseAttentive" title="base_attentive.core.base_attentive.BaseAttentive">BaseAttentive</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="configuration_guide.html" class="btn btn-neutral float-left" title="Configuration Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="components_reference.html" class="btn btn-neutral float-right" title="Components Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Laurent Kouadio.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
