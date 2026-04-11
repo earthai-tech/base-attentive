@@ -291,7 +291,36 @@ def get_backend_capabilities(
     if name is None:
         try:
             backend = get_backend()
-            return backend.get_capabilities()
+            caps = backend.get_capabilities()
+            caps.setdefault("name", getattr(backend, "name", "unknown"))
+            caps.setdefault(
+                "framework",
+                getattr(backend, "framework", getattr(backend, "name", "unknown")),
+            )
+            caps.setdefault(
+                "available",
+                backend.is_available() if hasattr(backend, "is_available") else True,
+            )
+            caps.setdefault(
+                "uses_keras_runtime",
+                getattr(backend, "uses_keras_runtime", False),
+            )
+            caps.setdefault("experimental", getattr(backend, "experimental", False))
+            caps.setdefault(
+                "supports_base_attentive",
+                getattr(backend, "supports_base_attentive", False),
+            )
+            caps.setdefault(
+                "supports_base_attentive_v2",
+                getattr(backend, "supports_base_attentive_v2", False),
+            )
+            caps.setdefault("blockers", list(getattr(backend, "blockers", ())))
+            caps.setdefault("v2_blockers", list(getattr(backend, "v2_blockers", ())))
+            caps.setdefault(
+                "version",
+                get_backend_version(getattr(backend, "name", "tensorflow")),
+            )
+            return caps
         except Exception:
             name = "tensorflow"
 
@@ -304,7 +333,30 @@ def get_backend_capabilities(
     try:
         backend = _BACKENDS[normalized](load_runtime=False)
         caps = backend.get_capabilities()
-        # Add version info
+        caps.setdefault("name", getattr(backend, "name", normalized))
+        caps.setdefault(
+            "framework",
+            getattr(_BACKENDS[normalized], "framework", normalized),
+        )
+        caps.setdefault(
+            "available",
+            backend.is_available() if hasattr(backend, "is_available") else True,
+        )
+        caps.setdefault(
+            "uses_keras_runtime",
+            getattr(backend, "uses_keras_runtime", False),
+        )
+        caps.setdefault("experimental", getattr(backend, "experimental", False))
+        caps.setdefault(
+            "supports_base_attentive",
+            getattr(backend, "supports_base_attentive", False),
+        )
+        caps.setdefault(
+            "supports_base_attentive_v2",
+            getattr(backend, "supports_base_attentive_v2", False),
+        )
+        caps.setdefault("blockers", list(getattr(backend, "blockers", ())))
+        caps.setdefault("v2_blockers", list(getattr(backend, "v2_blockers", ())))
         caps["version"] = get_backend_version(normalized)
         return caps
     except Exception as e:
@@ -319,7 +371,11 @@ def get_backend_capabilities(
             "supports_base_attentive": getattr(
                 _BACKENDS[normalized], "supports_base_attentive", False
             ),
+            "supports_base_attentive_v2": getattr(
+                _BACKENDS[normalized], "supports_base_attentive_v2", False
+            ),
             "blockers": list(getattr(_BACKENDS[normalized], "blockers", ())),
+            "v2_blockers": list(getattr(_BACKENDS[normalized], "v2_blockers", ())),
             "version": get_backend_version(normalized),
             "error": str(e),
         }
@@ -382,20 +438,34 @@ def set_backend(name: str) -> Backend:
 def _auto_initialize():
     """Auto-initialize backend on module import."""
     try:
-        # Check if already set
-        if "BASE_ATTENTIVE_BACKEND" in os.environ:
+        configured_backend = os.environ.get("BASE_ATTENTIVE_BACKEND")
+        if configured_backend:
+            normalized = normalize_backend_name(configured_backend)
+            os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
+            os.environ.setdefault("KERAS_BACKEND", normalized)
+            return
+
+        keras_backend = os.environ.get("KERAS_BACKEND")
+        if keras_backend:
+            normalized = normalize_backend_name(keras_backend)
+            os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
+            os.environ["KERAS_BACKEND"] = normalized
             return
 
         # Try to auto-select best backend
         best = select_best_backend(require_supported=True)
         if best:
-            os.environ["BASE_ATTENTIVE_BACKEND"] = best
+            normalized = normalize_backend_name(best)
+            os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
+            os.environ["KERAS_BACKEND"] = normalized
             return
 
         # Fall back to any available
         available = select_best_backend(require_supported=False)
         if available:
-            os.environ["BASE_ATTENTIVE_BACKEND"] = available
+            normalized = normalize_backend_name(available)
+            os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
+            os.environ["KERAS_BACKEND"] = normalized
             return
 
         # Will trigger auto-install on first get_backend() call

@@ -39,6 +39,12 @@ class TestCoreImports:
         assert callable(set_backend)
         assert callable(get_available_backends)
 
+    def test_import_runtime_helper(self):
+        """Test the lightweight runtime helper import."""
+        from base_attentive import make_fast_predict_fn
+
+        assert callable(make_fast_predict_fn)
+
     def test_import_api(self):
         """Test API module imports."""
         from base_attentive.api import NNLearner

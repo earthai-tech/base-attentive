@@ -298,6 +298,41 @@ Prediction with Quantile Intervals
    plt.legend()
    plt.show()
 
+Using BaseAttentive as a Kernel
+-------------------------------
+
+After you have a working forecast, a common next step is to keep
+``BaseAttentive`` as the forecasting kernel and wrap it with a larger model.
+This is a good fit when you want correction heads, anomaly-aware gating, or
+domain-specific safety logic without rewriting the temporal stack.
+
+.. code-block:: python
+
+   import keras
+
+   class RobustForecastModel(keras.Model):
+       def __init__(self):
+           super().__init__()
+           self.kernel = BaseAttentive(
+               static_input_dim=4,
+               dynamic_input_dim=8,
+               future_input_dim=6,
+               output_dim=2,
+               forecast_horizon=24,
+           )
+           self.residual_head = keras.layers.Dense(2)
+
+       def call(self, inputs, training=False):
+           _, dynamic_x, _ = inputs
+           base_forecast = self.kernel(inputs, training=training)
+           residual = self.residual_head(keras.ops.mean(dynamic_x, axis=1))
+           residual = keras.ops.expand_dims(residual, axis=1)
+           return base_forecast + residual
+
+For a fuller wrapper and subclassing guide, see :doc:`usage`. For larger
+production patterns such as ensembles, transfer learning, and
+physics-guided systems, see :doc:`applications`.
+
 Backend Selection
 -----------------
 
@@ -320,13 +355,36 @@ Supported backends:
 - ``jax``: experimental
 - ``torch``: experimental
 
+Faster TensorFlow Inference
+---------------------------
+
+When you are running the same forecast path repeatedly, you can create a
+traced prediction function:
+
+.. code-block:: python
+
+   from base_attentive import make_fast_predict_fn
+
+   fast_predict = make_fast_predict_fn(
+       model,
+       warmup_inputs=[static_features, dynamic_features, future_features],
+   )
+
+   predictions = fast_predict(
+       [static_features, dynamic_features, future_features]
+   )
+
+This is TensorFlow-specific and is meant for inference. For training, try
+``model.compile(..., jit_compile="auto")``.
+
 Next Steps
 ----------
 
 1. **Explore configurations**: See :doc:`configuration_guide`
 2. **Understand architecture**: See :doc:`architecture_guide`
 3. **API reference**: See :doc:`api_reference`
-4. **Extended usage**: See :doc:`usage`
+4. **Extended usage and kernel patterns**: See :doc:`usage`
+5. **Application blueprints**: See :doc:`applications`
 
 See Also
 --------

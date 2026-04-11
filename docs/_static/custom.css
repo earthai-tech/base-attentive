@@ -1,0 +1,443 @@
+/* =============================================================================
+   BaseAttentive – Custom Sphinx Theme CSS
+   Brand colors:
+     Primary   #92278f  (deep purple)
+     Secondary #ee2a7b  (hot pink / magenta)
+     Dark      #231f20  (near-black)
+   ============================================================================= */
+
+/* --------------------------------------------------------------------------
+   CSS custom properties (design tokens)
+   -------------------------------------------------------------------------- */
+:root {
+  --ba-primary:          #92278f;
+  --ba-primary-dark:     #6d1a6b;
+  --ba-primary-light:    #b84db5;
+  --ba-primary-xlight:   #f3e5f2;
+
+  --ba-secondary:        #ee2a7b;
+  --ba-secondary-dark:   #c41f62;
+  --ba-secondary-light:  #f55fa0;
+  --ba-secondary-xlight: #fde9f3;
+
+  --ba-dark:             #231f20;
+  --ba-mid:              #4a4547;
+  --ba-muted:            #7b7578;
+  --ba-border:           #ddd0dc;
+  --ba-bg-soft:          #faf5fa;
+  --ba-bg-code:          #f6f0f6;
+
+  --ba-white:            #ffffff;
+  --ba-link:             #92278f;
+  --ba-link-hover:       #ee2a7b;
+
+  --ba-font-sans:        "Segoe UI", system-ui, -apple-system, sans-serif;
+  --ba-font-mono:        "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --ba-radius:           4px;
+  --ba-radius-lg:        8px;
+  --ba-shadow:           0 1px 4px rgba(146, 39, 143, 0.12);
+  --ba-shadow-md:        0 4px 16px rgba(146, 39, 143, 0.16);
+}
+
+/* --------------------------------------------------------------------------
+   Base typography
+   -------------------------------------------------------------------------- */
+body {
+  color: var(--ba-dark);
+  font-family: var(--ba-font-sans);
+  line-height: 1.7;
+}
+
+/* --------------------------------------------------------------------------
+   Links
+   -------------------------------------------------------------------------- */
+a,
+a:visited {
+  color: var(--ba-link);
+  text-decoration: none;
+}
+
+a:hover,
+a:focus {
+  color: var(--ba-link-hover);
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Headings
+   -------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ba-primary);
+  font-family: var(--ba-font-sans);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h1 { border-bottom: 3px solid var(--ba-primary); padding-bottom: 0.3em; }
+h2 { border-bottom: 1px solid var(--ba-border);  padding-bottom: 0.2em; }
+
+/* --------------------------------------------------------------------------
+   Navigation / sidebar (RTD theme overrides)
+   -------------------------------------------------------------------------- */
+
+/* Top nav bar */
+.wy-nav-top,
+.wy-nav-top a {
+  background: var(--ba-primary);
+  color: var(--ba-white);
+}
+
+.wy-nav-top a:hover {
+  color: var(--ba-secondary-xlight);
+}
+
+/* Sidebar */
+.wy-nav-side {
+  background: var(--ba-dark);
+}
+
+.wy-side-nav-search {
+  background: var(--ba-primary);
+}
+
+.wy-side-nav-search a,
+.wy-side-nav-search .wy-dropdown > a {
+  color: var(--ba-white);
+  font-weight: 700;
+}
+
+.wy-side-nav-search input[type="text"] {
+  border-color: var(--ba-primary-light);
+  border-radius: var(--ba-radius);
+}
+
+.wy-side-nav-search input[type="text"]:focus {
+  border-color: var(--ba-secondary);
+  outline: 2px solid rgba(238, 42, 123, 0.25);
+}
+
+/* Sidebar logo */
+.wy-side-nav-search .wy-dropdown img.logo,
+.wy-side-nav-search > a img.logo {
+  max-height: 56px;
+  padding: 4px 0;
+}
+
+/* Sidebar nav links */
+.wy-menu-vertical a {
+  color: #c5b8c4;
+}
+
+.wy-menu-vertical a:hover {
+  background: rgba(238, 42, 123, 0.15);
+  color: var(--ba-white);
+}
+
+.wy-menu-vertical li.current > a,
+.wy-menu-vertical li.current > a:hover {
+  background: rgba(146, 39, 143, 0.25);
+  border-left: 3px solid var(--ba-secondary);
+  color: var(--ba-white);
+  font-weight: 600;
+}
+
+.wy-menu-vertical li.toctree-l1.current {
+  background: rgba(146, 39, 143, 0.18);
+}
+
+.wy-menu-vertical li.toctree-l2.current > a {
+  background: rgba(238, 42, 123, 0.18);
+  border-left: 3px solid var(--ba-primary-light);
+}
+
+/* --------------------------------------------------------------------------
+   Main content area
+   -------------------------------------------------------------------------- */
+.wy-nav-content {
+  background: var(--ba-white);
+  max-width: 960px;
+}
+
+.rst-content {
+  color: var(--ba-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Code blocks
+   -------------------------------------------------------------------------- */
+code,
+tt,
+kbd {
+  background: var(--ba-bg-code);
+  border: 1px solid var(--ba-border);
+  border-radius: var(--ba-radius);
+  color: var(--ba-primary-dark);
+  font-family: var(--ba-font-mono);
+  font-size: 0.88em;
+  padding: 0.1em 0.35em;
+}
+
+pre,
+.highlight pre {
+  background: var(--ba-bg-code);
+  border: 1px solid var(--ba-border);
+  border-left: 4px solid var(--ba-primary);
+  border-radius: var(--ba-radius-lg);
+  font-family: var(--ba-font-mono);
+  font-size: 0.875em;
+  line-height: 1.6;
+  padding: 1em 1.25em;
+}
+
+.highlight {
+  background: var(--ba-bg-code);
+}
+
+/* Syntax highlighting accents */
+.highlight .k,  /* keyword */
+.highlight .kn,
+.highlight .kd { color: var(--ba-primary); font-weight: 600; }
+
+.highlight .s,  /* string */
+.highlight .s1,
+.highlight .s2 { color: var(--ba-secondary-dark); }
+
+.highlight .c,  /* comment */
+.highlight .c1 { color: var(--ba-muted); font-style: italic; }
+
+.highlight .n  { color: var(--ba-dark); }
+.highlight .nf { color: var(--ba-primary-dark); font-weight: 600; }
+.highlight .mi { color: var(--ba-secondary); }
+
+/* --------------------------------------------------------------------------
+   Admonitions / call-outs
+   -------------------------------------------------------------------------- */
+.rst-content .note,
+.rst-content .tip,
+.rst-content .important,
+.rst-content .warning,
+.rst-content .caution,
+.rst-content .danger {
+  border-radius: var(--ba-radius-lg);
+  border-left-width: 5px;
+  box-shadow: var(--ba-shadow);
+}
+
+.rst-content .note {
+  background: var(--ba-primary-xlight);
+  border-left-color: var(--ba-primary);
+}
+
+.rst-content .note .admonition-title {
+  background: var(--ba-primary);
+  color: var(--ba-white);
+  border-radius: var(--ba-radius) var(--ba-radius) 0 0;
+}
+
+.rst-content .tip,
+.rst-content .important {
+  background: var(--ba-secondary-xlight);
+  border-left-color: var(--ba-secondary);
+}
+
+.rst-content .tip .admonition-title,
+.rst-content .important .admonition-title {
+  background: var(--ba-secondary);
+  color: var(--ba-white);
+}
+
+.rst-content .warning,
+.rst-content .caution {
+  background: #fff8e7;
+  border-left-color: #e6a817;
+}
+
+.rst-content .danger {
+  background: #fff0f0;
+  border-left-color: #d63939;
+}
+
+/* --------------------------------------------------------------------------
+   Tables
+   -------------------------------------------------------------------------- */
+.rst-content table.docutils thead {
+  background: var(--ba-primary);
+  color: var(--ba-white);
+}
+
+.rst-content table.docutils thead th {
+  border: none;
+  color: var(--ba-white);
+  font-weight: 600;
+  padding: 0.6em 0.9em;
+}
+
+.rst-content table.docutils tbody tr:nth-child(even) {
+  background: var(--ba-bg-soft);
+}
+
+.rst-content table.docutils tbody tr:hover {
+  background: var(--ba-primary-xlight);
+}
+
+.rst-content table.docutils td {
+  border-color: var(--ba-border);
+  padding: 0.5em 0.9em;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons / footer buttons
+   -------------------------------------------------------------------------- */
+.btn,
+.btn-neutral {
+  background: var(--ba-primary) !important;
+  border-radius: var(--ba-radius) !important;
+  border: none !important;
+  color: var(--ba-white) !important;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn:hover,
+.btn-neutral:hover {
+  background: var(--ba-secondary) !important;
+  color: var(--ba-white) !important;
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   Breadcrumbs
+   -------------------------------------------------------------------------- */
+.wy-breadcrumbs li.wy-breadcrumbs-aside a {
+  color: var(--ba-primary);
+}
+
+.wy-breadcrumbs li.wy-breadcrumbs-aside a:hover {
+  color: var(--ba-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Search results
+   -------------------------------------------------------------------------- */
+.search li a {
+  color: var(--ba-primary);
+  font-weight: 600;
+}
+
+.search li a:hover {
+  color: var(--ba-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   API / autodoc members
+   -------------------------------------------------------------------------- */
+.rst-content dl.class > dt,
+.rst-content dl.function > dt,
+.rst-content dl.method > dt,
+.rst-content dl.attribute > dt {
+  background: var(--ba-bg-code);
+  border-left: 4px solid var(--ba-primary);
+  border-radius: 0 var(--ba-radius) var(--ba-radius) 0;
+  color: var(--ba-dark);
+  font-family: var(--ba-font-mono);
+  font-size: 0.9em;
+  padding: 0.4em 0.75em;
+}
+
+.rst-content dl.class > dt .sig-name,
+.rst-content dl.function > dt .sig-name,
+.rst-content dl.method > dt .sig-name {
+  color: var(--ba-primary);
+  font-weight: 700;
+}
+
+.rst-content dl.class > dt .sig-param,
+.rst-content dl.function > dt .sig-param,
+.rst-content dl.method > dt .sig-param {
+  color: var(--ba-secondary-dark);
+}
+
+/* Field list labels (Parameters, Returns, etc.) */
+.rst-content .field-list > dt {
+  color: var(--ba-primary);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   Version / release label
+   -------------------------------------------------------------------------- */
+.rst-versions {
+  background: var(--ba-dark);
+  border-top: 2px solid var(--ba-primary);
+}
+
+.rst-versions .rst-current-version {
+  background: var(--ba-primary);
+  color: var(--ba-white);
+}
+
+.rst-versions .rst-current-version:hover {
+  background: var(--ba-primary-dark);
+}
+
+.rst-versions a {
+  color: #c5b8c4;
+}
+
+.rst-versions a:hover {
+  color: var(--ba-secondary-light);
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+footer {
+  border-top: 2px solid var(--ba-border);
+  color: var(--ba-muted);
+  font-size: 0.85em;
+  margin-top: 2em;
+  padding-top: 1em;
+}
+
+footer a {
+  color: var(--ba-primary);
+}
+
+footer a:hover {
+  color: var(--ba-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Scrollbar (WebKit)
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--ba-bg-soft); }
+::-webkit-scrollbar-thumb {
+  background: var(--ba-primary-light);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ba-secondary); }
+
+/* --------------------------------------------------------------------------
+   Selection highlight
+   -------------------------------------------------------------------------- */
+::selection {
+  background: rgba(238, 42, 123, 0.2);
+  color: var(--ba-dark);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive tweaks
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .wy-nav-content {
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  pre,
+  .highlight pre {
+    font-size: 0.8em;
+    padding: 0.75em 1em;
+  }
+}

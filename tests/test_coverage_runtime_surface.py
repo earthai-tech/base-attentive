@@ -124,6 +124,29 @@ def test_top_level_runtime_helpers_cover_scalar_and_lazy_import_paths(monkeypatc
         package._KerasLinalgNamespace.band_part("x", 1, 0)
 
 
+def test_top_level_runtime_backend_resolution_prefers_env_then_detected_backend(
+    monkeypatch,
+):
+    """Top-level backend resolution should sync explicit and detected defaults."""
+    import base_attentive as package
+
+    monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "pytorch")
+    monkeypatch.delenv("KERAS_BACKEND", raising=False)
+    assert package._resolve_runtime_backend() == "torch"
+
+    monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+    monkeypatch.setenv("KERAS_BACKEND", "jax")
+    assert package._resolve_runtime_backend() == "jax"
+
+    monkeypatch.delenv("KERAS_BACKEND", raising=False)
+    monkeypatch.setattr(package, "select_best_backend", lambda require_supported=False: "torch")
+    assert package._resolve_runtime_backend() == "torch"
+
+    monkeypatch.setattr(package, "select_best_backend", lambda require_supported=False: None)
+    monkeypatch.setattr(package, "ensure_default_backend", lambda **kwargs: "tensorflow")
+    assert package._resolve_runtime_backend() == "tensorflow"
+
+
 def test_top_level_keras_deps_resolve_symbols_from_keras_and_tensorflow(monkeypatch):
     """The runtime namespace resolver should search keras, then TensorFlow."""
     import base_attentive as package
@@ -473,10 +496,12 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
 
     class AvailableBackend:
         supports_base_attentive = True
+        supports_base_attentive_v2 = True
         experimental = False
         framework = "available"
         uses_keras_runtime = True
         blockers = ()
+        v2_blockers = ()
 
         def __init__(self, load_runtime=False):
             self.load_runtime = load_runtime
@@ -489,8 +514,10 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
 
     class ExperimentalBackend(AvailableBackend):
         supports_base_attentive = False
+        supports_base_attentive_v2 = True
         experimental = True
         blockers = ("x",)
+        v2_blockers = ("v2",)
 
     class MissingBackend(AvailableBackend):
         def __init__(self, load_runtime=False):
@@ -515,6 +542,7 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
 
     detected = detector.detect_available_backends()
     assert detected["tensorflow"]["available"] is True
+    assert detected["tensorflow"]["supports_base_attentive_v2"] is True
     assert detected["torch"]["error"] == "boom"
 
     monkeypatch.setenv("KERAS_BACKEND", "jax")
@@ -645,6 +673,7 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
     caps = backend_module.get_backend_capabilities()
     assert caps["available"] is True
     assert caps["version"] == "tensorflow-version"
+    assert caps["supports_base_attentive_v2"] is True
 
     with pytest.raises(ValueError, match="Unknown backend"):
         backend_module.get_backend_capabilities("invalid")
@@ -676,8 +705,11 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
     assert isinstance(backend, AvailableBackend)
     assert backend_module._CURRENT_BACKEND is backend
     assert backend_module.os.environ["BASE_ATTENTIVE_BACKEND"] == "tensorflow"
+    assert backend_module.os.environ["KERAS_BACKEND"] == "tensorflow"
 
     monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+    monkeypatch.delenv("KERAS_BACKEND", raising=False)
     monkeypatch.setattr(backend_module, "select_best_backend", lambda require_supported=True: "jax" if require_supported else None)
     backend_module._auto_initialize()
     assert backend_module.os.environ["BASE_ATTENTIVE_BACKEND"] == "jax"
+    assert backend_module.os.environ["KERAS_BACKEND"] == "jax"
