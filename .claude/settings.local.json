@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp \"D:/projects/base-attentive/docs/_static/base-attentive.ico\" \"D:/projects/base-attentive/.claude/worktrees/condescending-kilby/docs/_static/\")",
+      "Bash(cp \"D:/projects/base-attentive/docs/_static/base-attentive-logo.svg\" \"D:/projects/base-attentive/.claude/worktrees/condescending-kilby/docs/_static/\")",
+      "Bash(cp \"D:/projects/base-attentive/docs/_static/base-attentive-logo-long.svg\" \"D:/projects/base-attentive/.claude/worktrees/condescending-kilby/docs/_static/\")",
+      "Bash(cp \"D:/projects/base-attentive/docs/_static/base-attentive.png\" \"D:/projects/base-attentive/.claude/worktrees/condescending-kilby/docs/_static/\")",
+      "Bash(gh pr create --title 'docs: add brand assets, HTML readme header, and custom CSS theme' --body ':*)",
+      "Bash(where gh:*)",
+      "Bash(winget list:*)"
+    ]
+  }
+}
