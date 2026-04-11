@@ -383,8 +383,8 @@ When ``quantiles`` are specified, returns uncertainty estimates:
 
 Use when you need confidence intervals and uncertainty quantification.
 
-Advanced Features
-------------------
+Optional Features
+-----------------
 
 Residual Connections
 ~~~~~~~~~~~~~~~~~~~~
@@ -511,4 +511,4 @@ See Also
 
 - :doc:`configuration_guide` - Detailed parameter reference
 - :doc:`api_reference` - Complete API documentation
-- :doc:`usage` - Advanced usage patterns
+- :doc:`usage` - Extended usage patterns

@@ -7,15 +7,15 @@ BaseAttentive Documentation
 .. image:: https://img.shields.io/badge/license-Apache%202.0-green.svg
    :target: https://github.com/earthai-tech/base-attentive/blob/main/LICENSE
 
-A foundational blueprint for building powerful, data-driven, sequence-to-sequence time series forecasting models with advanced attention mechanisms.
+A foundational blueprint for building capable, data-driven, sequence-to-sequence time series forecasting models with layered attention mechanisms.
 
-**BaseAttentive** is a sophisticated encoder-decoder architecture designed to process three distinct types of inputs:
+**BaseAttentive** is a modular encoder-decoder architecture designed to process three distinct types of inputs:
 
 - **Static features** — constant across time (e.g., geographical coordinates, site properties)
 - **Dynamic past features** — historical time series (e.g., sensor readings, observations)
 - **Known future features** — forecast-period exogenous variables (e.g., weather forecasts)
 
-It fuses these inputs using a modular stack of attention mechanisms and serves as the core engine for advanced forecasting models.
+It fuses these inputs using a modular stack of attention mechanisms and serves as the foundation for practical, production-grade forecasting models.
 
 Key Features
 ============
@@ -25,11 +25,11 @@ Key Features
    - Transformer mode: Pure self-attention
    - Configurable attention stack (cross, hierarchical, memory-augmented)
 
-📊 **Advanced Components**
+📊 **Core Components**
    - Variable Selection Networks for learnable feature selection
    - Multi-scale LSTM for hierarchical temporal patterns
    - Cross-attention for encoder-decoder interaction
-   - Memory-augmented attention for long-term dependencies
+   - Memory-augmented attention for capturing dependencies
    - Dynamic time warping for time-series alignment
    - Quantile distribution modeling for uncertainty quantification
 

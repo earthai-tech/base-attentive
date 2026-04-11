@@ -325,7 +325,7 @@ Next Steps
 1. **Explore configurations**: See :doc:`configuration_guide`
 2. **Understand architecture**: See :doc:`architecture_guide`
 3. **API reference**: See :doc:`api_reference`
-4. **Advanced usage**: See :doc:`usage`
+4. **Extended usage**: See :doc:`usage`
 
 See Also
 --------
