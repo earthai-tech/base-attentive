@@ -1,16 +1,48 @@
-# BaseAttentive
+<div align="center">
+  <img src="docs/_static/base-attentive-logo-long.svg" alt="BaseAttentive" width="420" />
+</div>
 
-[![Tests](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml/badge.svg?branch=develop)](https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml?query=branch%3Adevelop)
-[![Documentation](https://readthedocs.org/projects/base-attentive/badge/?version=latest)](https://base-attentive.readthedocs.io/en/latest/)
-[![Code Quality](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml/badge.svg?branch=develop)](https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml?query=branch%3Adevelop)
-[![Publish](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg?branch=master)](https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml?query=branch%3Amaster)
-[![Version](https://img.shields.io/github/v/release/earthai-tech/base-attentive?display_name=tag&sort=semver)](https://github.com/earthai-tech/base-attentive/releases)
-[![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
-[![Coverage](https://codecov.io/gh/earthai-tech/base-attentive/branch/develop/graph/badge.svg)](https://codecov.io/gh/earthai-tech/base-attentive)
-[![Code Style](https://img.shields.io/badge/code%20style-ruff-46a758.svg)](https://docs.astral.sh/ruff/)
-[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+<br/>
 
-A modular encoder-decoder architecture for sequence-to-sequence time series forecasting with layered attention mechanisms.
+<div align="center">
+
+  <a href="https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml?query=branch%3Adevelop">
+    <img src="https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml/badge.svg?branch=develop" alt="Tests" />
+  </a>
+  <a href="https://base-attentive.readthedocs.io/en/latest/">
+    <img src="https://readthedocs.org/projects/base-attentive/badge/?version=latest" alt="Documentation" />
+  </a>
+  <a href="https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml?query=branch%3Adevelop">
+    <img src="https://github.com/earthai-tech/base-attentive/actions/workflows/code-quality.yml/badge.svg?branch=develop" alt="Code Quality" />
+  </a>
+  <a href="https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml?query=branch%3Amaster">
+    <img src="https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg?branch=master" alt="Publish" />
+  </a>
+  <a href="https://github.com/earthai-tech/base-attentive/releases">
+    <img src="https://img.shields.io/github/v/release/earthai-tech/base-attentive?display_name=tag&sort=semver" alt="Version" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-Apache%202.0-green.svg" alt="License" />
+  </a>
+  <a href="https://codecov.io/gh/earthai-tech/base-attentive">
+    <img src="https://codecov.io/gh/earthai-tech/base-attentive/branch/develop/graph/badge.svg" alt="Coverage" />
+  </a>
+  <a href="https://docs.astral.sh/ruff/">
+    <img src="https://img.shields.io/badge/code%20style-ruff-46a758.svg" alt="Code Style" />
+  </a>
+  <a href="https://www.python.org/">
+    <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python" />
+  </a>
+
+</div>
+
+<br/>
+
+<div align="center">
+  <strong>A modular encoder-decoder architecture for sequence-to-sequence time series forecasting with layered attention mechanisms.</strong>
+</div>
+
+<br/>
 
 ## Overview
 
