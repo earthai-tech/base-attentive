@@ -2,7 +2,7 @@ Backend Guide
 =============
 
 BaseAttentive is designed around a Keras 3 runtime layer. Today, the package
-is strongest on TensorFlow and exposes an experimental path for JAX and Torch.
+has comprehensive support for TensorFlow and exposes an experimental path for JAX and Torch.
 
 Support status
 --------------
@@ -10,7 +10,7 @@ Support status
 +------------+--------------+------------------------------------------------+
 | Backend    | Status       | Notes                                          |
 +============+==============+================================================+
-| TensorFlow | Recommended  | Best-tested runtime for ``BaseAttentive``      |
+| TensorFlow | Recommended  | Thoroughly tested runtime for ``BaseAttentive``      |
 +------------+--------------+------------------------------------------------+
 | JAX        | Experimental | Runtime abstraction exists, but the full model |
 |            |              | path is not yet first-class                    |

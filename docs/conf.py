@@ -28,7 +28,7 @@ def _read_version() -> str:
 
 project = "BaseAttentive"
 author = "Laurent Kouadio"
-copyright = f"{date.today().year}, Laurent Kouadio (https://lkouadio.com/)"
+copyright = f"© Copyright {date.today().year}, <a href='https://lkouadio.com/'>Laurent Kouadio</a>"
 version = _read_version()
 release = version
 
