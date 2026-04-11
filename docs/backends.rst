@@ -1,23 +1,28 @@
 Backend Guide
 =============
 
-BaseAttentive is designed around a Keras 3 runtime layer. Today, the package
-has comprehensive support for TensorFlow and exposes an experimental path for JAX and Torch.
+BaseAttentive uses a Keras 3 runtime layer. At present, the full model path is
+available with TensorFlow, while JAX and Torch remain experimental.
 
 Support status
 --------------
 
-+------------+--------------+------------------------------------------------+
-| Backend    | Status       | Notes                                          |
-+============+==============+================================================+
-| TensorFlow | Recommended  | Thoroughly tested runtime for ``BaseAttentive``      |
-+------------+--------------+------------------------------------------------+
-| JAX        | Experimental | Runtime abstraction exists, but the full model |
-|            |              | path is not yet first-class                    |
-+------------+--------------+------------------------------------------------+
-| Torch      | Experimental | Runtime abstraction exists, but the full model |
-|            |              | path is not yet first-class                    |
-+------------+--------------+------------------------------------------------+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 60
+
+   * - Backend
+     - Status
+     - Notes
+   * - TensorFlow
+     - Current full path
+     - The full ``BaseAttentive`` model is the main target of the current examples and tests.
+   * - JAX
+     - Experimental
+     - Runtime abstraction is available, but the full model path is still under evaluation.
+   * - Torch
+     - Experimental
+     - Runtime abstraction is available, but the full model path is still under evaluation.
 
 Selecting a backend
 -------------------
@@ -55,10 +60,10 @@ backends in this order:
 3. the backend previously set in the current Python process
 4. ``tensorflow``
 
-Current recommendation
-----------------------
+Current status
+--------------
 
-Use TensorFlow for training, testing, and serialized model workflows today.
-JAX and Torch are important compatibility targets, but you should currently
-treat them as exploratory rather than production-ready for the full
-``BaseAttentive`` model.
+Use TensorFlow for training, testing, and model serialization at the moment.
+JAX and Torch can be useful for backend experiments, but the full
+``BaseAttentive`` model should still be treated as exploratory on those
+runtimes.

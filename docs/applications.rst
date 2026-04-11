@@ -1,7 +1,9 @@
 Applications and Use Cases
 ===========================
 
-BaseAttentive enables a wide range of real-world applications as both a standalone forecasting model and as a kernel within larger deep learning architectures. This page showcases practical applications, integration patterns, and best practices for deploying BaseAttentive in production environments.
+BaseAttentive can be used as a standalone forecasting model or as a kernel
+within larger deep learning architectures. This page outlines example
+applications, integration patterns, and deployment considerations.
 
 .. contents::
    :local:
@@ -12,7 +14,9 @@ BaseAttentive enables a wide range of real-world applications as both a standalo
 Standalone Forecasting Applications
 ====================================
 
-BaseAttentive works well for multi-step time series forecasting across domains. It combines static context features with dynamic historical patterns and known future information to make reliable predictions.
+BaseAttentive can be applied to multi-step time series forecasting across
+domains. It combines static context features with dynamic historical patterns
+and known future information to produce multi-step forecasts.
 
 Architecture Pattern
 --------------------
@@ -54,19 +58,19 @@ Air Quality Forecasting
 
 **Challenge:** Air pollution varies with meteorology, human activity, and geography. Cities need real-time forecasts for health alerts.
 
-**BaseAttentive Solution:**
+**Example setup:**
 
 - **Static Features:** Geographic coordinates, elevation, urban index, pollution source density
 - **Dynamic Past:** 7 days of hourly PM2.5, NO₂, O₃, temperature, humidity
 - **Known Future:** Weather forecast (wind speed, temperature, precipitation)
 - **Output:** 24-hour PM2.5 forecast with uncertainty quantiles
 
-**Key Benefits:**
+**What this setup can capture:**
 
-✓ Learns seasonal pollution patterns (rush hour peaks, seasonal winds)
-✓ Incorporates weather forecast uncertainty
-✓ Predicts multiple pollutants jointly via multi-output attention
-✓ Quantile outputs enable thoughtful alerting strategies (10th, 50th, 90th percentiles)
+- Can represent recurring pollution patterns such as rush-hour peaks or seasonal changes
+- Can incorporate weather forecasts and scenario-based inputs
+- Allows joint prediction of several pollutants
+- Quantile outputs can support threshold-based alerting strategies
 
 **Use Cases:**
 
@@ -100,20 +104,20 @@ Energy Demand Forecasting
 
 **Challenge:** Electric grids must balance supply and demand in real-time. Peak demand prediction enables optimal resource allocation.
 
-**BaseAttentive Solution:**
+**Example setup:**
 
 - **Static Features:** Building type, floor area, insulation level, HVAC capacity, solar installation
 - **Dynamic Past:** 2 weeks of hourly loads, temperature, solar irradiance, time-of-use signals
 - **Known Future:** Weather forecast, calendar data (weekday/weekend/holiday), planned maintenance
 - **Output:** 48-hour demand forecast with peak identification
 
-**Key Benefits:**
+**What this setup can capture:**
 
-✓ Learns building-specific consumption patterns
-✓ Captures weekly and daily seasonality
-✓ Incorporates weather sensitivity (heating/cooling load)
-✓ Supports demand response scheduling
-✓ Enables multi-step forecasting for grid planning
+- Can represent building-specific consumption patterns
+- Can account for daily and weekly seasonality
+- Can relate demand to heating and cooling conditions
+- Can be coupled with demand-response rules
+- Produces multi-step forecasts for planning and dispatch
 
 **Use Cases:**
 
@@ -151,20 +155,20 @@ Weather Prediction
 
 **Challenge:** Weather systems are chaotic. Even small prediction windows require capturing multi-scale atmospheric interactions.
 
-**BaseAttentive Solution:**
+**Example setup:**
 
 - **Static Features:** Geographic coordinates, elevation, terrain type, urban heat island index
 - **Dynamic Past:** 5 days of 2-hourly weather (temperature, pressure, humidity, wind components)
 - **Known Future:** Seasonal encoding, jet stream position indicators
 - **Output:** 30-hour deterministic forecast (2-hourly step)
 
-**Key Benefits:**
+**What this setup can capture:**
 
-✓ Cross-attention between geography and historical patterns
-✓ Memory attention captures atmospheric wave structures
-✓ Incorporates climatological context (seasonal, monthly)
-✓ Ensemble-friendly for uncertainty quantification
-✓ Significantly faster inference than physics-based NWP with competitive accuracy
+- Can combine geographic context with recent atmospheric history
+- Memory attention can retain longer structures in the sequence
+- Can include seasonal or climatological covariates
+- Can be used within ensemble workflows for uncertainty analysis
+- Neural surrogates may reduce inference cost relative to physics-based NWP, although forecast quality depends on data coverage and evaluation design
 
 **Use Cases:**
 
@@ -197,20 +201,20 @@ Traffic Flow Prediction
 
 **Challenge:** Traffic patterns have complex dependencies on time-of-day, incidents, events, and weather.
 
-**BaseAttentive Solution:**
+**Example setup:**
 
 - **Static Features:** Road segment properties (type, lanes, speed limit, urban/highway)
 - **Dynamic Past:** 24 hours of 5-minute traffic (volume, speed, occupancy, incident flags)
 - **Known Future:** Time-of-day, day-of-week, known events, weather forecast
 - **Output:** 4-hour traffic predictions (5-minute resolution)
 
-**Key Benefits:**
+**What this setup can capture:**
 
-✓ Learns road-specific patterns and rush hour dynamics
-✓ Tracks incident detection and propagation
-✓ Incorporates event awareness (sports, concerts, road work)
-✓ Responds to weather impacts on traffic flow
-✓ Supports adaptive routing and congestion management
+- Can represent road-specific patterns and rush-hour dynamics
+- Can incorporate incident indicators and propagation effects
+- Can include scheduled events such as concerts or road work
+- Can account for weather-related changes in traffic flow
+- Can support downstream routing or congestion-management systems
 
 **Use Cases:**
 
@@ -222,13 +226,14 @@ Traffic Flow Prediction
 
 ---
 
-BaseAttentive as a Kernel: Dependable Neural Networks
-=====================================================
+BaseAttentive as a Kernel in Larger Models
+==========================================
 
-Beyond standalone forecasting, BaseAttentive serves as a capable kernel component within larger neural networks for building dependable, production-ready systems.
+Beyond standalone forecasting, BaseAttentive can also be used as a kernel
+component within larger neural networks and decision pipelines.
 
-Ensemble Methods for Improved Reliability
--------------------------------------------
+Ensemble Methods
+----------------
 
 **Pattern:** Combine multiple BaseAttentive architectures with different attention mechanisms.
 
@@ -244,15 +249,15 @@ Ensemble Methods for Improved Reliability
       ↓
     Meta-learner (learnable weights or weighted average)
       ↓
-    Reliable Predictions
+    Aggregated Predictions
 
-**Benefits:**
+**Typical effects:**
 
-✓ Reduces prediction variance through ensemble methods
-✓ Improved calibration for uncertainty quantification
-✓ Manages distribution shift between training and deployment
-✓ Captures complementary perspectives on difficult cases
-✓ Fault tolerance through redundancy
+- Can reduce prediction variance across model instances
+- May improve calibration of predictive intervals
+- Helps compare behavior under distribution shift
+- Combines different modeling assumptions on difficult cases
+- Adds redundancy if one member degrades
 
 **Example Application:**
 
@@ -299,13 +304,13 @@ Physics-Guided Networks
 - **Climate:** Include mass, heat conservation
 - **Geophysics:** Respect seismic wave physics
 
-**Benefits:**
+**Typical effects:**
 
-✓ Physically plausible predictions
-✓ Better extrapolation outside training distribution
-✓ Reduced data requirements through physics-guided regularization
-✓ Interpretability: constraint violations indicate modeling gaps
-✓ Suitable for longer-term forecasting
+- Encourages physically plausible outputs
+- Can improve extrapolation when the constraints are informative
+- May reduce data requirements through regularization
+- Constraint violations can help identify modeling gaps
+- Often useful for longer forecast horizons
 
 **Implementation:**
 
@@ -350,19 +355,19 @@ Transfer Learning for Data-Limited Domains
 1. **Pre-training phase:** Train BaseAttentive on 50+ locations
    - Learns general time series patterns
    - Captures domain-specific behaviors (diurnal cycles, seasonality)
-   - Builds dependable feature representations
+   - Produces reusable feature representations
 
 2. **Fine-tuning phase:** Adapt to target location with limited data
    - Freeze early attention layers (general patterns)
    - Train later layers and decoder (location-specific)
-   - 10-50x improvement with limited target data
+   - Can reduce the amount of target-site data needed when source and target domains are related
 
-**Benefits:**
+**Typical effects:**
 
-✓ Works effectively with limited historical data at target location
-✓ Leverages domain-wide knowledge from pre-training
-✓ Faster convergence and improved generalization
-✓ Reduces overfitting on small datasets
+- Can help when target-site history is limited
+- Reuses information learned during pre-training
+- May reduce overfitting on small target datasets
+- Fine-tuning remains important when domains differ substantially
 
 **Application Examples:**
 
@@ -411,13 +416,13 @@ Multi-Task Learning
     Task 3: Anomaly Detection ← Dense Decoder + Sigmoid
     Task 4: Grid Frequency ← Dense Decoder
 
-**Benefits:**
+**Typical effects:**
 
-✓ Shared representations reduce overfitting
-✓ Different tasks provide beneficial regularization
-✓ Single forward pass for all predictions
-✓ tasks share knowledge to improve overall performance
-✓ Efficient inference in production
+- Shared representations can reduce overfitting
+- Related tasks can regularize one another
+- A single forward pass can produce multiple outputs
+- Joint training may help when tasks share structure
+- Inference can remain compact in deployment
 
 **Loss Combination:**
 
@@ -526,8 +531,8 @@ Healthcare and Epidemiology
 
 ---
 
-Integration Patterns and Best Practices
-=======================================
+Integration Patterns and Deployment Notes
+=========================================
 
 Production Deployment Checklist
 -------------------------------
@@ -575,7 +580,7 @@ Feature Engineering Guide
 
 **Dynamic Past Features:**
 
-- Typically 5-15 features for best performance
+- A small to moderate feature set (for example 5-15 channels) is often a practical starting range
 - Include raw measurements and derived features:
   - Lags (t-1, t-7, t-365 for daily data)
   - Differences (rate of change)
@@ -678,9 +683,9 @@ References and Further Reading
 Getting Started
 ===============
 
-Ready to apply BaseAttentive to your application?
+To continue with an application-specific workflow:
 
-1. **Explore examples:** Check the examples folder for comprehensive notebooks on standalone applications and kernel-based architectures
+1. **Explore examples:** Check the examples folder for notebooks on standalone applications and kernel-based architectures
 2. **Quick start:** Follow :doc:`quick_start`
 3. **Full API:** Consult :doc:`api_reference`
 4. **Configuration**: Read :doc:`configuration_guide`

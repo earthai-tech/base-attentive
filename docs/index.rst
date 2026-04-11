@@ -7,7 +7,7 @@ BaseAttentive Documentation
 .. image:: https://img.shields.io/badge/license-Apache%202.0-green.svg
    :target: https://github.com/earthai-tech/base-attentive/blob/main/LICENSE
 
-A foundational blueprint for building capable, data-driven, sequence-to-sequence time series forecasting models with layered attention mechanisms.
+A modular encoder-decoder architecture for sequence-to-sequence time series forecasting with layered attention mechanisms.
 
 **BaseAttentive** is a modular encoder-decoder architecture designed to process three distinct types of inputs:
 
@@ -15,29 +15,28 @@ A foundational blueprint for building capable, data-driven, sequence-to-sequence
 - **Dynamic past features** — historical time series (e.g., sensor readings, observations)
 - **Known future features** — forecast-period exogenous variables (e.g., weather forecasts)
 
-It fuses these inputs using a modular stack of attention mechanisms and serves as the foundation for practical, production-grade forecasting models.
+It combines these inputs through a configurable attention stack for forecasting experiments and applied workflows.
 
-Key Features
-============
+Main Elements
+=============
 
-✨ **Flexible Architecture**
-   - Hybrid mode: Multi-scale LSTM + Attention
-   - Transformer mode: Pure self-attention
-   - Configurable attention stack (cross, hierarchical, memory-augmented)
+**Architecture options**
+   - Hybrid mode: Multi-scale LSTM with attention
+   - Transformer mode: self-attention encoder
+   - Configurable decoder attention stack
 
-📊 **Core Components**
-   - Variable Selection Networks for learnable feature selection
-   - Multi-scale LSTM for hierarchical temporal patterns
+**Core components**
+   - Variable selection networks for feature weighting
+   - Multi-scale LSTM for temporal aggregation
    - Cross-attention for encoder-decoder interaction
-   - Memory-augmented attention for capturing dependencies
-   - Dynamic time warping for time-series alignment
-   - Quantile distribution modeling for uncertainty quantification
+   - Memory-augmented attention for long-range context
+   - Quantile modeling for uncertainty-aware outputs
 
-🔧 **Production-Ready**
-   - Keras 3 backed with configurable runtimes
-   - Serializable (save/load models)
-   - Input validation and parameter checking
-   - Comprehensive logging and debugging support
+**Runtime support**
+   - Keras 3 based implementation
+   - Model serialization and configuration export
+   - Input validation utilities
+   - Logging and debugging hooks
 
 Quick Example
 =============

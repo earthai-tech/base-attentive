@@ -28,7 +28,7 @@ def _read_version() -> str:
 
 project = "BaseAttentive"
 author = "Laurent Kouadio"
-copyright = f"© Copyright {date.today().year}, <a href='https://lkouadio.com/'>Laurent Kouadio</a>"
+copyright = f"{date.today().year}, {author}"
 version = _read_version()
 release = version
 
@@ -43,7 +43,7 @@ extensions = [
 ]
 
 root_doc = "index"
-templates_path: list[str] = []
+templates_path: list[str] = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 autosummary_generate = True
@@ -83,6 +83,11 @@ html_theme = (
 html_title = f"{project} {release} documentation"
 html_static_path: list[str] = []
 html_theme_options = {}
+html_context = {
+    "author_name": author,
+    "author_url": "https://lkouadio.com/",
+    "copyright_year": str(date.today().year),
+}
 
 # Sidebars configuration
 # Sidebars configuration

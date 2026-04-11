@@ -154,7 +154,7 @@ Regularization Parameters
 
 **Supported Activations:**
 
-- ``'relu'`` - ReLU (recommended)
+- ``'relu'`` - ReLU (common default)
 - ``'elu'`` - ELU
 - ``'selu'`` - SELU
 - ``'sigmoid'`` - Sigmoid
@@ -325,7 +325,7 @@ Decoder Attention Stack
      - Use Case
    * - ``cross``
      - Encoder-decoder interaction
-     - Always recommended
+     - Used in the default stack
    * - ``hierarchical``
      - Multi-level temporal patterns
      - Seasonal data
@@ -381,7 +381,7 @@ Smallest model for testing:
 Standard Configuration
 ----------------------
 
-Balanced for accuracy and speed:
+General-purpose starting point:
 
 .. code-block:: python
 
@@ -406,7 +406,7 @@ Balanced for accuracy and speed:
 
 Large Configuration
 -------------------
-High-capacity model for complex problems:
+Larger starting point for more demanding datasets:
 
 .. code-block:: python
 
@@ -435,7 +435,7 @@ Hybrid vs Transformer Preset
 
 .. code-block:: python
 
-   # Hybrid mode (recommended)
+   # Hybrid mode
    HYBRID = {
        "architecture_config": {
            "encoder_type": "hybrid",
@@ -474,8 +474,8 @@ For Longer Sequences (T > 500)
        dropout_rate=0.15,
    )
 
-For Complex Patterns
----------------------
+For More Complex Patterns
+-------------------------
 
 .. code-block:: python
 
