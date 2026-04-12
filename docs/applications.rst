@@ -81,19 +81,27 @@ Air Quality Forecasting
 
 .. code-block:: python
 
+    import numpy as np
     from base_attentive import BaseAttentive
-    
+
     air_quality_model = BaseAttentive(
-        static_dim=4,           # lat, lon, alt, urban_index
-        dynamic_dim=5,          # PM2.5, NO2, O3, Temp, Humidity
-        future_dim=2,           # wind_speed, temp_forecast
+        static_input_dim=4,     # lat, lon, alt, urban_index
+        dynamic_input_dim=5,    # PM2.5, NO2, O3, Temp, Humidity
+        future_input_dim=2,     # wind_speed, temp_forecast
+        output_dim=1,
         forecast_horizon=24,
-        n_quantiles=3,          # [10th, 50th, 90th percentiles]
-        mode='hybrid'
+        quantiles=[0.1, 0.5, 0.9],  # 10th, 50th, 90th percentiles
+        mode="tft_like",
     )
-    
-    model.fit([static_features, historical_data, weather_forecast], targets)
-    predictions = model.predict([test_static, test_history, test_future])
+
+    air_quality_model.compile(optimizer="adam", loss="mse")
+    air_quality_model.fit(
+        [static_features, historical_data, weather_forecast],
+        targets,
+        epochs=50,
+    )
+
+    predictions = air_quality_model.predict([test_static, test_history, test_future])
     # predictions shape: (batch, 24, 3) → 24-hour forecast with 3 quantiles
 
 
@@ -129,19 +137,25 @@ Energy Demand Forecasting
 
 .. code-block:: python
 
+    import numpy as np
+    from base_attentive import BaseAttentive
+
     # Train on building portfolio
     energy_models = {}
     for building_id, data in buildings.items():
         model = BaseAttentive(
-            static_dim=5,        # Property features
-            dynamic_dim=5,       # Load, temp, solar, hour_sin, hour_cos
-            future_dim=2,        # Weather, day_type
-            forecast_horizon=48, # 2-day forecast
-            mode='hybrid'
+            static_input_dim=5,     # Property features
+            dynamic_input_dim=5,    # Load, temp, solar, hour_sin, hour_cos
+            future_input_dim=2,     # Weather, day_type
+            output_dim=1,
+            forecast_horizon=48,    # 2-day forecast
+            mode="tft_like",
+            attention_levels=["cross", "hierarchical"],
         )
-        model.fit(data['train_x'], data['train_y'])
+        model.compile(optimizer="adam", loss="mse")
+        model.fit(data["train_x"], data["train_y"])
         energy_models[building_id] = model
-    
+
     # Real-time forecasting
     for building_id, model in energy_models.items():
         demand_forecast = model.predict(current_features)
@@ -158,7 +172,7 @@ Weather Prediction
 - **Static Features:** Geographic coordinates, elevation, terrain type, urban heat island index
 - **Dynamic Past:** 5 days of 2-hourly weather (temperature, pressure, humidity, wind components)
 - **Known Future:** Seasonal encoding, jet stream position indicators
-- **Output:** 30-hour deterministic forecast (2-hourly step)
+- **Output:** 30-step deterministic forecast (2-hourly step)
 
 **What this setup can capture:**
 
@@ -180,17 +194,21 @@ Weather Prediction
 
 .. code-block:: python
 
+    import numpy as np
+    from base_attentive import BaseAttentive
+
     weather_model = BaseAttentive(
-        static_dim=4,           # lat, lon, elevation, terrain
-        dynamic_dim=5,          # T, P, RH, wind_u, wind_v
-        forecast_horizon=30,    # 60 hours of 2-hourly data
-        lookback_window=120,    # 10 days
-        mode='transformer',     # Pure attention for weather
-        attention_stack=[
-            ('cross_attention', {'heads': 8}),
-            ('self_attention', {'heads': 8}),
-            ('memory_attention', {'heads': 4, 'memory_size': 32}),
-        ]
+        static_input_dim=4,         # lat, lon, elevation, terrain
+        dynamic_input_dim=5,        # T, P, RH, wind_u, wind_v
+        future_input_dim=2,         # seasonal_enc_sin, seasonal_enc_cos
+        output_dim=2,               # T, P forecast
+        forecast_horizon=30,        # 60 hours of 2-hourly data
+        mode="pihal_like",          # Multi-scale + memory attention
+        attention_levels=["cross", "hierarchical", "memory"],
+        scales=[1, 2, 4],
+        memory_size=64,
+        num_heads=8,
+        embed_dim=64,
     )
 
 
@@ -222,6 +240,27 @@ Traffic Flow Prediction
 - Public transit prioritization
 - Emergency vehicle routing
 
+**Implementation:**
+
+.. code-block:: python
+
+    import numpy as np
+    from base_attentive import BaseAttentive
+
+    traffic_model = BaseAttentive(
+        static_input_dim=4,         # road_type, lanes, speed_limit, urban_flag
+        dynamic_input_dim=4,        # volume, speed, occupancy, incident_flag
+        future_input_dim=4,         # hour_sin, hour_cos, day_of_week, event_flag
+        output_dim=2,               # volume, speed
+        forecast_horizon=48,        # 4h at 5-minute resolution
+        mode="tft",
+        attention_levels=["cross", "hierarchical"],
+        scales="auto",
+        embed_dim=64,
+        num_heads=8,
+    )
+
+
 BaseAttentive as a Kernel in Larger Models
 ==========================================
 
@@ -248,6 +287,7 @@ letting you iterate on application logic more safely.
 .. code-block:: python
 
     import keras
+    import numpy as np
     from base_attentive import BaseAttentive
 
     class RobustGridForecaster(keras.Model):
@@ -299,17 +339,18 @@ pattern that extends ``call`` and ``get_config``.
 Ensemble Methods
 ----------------
 
-**Pattern:** Combine multiple BaseAttentive architectures with different attention mechanisms.
+**Pattern:** Combine multiple BaseAttentive configurations with different modes
+and attention mechanisms.
 
 .. code-block:: text
 
     Ensemble Architecture:
-    
+
     Inputs
       ↓
-    BaseAttentive Kernel 1 (hybrid: cross_attn + self_attn)
-    BaseAttentive Kernel 2 (transformer: multi-layer self_attn)
-    BaseAttentive Kernel 3 (memory: recurrent + attention)
+    BaseAttentive Kernel 1 (mode='tft_like':  cross + hierarchical)
+    BaseAttentive Kernel 2 (mode='pihal_like': multi-scale + memory)
+    BaseAttentive Kernel 3 (mode='tft':        full TFT path)
       ↓
     Meta-learner (learnable weights or weighted average)
       ↓
@@ -327,19 +368,36 @@ Ensemble Methods
 
 .. code-block:: python
 
-    # Energy forecasting ensemble
+    import numpy as np
+    from base_attentive import BaseAttentive
+
+    common = dict(
+        static_input_dim=4,
+        dynamic_input_dim=8,
+        future_input_dim=4,
+        output_dim=1,
+        forecast_horizon=24,
+        embed_dim=32,
+        num_heads=4,
+    )
+
     kernels = [
-        BaseAttentive(..., mode='hybrid'),    # Data + temporal patterns
-        BaseAttentive(..., mode='transformer'), # Long-range interactions
-        BaseAttentive(..., attention_stack=[
-            ('memory_attention', {...}),       # Recurrent dynamics
-        ])
+        BaseAttentive(**common, mode="tft_like"),
+        BaseAttentive(**common, mode="pihal_like", scales=[1, 2, 4]),
+        BaseAttentive(
+            **common,
+            attention_levels=["memory"],
+            memory_size=128,
+        ),
     ]
-    
-    # Combine predictions
-    predictions = [k.predict(inputs) for k in kernels]
-    ensemble_pred = np.mean(predictions, axis=0)      # Average
-    ensemble_uncertainty = np.std(predictions, axis=0) # Calibrated uncertainty
+
+    for k in kernels:
+        k.compile(optimizer="adam", loss="mse")
+        k.fit(train_inputs, train_targets, epochs=20, verbose=0)
+
+    predictions = [k.predict(test_inputs) for k in kernels]
+    ensemble_pred = np.mean(predictions, axis=0)
+    ensemble_uncertainty = np.std(predictions, axis=0)
 
 
 Physics-Guided Networks
@@ -356,7 +414,7 @@ Physics-Guided Networks
 .. code-block:: text
 
     Physics Loss = λ₁ × Data Loss + λ₂ × Constraint Loss
-    
+
     Example (Energy Conservation):
       Energy_t+1 ≈ Energy_t × decay + Solar_Production
       Constraint Loss = MSE(prediction, physics_prediction)
@@ -380,33 +438,46 @@ Physics-Guided Networks
 
 .. code-block:: python
 
-    class PhysicsGuidedEnsemble(tf.keras.Model):
-        def __init__(self, ensemble, physics_weight=0.1):
+    import keras
+    import numpy as np
+    from base_attentive import BaseAttentive
+
+    class PhysicsGuidedForecaster(keras.Model):
+        def __init__(self, forecast_horizon=48, physics_weight=0.1):
             super().__init__()
-            self.ensemble = ensemble
+            self.kernel = BaseAttentive(
+                static_input_dim=5,
+                dynamic_input_dim=6,
+                future_input_dim=4,
+                output_dim=1,
+                forecast_horizon=forecast_horizon,
+                mode="tft_like",
+            )
             self.physics_weight = physics_weight
-        
+
+        def call(self, inputs, training=False):
+            return self.kernel(inputs, training=training)
+
+        def compute_physics_loss(self, x, pred):
+            # Example: energy balance constraint
+            _, dynamic_x, _ = x
+            last_obs = dynamic_x[:, -1:, :1]   # last observed energy
+            delta = keras.ops.mean(keras.ops.abs(pred - last_obs))
+            return delta
+
         def train_step(self, data):
             x, y = data
-            
-            with tf.GradientTape() as tape:
-                pred = self.ensemble(x, training=True)
-                
-                # Data loss
-                data_loss = tf.keras.losses.mse(y, pred)
-                
-                # Physics loss (energy balance example)
+            with keras.GradientTape() as tape:
+                pred = self(x, training=True)
+                data_loss = keras.losses.mean_squared_error(y, pred)
                 physics_loss = self.compute_physics_loss(x, pred)
-                
-                # Combined
-                total_loss = data_loss + self.physics_weight * physics_loss
-            
-            # Backpropagation
-            trainable_vars = self.trainable_variables
-            gradients = tape.gradient(total_loss, trainable_vars)
-            self.optimizer.apply_gradients(zip(gradients, trainable_vars))
-            
-            return {'loss': total_loss, 'physics_loss': physics_loss}
+                total_loss = (
+                    keras.ops.mean(data_loss)
+                    + self.physics_weight * physics_loss
+                )
+            grads = tape.gradient(total_loss, self.trainable_variables)
+            self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
+            return {"loss": total_loss, "physics_loss": physics_loss}
 
 
 Transfer Learning for Data-Limited Domains
@@ -444,25 +515,44 @@ Transfer Learning for Data-Limited Domains
 
 .. code-block:: python
 
-    # Pre-train on 100+ buildings
-    pretrained = BaseAttentive(...)
-    pretrained.fit(large_dataset, epochs=50)
-    
-    # Clone and freeze encoder
-    transfer_model = clone_model(pretrained)
+    import numpy as np
+    import keras
+    from base_attentive import BaseAttentive
+
+    # Pre-train on large dataset
+    pretrained = BaseAttentive(
+        static_input_dim=5,
+        dynamic_input_dim=6,
+        future_input_dim=4,
+        output_dim=1,
+        forecast_horizon=24,
+        mode="tft_like",
+    )
+    pretrained.compile(optimizer="adam", loss="mse")
+    pretrained.fit(large_dataset_x, large_dataset_y, epochs=50)
+
+    # Clone and freeze most layers
+    transfer_model = keras.models.clone_model(pretrained)
+    transfer_model.set_weights(pretrained.get_weights())
     for layer in transfer_model.layers[:-8]:
         layer.trainable = False
-    
-    # Fine-tune on target building
-    transfer_model.compile(optimizer=Adam(lr=1e-5), loss='mse')
-    transfer_model.fit(target_data, epochs=20)
-    
+
+    # Fine-tune on target domain
+    transfer_model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=1e-5),
+        loss="mse",
+    )
+    transfer_model.fit(target_x, target_y, epochs=20)
+
     # Optional: progressive unfreezing
     for layer in transfer_model.layers[-8:-4]:
         layer.trainable = True
-    transfer_model.compile(optimizer=Adam(lr=1e-5), loss='mse')
-    transfer_model.fit(target_data, epochs=10)
-    
+    transfer_model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=1e-5),
+        loss="mse",
+    )
+    transfer_model.fit(target_x, target_y, epochs=10)
+
 
 Multi-Task Learning
 --------------------
@@ -492,12 +582,32 @@ Multi-Task Learning
 
 .. code-block:: python
 
-    total_loss = (
-        w1 * MSE(demand_pred, demand_true) +
-        w2 * CrossEntropy(peak_pred, peak_true) +
-        w3 * CrossEntropy(anomaly_pred, anomaly_true) +
-        w4 * MSE(frequency_pred, frequency_true)
-    )
+    import keras
+    import numpy as np
+    from base_attentive import BaseAttentive
+    from base_attentive.components import MultiObjectiveLoss
+
+    # Build multi-task model around a shared kernel
+    class MultiTaskEnergyModel(keras.Model):
+        def __init__(self, forecast_horizon=24):
+            super().__init__()
+            self.kernel = BaseAttentive(
+                static_input_dim=5,
+                dynamic_input_dim=8,
+                future_input_dim=4,
+                output_dim=1,
+                forecast_horizon=forecast_horizon,
+            )
+            self.demand_head  = keras.layers.Dense(1)
+            self.anomaly_head = keras.layers.Dense(1, activation="sigmoid")
+
+        def call(self, inputs, training=False):
+            shared = self.kernel(inputs, training=training)
+            context = keras.ops.mean(shared, axis=1)
+            return {
+                "demand":  shared,
+                "anomaly": self.anomaly_head(context),
+            }
 
 **Typical Weights:**
 
@@ -660,32 +770,38 @@ Hyperparameter Tuning Strategy
 
 .. code-block:: python
 
+    import numpy as np
+    from base_attentive import BaseAttentive
+
     model = BaseAttentive(
-        static_dim=your_static_dim,
-        dynamic_dim=your_dynamic_dim,
-        future_dim=your_future_dim,
+        static_input_dim=your_static_dim,
+        dynamic_input_dim=your_dynamic_dim,
+        future_input_dim=your_future_dim,
+        output_dim=1,
         forecast_horizon=your_horizon,
-        mode='hybrid',  # Balance attention and LSTM
-        attention_stack=[
-            ('cross_attention', {'heads': 4, 'dim': 64}),
-            ('self_attention', {'heads': 4, 'dim': 64}),
-        ]
+        mode="tft_like",    # Cross + hierarchical attention
+        embed_dim=64,
+        num_heads=4,
     )
 
 **Production Tuning:**
 
-1. Adjust ``heads`` and ``dim`` based on data size:
-   - Small data (< 10K samples): 4 heads, 64 dim
-   - Medium data (10K-100K): 8 heads, 128 dim
-   - Large data (> 100K): 16 heads, 256 dim
+1. Adjust ``embed_dim`` and ``num_heads`` based on data size:
+   - Small data (< 10K samples): ``embed_dim=32``, 4 heads
+   - Medium data (10K-100K): ``embed_dim=64``, 8 heads
+   - Large data (> 100K): ``embed_dim=128``, 16 heads
 
-2. Stack depth (number of attention layers):
-   - Start with 2-3 layers
-   - Add more if overfitting is low and data abundant
+2. Attention depth (``attention_levels``):
+   - Start with ``["cross", "hierarchical"]`` (2 levels)
+   - Add ``"memory"`` for long-range dependencies
 
-3. Quantiles for uncertainty:
-   - 3 quantiles ([0.1, 0.5, 0.9]): Fastest, basic uncertainty
-   - 5 quantiles ([0.05, 0.25, 0.5, 0.75, 0.95]): Balanced
+3. Multi-scale aggregation (``scales`` + ``multi_scale_agg``):
+   - ``scales=[1, 2, 4]`` for typical time series
+   - ``multi_scale_agg="average"`` is a stable default
+
+4. Quantiles for uncertainty:
+   - 3 quantiles (``[0.1, 0.5, 0.9]``): Fastest, basic uncertainty
+   - 5 quantiles (``[0.05, 0.25, 0.5, 0.75, 0.95]``): Balanced
    - 11 quantiles: Maximum flexibility, slower inference
 
 Evaluation Metrics Framework
@@ -748,6 +864,6 @@ To continue with an application-specific workflow:
 
 Need help?
 
-- Open an issue on `GitHub <https://github.com/yourusername/base-attentive>`__
+- Open an issue on `GitHub <https://github.com/earthai-tech/base-attentive>`__
 - Discuss on project forums
 - Review other examples and documentation

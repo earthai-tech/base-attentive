@@ -1,10 +1,38 @@
 Components Reference
 ====================
 
-This page summarizes the most important reusable neural-network components
-that power ``BaseAttentive``. The classes and helpers listed here are useful
-when you want to assemble custom encoder-decoder models without relying only
-on the top-level ``BaseAttentive`` abstraction.
+This page summarizes the reusable neural-network components that power
+``BaseAttentive``. All components are importable from
+``base_attentive.components``.
+
+.. code-block:: python
+
+   from base_attentive.components import (
+       # Attention
+       CrossAttention, HierarchicalAttention, MemoryAugmentedAttention,
+       ExplainableAttention, TemporalAttentionLayer,
+       MultiResolutionAttentionFusion,
+       # Temporal
+       MultiScaleLSTM, DynamicTimeWindow,
+       # Gating / normalization
+       VariableSelectionNetwork, GatedResidualNetwork,
+       LearnedNormalization, StaticEnrichmentLayer,
+       # Transformer blocks
+       TransformerEncoderLayer, TransformerDecoderLayer,
+       TransformerEncoderBlock, TransformerDecoderBlock,
+       MultiDecoder,
+       # Forecast heads
+       PointForecastHead, QuantileHead, GaussianHead,
+       MixtureDensityHead, QuantileDistributionModeling, CombinedHeadLoss,
+       # Positional / embedding
+       PositionalEncoding, TSPositionalEncoding,
+       MultiModalEmbedding, Activation,
+       # Losses
+       AdaptiveQuantileLoss, MultiObjectiveLoss, CRPSLoss, AnomalyLoss,
+       QuantileLoss, MeanSquaredErrorLoss, HuberLoss, WeightedLoss,
+       # Layer utilities
+       Gate, LayerScale, ResidualAdd, SqueezeExcite1D, StochasticDepth,
+   )
 
 Core Components
 ---------------
@@ -12,48 +40,95 @@ Core Components
 Variable Selection Network
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.VariableSelectionNetwork``
+Import: ``base_attentive.components.VariableSelectionNetwork``
+
+Signature: ``VariableSelectionNetwork(units, num_inputs)``
 
 Learns feature-wise gating weights and projects inputs into a more useful
-representation before they are passed deeper into the model. Each feature
-receives a learnable weight indicating its importance.
+representation. Each feature receives a learnable importance weight.
 
 .. math::
 
    \mathbf{z} = g(\mathbf{x}) \odot \mathbf{x}
 
-where :math:`g(\mathbf{x})` is a gating function and :math:`\odot` denotes
+where :math:`g(\mathbf{x})` is a gating function and :math:`\odot` is
 element-wise multiplication.
+
+.. code-block:: python
+
+   vsn    = VariableSelectionNetwork(units=32, num_inputs=8)
+   output = vsn([feat_1, feat_2, ..., feat_8])  # list of input tensors
+
+Gated Residual Network
+~~~~~~~~~~~~~~~~~~~~~~
+
+Import: ``base_attentive.components.GatedResidualNetwork``
+
+Signature: ``GatedResidualNetwork(units, dropout_rate=0.0)``
+
+Applies a gated linear unit followed by a residual connection and layer
+normalization. The backbone of TFT-style gating.
+
+.. code-block:: python
+
+   grn    = GatedResidualNetwork(units=32, dropout_rate=0.1)
+   output = grn(x)                     # without context
+   output = grn([x, context_vector])   # with optional context
+
+Learned Normalization
+~~~~~~~~~~~~~~~~~~~~~
+
+Import: ``base_attentive.components.LearnedNormalization``
+
+Learnable layer normalization with per-channel scale and shift.
+
+Static Enrichment Layer
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Import: ``base_attentive.components.StaticEnrichmentLayer``
+
+Signature: ``StaticEnrichmentLayer(units)``
+
+Enriches temporal features with static context information.
+
+.. code-block:: python
+
+   enriched = StaticEnrichmentLayer(units=32)([temporal, static_context])
 
 Multi-Scale LSTM
 ~~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.MultiScaleLSTM``
+Import: ``base_attentive.components.MultiScaleLSTM``
+
+Signature: ``MultiScaleLSTM(lstm_units, scales=None, return_sequences=False)``
 
 Encodes temporal context across multiple resolutions. Each scale processes
-sub-sampled sequences, then outputs are concatenated.
+a sub-sampled sequence, then outputs are concatenated.
 
 .. math::
 
    \mathbf{h}^{(s)} = \text{LSTM}(\mathbf{x}[::s])
 
-   \mathbf{y} = \text{concat}(\mathbf{h}^{(1)}, \mathbf{h}^{(2)}, \ldots, \mathbf{h}^{(S)})
+   \mathbf{y} = \text{concat}(\mathbf{h}^{(1)}, \mathbf{h}^{(2)}, \ldots)
 
-where :math:`s` is the scale factor and :math:`S` is the number of scales.
+.. code-block:: python
 
-Multi-Decoder
-~~~~~~~~~~~~~
+   lstm   = MultiScaleLSTM(lstm_units=64, scales=[1, 2, 4])
+   output = lstm(x)   # x: (batch, time_steps, features)
 
-Import path: ``base_attentive.components.MultiDecoder``
+Dynamic Time Window
+~~~~~~~~~~~~~~~~~~~
 
-Projects the latent representation into horizon-wise forecast outputs.
-For each forecast step, a separate dense layer projects features to the output dimension.
+Import: ``base_attentive.components.DynamicTimeWindow``
 
-.. math::
+Signature: ``DynamicTimeWindow(max_window_size)``
 
-   \hat{\mathbf{y}}_t = W_t \mathbf{h} + \mathbf{b}_t
+Adaptively selects temporal context windows up to ``max_window_size`` steps.
 
-where :math:`W_t` is a horizon-specific weight matrix and :math:`\mathbf{h}` is the encoder hidden state.
+.. code-block:: python
+
+   dtw    = DynamicTimeWindow(max_window_size=10)
+   output = dtw(x)   # x: (batch, time_steps, features)
 
 Attention Layers
 ----------------
@@ -61,870 +136,379 @@ Attention Layers
 Cross-Attention
 ~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.CrossAttention``
+Import: ``base_attentive.components.CrossAttention``
+
+Signature: ``CrossAttention(units, num_heads)``
 
 Fuses decoder queries with encoder memory using scaled dot-product attention.
-This is the key bridge between historical context and forecast generation.
 
 .. math::
 
-   \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V
+   \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V
 
-where :math:`Q` is the decoder query, :math:`K` and :math:`V` are encoder key and value.
+.. code-block:: python
 
-**Multi-Head Variant:**
-
-.. math::
-
-   \text{MultiHead}(Q, K, V) = \text{concat}(\text{head}_1, \ldots, \text{head}_h) W^O
-
-   \text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)
+   ca     = CrossAttention(units=32, num_heads=4)
+   output = ca([query, context])
 
 Hierarchical Attention
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.HierarchicalAttention``
+Import: ``base_attentive.components.HierarchicalAttention``
 
-Adds structure-aware attention on top of temporal features, capturing
-richer contextual relationships at multiple levels of abstraction.
+Signature: ``HierarchicalAttention(units, num_heads)``
+
+Multi-level attention for richer contextual relationships.
 
 .. math::
 
    \mathbf{a}^{(l)} = \text{softmax}(W^{(l)} \mathbf{h}^{(l)})
 
-   \mathbf{z}^{(l)} = \sum_i a_i^{(l)} \mathbf{h}_i^{(l)}
+.. code-block:: python
 
-where :math:`l` denotes the hierarchy level.
+   ha     = HierarchicalAttention(units=32, num_heads=4)
+   output = ha(x)
 
 Memory-Augmented Attention
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.MemoryAugmentedAttention``
+Import: ``base_attentive.components.MemoryAugmentedAttention``
 
-Provides an extended attention mechanism for longer-range dependencies,
-augmenting standard attention with external memory.
+Signature: ``MemoryAugmentedAttention(units, num_heads)``
 
-.. math::
+Maintains a persistent memory bank for long-range pattern retrieval.
 
-   \text{Score}(Q, M) = \frac{QM^T}{\sqrt{d}} + \text{memory\_bias}
+.. code-block:: python
 
-   \text{Output} = \text{softmax}(\text{Score}) V
-
-where :math:`M` is the memory matrix and :math:`\text{memory\_bias}` provides learnable offsets.
+   maa    = MemoryAugmentedAttention(units=32, num_heads=4)
+   output = maa(x)
 
 Temporal Attention Layer
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.TemporalAttentionLayer``
+Import: ``base_attentive.components.TemporalAttentionLayer``
 
-Conditions query context with temporal information. Processes sequences
-across time, learning temporal dependencies.
+Signature: ``TemporalAttentionLayer(units, num_heads)``
 
-.. math::
+General-purpose temporal multi-head attention.
 
-   \mathbf{y}_t = \text{Attention}(Q_t, K_{1:t}, V_{1:t})
+.. code-block:: python
 
-This ensures the model respects causality when processing sequential data.
+   tal    = TemporalAttentionLayer(units=32, num_heads=4)
+   output = tal([x, x])   # self-attention
 
 Explainable Attention
 ~~~~~~~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.ExplainableAttention``
+Import: ``base_attentive.components.ExplainableAttention``
 
-Provides interpretable attention weights that highlight which parts
-of the input are most influential for each prediction.
+Signature: ``ExplainableAttention(units, num_heads)``
 
-.. math::
-
-   \alpha_{ij} = \frac{\exp(s_{ij})}{\sum_k \exp(s_{ik})}
-
-   \text{Importance}_i = \sum_j |\alpha_{ij}|
+Returns attention weights alongside the output for interpretability.
 
 Multi-Resolution Attention Fusion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.MultiResolutionAttentionFusion``
+Import: ``base_attentive.components.MultiResolutionAttentionFusion``
 
-Combines attention outputs computed at multiple resolutions.
+Signature: ``MultiResolutionAttentionFusion(units, num_heads)``
 
-.. math::
+Fuses representations from multiple temporal resolutions using attention.
 
-   \text{Output} = \sum_{r} w_r \cdot \text{Attention}(\mathbf{x}^{(r)})
+.. code-block:: python
 
-where :math:`r` indexes resolutions and :math:`w_r` are learnable weights.
+   mraf   = MultiResolutionAttentionFusion(units=32, num_heads=4)
+   output = mraf([fine_features, coarse_features])
 
-Transformer Layers
--------------------
+Transformer Blocks
+------------------
 
-Transformer Encoder Layer
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.TransformerEncoderLayer``
-
-Standard transformer encoder block with multi-head self-attention
-and position-wise feed-forward network.
-
-.. math::
-
-   \text{Attn} = \text{MultiHeadAttention}(\mathbf{x}, \mathbf{x}, \mathbf{x})
-
-   \mathbf{z} = \text{LayerNorm}(\mathbf{x} + \text{Attn})
-
-   \mathbf{y} = \text{LayerNorm}(\mathbf{z} + \text{FFN}(\mathbf{z}))
-
-where :math:`\text{FFN}(\mathbf{z}) = \max(0, \mathbf{z}W_1 + b_1)W_2 + b_2`.
-
-Transformer Decoder Layer
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.TransformerDecoderLayer``
-
-Transformer decoder block with self-attention, cross-attention, and FFN.
-
-.. math::
-
-   \text{Self-Attn} = \text{MultiHeadAttention}(\mathbf{y}, \mathbf{y}, \mathbf{y})
-
-   \mathbf{z}_1 = \text{LayerNorm}(\mathbf{y} + \text{Self-Attn})
-
-   \text{Cross-Attn} = \text{MultiHeadAttention}(\mathbf{z}_1, \mathbf{x}, \mathbf{x})
-
-   \mathbf{z}_2 = \text{LayerNorm}(\mathbf{z}_1 + \text{Cross-Attn})
-
-   \text{Output} = \text{LayerNorm}(\mathbf{z}_2 + \text{FFN}(\mathbf{z}_2))
-
-Transformer Encoder Block
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.TransformerEncoderBlock``
-
-Stack of Transformer encoder layers for deep sequential processing.
-
-Transformer Decoder Block
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.TransformerDecoderBlock``
-
-Stack of Transformer decoder layers for multi-step ahead forecasting.
-
-Supporting Layers
------------------
-
-Gated Residual Network
-~~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.GatedResidualNetwork``
-
-Used throughout the architecture for stable feature transformation with gating.
-Enables skip connections and controlled information flow.
-
-.. math::
-
-   \mathbf{g} = \text{sigmoid}(W_g \mathbf{h} + b_g)
-
-   \mathbf{y} = \mathbf{g} \odot f(\mathbf{x}) + (1 - \mathbf{g}) \odot \mathbf{x}
-
-where :math:`f` is a residual network and :math:`\mathbf{g}` is the gate.
-
-Learned Normalization
-~~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.LearnedNormalization``
-
-Instance normalization with learnable scale and shift parameters.
-
-.. math::
-
-   \mathbf{y} = \gamma \frac{\mathbf{x} - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta
-
-where :math:`\mu, \sigma` are computed per sample and :math:`\gamma, \beta` are learnable.
-
-Static Enrichment Layer
+TransformerEncoderLayer
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.StaticEnrichmentLayer``
+Import: ``base_attentive.components.TransformerEncoderLayer``
 
-Enriches dynamic features with static context information through gating.
+Signature: ``TransformerEncoderLayer(embed_dim, num_heads, ffn_dim, dropout_rate=0.1)``
+
+Single transformer encoder layer: self-attention + feed-forward + layer norm.
+
+.. code-block:: python
+
+   enc    = TransformerEncoderLayer(embed_dim=32, num_heads=4, ffn_dim=64)
+   output = enc(x)   # x: (batch, seq_len, embed_dim)
+
+TransformerDecoderLayer
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Import: ``base_attentive.components.TransformerDecoderLayer``
+
+Signature: ``TransformerDecoderLayer(embed_dim, num_heads, ffn_dim, dropout_rate=0.1)``
+
+Single transformer decoder layer: masked self-attention + cross-attention +
+feed-forward + layer norm.
+
+.. code-block:: python
+
+   dec    = TransformerDecoderLayer(embed_dim=32, num_heads=4, ffn_dim=64)
+   output = dec([tgt, memory])   # tgt: (B, T_dec, D), memory: (B, T_enc, D)
+
+TransformerEncoderBlock
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Import: ``base_attentive.components.TransformerEncoderBlock``
+
+Signature: ``TransformerEncoderBlock(embed_dim, num_heads, ffn_dim, num_layers, dropout_rate=0.1)``
+
+Stack of ``TransformerEncoderLayer`` blocks.
+
+TransformerDecoderBlock
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Import: ``base_attentive.components.TransformerDecoderBlock``
+
+Signature: ``TransformerDecoderBlock(embed_dim, num_heads, ffn_dim, num_layers, dropout_rate=0.1)``
+
+Stack of ``TransformerDecoderLayer`` blocks.
+
+Multi-Decoder
+~~~~~~~~~~~~~
+
+Import: ``base_attentive.components.MultiDecoder``
+
+Signature: ``MultiDecoder(output_dim, num_horizons)``
+
+Projects the latent representation into horizon-wise forecast outputs with
+one dense layer per horizon step.
 
 .. math::
 
-   \mathbf{z}_t = \mathbf{x}_t + W[\mathbf{x}_t; \mathbf{s}]
+   \hat{\mathbf{y}}_t = W_t \mathbf{h} + \mathbf{b}_t
 
-where :math:`\mathbf{s}` denotes static features and :math:`[\cdot]` is concatenation.
+.. code-block:: python
 
-Dynamic Time Window
-~~~~~~~~~~~~~~~~~~~
+   md     = MultiDecoder(output_dim=2, num_horizons=24)
+   output = md(h)   # h: (batch, embed_dim)
 
-Import path: ``base_attentive.components.DynamicTimeWindow``
+Forecast Heads
+--------------
 
-Supports dynamic alignment and adaptive temporal windowing. Slices
-sequences at variable positions for alignment.
+PointForecastHead
+~~~~~~~~~~~~~~~~~
 
-Layer Scale
-~~~~~~~~~~~
+Import: ``base_attentive.components.PointForecastHead``
 
-Import path: ``base_attentive.components.LayerScale``
+Signature: ``PointForecastHead(output_dim, forecast_horizon)``
 
-Per-channel trainable scale vector (inspired by ConvNeXt).
+Single dense output head for point forecasting.
 
-.. math::
+.. code-block:: python
 
-   \mathbf{y} = \gamma \odot \mathbf{x}
+   head   = PointForecastHead(output_dim=2, forecast_horizon=24)
+   output = head(h)   # output: (batch, 24, 2)
 
-where :math:`\gamma` is a learnable per-channel scaling vector.
-
-Residual Add
+QuantileHead
 ~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.ResidualAdd``
+Import: ``base_attentive.components.QuantileHead``
 
-Simple residual connection combining inputs.
+Signature: ``QuantileHead(quantiles, output_dim, forecast_horizon)``
 
-.. math::
+Outputs a separate dense projection for each quantile level.
 
-   \mathbf{y} = \mathbf{x} + f(\mathbf{x})
+.. code-block:: python
 
-Squeeze-Excite (1D)
-~~~~~~~~~~~~~~~~~~~
+   head   = QuantileHead(quantiles=[0.1, 0.5, 0.9], output_dim=2, forecast_horizon=24)
+   output = head(h)   # output: (batch, 24, 3, 2)
 
-Import path: ``base_attentive.components.SqueezeExcite1D``
+GaussianHead
+~~~~~~~~~~~~
 
-Channel-wise attention mechanism. Recalibrates channel importance.
+Import: ``base_attentive.components.GaussianHead``
 
-.. math::
+Signature: ``GaussianHead(output_dim)``
 
-   \mathbf{s} = \sigma(W_2 \text{ReLU}(W_1 \mathbf{z}))
+Outputs mean and log-variance parameters for a Gaussian predictive distribution.
 
-   \mathbf{y} = \mathbf{s} \odot \mathbf{x}
-
-where :math:`\mathbf{z}` is global average pooling of :math:`\mathbf{x}`.
-
-Stochastic Depth
-~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.StochasticDepth``
-
-Randomly drops residual branches during training for regularization.
-
-.. math::
-
-   \mathbf{y} = \begin{cases}
-   \mathbf{x} + f(\mathbf{x}) & \text{with probability } 1-p \\
-   \mathbf{x} & \text{with probability } p
-   \end{cases}
-
-Gate Layer
-~~~~~~~~~~
-
-Import path: ``base_attentive.components.Gate``
-
-Simple multiplicative gating mechanism.
-
-.. math::
-
-   \mathbf{y} = \mathbf{g} \odot \mathbf{x}
-
-where :math:`\mathbf{g} \in (0, 1)` is a gating vector.
-
-Positional Encoding
-~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.PositionalEncoding``
-
-Injects absolute positional information into embeddings.
-
-.. math::
-
-   PE_{(pos, 2i)} = \sin(pos / 10000^{2i/d})
-
-   PE_{(pos, 2i+1)} = \cos(pos / 10000^{2i/d})
-
-where :math:`pos` is position and :math:`d` is embedding dimension.
-
-Time Series Positional Encoding
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.TSPositionalEncoding``
-
-Time-series specific positional encoding handling irregular sampling or variable-length sequences.
-
-.. math::
-
-   PE_t = \text{embed}(\Delta t) + \text{embed}(\text{dayofweek}) + \cdots
-
-where :math:`\Delta t` is time delta and additional features capture temporal patterns.
-
-Embedding Layers
------------------
-
-Multi-Modal Embedding
-~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.MultiModalEmbedding``
-
-Embeds multi-modal inputs (static, dynamic, future) into a unified space.
-
-.. math::
-
-   \mathbf{e}_s = W_s \mathbf{x}_s + b_s
-
-   \mathbf{e}_d = W_d \mathbf{x}_d + b_d
-
-   \mathbf{e}_f = W_f \mathbf{x}_f + b_f
-
-where subscripts denote static, dynamic, and future modalities.
-
-Activation Layer
-~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.Activation``
-
-Flexible activation layer supporting any Keras or custom activation function.
-
-.. math::
-
-   \mathbf{y} = \phi(\mathbf{x})
-
-where :math:`\phi` can be ReLU, GELU, Tanh, or any other function.
-
-Prediction Heads
-----------------
-
-Quantile Head
-~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.QuantileHead``
-
-Predicts multiple quantiles for probabilistic forecasting.
-
-.. math::
-
-   \hat{y}_{q} = W_q \mathbf{h} + b_q \quad \forall q \in \{0.1, 0.5, 0.9, \ldots\}
-
-Point Forecast Head
-~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.PointForecastHead``
-
-Standard point forecast (mean prediction).
-
-.. math::
-
-   \hat{y} = W \mathbf{h} + b
-
-Gaussian Head
-~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.GaussianHead``
-
-Predicts parametric Gaussian distribution: mean :math:`\mu` and standard deviation :math:`\sigma`.
-
-.. math::
-
-   \mu = W_\mu \mathbf{h} + b_\mu
-
-   \sigma = \text{softplus}(W_\sigma \mathbf{h} + b_\sigma) + \epsilon
-
-Mixture Density Head
-~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.MixtureDensityHead``
-
-Predicts mixture of Gaussians for multi-modal distributions.
-
-.. math::
-
-   p(y|\mathbf{x}) = \sum_{k=1}^K \pi_k N(y | \mu_k, \sigma_k^2)
-
-Quantile Distribution Modeling
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.QuantileDistributionModeling``
-
-Explicitly models the predictive distribution via quantile regression.
-
-.. math::
-
-   \mathcal{L}_q = \frac{1}{n} \sum_{i=1}^n q \cdot (y_i - \hat{y}_q)^+ + (1-q) \cdot (\hat{y}_q - y_i)^+
-
-where :math:`(x)^+ = \max(x, 0)`.
-
-Combined Head Loss
+MixtureDensityHead
 ~~~~~~~~~~~~~~~~~~
 
-Import path: ``base_attentive.components.CombinedHeadLoss``
+Import: ``base_attentive.components.MixtureDensityHead``
 
-Aggregates losses from multiple prediction heads into a single objective.
+Signature: ``MixtureDensityHead(num_components, output_dim)``
 
-.. math::
+Outputs mixture weights, means, and variances for a Gaussian Mixture Model.
 
-   \mathcal{L}_{\text{total}} = \sum_h \lambda_h \mathcal{L}_h
+QuantileDistributionModeling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-where :math:`\lambda_h` are loss weights per head.
+Import: ``base_attentive.components.QuantileDistributionModeling``
 
-Loss Functions
----------------
+Signature: ``QuantileDistributionModeling(quantiles, output_dim)``
 
-Quantile Loss
-~~~~~~~~~~~~~
+Full quantile distribution modeling head.
 
-Import path: ``base_attentive.components.QuantileLoss``
-
-Used for probabilistic forecasting when optimizing quantile outputs.
-
-.. math::
-
-   \mathcal{L}_q(y, \hat{y}) = (q - \mathbb{1}[y < \hat{y}]) \cdot (y - \hat{y})
-
-Adaptive Quantile Loss
-~~~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.AdaptiveQuantileLoss``
-
-Quantile loss with adaptive weighting based on prediction confidence.
-
-.. math::
-
-   \mathcal{L} = w(\hat{\sigma}) \cdot \mathcal{L}_q + \lambda \hat{\sigma}
-
-where :math:`w` weighs by predicted uncertainty and :math:`\lambda` penalizes overconfidence.
-
-Multi-Objective Loss
-~~~~~~~~~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.MultiObjectiveLoss``
-
-Combines multiple loss terms into a single optimization target.
-
-.. math::
-
-   \mathcal{L}_{\text{total}} = \sum_i \alpha_i \mathcal{L}_i
-
-where :math:`\alpha_i` are learnable or fixed weights.
-
-CRPS Loss
-~~~~~~~~~
-
-Import path: ``base_attentive.components.CRPSLoss``
-
-Continuous Ranked Probability Score for probabilistic forecasts.
-
-**Quantile approximation:**
-
-.. math::
-
-   \text{CRPS}_q \approx \frac{1}{M} \sum_{m=1}^M |y - \hat{y}_{(m)}|
-
-**Gaussian closed form:**
-
-.. math::
-
-   \text{CRPS}_N(y) = \sigma \left( \frac{y-\mu}{\sigma} \phi\left(\frac{y-\mu}{\sigma}\right) 
-   + \Phi\left(\frac{y-\mu}{\sigma}\right) - \frac{1}{\sqrt{\pi}} \right)
-
-Anomaly Loss
-~~~~~~~~~~~~
-
-Import path: ``base_attentive.components.AnomalyLoss``
-
-Specialized loss for anomaly detection combining reconstruction and outlier terms.
-
-.. math::
-
-   \mathcal{L} = \|y - \hat{y}\|^2 + \lambda \cdot \text{anomaly\_score}(y, \hat{y})
-
-
-Utility Functions
------------------
-
-Tensor Management
-~~~~~~~~~~~~~~~~~
-
-``maybe_expand_time``
-   Expands time dimension if needed for compatibility.
-
-.. math::
-
-   \text{shape} = \begin{cases}
-   (\text{batch}, \text{time}, \text{features}) & \text{if } \text{rank} = 2 \\
-   (\text{batch}, \text{time}, \text{features}) & \text{if } \text{rank} = 3
-   \end{cases}
-
-``broadcast_like``
-   Broadcasts tensor to match shape of reference tensor.
-
-.. math::
-
-   \text{broadcast}(\mathbf{x}, \text{shape}(\mathbf{ref}))
-
-``ensure_rank_at_least``
-   Ensures tensor has minimum rank by adding dimensions.
-
-Residual Patterns
-~~~~~~~~~~~~~~~~~
-
-``apply_residual``
-   Applies residual connection with optional transformation.
-
-.. math::
-
-   \mathbf{y} = \mathbf{x} + \alpha \cdot f(\mathbf{x})
-
-where :math:`\alpha` is an optional scaling factor.
-
-``drop_path``
-   Stochastic depth variant dropping entire spatial paths.
-
-.. math::
-
-   \mathbf{y} = \begin{cases}
-   \mathbf{x} + f(\mathbf{x}) & \text{with probability } 1-p \\
-   \mathbf{x} & \text{with probability } p
-   \end{cases}
-
-Masking Utilities
-~~~~~~~~~~~~~~~~~
-
-``create_causal_mask``
-   Creates a causal (lower-triangular) attention mask for autoregressive models.
-
-.. math::
-
-   M_{ij} = \begin{cases}
-   0 & \text{if } i \geq j \\
-   -\infty & \text{if } i < j
-   \end{cases}
-
-``combine_masks``
-   Combines multiple masks via logical AND operation.
-
-``pad_mask_from_lengths``
-   Creates padding mask from sequence lengths.
-
-.. math::
-
-   M_i = \begin{cases}
-   0 & \text{if } i < \text{length} \\
-   -\infty & \text{if } i \geq \text{length}
-   \end{cases}
-
-``sequence_mask_3d``
-   Creates 3D masks for batch-wise sequences.
-
-Temporal Aggregation
-~~~~~~~~~~~~~~~~~~~~
-
-``aggregate_multiscale_on_3d``
-   Reduces 3D tensor across time using multiple scales.
-
-.. math::
-
-   \mathbf{y}^{(s)} = \text{pool}(\mathbf{x}[::s])
-
-``aggregate_time_window_output``
-   Aggregates outputs within temporal windows.
-
-.. math::
-
-   \mathbf{y}_w = \text{agg}(\{\mathbf{x}_t : t \in \text{window}_w\})
-
-Component Architecture
-----------------------
-
-Composition Pattern
-~~~~~~~~~~~~~~~~~~~
-
-Components are designed to be composable:
-
-.. code-block:: python
-
-   from keras import layers
-   from base_attentive.components import (
-       VariableSelectionNetwork,
-       CrossAttention,
-       MultiDecoder,
-       TransformerEncoderLayer,
-   )
-
-   class CustomModel(layers.Layer):
-       def __init__(self, **config):
-           super().__init__()
-           self.vsn = VariableSelectionNetwork(**config)
-           self.encoder = TransformerEncoderLayer(**config)
-           self.attention = CrossAttention(**config)
-           self.decoder = MultiDecoder(**config)
-
-       def call(self, inputs, training=False):
-           # Select important features
-           selected = self.vsn(inputs)
-           
-           # Encode with transformer
-           encoded = self.encoder(selected, training=training)
-           
-           # Cross-attend to encoder
-           attended = self.attention(
-               [encoded, encoded, encoded],
-               training=training
-           )
-           
-           # Decode to forecast horizon
-           output = self.decoder(attended, training=training)
-           return output
-
-Common Patterns
----------------
-
-Feature Selection with VSN
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   from base_attentive.components import VariableSelectionNetwork
-
-   vsn = VariableSelectionNetwork(
-       input_dim=10,
-       output_dim=8,
-       hidden_units=32,
-       dropout_rate=0.1,
-   )
-
-   # Learns which features matter
-   selected_features = vsn(raw_features, training=True)
-
-Multi-Head Attention
-~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   from base_attentive.components import CrossAttention
-
-   attention = CrossAttention(
-       num_heads=8,
-       dropout_rate=0.1,
-   )
-
-   # Apply multi-head attention
-   # Q: decoder hidden state, K,V: encoder hidden states
-   output = attention(
-       [query, encoder_output, encoder_output],
-       training=True
-   )
-
-Probabilistic Forecasting
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   from base_attentive.components import (
-       MultiScaleLSTM,
-       QuantileHead,
-       QuantileLoss,
-   )
-
-   # Multi-scale encoder
-   encoder = MultiScaleLSTM(
-       lstm_units=64,
-       scales=[1, 2, 3],
-       return_sequences=False
-   )
-
-   # Quantile prediction head
-   head = QuantileHead(
-       output_dim=1,
-       quantiles=[0.1, 0.5, 0.9]
-   )
-
-   # Quantile loss
-   loss_fn = QuantileLoss()
-
-Multi-Horizon Decoding
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   from base_attentive.components import MultiDecoder
-
-   decoder = MultiDecoder(
-       output_dim=1,
-       forecast_horizon=24,
-   )
-
-   # Projects encoder output to horizon forecasts
-   forecasts = decoder(encoded)  # shape: (batch, 24, 1)
-
-Transformer Encoder-Decoder Stack
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   from base_attentive.components import (
-       TransformerEncoderBlock,
-       TransformerDecoderBlock,
-   )
-
-   encoder = TransformerEncoderBlock(
-       embed_dim=64,
-       num_heads=8,
-       ffn_dim=256,
-       num_layers=3,
-   )
-
-   decoder = TransformerDecoderBlock(
-       embed_dim=64,
-       num_heads=8,
-       ffn_dim=256,
-       num_layers=3,
-   )
-
-   # Encode historical context
-   encoder_output = encoder(x_hist)
-
-   # Decode forecast
-   decoder_output = decoder(
-       x_future,
-       encoder_output=encoder_output
-   )
-
-Regularization Techniques
---------------------------
-
-Stochastic Depth
+CombinedHeadLoss
 ~~~~~~~~~~~~~~~~
 
-Randomly drops residual branches during training to improve generalization:
+Import: ``base_attentive.components.CombinedHeadLoss``
+
+Signature: ``CombinedHeadLoss(output_dim, forecast_horizon)``
+
+Combines forecast head with loss computation.
+
+Positional Encoding and Embedding
+-----------------------------------
+
+PositionalEncoding
+~~~~~~~~~~~~~~~~~~
+
+Import: ``base_attentive.components.PositionalEncoding``
+
+Signature: ``PositionalEncoding(max_length=2048)``
+
+Sinusoidal positional encoding (added to input embeddings).
 
 .. code-block:: python
 
-   from base_attentive.components import StochasticDepth
+   pe     = PositionalEncoding(max_length=200)
+   output = pe(x)   # x: (batch, seq_len, embed_dim)
 
-   depth = StochasticDepth(drop_rate=0.1)
-   
-   # Usage in residual block
-   output = x + depth(f(x), training=training)
+TSPositionalEncoding
+~~~~~~~~~~~~~~~~~~~~~
 
-Layer Scale
-~~~~~~~~~~~
+Import: ``base_attentive.components.TSPositionalEncoding``
 
-Per-channel scaling helps stabilize training of deep networks:
+Signature: ``TSPositionalEncoding(max_position, embed_dim)``
 
-.. code-block:: python
-
-   from base_attentive.components import LayerScale
-
-   scale = LayerScale(init_value=1e-4)
-   
-   # Scale residual branch before adding
-   output = x + scale(f(x))
-
-Squeeze-Excite Attention
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Channel-wise attention recalibrating channel importance:
+Time-series-specific positional encoding with explicit position and
+embedding dimensions.
 
 .. code-block:: python
 
-   from base_attentive.components import SqueezeExcite1D
+   tspe   = TSPositionalEncoding(max_position=100, embed_dim=32)
+   output = tspe(x)
 
-   se = SqueezeExcite1D(reduction=16)
-   
-   # Recalibrate channels
-   output = se(x)
-
-Mathematical Notation Reference
---------------------------------
-
-**Activation Functions:**
-
-- :math:`\sigma(x)` — sigmoid
-- :math:`\tanh(x)` — hyperbolic tangent  
-- :math:`\text{ReLU}(x) = \max(0, x)`
-- :math:`\text{GELU}(x) = x \Phi(x)` where :math:`\Phi` is the CDF of standard normal
-
-**Operations:**
-
-- :math:`\odot` — element-wise (Hadamard) product
-- :math:`\otimes` — outer product
-- :math:`[\cdot]` — concatenation
-- :math:`\|\cdot\|_2` — L2 norm
-- :math:`\mathbb{E}[\cdot]` — expectation
-
-**Distributions:**
-
-- :math:`N(\mu, \sigma^2)` — normal distribution
-- :math:`\Phi(x)` — CDF of standard normal
-- :math:`\phi(x)` — PDF of standard normal
-
-**Common Layer Operations:**
-
-- LayerNorm: :math:`\text{LN}(\mathbf{x}) = \gamma \frac{\mathbf{x} - \mu}{\sqrt{\sigma^2 + \epsilon}} + \beta`
-- BatchNorm: :math:`\text{BN}(\mathbf{x}) = \gamma \frac{\mathbf{x} - \mathbb{E}[\mathbf{x}]}{\sqrt{\text{Var}[\mathbf{x}] + \epsilon}} + \beta`
-- Dropout: :math:`\text{Dropout}(\mathbf{x}) = \mathbf{x} \odot \mathbf{m}` where :math:`\mathbf{m} \sim \text{Bernoulli}(1-p)`
-
-References and Further Reading
--------------------------------
-
-- `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_ (Vaswani et al., 2017)
-- `Multi-Head Attention <https://arxiv.org/abs/1512.08756>`_ (Bahdanau et al., 2015)
-- `Layer Normalization <https://arxiv.org/abs/1607.06450>`_ (Ba et al., 2016)
-- `Quantile Regression <https://arxiv.org/abs/1709.01907>`_ (Koenker & Bassett, 1978)
-- `CRPS Loss <https://www.jstor.org/stable/2988369>`_ (Hersbach, 2000)
-       input_dim=64,
-       output_dim=2,
-       forecast_horizon=24,
-       hidden_units=32,
-   )
-
-   # Generate 24 steps ahead
-   forecasts = decoder(encoded_input)
-   # Shape: (batch, 24, 2)
-
-Integration Examples
---------------------
-
-Full Model Pipeline
+MultiModalEmbedding
 ~~~~~~~~~~~~~~~~~~~
 
+Import: ``base_attentive.components.MultiModalEmbedding``
+
+Signature: ``MultiModalEmbedding(embed_dim)``
+
+Embeds multi-modal inputs into a shared embedding space.
+
+Activation
+~~~~~~~~~~
+
+Import: ``base_attentive.components.Activation``
+
+Signature: ``Activation(activation)``
+
+Wrapped Keras activation layer supporting all standard activations:
+``'relu'``, ``'elu'``, ``'selu'``, ``'sigmoid'``, ``'tanh'``, ``'linear'``,
+``'gelu'``, ``'swish'``.
+
+Loss Functions
+--------------
+
+All loss classes extend ``keras.losses.Loss`` and are registered as
+Keras-serializable.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Class
+     - Description
+   * - ``MeanSquaredErrorLoss``
+     - Standard MSE loss
+   * - ``QuantileLoss(quantiles)``
+     - Pinball / quantile loss for given quantile levels
+   * - ``HuberLoss``
+     - Huber (smooth L1) loss
+   * - ``WeightedLoss(base_loss, weight)``
+     - Wraps any loss with a scalar weight
+   * - ``AdaptiveQuantileLoss(quantiles)``
+     - Adaptive quantile regression loss
+   * - ``MultiObjectiveLoss()``
+     - Combines multiple loss terms
+   * - ``CRPSLoss()``
+     - Continuous Ranked Probability Score
+   * - ``AnomalyLoss()``
+     - Loss for anomaly-aware training
+
 .. code-block:: python
 
-   from keras import layers, Model
-   from base_attentive.components import (
-       VariableSelectionNetwork,
-       MultiScaleLSTM,
-       CrossAttention,
-       MultiDecoder,
-   )
+   from base_attentive.components import AdaptiveQuantileLoss
 
-   # Inputs
-   static_input = layers.Input((4,), name='static')
-   dynamic_input = layers.Input((100, 8), name='dynamic')
-   future_input = layers.Input((24, 6), name='future')
+   loss   = AdaptiveQuantileLoss(quantiles=[0.1, 0.5, 0.9])
+   result = loss(y_true, y_pred)
 
-   # Feature selection
-   vsn = VariableSelectionNetwork(output_dim=32)
-   static_embedded = vsn(static_input)
-   dynamic_embedded = vsn(dynamic_input)
-   future_embedded = vsn(future_input)
+Layer Utilities
+---------------
 
-   # Encoding
-   lstm = MultiScaleLSTM(scales=3, output_dim=64)
-   dynamic_encoded = lstm(dynamic_embedded)
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
 
-   # Attention
-   attention = CrossAttention(num_heads=8)
-   attended = attention([dynamic_encoded, dynamic_encoded, dynamic_encoded])
+   * - Class / Function
+     - Description
+   * - ``Gate(units)``
+     - GLU-style gating layer
+   * - ``LayerScale(init_value)``
+     - Per-channel learnable scaling (ViT-style)
+   * - ``ResidualAdd()``
+     - Adds two tensors as a residual connection
+   * - ``SqueezeExcite1D(ratio)``
+     - Squeeze-and-excite channel re-weighting for 1D sequences
+   * - ``StochasticDepth(drop_rate)``
+     - Stochastic depth / drop-path regularization
+   * - ``apply_residual(x, f)``
+     - Functional residual: ``x + f``
+   * - ``broadcast_like(x, ref, time_axis)``
+     - Broadcast 2D tensor to 3D by expanding a time axis
+   * - ``ensure_rank_at_least(x, rank)``
+     - Expand dims until tensor reaches minimum rank
+   * - ``maybe_expand_time(x)``
+     - Expand 2D ``(B, D)`` to ``(B, 1, D)`` if needed
+   * - ``drop_path(x, drop_prob, training)``
+     - Functional drop-path
+   * - ``create_causal_mask(length)``
+     - Create upper-triangular causal attention mask
+   * - ``combine_masks(mask_a, mask_b, mode)``
+     - Combine two boolean masks (``'and'``, ``'or'``, ``'xor'``)
+   * - ``pad_mask_from_lengths(lengths, max_len)``
+     - Boolean padding mask from sequence lengths
+   * - ``sequence_mask_3d(data, lengths, mask_2d)``
+     - Apply a 2D mask to a 3D tensor
+   * - ``aggregate_multiscale_on_3d(x)``
+     - Aggregate multi-scale 3D features
+   * - ``aggregate_time_window_output(x)``
+     - Aggregate dynamic time window output
 
-   # Decoding
-   decoder = MultiDecoder(output_dim=2, forecast_horizon=24)
-   output = decoder(attended)
+Utility Functions (components.utils)
+--------------------------------------
 
-   # Model
-   model = Model(
-       inputs=[static_input, dynamic_input, future_input],
-       outputs=output
-   )
+``resolve_attn_levels(att_levels)``
+   Converts ``att_levels`` to a canonical list of attention type strings.
+
+   .. code-block:: python
+
+      from base_attentive.components.utils import resolve_attn_levels
+
+      resolve_attn_levels(None)             # ['cross', 'hierarchical', 'memory']
+      resolve_attn_levels("hier")           # ['hierarchical']
+      resolve_attn_levels([1, 3])           # ['cross', 'memory']
+
+``configure_architecture(objective, use_vsn, attention_levels, architecture_config)``
+   Builds the final architecture config dict from layered inputs.
+
+``resolve_fusion_mode(fusion_mode)``
+   Returns ``'integrated'`` or ``'disjoint'``.
 
 See Also
 --------
 
-- :doc:`api_reference` - Core API reference
-- :doc:`architecture_guide` - Architecture details
+- :doc:`api_reference` — Full API autodoc
+- :doc:`architecture_guide` — Architecture overview
+- :doc:`usage` — Usage patterns
