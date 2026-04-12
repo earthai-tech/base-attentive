@@ -5,7 +5,11 @@ time series forecasting models with attention mechanisms.
 
 from __future__ import annotations
 
-__version__ = "2.0.0rc1"
+try:
+    from importlib.metadata import version as _meta_version, PackageNotFoundError
+    __version__ = _meta_version("base-attentive")
+except PackageNotFoundError:  # package not installed (e.g. bare source checkout)
+    __version__ = "unknown"
 __author__ = "LKouadio"
 __email__ = "etanoyau@gmail.com"
 __license__ = "Apache-2.0"
