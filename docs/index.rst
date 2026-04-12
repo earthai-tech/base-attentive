@@ -1,49 +1,63 @@
 BaseAttentive Documentation
-===========================
+============================
 
 .. image:: https://img.shields.io/badge/python-3.10%2B-blue.svg
    :target: https://www.python.org/downloads/
 
+.. image:: https://img.shields.io/badge/version-1.0.0-brightgreen.svg
+   :target: release_notes.html
+
 .. image:: https://img.shields.io/badge/license-Apache%202.0-green.svg
    :target: https://github.com/earthai-tech/base-attentive/blob/main/LICENSE
 
-A modular encoder-decoder architecture for sequence-to-sequence time series forecasting with layered attention mechanisms.
+A modular encoder-decoder architecture for sequence-to-sequence time series
+forecasting with layered attention mechanisms — **version 1.0.0 (v2 stable)**.
 
-**BaseAttentive** is a modular encoder-decoder architecture designed to process three distinct types of inputs:
+**BaseAttentive** is a modular encoder-decoder architecture designed to process
+three distinct types of inputs:
 
 - **Static features** — constant across time (e.g., geographical coordinates, site properties)
 - **Dynamic past features** — historical time series (e.g., sensor readings, observations)
 - **Known future features** — forecast-period exogenous variables (e.g., weather forecasts)
 
-It combines these inputs through a configurable attention stack for forecasting experiments and applied workflows.
+It combines these inputs through a configurable attention stack for forecasting
+experiments and applied workflows. The v2 architecture introduces a registry /
+resolver / assembly system making every component pluggable and backend-neutral.
 
 Main Elements
 =============
 
 **Architecture options**
-   - Hybrid mode: Multi-scale LSTM with attention
-   - Transformer mode: self-attention encoder
-   - Configurable decoder attention stack
+   - Hybrid mode: Multi-scale LSTM with attention (``objective="hybrid"``)
+   - Transformer mode: self-attention encoder (``objective="transformer"``)
+   - Operational mode shortcuts: TFT-like (``mode="tft"``), PIHALNet-like (``mode="pihal"``)
+   - Declarative attention stack via ``attention_levels``
 
 **Core components**
    - Variable selection networks for feature weighting
-   - Multi-scale LSTM for temporal aggregation
-   - Cross-attention for encoder-decoder interaction
-   - Memory-augmented attention for long-range context
-   - Quantile modeling for uncertainty-aware outputs
+   - Multi-scale LSTM for temporal aggregation (``scales``, ``multi_scale_agg``)
+   - Cross, hierarchical, and memory-augmented attention
+   - Transformer encoder/decoder blocks
+   - Quantile and probabilistic forecast heads
+
+**V2 system**
+   - ``BaseAttentiveSpec`` / ``BaseAttentiveComponentSpec`` for backend-neutral config
+   - ``ComponentRegistry`` and ``ModelRegistry`` for pluggable components
+   - ``BaseAttentiveV2Assembly`` resolver/assembler pattern
+   - Multi-backend: TensorFlow (stable), JAX, PyTorch (experimental)
 
 **Runtime support**
    - Keras 3 based implementation
-   - Model serialization and configuration export
+   - ``make_fast_predict_fn`` for traced TF inference
    - Input validation utilities
-   - Logging and debugging hooks
+   - ``TorchDeviceManager`` for CUDA/MPS device management
 
 Quick Example
 =============
 
 .. code-block:: python
 
-   import tensorflow as tf
+   import numpy as np
    from base_attentive import BaseAttentive
 
    # Create a model
@@ -52,7 +66,7 @@ Quick Example
        dynamic_input_dim=8,       # Historical observations
        future_input_dim=6,        # Known future features
        output_dim=2,              # Forecast targets
-       forecast_horizon=24,       # 24-hour forecast
+       forecast_horizon=24,       # 24-step forecast
        quantiles=[0.1, 0.5, 0.9], # Uncertainty quantiles
        embed_dim=32,
        num_heads=8,
@@ -61,13 +75,13 @@ Quick Example
 
    # Prepare inputs
    batch_size = 32
-   x_static = tf.random.normal([batch_size, 4])
-   x_dynamic = tf.random.normal([batch_size, 100, 8])
-   x_future = tf.random.normal([batch_size, 24, 6])
+   x_static  = np.random.randn(batch_size, 4).astype('float32')
+   x_dynamic = np.random.randn(batch_size, 100, 8).astype('float32')
+   x_future  = np.random.randn(batch_size, 24, 6).astype('float32')
 
    # Get predictions
    predictions = model([x_static, x_dynamic, x_future])
-   # shape: (32, 24, 3, 2) — batch, horizon, quantiles, output
+   # shape: (32, 24, 3, 2) — batch, horizon, quantiles, output_dim
 
 .. toctree::
    :maxdepth: 2
