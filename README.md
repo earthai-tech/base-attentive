@@ -190,11 +190,12 @@ This project is licensed under the Apache License 2.0 — see [LICENSE](LICENSE)
 ## Citation
 
 ```bibtex
-@software{baseattentive2025,
-  author = {Kouadio, L.},
-  title  = {BaseAttentive: Modular Encoder-Decoder Architecture for Time Series Forecasting},
-  year   = {2025},
-  url    = {https://github.com/earthai-tech/base-attentive}
+@software{baseattentive2026,
+  author  = {Kouadio, L.},
+  title   = {BaseAttentive: Modular Multi-Backend Encoder-Decoder Architecture for Probabilistic Time Series Forecasting},
+  year    = {2026},
+  version = {2.0.0rc1},
+  url     = {https://github.com/earthai-tech/base-attentive}
 }
 ```
 
