@@ -35,9 +35,9 @@ jobs:
         id: version
         run: |
           VERSION=$(python -c "
-          import tomllib, pathlib
-          data = tomllib.load(pathlib.Path('pyproject.toml').open('rb'))
-          print(data['project']['version'])
+          import re, pathlib
+          content = pathlib.Path('pyproject.toml').read_text()
+          print(re.search(r'^version\s*=\s*\"([^\"]+)\"', content, re.M).group(1))
           ")
           echo "Detected version: $VERSION"
           if echo "$VERSION" | grep -qE '(a|b|rc|alpha|beta|dev)[0-9]*$'; then
