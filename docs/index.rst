@@ -6,7 +6,7 @@ BaseAttentive Documentation
    :alt: Python 3.10+
 
 .. image:: https://img.shields.io/badge/version-2.0.0rc0-brightgreen.svg
-   :target: release_notes.html
+   :target: release_notes/index.html
    :alt: Version 2.0.0rc0
 
 .. image:: https://img.shields.io/badge/keras-%E2%89%A53.0-FF6F00.svg
@@ -130,7 +130,7 @@ Quick Example
    :maxdepth: 2
    :caption: Resources
 
-   release_notes
+   release_notes/index
 
 .. toctree::
    :maxdepth: 2

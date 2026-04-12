@@ -1,0 +1,8 @@
+.. _release-v0.4.2:
+
+**v0.4.2** — |PATCH| Patch Release
+=====================================
+
+- |Fix| Critical fix for numerical instability in ``QuantileLoss``.
+- |Security| Updated dependencies to patch a security vulnerability in
+  TensorFlow.

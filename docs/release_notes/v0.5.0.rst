@@ -1,0 +1,22 @@
+.. _release-v0.5.0:
+
+**v0.5.0** — |MINOR| Pre-release
+==================================
+
+Features
+--------
+
+- |Feature| Added ``ExplainableAttention`` for interpretable attention weights.
+- |Feature| Introduced ``MultiResolutionAttentionFusion`` component.
+
+Bug Fixes
+---------
+
+- |Bugfix| Fixed edge case in causal masking for variable-length sequences.
+- |Deprecated| Marked ``BatchNormalization`` as deprecated in favour of
+  ``LayerNormalization``.
+
+Internal
+--------
+
+- |Internal| Performance improvements in multi-scale aggregation (~15% speedup).
