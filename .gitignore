@@ -136,4 +136,5 @@ dmypy.json
 
 # Local planning / design notes
 _V2_BACKEND*.md
+V2_BACKEND*.md
 V2_IMPLEM*.md
