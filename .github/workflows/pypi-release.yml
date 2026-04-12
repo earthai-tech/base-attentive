@@ -1,59 +1,116 @@
 name: PyPI Release
 
 on:
-  push:
-    branches: [ master, main, develop ]
-    paths:
-      - "pyproject.toml"
-      - "README.md"
-      - "src/**"
-      - ".github/workflows/pypi-release.yml"
-  workflow_dispatch:
   release:
-    types: [published, created]
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Publish target"
+        required: true
+        default: "testpypi"
+        type: choice
+        options:
+          - testpypi
+          - pypi
 
+# ── Build once, publish to the appropriate index ──────────────────────────────
 jobs:
-  deploy:
+  build:
+    name: Build distribution
     runs-on: ubuntu-latest
-    
+    outputs:
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-        cache: 'pip'
-    
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
-        pip install build twine
-    
-    - name: Build distribution
-      run: python -m build
-    
-    - name: Check distribution
-      run: twine check dist/* || true
-    
-    - name: Publish to PyPI (Test)
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
-      if: github.event_name == 'release' && github.event.release.prerelease == true
-      continue-on-error: true
-    
-    - name: Publish to PyPI (Production)
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
-      if: github.event_name == 'release' && github.event.release.prerelease == false
-      continue-on-error: true
-    
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: python-distribution-packages
-        path: dist/
-      continue-on-error: true
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Detect pre-release version
+        id: version
+        run: |
+          VERSION=$(python -c "
+          import tomllib, pathlib
+          data = tomllib.load(pathlib.Path('pyproject.toml').open('rb'))
+          print(data['project']['version'])
+          ")
+          echo "Detected version: $VERSION"
+          if echo "$VERSION" | grep -qE '(a|b|rc|alpha|beta|dev)[0-9]*$'; then
+            echo "is_prerelease=true"  >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip setuptools wheel build twine
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Validate distribution
+        run: twine check dist/*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-distribution-packages
+          path: dist/
+
+  # ── Test PyPI — pre-releases and manual testpypi dispatches ─────────────────
+  publish-testpypi:
+    name: Publish → Test PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'release'          && github.event.release.prerelease == true) ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi')
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/base-attentive/
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-distribution-packages
+          path: dist/
+
+      - name: Publish to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKENS }}
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+
+  # ── Production PyPI — stable releases and manual pypi dispatches ─────────────
+  publish-pypi:
+    name: Publish → PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'release'          && github.event.release.prerelease == false) ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
+
+    environment:
+      name: pypi
+      url: https://pypi.org/project/base-attentive/
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-distribution-packages
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
