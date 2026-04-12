@@ -71,9 +71,6 @@ jobs:
       (github.event_name == 'release'          && github.event.release.prerelease == true) ||
       (github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi')
 
-    permissions:
-      id-token: write  # required by pypa/gh-action-pypi-publish for OIDC token
-
     environment:
       name: testpypi
       url: https://test.pypi.org/project/base-attentive/
@@ -90,6 +87,7 @@ jobs:
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKENS }}
           repository-url: https://test.pypi.org/legacy/
+          attestations: false
           verbose: true
 
   # ── Production PyPI — stable releases and manual pypi dispatches ─────────────
@@ -100,9 +98,6 @@ jobs:
     if: |
       (github.event_name == 'release'          && github.event.release.prerelease == false) ||
       (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
-
-    permissions:
-      id-token: write  # required by pypa/gh-action-pypi-publish for OIDC token
 
     environment:
       name: pypi
@@ -119,4 +114,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          attestations: false
           verbose: true

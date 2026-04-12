@@ -5,7 +5,7 @@ time series forecasting models with attention mechanisms.
 
 from __future__ import annotations
 
-__version__ = "2.0.0rc0"
+__version__ = "2.0.0rc1"
 __author__ = "LKouadio"
 __email__ = "etanoyau@gmail.com"
 __license__ = "Apache-2.0"
