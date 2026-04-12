@@ -8,8 +8,6 @@ import os
 import numpy as np
 import pytest
 
-os.environ.setdefault("KERAS_BACKEND", "torch")
-
 from base_attentive.validation import (
     validate_model_inputs,
     maybe_reduce_quantiles_bh,
