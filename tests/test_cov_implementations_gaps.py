@@ -7,7 +7,13 @@ import os
 
 import numpy as np
 import pytest
-import torch
+
+# Skip the entire module when PyTorch is not installed.
+# All torch-specific classes (TestEnsureTorch, TestTorchTemporalSelf…, etc.)
+# require a working torch installation; the rest of the file also imports
+# torch implementation symbols at module level, so the cleanest approach is
+# to skip the whole file rather than guard every test individually.
+torch = pytest.importorskip("torch", reason="PyTorch not installed — skipping torch implementation tests")
 
 os.environ.setdefault("KERAS_BACKEND", "torch")
 
