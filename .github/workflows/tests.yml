@@ -9,26 +9,38 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.10', '3.11', '3.12']
 
+    env:
+      # Suppress TF C++ runtime logs (0=INFO … 3=FATAL only).
+      # Without this, TF floods pytest's log capture and makes tests appear
+      # frozen on Linux / macOS CI runners.
+      TF_CPP_MIN_LOG_LEVEL: '3'
+      # Prevent TF from scanning for CUDA GPUs on CPU-only runners.
+      # GPU probing can stall Linux CI for 20-40 min when no GPU is present.
+      CUDA_VISIBLE_DEVICES: ''
+      # Disable oneDNN JIT tuning that adds startup latency on first use.
+      TF_ENABLE_ONEDNN_OPTS: '0'
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install -e ".[dev,tensorflow]" || pip install -e .
-        pip install pytest pytest-cov
+        pip install pytest pytest-cov pytest-timeout
 
     - name: Lint with Ruff
       run: |
@@ -36,18 +48,18 @@ jobs:
         ruff check src/ tests/ || true
         ruff format --check src/ tests/ || true
       continue-on-error: true
-    
+
     - name: Type check with mypy
       run: |
         pip install mypy
         mypy src/ --ignore-missing-imports || true
       continue-on-error: true
-    
+
     - name: Test with pytest and coverage
       id: pytest_cov
       continue-on-error: true
       run: |
-        python -m coverage run -m pytest tests/ -v --tb=short -x
+        python -m coverage run -m pytest tests/ -v --tb=short
         python -m coverage xml
         python -m coverage report
 
@@ -55,7 +67,7 @@ jobs:
       if: steps.pytest_cov.outcome == 'failure' && hashFiles('coverage.xml') == ''
       run: |
         python -m pytest tests/ -v --tb=short
-    
+
     - name: Upload coverage to Codecov
       if: hashFiles('coverage.xml') != ''
       uses: codecov/codecov-action@v4
@@ -75,22 +87,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: test
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-    
+
     - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
         pip install build twine
-    
+
     - name: Build distribution
       run: python -m build
-    
+
     - name: Check distribution
       run: twine check dist/*
