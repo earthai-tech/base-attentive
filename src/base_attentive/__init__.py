@@ -7,7 +7,7 @@ from __future__ import annotations
 
 try:
     from importlib.metadata import version as _meta_version, PackageNotFoundError
-    __version__ = _meta_version("base-attentive")
+    __version__ = _meta_version("base_attentive")
 except PackageNotFoundError:  # package not installed (e.g. bare source checkout)
     __version__ = "unknown"
 __author__ = "LKouadio"
