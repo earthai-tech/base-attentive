@@ -7,7 +7,24 @@
       "Bash(cp \"D:/projects/base-attentive/docs/_static/base-attentive.png\" \"D:/projects/base-attentive/.claude/worktrees/condescending-kilby/docs/_static/\")",
       "Bash(gh pr create --title 'docs: add brand assets, HTML readme header, and custom CSS theme' --body ':*)",
       "Bash(where gh:*)",
-      "Bash(winget list:*)"
+      "Bash(winget list:*)",
+      "Bash(python -m pytest tests/test_v2_backends.py -v)",
+      "Bash(python -m pytest --cov=src/base_attentive --cov-report=term-missing --tb=no -q)",
+      "Bash(python -c ':*)",
+      "Bash(python -m pytest tests/test_cov_components_pure.py -v --tb=short)",
+      "Bash(python -m pytest tests/test_v2_scaffold.py -v --tb=short)",
+      "Bash(sed -n '113,140p' temporal.py)",
+      "Bash(sed -n '356,380p' encoder_decoder.py)",
+      "Bash(sed -n '437,460p' encoder_decoder.py)",
+      "Bash(sed -n '51,100p' _loss_utils.py)",
+      "Bash(sed -n '74,100p' encoder_decoder.py)",
+      "Bash(sed -n '203,230p' encoder_decoder.py)",
+      "Bash(sed -n '599,615p' encoder_decoder.py)",
+      "Bash(sed -n '185,200p' gating_norm.py)",
+      "Bash(sed -n '433,445p' gating_norm.py)",
+      "Bash(python -c \"import os; t=os.environ.get\\('GITHUB_TOKEN',''\\); print\\('TOKEN_SET' if t else 'NOT_SET'\\)\")",
+      "Bash(python -m pip list)",
+      "Bash(python -m pip show typeguard)"
     ]
   }
 }
