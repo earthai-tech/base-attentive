@@ -57,6 +57,17 @@ SERIALIZATION_PACKAGE = __name__
 _PI = 3.141592653589793
 
 
+def _append_shape(shape, *tail):
+    if isinstance(shape, tuple):
+        return tuple(shape[:-1]) + tuple(tail)
+
+    shape_dtype = getattr(shape, "dtype", None)
+    if shape_dtype is None:
+        return tuple(shape[:-1]) + tuple(tail)
+
+    return tf_concat([shape[:-1], tf_constant(list(tail), dtype=shape_dtype)], axis=0)
+
+
 @register_keras_serializable(SERIALIZATION_PACKAGE, name="GaussianHead")
 class GaussianHead(Layer, NNLearner):
     """
@@ -84,20 +95,20 @@ class GaussianHead(Layer, NNLearner):
         self,
         output_dim: int,
         min_scale: float = 1e-4,
+        forecast_horizon: int | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.output_dim = output_dim
         self.min_scale = float(min_scale)
+        self.forecast_horizon = forecast_horizon
         # Predict 2 * O parameters (μ and raw σ)
         self.proj = Dense(2 * output_dim, name="gaussian_head_dense")
 
     def call(self, features: Tensor, training: bool = False) -> dict[str, Tensor]:
         params = self.proj(features)  # (B,[H], 2*O)
         shp = tf_shape(params)
-        # new_shape = tf_stack(shp[:-1] + [2, self.output_dim])  # (..., 2, O)
-        tail = tf_constant([2, self.output_dim], dtype=shp.dtype)
-        new_shape = tf_concat([shp[:-1], tail], axis=0)
+        new_shape = _append_shape(shp, 2, self.output_dim)
 
         params = tf_reshape(params, new_shape)
 
@@ -137,6 +148,7 @@ class GaussianHead(Layer, NNLearner):
             {
                 "output_dim": self.output_dim,
                 "min_scale": self.min_scale,
+                "forecast_horizon": self.forecast_horizon,
             }
         )
         return cfg
@@ -180,6 +192,7 @@ class MixtureDensityHead(Layer, NNLearner):
         output_dim: int,
         num_components: int,
         min_scale: float = 1e-4,
+        forecast_horizon: int | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -188,6 +201,7 @@ class MixtureDensityHead(Layer, NNLearner):
         self.output_dim = output_dim
         self.num_components = num_components
         self.min_scale = float(min_scale)
+        self.forecast_horizon = forecast_horizon
 
         # Total params per target = K (weights) + K (means) + K (scales)
         # but weights have to be separate because of softmax over K.
@@ -212,9 +226,7 @@ class MixtureDensityHead(Layer, NNLearner):
         rest = raw[..., w_end:]  # (B,[H], 2*K*O)
 
         # Reshape rest → (..., K, 2, O)
-        # rest_shape = tf_stack(shp[:-1] + [k, 2, o])
-        tail = tf_constant([k, 2, o], dtype=shp.dtype)
-        rest_shape = tf_concat([shp[:-1], tail], axis=0)
+        rest_shape = _append_shape(shp, k, 2, o)
 
         rest = tf_reshape(rest, rest_shape)
         means = rest[..., 0, :]  # (..., K, O)
@@ -288,6 +300,7 @@ class MixtureDensityHead(Layer, NNLearner):
                 "output_dim": self.output_dim,
                 "num_components": self.num_components,
                 "min_scale": self.min_scale,
+                "forecast_horizon": self.forecast_horizon,
             }
         )
         return cfg
@@ -315,9 +328,15 @@ class PointForecastHead(Layer, NNLearner):
         KERAS_BACKEND or "keras",
         extra="PointForecastHead needs Keras backend.",
     )
-    def __init__(self, output_dim: int, **kwargs):
+    def __init__(
+        self,
+        output_dim: int,
+        forecast_horizon: int | None = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.output_dim = output_dim
+        self.forecast_horizon = forecast_horizon
         # Single projection to the final target dimension
         self.proj = Dense(output_dim, name="point_head_dense")
 
@@ -327,7 +346,12 @@ class PointForecastHead(Layer, NNLearner):
 
     def get_config(self) -> dict:
         cfg = super().get_config()
-        cfg.update({"output_dim": self.output_dim})
+        cfg.update(
+            {
+                "output_dim": self.output_dim,
+                "forecast_horizon": self.forecast_horizon,
+            }
+        )
         return cfg
 
     @classmethod
@@ -360,6 +384,7 @@ class QuantileHead(Layer, NNLearner):
         self,
         quantiles: list[float],
         output_dim: int,
+        forecast_horizon: int | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -368,6 +393,7 @@ class QuantileHead(Layer, NNLearner):
         self.quantiles = quantiles
         self.output_dim = output_dim
         self.q = len(quantiles)
+        self.forecast_horizon = forecast_horizon
 
         # Project to Q * O, then reshape to (..., Q, O)
         self.proj = Dense(self.q * output_dim, name="quantile_head_dense")
@@ -382,11 +408,7 @@ class QuantileHead(Layer, NNLearner):
         # Supports (B, F) or (B,H,F). Output should insert Q dimension before O.
         out = self.proj(features)  # (B,[H], Q*O)
         shp = tf_shape(out)  # dynamic shape
-        # new_shape = tf_stack(                     # (B,[H], Q, O)
-        #     shp[:-1] + [self.q, self.output_dim]
-        # )
-        tail = tf_constant([self.q, self.output_dim], dtype=shp.dtype)
-        new_shape = tf_concat([shp[:-1], tail], axis=0)
+        new_shape = _append_shape(shp, self.q, self.output_dim)
 
         out = tf_reshape(out, new_shape)
         return out
@@ -397,6 +419,7 @@ class QuantileHead(Layer, NNLearner):
             {
                 "quantiles": self.quantiles,
                 "output_dim": self.output_dim,
+                "forecast_horizon": self.forecast_horizon,
             }
         )
         return cfg
@@ -437,18 +460,23 @@ class CombinedHeadLoss(Loss, NNLearner):
     @ensure_pkg("keras", extra="CombinedHeadLoss needs Keras backend.")
     def __init__(
         self,
-        heads_losses: Mapping[str, tuple[Loss, float]],
+        heads_losses: Mapping[str, tuple[Loss, float]] | None = None,
         reduction: str = "sum",
         name: str = "CombinedHeadLoss",
+        output_dim: int | None = None,
+        forecast_horizon: int | None = None,
     ):
         super().__init__(name=name, reduction="sum")  # we manage reduction manually
         if not heads_losses:
-            raise ValueError("heads_losses cannot be empty.")
+            default_loss = lambda y_true, y_pred: tf_reduce_mean(
+                tf_square(y_true - y_pred)
+            )
+            heads_losses = {"default": (default_loss, 1.0)}
 
         # Normalize to {str: (Loss, weight)}
         norm: dict[str, tuple[Loss, float]] = {}
         for k, v in heads_losses.items():
-            if isinstance(v, list | tuple):
+            if isinstance(v, (list, tuple)):
                 if len(v) == 1:
                     norm[k] = (v[0], 1.0)
                 else:
@@ -457,6 +485,8 @@ class CombinedHeadLoss(Loss, NNLearner):
                 norm[k] = (v, 1.0)
         self.heads_losses = norm
         self._reduction_mode = reduction
+        self.output_dim = output_dim
+        self.forecast_horizon = forecast_horizon
 
     def call(self, y_true, y_pred):
         """
@@ -496,6 +526,8 @@ class CombinedHeadLoss(Loss, NNLearner):
             {
                 "heads_losses": sub_cfg,
                 "reduction_mode": self._reduction_mode,
+                "output_dim": self.output_dim,
+                "forecast_horizon": self.forecast_horizon,
             }
         )
         return cfg

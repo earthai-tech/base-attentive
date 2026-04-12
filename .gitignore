@@ -73,6 +73,7 @@ venv.bak/
 *.swo
 *~
 .DS_Store
+.claude/
 
 # Sphinx documentation
 docs/_build/

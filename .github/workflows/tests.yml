@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        pip install -e ".[dev,tensorflow]" || pip install -e .
+        pip install -e ".[dev,tensorflow,torch]"
         pip install pytest pytest-cov
 
     - name: Lint with Ruff

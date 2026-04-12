@@ -58,6 +58,12 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
+def _normalize_loss_reduction(reduction: str | None) -> str | None:
+    if reduction == Reduction.AUTO or reduction == "auto":
+        return "sum_over_batch_size"
+    return reduction
+
+
 @register_keras_serializable(SERIALIZATION_PACKAGE, name="CRPSLoss")
 class CRPSLoss(Loss, NNLearner):
     r"""
@@ -125,7 +131,7 @@ class CRPSLoss(Loss, NNLearner):
         reduction: str = Reduction.AUTO,
         name: str = "CRPSLoss",
     ):
-        super().__init__(reduction=reduction, name=name)
+        super().__init__(reduction=_normalize_loss_reduction(reduction), name=name)
         self.mode = mode.lower()
         self.quantiles = list(quantiles) if quantiles else None
         self.mc_samples = int(mc_samples)
@@ -428,12 +434,14 @@ class AdaptiveQuantileLoss(Loss, NNLearner):
         """
         if self.quantiles is None:
             return 0.0
-        # Expand y_true to match y_pred's quantile
-        # dimension
-        y_true_expanded = tf_expand_dims(y_true, axis=2)  # => (B, H, 1, O)
-        error = y_true_expanded - y_pred
         quantiles = tf_constant(self.quantiles, dtype=tf_float32)
-        quantiles = tf_reshape(quantiles, [1, 1, len(self.quantiles), 1])
+        if len(getattr(y_pred, "shape", ())) <= 2:
+            error = y_true - y_pred
+            quantiles = tf_reshape(quantiles, [1, len(self.quantiles)])
+        else:
+            y_true_expanded = tf_expand_dims(y_true, axis=2)  # => (B, H, 1, O)
+            error = y_true_expanded - y_pred
+            quantiles = tf_reshape(quantiles, [1, 1, len(self.quantiles), 1])
         # quantile loss
         quantile_loss = tf_maximum(quantiles * error, (quantiles - 1) * error)
         return tf_reduce_mean(quantile_loss)
@@ -685,12 +693,17 @@ class MultiObjectiveLoss(Loss, NNLearner):
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
     def __init__(
         self,
-        quantile_loss_fn,
-        anomaly_loss_fn,
+        quantile_loss_fn=None,
+        anomaly_loss_fn=None,
         anomaly_scores=None,
         name="MultiObjectiveLoss",
     ):
         super().__init__(name=name)
+
+        if quantile_loss_fn is None:
+            quantile_loss_fn = AdaptiveQuantileLoss([0.1, 0.5, 0.9])
+        if anomaly_loss_fn is None:
+            anomaly_loss_fn = AnomalyLoss()
 
         self.quantile_loss_fn = quantile_loss_fn
         self.anomaly_loss_fn = anomaly_loss_fn
@@ -842,7 +855,7 @@ class CRPSLossWrapper(Loss, NNLearner):
         reduction: str = Reduction.AUTO,
         name: str = "CRPSLossWrapper",
     ):
-        super().__init__(reduction=reduction, name=name)
+        super().__init__(reduction=_normalize_loss_reduction(reduction), name=name)
         mode = mode.lower()
         if mode not in {"quantile", "gaussian"}:
             raise ValueError("mode must be 'quantile' or 'gaussian'.")

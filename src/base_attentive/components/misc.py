@@ -402,12 +402,22 @@ class PositionalEncoding(Layer, NNLearner):
     Vaswani et al., 2017, "Attention is All You Need".
     """
 
-    def __init__(self, max_length: int = 2048, **kwargs):
+    def __init__(
+        self,
+        max_length: int = 2048,
+        *,
+        max_steps: int | None = None,
+        d_model: int | None = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
+        if max_steps is not None:
+            max_length = max_steps
 
         # Max supported sequence length for the lookup table.
         # Stored as a Python int so it is JSON-serializable in config.
         self.max_length = int(max_length)
+        self.d_model = d_model
 
         # Will become a non-trainable weight of shape (1, max_length, D).
         # Keeping it as None until `build()` ensures we know D.
@@ -469,7 +479,7 @@ class PositionalEncoding(Layer, NNLearner):
             self.positional_encoding = self.add_weight(
                 name="positional_encoding",
                 shape=pe.shape,
-                dtype=tf_float32,
+                dtype="float32",
                 initializer=Constant(pe),
                 trainable=False,
             )
@@ -533,7 +543,7 @@ class PositionalEncoding(Layer, NNLearner):
         Keep config minimal and JSON-serializable.
         """
         config = super().get_config()
-        config.update({"max_length": self.max_length})
+        config.update({"max_length": self.max_length, "d_model": self.d_model})
         return config
 
 
@@ -719,7 +729,7 @@ class _PositionalEncoding(Layer, NNLearner):
             self.positional_encoding = self.add_weight(
                 name="positional_encoding",
                 shape=pe.shape,
-                dtype=tf_float32,
+                dtype="float32",
                 initializer=Constant(pe),
                 trainable=False,
             )
@@ -788,8 +798,24 @@ class TSPositionalEncoding(Layer, NNLearner):
                          positional encoding).
     """
 
-    def __init__(self, max_position: int, embed_dim: int, **kwargs):
+    def __init__(
+        self,
+        max_position: int | None = None,
+        embed_dim: int | None = None,
+        *,
+        max_steps: int | None = None,
+        d_model: int | None = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
+        if max_position is None:
+            max_position = max_steps
+        if embed_dim is None:
+            embed_dim = d_model
+        if max_position is None or embed_dim is None:
+            raise ValueError(
+                "Provide `max_position`/`max_steps` and `embed_dim`/`d_model`."
+            )
         self.max_position = max_position
         self.embed_dim = embed_dim
         # self.pos_encoding is created once and stored.

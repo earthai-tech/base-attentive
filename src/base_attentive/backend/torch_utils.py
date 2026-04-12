@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import importlib.util
 import logging
+import re
+import sys
 from typing import Literal, Optional
 
 __all__ = [
@@ -18,6 +20,58 @@ __all__ = [
 
 _logger = logging.getLogger(__name__)
 
+_CUDA_DEVICE_RE = re.compile(r"^cuda(?::\d+)?$")
+
+
+def _get_torch_module():
+    """Return the loaded/imported torch module when available."""
+    loaded = sys.modules.get("torch")
+    if loaded is not None:
+        return loaded
+
+    try:
+        if importlib.util.find_spec("torch") is None:
+            return None
+    except (ImportError, ValueError, AttributeError):
+        return None
+
+    try:
+        import torch
+
+        return torch
+    except Exception:
+        return None
+
+
+def _cuda_is_available(torch_module) -> bool:
+    """Safely check CUDA availability on a torch-like module."""
+    cuda = getattr(torch_module, "cuda", None)
+    is_available = getattr(cuda, "is_available", None)
+    if not callable(is_available):
+        return False
+    try:
+        return bool(is_available())
+    except Exception:
+        return False
+
+
+def _mps_is_available(torch_module) -> bool:
+    """Safely check MPS availability on a torch-like module."""
+    backends = getattr(torch_module, "backends", None)
+    mps = getattr(backends, "mps", None)
+    is_available = getattr(mps, "is_available", None)
+    if not callable(is_available):
+        return False
+    try:
+        return bool(is_available())
+    except Exception:
+        return False
+
+
+def _is_valid_device_string(device: str) -> bool:
+    """Validate common torch device string formats without importing torch."""
+    return device in {"cpu", "mps"} or bool(_CUDA_DEVICE_RE.fullmatch(device))
+
 
 def torch_is_available() -> bool:
     """Check if PyTorch is installed and importable.
@@ -27,7 +81,7 @@ def torch_is_available() -> bool:
     bool
         True if PyTorch is available.
     """
-    return importlib.util.find_spec("torch") is not None
+    return _get_torch_module() is not None
 
 
 def get_torch_version() -> Optional[str]:
@@ -41,10 +95,12 @@ def get_torch_version() -> Optional[str]:
     if not torch_is_available():
         return None
 
-    try:
-        import torch
+    torch = _get_torch_module()
+    if torch is None:
+        return None
 
-        return torch.__version__.split("+")[0]  # Remove CUDA suffix if present
+    try:
+        return str(torch.__version__).split("+")[0]  # Remove CUDA suffix if present
     except Exception:
         return None
 
@@ -121,17 +177,30 @@ def get_torch_device(
             _logger.warning("PyTorch not available, using CPU")
         return "cpu"
 
-    import torch
+    torch = _get_torch_module()
+    if torch is None:
+        if verbose:
+            _logger.warning("PyTorch runtime unavailable, using CPU")
+        return "cpu"
 
     # Try preferred device first
-    if prefer == "cuda" and torch.cuda.is_available():
-        device = torch.device("cuda:0")
+    if prefer == "cuda" and _cuda_is_available(torch):
+        device_factory = getattr(torch, "device", None)
+        device = device_factory("cuda:0") if callable(device_factory) else "cuda:0"
         if verbose:
-            _logger.info(f"Using CUDA device: {torch.cuda.get_device_name(0)}")
+            get_name = getattr(getattr(torch, "cuda", None), "get_device_name", None)
+            device_name = "cuda:0"
+            if callable(get_name):
+                try:
+                    device_name = get_name(0)
+                except Exception:
+                    pass
+            _logger.info(f"Using CUDA device: {device_name}")
         return str(device)
 
-    if prefer == "mps" and torch.backends.mps.is_available():
-        device = torch.device("mps")
+    if prefer == "mps" and _mps_is_available(torch):
+        device_factory = getattr(torch, "device", None)
+        device = device_factory("mps") if callable(device_factory) else "mps"
         if verbose:
             _logger.info("Using MPS device (Apple Metal)")
         return str(device)
@@ -179,12 +248,18 @@ class TorchDeviceManager:
         if not torch_is_available():
             raise RuntimeError("PyTorch not available")
 
-        import torch
+        torch = _get_torch_module()
+        if torch is None:
+            raise RuntimeError("PyTorch runtime unavailable")
 
         # Validate device
+        device_factory = getattr(torch, "device", None)
         try:
-            torch.device(device)  # Validate
-        except RuntimeError as e:
+            if callable(device_factory):
+                device_factory(device)  # Validate
+            elif not _is_valid_device_string(device):
+                raise ValueError(f"Unsupported device '{device}'")
+        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             raise ValueError(f"Invalid device '{device}': {e}") from e
 
         self._device = device
@@ -206,12 +281,18 @@ class TorchDeviceManager:
                 "mps": False,
             }
 
-        import torch
+        torch = _get_torch_module()
+        if torch is None:
+            return {
+                "cuda": False,
+                "cpu": True,
+                "mps": False,
+            }
 
         return {
-            "cuda": torch.cuda.is_available(),
+            "cuda": _cuda_is_available(torch),
             "cpu": True,
-            "mps": torch.backends.mps.is_available(),
+            "mps": _mps_is_available(torch),
         }
 
     def get_device_info(self) -> dict:
@@ -229,31 +310,71 @@ class TorchDeviceManager:
                 "current_device": "cpu",
             }
 
-        import torch
+        torch = _get_torch_module()
+        if torch is None:
+            return {
+                "available_devices": {"cpu": True},
+                "cuda_available": False,
+                "current_device": "cpu",
+            }
+
+        cuda_available = _cuda_is_available(torch)
 
         info = {
-            "torch_version": torch.__version__,
-            "cuda_available": torch.cuda.is_available(),
-            "cudnn_version": torch.backends.cudnn.version()
-            if torch.cuda.is_available()
-            else None,
+            "torch_version": getattr(torch, "__version__", None),
+            "cuda_available": cuda_available,
+            "cudnn_version": None,
             "current_device": self.device,
             "available_devices": self.get_available_devices(),
         }
 
+        backends = getattr(torch, "backends", None)
+        cudnn = getattr(backends, "cudnn", None)
+        cudnn_version = getattr(cudnn, "version", None)
+        if cuda_available and callable(cudnn_version):
+            try:
+                info["cudnn_version"] = cudnn_version()
+            except Exception:
+                info["cudnn_version"] = None
+
         # Add CUDA device details
-        if torch.cuda.is_available():
-            info["cuda_device_count"] = torch.cuda.device_count()
-            info["cuda_devices"] = [
-                torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())
-            ]
-            info["cuda_device_memory_mb"] = [
-                torch.cuda.get_device_properties(i).total_memory / 1024 / 1024
-                for i in range(torch.cuda.device_count())
-            ]
+        if cuda_available:
+            cuda = getattr(torch, "cuda", None)
+            device_count = getattr(cuda, "device_count", None)
+            get_name = getattr(cuda, "get_device_name", None)
+            get_props = getattr(cuda, "get_device_properties", None)
+
+            try:
+                count = int(device_count()) if callable(device_count) else 0
+            except Exception:
+                count = 0
+
+            info["cuda_device_count"] = count
+            info["cuda_devices"] = []
+            info["cuda_device_memory_mb"] = []
+
+            for i in range(count):
+                if callable(get_name):
+                    try:
+                        info["cuda_devices"].append(get_name(i))
+                    except Exception:
+                        info["cuda_devices"].append(f"cuda:{i}")
+                else:
+                    info["cuda_devices"].append(f"cuda:{i}")
+
+                if callable(get_props):
+                    try:
+                        total_memory = get_props(i).total_memory
+                        info["cuda_device_memory_mb"].append(
+                            total_memory / 1024 / 1024
+                        )
+                    except Exception:
+                        info["cuda_device_memory_mb"].append(None)
+                else:
+                    info["cuda_device_memory_mb"].append(None)
 
         # Add MPS info
-        if torch.backends.mps.is_available():
+        if _mps_is_available(torch):
             info["mps_available"] = True
 
         return info
@@ -264,12 +385,19 @@ class TorchDeviceManager:
             _logger.warning("PyTorch not available")
             return
 
-        import torch
+        torch = _get_torch_module()
+        if torch is None:
+            _logger.warning("PyTorch runtime unavailable")
+            return
 
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        if _cuda_is_available(torch):
+            empty_cache = getattr(getattr(torch, "cuda", None), "empty_cache", None)
+            if callable(empty_cache):
+                empty_cache()
             _logger.info("CUDA cache cleared")
 
-        if hasattr(torch, "mps") and torch.backends.mps.is_available():
-            torch.mps.empty_cache()
+        if hasattr(torch, "mps") and _mps_is_available(torch):
+            empty_cache = getattr(torch.mps, "empty_cache", None)
+            if callable(empty_cache):
+                empty_cache()
             _logger.info("MPS cache cleared")

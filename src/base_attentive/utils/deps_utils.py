@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import functools
-import importlib
+import importlib.util
 from typing import Callable, TypeVar
 
 _T = TypeVar("_T")
@@ -42,16 +42,18 @@ def ensure_pkg(
     def decorator(func: _T) -> _T:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # Try to import the package
             try:
-                importlib.import_module(name)
-            except ImportError as e:
+                available = importlib.util.find_spec(name) is not None
+            except (ImportError, AttributeError, ValueError):
+                available = False
+
+            if not available:
                 msg = f"Package '{name}' is required but not installed."
                 if extra:
                     msg += f" {extra}"
 
                 if error == "raise":
-                    raise ImportError(msg) from e
+                    raise ImportError(msg)
                 elif error == "warn":
                     import warnings
 

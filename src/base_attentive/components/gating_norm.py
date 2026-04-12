@@ -230,6 +230,8 @@ class GatedResidualNetwork(Layer):
 
     def call(self, x, context=None, training=False):
         """Forward pass implementing GRN with optional context."""
+        if context is None and isinstance(x, (list, tuple)) and len(x) == 2:
+            x, context = x
         # Input x shape (B, ..., F_in)
         # Context shape (if provided) (B, ..., Units) after projection
         """Forward pass implementing GRN with optional context."""
@@ -431,12 +433,36 @@ class VariableSelectionNetwork(Layer, NNLearner):
     def build(self, input_shape):
         """Builds internal GRNs and projection layers
         with explicit shapes."""
+        if (
+            isinstance(input_shape, (list, tuple))
+            and input_shape
+            and isinstance(input_shape[0], (list, tuple, tf_TensorShape))
+        ):
+            first_shape = tf_TensorShape(input_shape[0])
+            num_vars = len(input_shape)
+            if first_shape.rank >= 3:
+                input_shape = tf_TensorShape(
+                    [
+                        first_shape[0],
+                        first_shape[1],
+                        num_vars,
+                        first_shape[-1],
+                    ]
+                )
+            else:
+                input_shape = tf_TensorShape(
+                    [first_shape[0], num_vars, first_shape[-1]]
+                )
+
         # Use TensorShape object for robust handling
         if not isinstance(input_shape, tf_TensorShape):
             input_shape = tf_TensorShape(input_shape)
 
         input_rank = input_shape.rank
-        expected_min_rank = 3 if self.use_time_distributed else 2
+        effective_use_time_distributed = self.use_time_distributed or (
+            input_rank is not None and input_rank >= 4
+        )
+        expected_min_rank = 3 if effective_use_time_distributed else 2
 
         # Check if rank is known and sufficient
         if input_rank is None or input_rank < expected_min_rank:
@@ -500,7 +526,7 @@ class VariableSelectionNetwork(Layer, NNLearner):
             )
 
         # Calculate the expected shape for a single variable slice
-        if self.use_time_distributed:
+        if effective_use_time_distributed:
             # Input (B, T, N, F) -> Slice is (B, T, F)
             single_var_input_shape = tf_TensorShape(
                 [
@@ -549,6 +575,19 @@ class VariableSelectionNetwork(Layer, NNLearner):
     @tf_autograph.experimental.do_not_convert
     def call(self, inputs, context=None, training=False):
         """Execute the forward pass with optional context."""
+        effective_use_time_distributed = self.use_time_distributed
+        if isinstance(inputs, (list, tuple)):
+            if context is None and inputs and not hasattr(inputs, "shape"):
+                first = inputs[0]
+                first_rank = len(getattr(first, "shape", ()))
+                effective_use_time_distributed = (
+                    self.use_time_distributed or first_rank >= 3
+                )
+                axis = -2 if effective_use_time_distributed else 1
+                inputs = tf_stack(list(inputs), axis=axis)
+            else:
+                inputs = tf_stack(list(inputs), axis=1)
+
         _logger.debug(f"VSN '{self.name}': Entering call method.")
         _logger.debug(f"  Initial input shape: {getattr(inputs, 'shape', 'N/A')}")
         _logger.debug(f"  Context provided: {context is not None}")
@@ -568,7 +607,9 @@ class VariableSelectionNetwork(Layer, NNLearner):
                 f" {getattr(inputs, 'shape', 'N/A')}"
             ) from e
 
-        expected_min_rank = 3 if self.use_time_distributed else 2
+        if actual_rank >= 4:
+            effective_use_time_distributed = True
+        expected_min_rank = 3 if effective_use_time_distributed else 2
         _logger.debug(
             f"  Input rank: actual={actual_rank}, expected_min={expected_min_rank}"
         )
@@ -619,7 +660,7 @@ class VariableSelectionNetwork(Layer, NNLearner):
         for i in range(self.num_inputs):
             _logger.debug(f"    Processing variable index {i}")
             # Slice input for the i-th variable
-            if self.use_time_distributed:
+            if effective_use_time_distributed:
                 # Slice variable i: (B, T, N, F) -> (B, T, F)
                 var_input = inputs[:, :, i, :]
                 _logger.debug(f"      Sliced var_input shape (TD): {var_input.shape}")
@@ -780,13 +821,13 @@ class LearnedNormalization(Layer, NNLearner):
             (batch_size, ..., feature_dim).
         """
         self.mean = self.add_weight(
-            "mean",
+            name="mean",
             shape=(input_shape[-1],),
             initializer="zeros",
             trainable=True,
         )
         self.stddev = self.add_weight(
-            "stddev",
+            name="stddev",
             shape=(input_shape[-1],),
             initializer="ones",
             trainable=True,
@@ -994,7 +1035,7 @@ class StaticEnrichmentLayer(Layer, NNLearner):
     def call(
         self,
         temporal_features,
-        context_vector,
+        context_vector=None,
         training=False,
     ):
         r"""
@@ -1027,6 +1068,9 @@ class StaticEnrichmentLayer(Layer, NNLearner):
         3. Pass through internal GRN for final
            transformation.
         """
+        if context_vector is None and isinstance(temporal_features, (list, tuple)):
+            temporal_features, context_vector = temporal_features
+
         # Expand the static context to align
         # with temporal features along T
         static_context_expanded = tf_expand_dims(context_vector, axis=1)

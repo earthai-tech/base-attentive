@@ -73,9 +73,11 @@ class Interval:
                 "scikit-learn is not installed or does not have Interval support"
             )
 
-        # Convert int to numbers.Integral for newer sklearn versions
+        # Convert builtin numeric types to the abstract types newer sklearn expects.
         if type_ is int:
             type_ = numbers.Integral
+        elif type_ is float:
+            type_ = numbers.Real
 
         # Check if 'inclusive' is a parameter in sklearn_Interval
         signature = inspect.signature(sklearn_Interval.__init__)

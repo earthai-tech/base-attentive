@@ -65,7 +65,7 @@ os.environ["KERAS_BACKEND"] = KERAS_BACKEND
 def _safe_import(module_name: str):
     try:
         return importlib.import_module(module_name)
-    except ImportError:
+    except Exception:
         return None
 
 
@@ -94,6 +94,30 @@ def _get_static_value(value: Any) -> Any:
             except Exception:
                 return None
     return None
+
+
+def _normalize_dtype(dtype: Any) -> Any:
+    """Convert fallback/runtime dtypes into a Keras-friendly representation."""
+    if dtype is None:
+        return None
+    if isinstance(dtype, str):
+        return dtype
+
+    name = getattr(dtype, "name", None)
+    if isinstance(name, str):
+        return name
+
+    as_numpy_dtype = getattr(dtype, "as_numpy_dtype", None)
+    if as_numpy_dtype is not None:
+        try:
+            return np.dtype(as_numpy_dtype).name
+        except Exception:
+            pass
+
+    try:
+        return np.dtype(dtype).name
+    except Exception:
+        return dtype
 
 
 class _KerasAutographExperimental:
@@ -164,6 +188,12 @@ class _KerasDeps:
 
     def __init__(self):
         self._cache: dict[str, Any] = {}
+        self._fallback_runtime = None
+
+    def _load_fallback_runtime(self):
+        if self._fallback_runtime is None:
+            self._fallback_runtime = _safe_import("base_attentive._keras_fallback")
+        return self._fallback_runtime
 
     def _load_keras_root(self):
         keras = _safe_import("keras")
@@ -194,6 +224,7 @@ class _KerasDeps:
         return _safe_import("tensorflow")
 
     def _resolve_special(self, name: str) -> Any:
+        fallback = self._load_fallback_runtime()
         if name == "autograph":
             return _KerasAutographNamespace()
         if name == "debugging":
@@ -204,36 +235,48 @@ class _KerasDeps:
         if name == "newaxis":
             return None
         if name == "bool":
-            return np.bool_
+            return getattr(fallback, "bool", np.bool_)
         if name == "float32":
-            return np.float32
+            return getattr(fallback, "float32", np.float32)
         if name == "int32":
-            return np.int32
+            return getattr(fallback, "int32", np.int32)
         if name == "Assert":
             tf = self._load_tensorflow()
             if tf is not None and hasattr(tf, "Assert"):
                 return tf.Assert
-            return lambda condition, data=None, summarize=None, name=None: condition
+            return getattr(
+                fallback,
+                "Assert",
+                lambda condition, data=None, summarize=None, name=None: condition,
+            )
         if name == "Tensor":
             tf = self._load_tensorflow()
-            return getattr(tf, "Tensor", object) if tf else object
+            if tf:
+                return getattr(tf, "Tensor", object)
+            return getattr(fallback, "Tensor", object)
         if name == "TensorShape":
             tf = self._load_tensorflow()
-            return getattr(tf, "TensorShape", tuple) if tf else tuple
+            if tf:
+                return getattr(tf, "TensorShape", tuple)
+            return getattr(fallback, "TensorShape", tuple)
         if name == "Reduction":
             keras = self._load_keras_root()
             losses = self._load_namespace(keras, "losses")
             reduction = getattr(losses, "Reduction", None)
             if reduction is not None:
                 return reduction
-            return SimpleNamespace(AUTO="auto", SUM="sum", NONE="none")
+            return getattr(
+                fallback,
+                "Reduction",
+                SimpleNamespace(AUTO="auto", SUM="sum", NONE="none"),
+            )
         if name == "get_static_value":
             return _get_static_value
         if name == "linalg":
             tf = self._load_tensorflow()
             if tf is not None and hasattr(tf, "linalg"):
                 return tf.linalg
-            return _KerasLinalgNamespace()
+            return getattr(fallback, "linalg", _KerasLinalgNamespace())
         return None
 
     def _resolve_from_keras(self, name: str) -> Any:
@@ -260,6 +303,32 @@ class _KerasDeps:
             return self._load_namespace(keras, "random")
 
         target_name = self._OP_ALIASES.get(name, name)
+        ops = self._load_namespace(keras, "ops")
+
+        if name == "constant":
+            convert_to_tensor = getattr(ops, "convert_to_tensor", None)
+            if callable(convert_to_tensor):
+                def _constant(value, dtype=None):
+                    normalized = _normalize_dtype(dtype)
+                    if normalized is None:
+                        return convert_to_tensor(value)
+                    return convert_to_tensor(value, dtype=normalized)
+
+                return _constant
+
+        if name == "cast":
+            cast = getattr(ops, "cast", None)
+            if callable(cast):
+                return lambda value, dtype, **kwargs: cast(
+                    value,
+                    _normalize_dtype(dtype),
+                )
+
+        if ops is not None:
+            value = getattr(ops, target_name, None)
+            if value is not None:
+                return value
+
         for namespace_name in self._SEARCH_PATHS:
             namespace = self._load_namespace(keras, namespace_name)
             if namespace is None:
@@ -291,6 +360,20 @@ class _KerasDeps:
                 return getattr(keras, target_name)
         return None
 
+    def _resolve_from_fallback(self, name: str) -> Any:
+        fallback = self._load_fallback_runtime()
+        if fallback is None:
+            return None
+
+        namespace_map = {
+            "activations": "activations",
+            "random": "random",
+            "register_keras_serializable": "register_keras_serializable",
+            "get": "get",
+        }
+        target_name = namespace_map.get(name, self._OP_ALIASES.get(name, name))
+        return getattr(fallback, target_name, None)
+
     def __getattr__(self, name: str) -> Any:
         """Lazy load Keras/TensorFlow symbols as needed."""
         if name in self._cache:
@@ -304,6 +387,8 @@ class _KerasDeps:
             value = self._resolve_from_keras(name)
         if value is None:
             value = self._resolve_from_tensorflow(name)
+        if value is None:
+            value = self._resolve_from_fallback(name)
         if value is None:
             raise ImportError(
                 f"Cannot import {name} from Keras runtime '{KERAS_BACKEND}'."
