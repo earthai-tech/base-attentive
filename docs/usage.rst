@@ -6,7 +6,7 @@ Quick start
 
 .. code-block:: python
 
-   import tensorflow as tf
+   import numpy as np
    from base_attentive import BaseAttentive
 
    model = BaseAttentive(
@@ -23,9 +23,9 @@ Quick start
    )
 
    batch_size = 32
-   x_static = tf.random.normal([batch_size, 4])
-   x_dynamic = tf.random.normal([batch_size, 10, 8])
-   x_future = tf.random.normal([batch_size, 24, 6])
+   x_static  = np.random.randn(batch_size, 4).astype('float32')
+   x_dynamic = np.random.randn(batch_size, 10, 8).astype('float32')
+   x_future  = np.random.randn(batch_size, 24, 6).astype('float32')
 
    predictions = model([x_static, x_dynamic, x_future])
 
@@ -38,11 +38,11 @@ Input contract
 2. dynamic historical features
 3. known future covariates
 
-The common shape contract is:
+Shape contract:
 
-- static: ``(batch, static_input_dim)``
+- static:  ``(batch, static_input_dim)``
 - dynamic: ``(batch, past_steps, dynamic_input_dim)``
-- future: ``(batch, forecast_horizon, future_input_dim)``
+- future:  ``(batch, forecast_horizon, future_input_dim)``
 
 If you pass a single tensor to the validation helpers, it is treated as the
 static slot and the missing slots are normalized to ``None``.
@@ -50,22 +50,195 @@ static slot and the missing slots are normalized to ``None``.
 Output shapes
 -------------
 
-Point-forecast output typically has shape:
+Point-forecast output:
 
 .. code-block:: text
 
    (batch, forecast_horizon, output_dim)
 
-Quantile output typically has shape:
+Quantile output:
 
 .. code-block:: text
 
    (batch, forecast_horizon, num_quantiles, output_dim)
 
+Complete Parameter Reference
+-----------------------------
+
+.. list-table:: Required Parameters
+   :header-rows: 1
+   :widths: 22 12 12 54
+
+   * - Parameter
+     - Type
+     - Constraints
+     - Description
+   * - ``static_input_dim``
+     - int
+     - >= 0
+     - Number of static (time-invariant) features
+   * - ``dynamic_input_dim``
+     - int
+     - >= 1
+     - Number of historical time-series features
+   * - ``future_input_dim``
+     - int
+     - >= 0
+     - Number of known future covariate features
+   * - ``output_dim``
+     - int
+     - >= 1
+     - Number of output variables (default: 1)
+   * - ``forecast_horizon``
+     - int
+     - >= 1
+     - Number of future steps to predict (default: 1)
+
+.. list-table:: Architecture Parameters
+   :header-rows: 1
+   :widths: 22 10 10 58
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``embed_dim``
+     - int
+     - 32
+     - Shared embedding dimension
+   * - ``hidden_units``
+     - int
+     - 64
+     - Dense hidden layer width
+   * - ``lstm_units``
+     - int
+     - 64
+     - LSTM hidden size (hybrid mode)
+   * - ``attention_units``
+     - int
+     - 32
+     - Attention projection dimension
+   * - ``num_heads``
+     - int
+     - 4
+     - Multi-head attention heads
+   * - ``num_encoder_layers``
+     - int
+     - 2
+     - Stacked encoder layer count
+   * - ``max_window_size``
+     - int
+     - 10
+     - Maximum dynamic time window size
+   * - ``memory_size``
+     - int
+     - 100
+     - Memory bank size for memory-augmented attention
+
+.. list-table:: Temporal Aggregation
+   :header-rows: 1
+   :widths: 22 10 12 56
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``scales``
+     - list[int] or 'auto'
+     - None
+     - LSTM temporal scales, e.g. ``[1, 2, 4]``
+   * - ``multi_scale_agg``
+     - str
+     - 'last'
+     - Merge multi-scale outputs: ``'last'``, ``'average'``, ``'flatten'``, ``'sum'``, ``'concat'``
+   * - ``final_agg``
+     - str
+     - 'last'
+     - Final sequence aggregation: ``'last'``, ``'average'``, ``'flatten'``
+
+.. list-table:: Regularization
+   :header-rows: 1
+   :widths: 22 10 10 58
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``dropout_rate``
+     - float
+     - 0.1
+     - Dropout probability [0, 1]
+   * - ``activation``
+     - str
+     - 'relu'
+     - ``'relu'``, ``'elu'``, ``'selu'``, ``'sigmoid'``, ``'tanh'``, ``'linear'``, ``'gelu'``, ``'swish'``
+   * - ``use_batch_norm``
+     - bool
+     - False
+     - Apply batch normalization
+   * - ``use_residuals``
+     - bool
+     - True
+     - Use residual connections
+
+.. list-table:: Feature Processing
+   :header-rows: 1
+   :widths: 22 10 10 58
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``use_vsn``
+     - bool
+     - True
+     - Enable Variable Selection Network
+   * - ``vsn_units``
+     - int or None
+     - None
+     - Override VSN projection units (uses ``embed_dim`` when None)
+   * - ``apply_dtw``
+     - bool
+     - True
+     - Apply Dynamic Time Warping alignment
+
+.. list-table:: Configuration
+   :header-rows: 1
+   :widths: 22 10 12 56
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``objective``
+     - str
+     - 'hybrid'
+     - Encoder type: ``'hybrid'`` or ``'transformer'``
+   * - ``mode``
+     - str or None
+     - None
+     - Mode shortcut: ``'tft'``, ``'pihal'``, ``'tft_like'``, ``'pihal_like'``
+   * - ``attention_levels``
+     - str, list, int, None
+     - None
+     - Decoder attention stack control
+   * - ``quantiles``
+     - list[float] or None
+     - None
+     - Quantile levels for probabilistic output
+   * - ``architecture_config``
+     - dict or None
+     - None
+     - Structural overrides (highest precedence)
+   * - ``verbose``
+     - int
+     - 0
+     - Logging verbosity
+
 Architecture configuration
 --------------------------
 
-The model can be configured through ``architecture_config``:
+Use ``architecture_config`` for structural choices:
 
 .. code-block:: python
 
@@ -84,34 +257,78 @@ The model can be configured through ``architecture_config``:
        architecture_config=transformer_config,
    )
 
-Common options
---------------
+Common options:
 
 - ``encoder_type``: ``"hybrid"`` or ``"transformer"``
-- ``decoder_attention_stack``: attention layers such as
-  ``["cross", "hierarchical", "memory"]``
+- ``decoder_attention_stack``: list from ``["cross", "hierarchical", "memory"]``
 - ``feature_processing``: ``"vsn"`` or ``"dense"``
 
-Using BaseAttentive as a Kernel
+Operational Mode (``mode`` parameter)
+--------------------------------------
+
+.. code-block:: python
+
+   model = BaseAttentive(..., mode="tft")    # TFT-like profile
+   model = BaseAttentive(..., mode="pihal")  # PIHALNet-like profile
+
+Attention Levels
+----------------
+
+.. code-block:: python
+
+   model = BaseAttentive(..., attention_levels=None)              # all three
+   model = BaseAttentive(..., attention_levels="cross")           # cross only
+   model = BaseAttentive(..., attention_levels=["cross", "memory"])
+   model = BaseAttentive(..., attention_levels=1)                 # cross (int shortcut)
+   model = BaseAttentive(..., attention_levels=2)                 # hierarchical
+   model = BaseAttentive(..., attention_levels=3)                 # memory
+
+Multi-Scale Aggregation
+------------------------
+
+.. code-block:: python
+
+   model = BaseAttentive(
+       ...,
+       scales=[1, 2, 4],
+       multi_scale_agg="average",
+       final_agg="last",
+   )
+
+V2 Schema-based Configuration
 -------------------------------
 
-``BaseAttentive`` does not need to be the final model you serve. In many
-projects it is most useful as a forecasting kernel: it handles temporal
-representation learning, encoder-decoder fusion, and multi-horizon prediction,
-while you add domain-specific logic around it.
+For programmatic / backend-neutral construction use ``BaseAttentiveSpec``:
 
-This pattern is especially helpful when you want to:
+.. code-block:: python
 
-- add a correction head without rewriting the temporal stack
-- attach domain constraints or rule-based penalties
-- combine forecasting with auxiliary tasks such as anomaly detection
-- keep a stable forecasting core while experimenting with downstream heads
+   from base_attentive.config import BaseAttentiveSpec, BaseAttentiveComponentSpec
+
+   spec = BaseAttentiveSpec(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=1,
+       forecast_horizon=24,
+       embed_dim=32,
+       hidden_units=64,
+       attention_heads=4,
+       dropout_rate=0.1,
+       head_type="point",
+       backend_name="tensorflow",
+   )
+
+   # Override individual component registry keys
+   spec_custom = BaseAttentiveSpec(
+       static_input_dim=4, dynamic_input_dim=8, future_input_dim=6,
+       components=BaseAttentiveComponentSpec(sequence_pooling="pool.last"),
+   )
+
+Using BaseAttentive as a Kernel
+--------------------------------
 
 Wrapper Pattern (Recommended)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Composition is usually the safest approach. You keep ``BaseAttentive`` as an
-internal kernel and build a larger model around it.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -122,70 +339,45 @@ internal kernel and build a larger model around it.
        def __init__(self, forecast_horizon=24, output_dim=1):
            super().__init__()
            self.kernel = BaseAttentive(
-               static_input_dim=4,
-               dynamic_input_dim=8,
-               future_input_dim=6,
-               output_dim=output_dim,
-               forecast_horizon=forecast_horizon,
-               quantiles=None,  # keep shapes simple for the correction head
+               static_input_dim=4, dynamic_input_dim=8, future_input_dim=6,
+               output_dim=output_dim, forecast_horizon=forecast_horizon,
            )
-           self.context_pool = keras.layers.GlobalAveragePooling1D()
-           self.residual_head = keras.Sequential(
-               [
-                   keras.layers.Dense(64, activation="relu"),
-                   keras.layers.RepeatVector(forecast_horizon),
-                   keras.layers.Dense(output_dim),
-               ]
-           )
+           self.context_pool  = keras.layers.GlobalAveragePooling1D()
+           self.residual_head = keras.Sequential([
+               keras.layers.Dense(64, activation="relu"),
+               keras.layers.RepeatVector(forecast_horizon),
+               keras.layers.Dense(output_dim),
+           ])
            self.gate = keras.layers.Dense(output_dim, activation="sigmoid")
 
        def call(self, inputs, training=False):
            static_x, dynamic_x, future_x = inputs
-
-           base_forecast = self.kernel(
-               [static_x, dynamic_x, future_x],
-               training=training,
-           )
-
-           context = self.context_pool(dynamic_x)
+           base_forecast = self.kernel([static_x, dynamic_x, future_x],
+                                       training=training)
+           context  = self.context_pool(dynamic_x)
            residual = self.residual_head(context, training=training)
-           gate = self.gate(context, training=training)
-           gate = keras.ops.expand_dims(gate, axis=1)
-
+           gate     = keras.ops.expand_dims(self.gate(context), axis=1)
            return base_forecast + gate * residual
 
-The advantage of this pattern is that the forecasting kernel stays reusable:
-
-- you can swap ``architecture_config`` without changing the outer model
-- kernel serialization stays close to the base implementation
-- extra robustness logic remains small, testable, and domain-specific
-
 Direct Inheritance (Advanced)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Direct subclassing is useful when your custom model still follows the same
-three-input contract and you want one model class that extends the base
-behavior.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-   import keras
    from base_attentive import BaseAttentive
+   import keras
 
    class PhysicsAwareBaseAttentive(BaseAttentive):
        def __init__(self, physics_weight=0.1, **kwargs):
            super().__init__(**kwargs)
-           self.physics_weight = physics_weight
+           self.physics_weight  = physics_weight
            self.constraint_head = keras.layers.Dense(self.output_dim)
 
        def call(self, inputs, training=False):
-           base_forecast = super().call(inputs, training=training)
+           base_forecast  = super().call(inputs, training=training)
            _, _, future_x = inputs
-
-           future_summary = keras.ops.mean(future_x, axis=1)
-           correction = self.constraint_head(future_summary)
-           correction = keras.ops.expand_dims(correction, axis=1)
-
+           correction     = self.constraint_head(keras.ops.mean(future_x, axis=1))
+           correction     = keras.ops.expand_dims(correction, axis=1)
            return base_forecast + self.physics_weight * correction
 
        def get_config(self):
@@ -193,55 +385,40 @@ behavior.
            config.update({"physics_weight": self.physics_weight})
            return config
 
-Use inheritance when you want the custom behavior to be part of the model
-class itself. Use wrapping when you want clearer separation between the
-forecasting kernel and the downstream application logic.
-
-Practical Guidance
-~~~~~~~~~~~~~~~~~~
-
-- If you only need a post-processing or correction stage, prefer wrapping.
-- If you need access to intermediate temporal features, inspect
-  ``run_encoder_decoder_core`` and extend carefully.
-- If you enable ``quantiles``, make sure any added head matches the forecast
-  output shape.
-- Keep the kernel responsible for forecasting and the outer model responsible
-  for business rules, physics, safety logic, or task fusion.
-
 Serialization and reconfiguration
----------------------------------
-
-The model exposes a standard Keras-style configuration API:
+-----------------------------------
 
 .. code-block:: python
 
-   config = model.get_config()
-   cloned = BaseAttentive.from_config(config)
+   config  = model.get_config()
+   cloned  = BaseAttentive.from_config(config)
 
-To experiment with architecture changes without mutating the original
-instance, use ``reconfigure``:
-
-.. code-block:: python
-
-   transformer_model = model.reconfigure(
-       {"encoder_type": "transformer"}
-   )
+   # Variant without mutating the original
+   transformer_model = model.reconfigure({"encoder_type": "transformer"})
 
 Validation helpers
 ------------------
 
-The ``base_attentive.validation`` module provides small backend-aware helpers
-that are useful when preparing or post-processing model inputs:
+.. code-block:: python
 
-- ``validate_model_inputs`` normalizes the three-slot input structure
-- ``maybe_reduce_quantiles_bh`` reduces a quantile axis when present
-- ``ensure_bh1`` reshapes outputs into ``(batch, horizon, 1)``
+   from base_attentive.validation import (
+       validate_model_inputs,
+       maybe_reduce_quantiles_bh,
+       ensure_bh1,
+   )
+
+   static, dynamic, future = validate_model_inputs(
+       [x_static, x_dynamic, x_future],
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       verbose=1,
+   )
+
+   reduced  = maybe_reduce_quantiles_bh(predictions)
+   reshaped = ensure_bh1(predictions)
 
 Accelerated inference
----------------------
-
-With the TensorFlow backend, you can build a traced prediction callable for
-repeated inference workloads:
+----------------------
 
 .. code-block:: python
 
@@ -251,17 +428,10 @@ repeated inference workloads:
        model,
        warmup_inputs=[x_static, x_dynamic, x_future],
    )
-
    predictions = fast_predict([x_static, x_dynamic, x_future])
 
-The helper wraps ``model(inputs, training=False)`` with ``tf.function``.
-Use it when you want a reusable inference path without changing the model
-class itself.
-
 Development workflow
---------------------
-
-The repository ships with a top-level ``Makefile`` for common tasks:
+---------------------
 
 .. code-block:: bash
 

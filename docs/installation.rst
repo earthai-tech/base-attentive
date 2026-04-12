@@ -15,7 +15,7 @@ The core package depends on:
 Runtime extras
 --------------
 
-Install the package with the runtime you want to use:
+Install the package together with the runtime backend you want to use:
 
 .. code-block:: bash
 
@@ -31,13 +31,13 @@ If you are working from a source checkout:
    cd base-attentive
    pip install -e ".[dev,tensorflow]"
 
-For local development:
+For local development only:
 
 .. code-block:: bash
 
    pip install -e ".[dev,tensorflow]"
 
-If you use the repository ``Makefile``, common setup commands are available:
+If you use the repository ``Makefile``, common setup commands are:
 
 .. code-block:: bash
 
@@ -49,31 +49,42 @@ If you use the repository ``Makefile``, common setup commands are available:
 Backend selection
 -----------------
 
-The runtime backend can be selected before importing the package:
+The runtime backend must be selected **before** importing ``base_attentive``
+or ``keras``:
 
 .. code-block:: bash
 
-   export KERAS_BACKEND=tensorflow
-   export KERAS_BACKEND=jax
-   export KERAS_BACKEND=torch
+   export KERAS_BACKEND=tensorflow   # default / stable
+   export KERAS_BACKEND=jax          # experimental
+   export KERAS_BACKEND=torch        # experimental
 
-The same can also be controlled with ``BASE_ATTENTIVE_BACKEND``.
+You can also set the backend programmatically before the first import:
 
-Sanity check your install
--------------------------
+.. code-block:: python
 
-After installation you can validate the import path and backend resolution:
+   import os
+   os.environ["KERAS_BACKEND"] = "tensorflow"
+   from base_attentive import BaseAttentive
+
+The ``BASE_ATTENTIVE_BACKEND`` environment variable can also be used; it takes
+precedence over ``KERAS_BACKEND``.
+
+Verifying your install
+----------------------
+
+After installation, validate the import path, version, and backend resolution:
 
 .. code-block:: python
 
    import base_attentive
-   from base_attentive import get_backend
+   from base_attentive import get_backend, get_available_backends
 
-   print(base_attentive.__version__)
-   print(get_backend().name)
+   print(base_attentive.__version__)   # e.g. "1.0.0"
+   print(get_backend().name)           # e.g. "tensorflow"
+   print(get_available_backends())     # ['tensorflow', ...]
 
 Build the documentation locally
--------------------------------
+---------------------------------
 
 Install the docs dependencies and build the Sphinx site:
 
@@ -87,7 +98,7 @@ The generated HTML lives in ``docs/_build/html``.
 Notes
 -----
 
-- TensorFlow is the current full runtime path used in the examples and tests.
+- TensorFlow is the current full runtime path used in examples and tests.
 - JAX and Torch are available through the backend abstraction layer, but the
-  full ``BaseAttentive`` execution path is still experimental on those
-  runtimes.
+  full ``BaseAttentive`` execution path is still experimental on those runtimes.
+- Python 3.9 is no longer supported as of v1.0.0; use Python 3.10 or newer.

@@ -4,38 +4,12 @@ Architecture Guide
 Overview
 --------
 
-BaseAttentive is an encoder-decoder neural network architecture designed for 
-sequence-to-sequence time series forecasting. It combines three distinct feature streams 
-into a unified forecasting kernel:
+BaseAttentive is an encoder-decoder neural network for sequence-to-sequence
+time series forecasting. It combines three distinct feature streams:
 
-1. **Static features** - Time-invariant properties (shape: ``batch_size, static_dim``)
-   
-   Examples: geographical coordinates, site elevation, installation date
-   
-2. **Dynamic features** - Historical time series data (shape: ``batch_size, history_steps, dynamic_dim``)
-   
-   Examples: sensor readings, temperature, humidity, historical observations
-   
-3. **Future features** - Known exogenous variables for forecast period (shape: ``batch_size, forecast_horizon, future_dim``)
-   
-   Examples: weather forecasts, calendar features, scheduled maintenance
-
-The architecture processes these three input streams through a configurable encoder-decoder 
-pipeline that supports multiple architectural choices, attention mechanisms, and output modes.
-
-Conceptual Flow
----------------
-
-At a high level, the model follows this processing path:
-
-1. **Ingest** - Accept static, historical, and future feature tensors
-2. **Project** - Transform features into a shared embedding space
-3. **Encode** - Process temporal context with hybrid or transformer-style encoder
-4. **Attend** - Apply configured decoder attention stack (cross, hierarchical, memory)
-5. **Forecast** - Generate point or probabilistic forecasts over horizon
-
-This flow keeps the three feature types available throughout the model while
-allowing different temporal encoding and fusion choices.
+1. **Static features** — time-invariant properties ``(batch, static_dim)``
+2. **Dynamic features** — historical time series ``(batch, T, dynamic_dim)``
+3. **Future features** — known future exogenous variables ``(batch, H, future_dim)``
 
 Input/Output Contract
 ---------------------
@@ -53,7 +27,6 @@ Input/Output Contract
                     ▼
            ┌─────────────────────┐
            │   Encoder-Decoder   │
-           │   Architecture      │
            └────────────┬────────┘
                         │
                 ┌───────┴────────┐
@@ -62,141 +35,48 @@ Input/Output Contract
            Point Forecast      With Quantiles
          (B, H, output_dim)  (B, H, Q, output_dim)
 
-Where:
-- B = batch size
-- T = time steps (history)
-- H = forecast horizon
-- Q = quantiles
-
-Core Configuration Parameters
-------------------------------
-
-BaseAttentive exposes most architectural choices directly on the model constructor.
-
-**Required Parameters:**
-
-- ``static_input_dim`` - Number of static features
-- ``dynamic_input_dim`` - Number of dynamic features
-- ``future_input_dim`` - Number of future features
-- ``output_dim`` - Number of output variables
-- ``forecast_horizon`` - Forecast length in time steps
-
-**Important Hyperparameters:**
-
-- ``embed_dim`` - Embedding dimension (default: 32)
-- ``attention_units`` - Attention mechanism dimension (default: 64)
-- ``num_heads`` - Multi-head attention heads (default: 4)
-- ``dropout_rate`` - Dropout probability (default: 0.2)
-- ``quantiles`` - Quantiles for probabilistic output (default: None)
-
-**Architecture-level choices** live in the ``architecture_config`` dictionary:
-
-.. code-block:: python
-
-   architecture_config = {
-       "encoder_type": "hybrid",  # or "transformer"
-       "decoder_attention_stack": ["cross", "hierarchical", "memory"],
-       "feature_processing": "vsn",  # or "dense"
-   }
-
-   model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       architecture_config=architecture_config,
-       embed_dim=32,
-       attention_units=64,
-       num_heads=8,
-       dropout_rate=0.2,
-   )
-
-Core Components
+Conceptual Flow
 ---------------
 
-Feature Extraction & Processing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Raw input features are first projected into a shared embedding space using one of two methods:
-
-**Variable Selection Network (VSN)** - Default method
-
-Dynamically learns feature importance:
-
-.. code-block:: python
-
-   model = BaseAttentive(
-       use_vsn=True,  # Learns which features matter
-       ...
-   )
-
-- Uses gating mechanisms to weight features
-- Often useful for high-dimensional inputs
-- Slightly more parameters and computation
-- Can make feature weighting easier to inspect
-
-**Dense Processing** - Alternative method
-
-Simple linear transformation:
-
-.. code-block:: python
-
-   model = BaseAttentive(
-       use_vsn=False,  # Simple linear embedding
-       ...
-   )
-
-- Standard dense layer projection
-- Fewer parameters
-- Lower computational cost
-- Simpler structure with fewer moving parts
+1. **Select** — Variable Selection Networks weight each feature
+2. **Project** — Transform features into shared embedding space
+3. **Encode** — Process temporal context (hybrid LSTM or transformer)
+4. **Attend** — Apply decoder attention stack (cross / hierarchical / memory)
+5. **Aggregate** — Pool sequence representation
+6. **Forecast** — Generate point or probabilistic outputs
 
 Encoder Architecture
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
-The encoder processes temporal context with one of two architectural approaches:
+Hybrid Mode (Default)
+~~~~~~~~~~~~~~~~~~~~~
 
-**Hybrid Mode** (Default)
-
-Combines Multi-Scale LSTM with attention:
-
-.. code-block:: python
-
-   model = BaseAttentive(
-       architecture_config={
-           "encoder_type": "hybrid"
-       },
-       ...
-   )
-
-Typical characteristics:
-- Multi-scale LSTM captures hierarchical patterns
-- Lower computational cost than pure attention
-- Often used for longer sequences
-
-**Transformer Mode**
-
-Pure self-attention based:
+Multi-scale LSTM with attention — best for long sequences (T > 500):
 
 .. code-block:: python
 
    model = BaseAttentive(
-       architecture_config={
-           "encoder_type": "transformer"
-       },
-       ...
+       ...,
+       objective="hybrid",
+       scales=[1, 2, 4],
+       multi_scale_agg="last",
    )
 
-Typical characteristics:
-- Full temporal dependency modeling
-- Often used for shorter sequences
-- Parallelizable computation
+Transformer Mode
+~~~~~~~~~~~~~~~~
+
+Pure self-attention — better parallelism on shorter sequences:
+
+.. code-block:: python
+
+   model = BaseAttentive(
+       ...,
+       objective="transformer",
+       num_encoder_layers=4,
+   )
 
 Attention Types
 ~~~~~~~~~~~~~~~
-
-The decoder can stack different attention mechanisms:
 
 .. list-table::
    :header-rows: 1
@@ -205,310 +85,272 @@ The decoder can stack different attention mechanisms:
    * - Type
      - Purpose
      - Use Case
-   * - Cross-Attention
+   * - ``cross``
      - Bridge encoder-decoder
-     - Always included by default
-   * - Hierarchical
-     - Multi-level aggregation
-     - Seasonal patterns
-   * - Memory-Augmented
+     - Default; always useful
+   * - ``hierarchical``
+     - Multi-level temporal patterns
+     - Seasonal / structured data
+   * - ``memory``
      - Historical pattern retrieval
      - Long-range dependencies
 
+Operational Modes
+-----------------
+
+The ``mode`` parameter applies a named configuration profile:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Mode value
+     - Effect
+   * - ``None`` (default)
+     - Manual configuration — use ``objective``, ``architecture_config``, etc.
+   * - ``"tft"`` / ``"tft_like"``
+     - Temporal Fusion Transformer style: VSN, gated residual, cross attention
+   * - ``"pihal"`` / ``"pihal_like"``
+     - Physics-Informed HAL style: memory-augmented + hierarchical stack
+
+Attention Level Control
+-----------------------
+
+``attention_levels`` accepts several forms:
 
 .. code-block:: python
 
-   # Use all attention types
+   model = BaseAttentive(..., attention_levels=None)              # all three
+   model = BaseAttentive(..., attention_levels="cross")
+   model = BaseAttentive(..., attention_levels=["cross", "memory"])
+   model = BaseAttentive(..., attention_levels=1)   # cross
+   model = BaseAttentive(..., attention_levels=2)   # hierarchical
+   model = BaseAttentive(..., attention_levels=3)   # memory
+
+Multi-Scale Aggregation
+-----------------------
+
+.. code-block:: python
+
    model = BaseAttentive(
-       architecture_config={
-           "decoder_attention_stack": ["cross", "hierarchical", "memory"]
-       },
-       ...
+       ...,
+       scales=[1, 2, 4],
+       multi_scale_agg="average",  # 'last','average','flatten','sum','concat'
+       final_agg="last",           # 'last','average','flatten'
    )
 
-Data Flow
----------
+Feature Extraction
+------------------
 
-Complete processing pipeline:
+**Variable Selection Network (VSN)** — learns feature importance:
 
-.. code-block:: text
+.. code-block:: python
 
-   Input tensors
-        │
-        ├─► Static (B, S_dim) ──┐
-        ├─► Dynamic (B, T, D_dim) ──┬─► Feature Extraction (VSN or Dense)
-        └─► Future (B, H, F_dim) ──┘
-                                │
-                        ┌───────▼────────┐
-                        │ Embedded Input │
-                        └───────┬────────┘
-                                │
-                ┌───────────────┼───────────────┐
-                │               │               │
-        ┌───────▼──────┐  ┌─────▼──────┐  ┌───▼──────────┐
-        │Static Encoder│ │Dyn Encoder│ │Future Context│
-        │(Dense)       │ │(LSTM/Attn)│ │(Dense)       │
-        └───────┬──────┘  └─────┬──────┘  └───┬──────────┘
-                │               │            │
-                └───────────────┼────────────┘
-                                │
-                ┌───────────────▼────────────┐
-                │  Attention Stack          │
-                │ • Cross-attention         │
-                │ • Hierarchical-attention  │
-                │ • Memory-attention        │
-                └───────────────┬────────────┘
-                                │
-                        ┌───────▼──────┐
-                        │ Time Agg.    │
-                        │ Last/Avg     │
-                        └───────┬──────┘
-                                │
-                        ┌───────▼──────┐
-                        │ Multi-Decoder│
-                        │ Per-horizon  │
-                        │ heads        │
-                        └───────┬──────┘
-                                │
-                    ┌───────────┴──────────┐
-                    │                      │
-         Point Forecast          Quantile Modeling
-            (B,H,D)                (B,H,Q,D)
+   model = BaseAttentive(..., use_vsn=True, vsn_units=64)
+
+**Dense Processing** — simple linear projection:
+
+.. code-block:: python
+
+   model = BaseAttentive(..., use_vsn=False)
+
+Output Modes
+------------
+
+.. code-block:: python
+
+   # Point forecast
+   model = BaseAttentive(..., output_dim=2, forecast_horizon=24)
+   # predictions shape: (batch, 24, 2)
+
+   # Probabilistic
+   model = BaseAttentive(..., quantiles=[0.1, 0.5, 0.9])
+   # predictions shape: (batch, 24, 3, 2)
+
+V2 Architecture: Registry / Resolver / Assembly
+------------------------------------------------
+
+Version 1.0.0 introduces a pluggable component system for backend-neutral
+model construction.
+
+ComponentRegistry
+~~~~~~~~~~~~~~~~~
+
+Stores builder functions keyed by ``(component_key, backend)``:
+
+.. code-block:: python
+
+   from base_attentive.registry import DEFAULT_COMPONENT_REGISTRY
+
+   def my_encoder_builder(*, context, units, hidden_units, **kw):
+       return MyCustomEncoder(units=units)
+
+   DEFAULT_COMPONENT_REGISTRY.register(
+       "encoder.my_custom",
+       my_encoder_builder,
+       backend="generic",
+       description="My custom temporal encoder.",
+   )
+
+ModelRegistry
+~~~~~~~~~~~~~
+
+Stores assembler functions:
+
+.. code-block:: python
+
+   from base_attentive.registry import DEFAULT_MODEL_REGISTRY
+
+   DEFAULT_MODEL_REGISTRY.register(
+       "base_attentive.v2",
+       my_assembler_fn,
+       backend="generic",
+   )
+
+Default component keys (``generic`` backend):
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Registry Key
+     - Purpose
+   * - ``projection.static``
+     - Static feature linear projection
+   * - ``projection.dynamic``
+     - Dynamic sequence projection
+   * - ``projection.future``
+     - Future covariate projection
+   * - ``projection.hidden``
+     - Post-fusion hidden projection
+   * - ``projection.dense``
+     - Generic dense projection (fallback)
+   * - ``encoder.temporal_self_attention``
+     - Temporal self-attention encoder
+   * - ``pool.mean``
+     - Sequence mean pooling
+   * - ``pool.last``
+     - Last-step pooling
+   * - ``fusion.concat``
+     - Feature concatenation
+   * - ``head.point_forecast``
+     - Point forecast head
+   * - ``head.quantile_forecast``
+     - Quantile forecast head
+
+BaseAttentiveSpec
+~~~~~~~~~~~~~~~~~
+
+A frozen dataclass that fully describes a V2 model:
+
+.. code-block:: python
+
+   from base_attentive.config import BaseAttentiveSpec, BaseAttentiveComponentSpec
+
+   spec = BaseAttentiveSpec(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=1,
+       forecast_horizon=24,
+       embed_dim=32,
+       hidden_units=64,
+       attention_heads=4,
+       layer_norm_epsilon=1e-6,
+       dropout_rate=0.1,
+       activation="relu",
+       backend_name="tensorflow",
+       head_type="point",
+       quantiles=(),
+       components=BaseAttentiveComponentSpec(
+           sequence_pooling="pool.last",  # override one component
+       ),
+   )
 
 Configuration Hierarchy
 -----------------------
 
-Parameters are applied in order of precedence:
+Precedence (lowest to highest):
 
-1. **architecture_config** dict (highest)
-   
-   .. code-block:: python
-   
-      architecture_config = {
-          "encoder_type": "transformer",
-          "decoder_attention_stack": ["cross"]
-      }
-
-2. **Explicit keyword arguments**
-   
-   .. code-block:: python
-   
-      model = BaseAttentive(
-          embed_dim=64,  # Overrides default
-          ...
-      )
-
-3. **Default values** (lowest)
-   
-   .. code-block:: python
-   
-      DEFAULT_ARCHITECTURE = {
-          "encoder_type": "hybrid",
-          "decoder_attention_stack": ["cross", "hierarchical", "memory"],
-          "feature_processing": "vsn"
-      }
-
-Example Configuration Merging
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   # User configuration
-   config = {
-       'static_input_dim': 4,
-       'dynamic_input_dim': 8,
-       'future_input_dim': 6,
-       'output_dim': 2,
-       'forecast_horizon': 24,
-       'embed_dim': 64,  # Overrides default (32)
-       'architecture_config': {
-           'encoder_type': 'transformer'  # Overrides default (hybrid)
-       }
-   }
-
-   model = BaseAttentive(**config)
-
-   # Result:
-   # - embed_dim: 64 (from keyword argument)
-   # - encoder_type: 'transformer' (from architecture_config)
-   # - decoder_attention_stack: ["cross", "hierarchical", "memory"] (from default)
-
-Output Modes
-~~~~~~~~~~~~
-
-The model supports two output modes depending on the ``quantiles`` parameter:
-
-**Point Forecast** (Default)
-
-When ``quantiles`` is not set, returns single point predictions:
+1. Default values (``DEFAULT_ARCHITECTURE``)
+2. Explicit keyword arguments (``objective``, ``mode``, ``attention_levels``, …)
+3. ``architecture_config`` dict (overrides all)
 
 .. code-block:: python
 
    model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       # quantiles not specified
+       ...,
+       objective="hybrid",          # step 2
+       architecture_config={
+           "encoder_type": "transformer",  # step 3 — wins
+       },
    )
 
-   predictions = model([static, dynamic, future])
-   # Shape: (batch_size, forecast_horizon, output_dim)
-   # Example: (32, 24, 2)
-
-Use when you need a single deterministic forecast.
-
-**Probabilistic Forecast** (Quantile-based)
-
-When ``quantiles`` are specified, returns uncertainty estimates:
-
-.. code-block:: python
-
-   model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       quantiles=[0.1, 0.5, 0.9],  # Lower, median, upper
-   )
-
-   predictions = model([static, dynamic, future])
-   # Shape: (batch_size, forecast_horizon, num_quantiles, output_dim)
-   # Example: (32, 24, 3, 2)
-   # predictions[:, :, 0, :] = 10th percentile (lower bound)
-   # predictions[:, :, 1, :] = 50th percentile (median)
-   # predictions[:, :, 2, :] = 90th percentile (upper bound)
-
-Use when you need quantile ranges and uncertainty estimates.
-
-Optional Features
+Data Flow Diagram
 -----------------
 
-Residual Connections
-~~~~~~~~~~~~~~~~~~~~
+.. code-block:: text
 
-Skip connections for gradient flow:
+   Static (B,S)  Dynamic (B,T,D)  Future (B,H,F)
+        │               │                │
+        └───────────────┴────────────────┘
+                        │
+             ┌──────────▼──────────┐
+             │  Feature Selection  │
+             │  (VSN or Dense)     │
+             └──────────┬──────────┘
+                        │
+              ┌─────────┴──────────┐
+              │                    │
+   ┌──────────▼──────┐  ┌──────────▼──────┐
+   │ Dynamic Encoder  │  │ Future Context  │
+   │ (LSTM / Attn)    │  │ (Dense proj.)   │
+   └──────────┬──────┘  └──────────┬──────┘
+              │                    │
+              └─────────┬──────────┘
+                        │
+             ┌──────────▼──────────┐
+             │   Attention Stack   │
+             │ cross / hier / mem  │
+             └──────────┬──────────┘
+                        │
+             ┌──────────▼──────────┐
+             │  Sequence Pooling   │
+             └──────────┬──────────┘
+                        │
+             ┌──────────▼──────────┐
+             │  Hidden Projection  │
+             └──────────┬──────────┘
+                        │
+             ┌──────────┴──────────┐
+             │                     │
+       Point Forecast        Quantile Forecast
+         (B, H, D)             (B, H, Q, D)
 
-.. code-block:: python
+Performance Notes
+-----------------
 
-   model = BaseAttentive(
-       use_residuals=True,  # Default
-       ...
-   )
-
-Typical effects:
-- Easier training of deep models
-- Mitigates vanishing gradient
-- Can improve optimization stability
-
-Batch Normalization
-~~~~~~~~~~~~~~~~~~~
-
-Normalize layer activations:
-
-.. code-block:: python
-
-   model = BaseAttentive(
-       use_batch_norm=True,  # Default: False
-       ...
-   )
-
-Typical effects:
-- Faster training
-- May improve optimization stability
-- Reduced internal covariate shift
-
-Quantile Modeling
-~~~~~~~~~~~~~~~~~
-
-Probabilistic forecasts with uncertainty:
-
-.. code-block:: python
-
-   model = BaseAttentive(
-       quantiles=[0.1, 0.5, 0.9],  # Default: None (point forecast)
-       ...
-   )
-
-Output:
-- Shape: (batch, horizon, num_quantiles, output_dim)
-- Allows confidence intervals
-- Useful for risk-aware applications
-
-Performance Characteristics
----------------------------
-
-Computational Complexity
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. list-table:: Performance Characteristics by Architecture
+.. list-table::
    :header-rows: 1
-   :widths: 15 20 20 22
+   :widths: 15 20 22 43
 
    * - Mode
      - Encoder
      - Complexity
-     - Time/Inference
+     - Notes
    * - Hybrid
-     - MultiScale LSTM
+     - Multi-scale LSTM
      - O(T·h²)
-     - ~10ms (RTX 3090, batch=32)
+     - Recommended for T > 500
    * - Transformer
-     - Self-Attention
+     - Self-attention
      - O(T²·h)
-     - ~25ms (RTX 3090, batch=32)
-
-
-Memory Usage
-~~~~~~~~~~~~
-
-Per batch (batch_size=32, embed_dim=64):
-
-- Model weights: ~2-5 MB
-- Activations: ~10-20 MB
-- Attention matrices: ~1-10 MB
-
-Total: ~15-35 MB per batch
-
-Extensibility
---------------
-
-Custom Encoders
-~~~~~~~~~~~~~~~
-
-Implement custom encoder logic:
-
-.. code-block:: python
-
-   from keras import layers
-
-   class CustomEncoder(layers.Layer):
-       def call(self, inputs):
-           # Your encoding logic
-           return encoded
-
-
-Custom Loss Functions
-~~~~~~~~~~~~~~~~~~~~~
-
-Plug in custom loss:
-
-.. code-block:: python
-
-   from keras import losses
-
-   class QuantileLoss(losses.Loss):
-       def call(self, y_true, y_pred):
-           # Quantile-specific loss
-           return loss
-
-   model.compile(loss=QuantileLoss())
+     - Recommended for T < 500
 
 See Also
 --------
 
-- :doc:`configuration_guide` - Detailed parameter reference
-- :doc:`api_reference` - Complete API documentation
-- :doc:`usage` - Extended usage patterns
+- :doc:`configuration_guide` — Detailed parameter reference
+- :doc:`api_reference` — Complete API
+- :doc:`usage` — Extended usage patterns
+- :doc:`components_reference` — Component library
