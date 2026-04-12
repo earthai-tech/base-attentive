@@ -114,7 +114,7 @@ class TemporalAttentionLayer(Layer):
     def build(self, input_shape):
         """Builds internal layers, especially GRNs."""
         # input_shape corresponds to the main 'inputs' tensor (B, T, U)
-        if not isinstance(input_shape, list | tuple):
+        if not isinstance(input_shape, (list, tuple)):
             # If only main input shape is passed (common)
             main_input_shape = tuple(input_shape)
         elif len(input_shape) == 2:
@@ -147,6 +147,13 @@ class TemporalAttentionLayer(Layer):
     def call(self, inputs, context_vector=None, training=False):
         """Forward pass of the temporal attention layer."""
         # Input shapes: inputs=(B, T, U), context_vector=(B, U_ctx)
+        attention_source = inputs
+        if isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+            inputs, secondary = inputs
+            if context_vector is None and hasattr(secondary, "shape") and len(secondary.shape) == 2:
+                context_vector = secondary
+            else:
+                attention_source = secondary
 
         query = inputs  # Default query
         processed_context = None
@@ -170,8 +177,8 @@ class TemporalAttentionLayer(Layer):
         # --- Multi-Head Self-Attention ---
         attn_output = self.multi_head_attention(
             query=query,
-            value=inputs,
-            key=inputs,
+            value=attention_source,
+            key=attention_source,
             training=training,
         )  # Shape: (B, T, units)
 
@@ -512,7 +519,12 @@ class MemoryAugmentedAttention(Layer, NNLearner):
     r"""Memory-augmented attention with optional masking."""
 
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
-    def __init__(self, units: int, memory_size: int, num_heads: int):
+    def __init__(
+        self,
+        units: int,
+        memory_size: int = 1,
+        num_heads: int = 1,
+    ):
         super().__init__()
         self.units = units
         self.memory_size = memory_size
@@ -796,7 +808,10 @@ class HierarchicalAttention(Layer, NNLearner):
         **kwargs,
     ):
         # inputs: [short_term, long_term]
-        short_term, long_term = inputs
+        if isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+            short_term, long_term = inputs
+        else:
+            short_term = long_term = inputs
 
         s = self.short_term_dense(short_term)
         long_proj = self.long_term_dense(long_term)
@@ -919,7 +934,13 @@ class ExplainableAttention(Layer, NNLearner):
     """
 
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
-    def __init__(self, num_heads: int, key_dim: int):
+    def __init__(
+        self,
+        num_heads: int,
+        key_dim: int | None = None,
+        *,
+        units: int | None = None,
+    ):
         r"""
         Initialize the ExplainableAttention layer.
 
@@ -933,10 +954,12 @@ class ExplainableAttention(Layer, NNLearner):
         """
         super().__init__()
         self.num_heads = num_heads
-        self.key_dim = key_dim
+        self.key_dim = key_dim if key_dim is not None else units
+        if self.key_dim is None:
+            raise ValueError("Provide `key_dim` or `units` for ExplainableAttention.")
         # MultiHeadAttention, focusing on returning
         # the attention scores
-        self.attention = MultiHeadAttention(num_heads=num_heads, key_dim=key_dim)
+        self.attention = MultiHeadAttention(num_heads=num_heads, key_dim=self.key_dim)
 
     @tf_autograph.experimental.do_not_convert
     def call(self, inputs, training=False):
@@ -958,8 +981,13 @@ class ExplainableAttention(Layer, NNLearner):
             Attention scores of shape
             (B, num_heads, T, T).
         """
+        if isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+            query, value = inputs
+        else:
+            query = value = inputs
+
         _, attention_scores = self.attention(
-            inputs, inputs, return_attention_scores=True
+            query, value, return_attention_scores=True
         )
         return attention_scores
 
@@ -1112,6 +1140,9 @@ class MultiResolutionAttentionFusion(Layer, NNLearner):
             Tensor of shape (B, T, D),
             representing fused features.
         """
+        if isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+            query, value = inputs
+            return self.attention(query, value)
         return self.attention(inputs, inputs)
 
     def get_config(self):

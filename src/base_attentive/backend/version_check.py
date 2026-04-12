@@ -91,13 +91,22 @@ def get_backend_version(backend_name: str) -> Optional[str]:
     if not module_name:
         return None
 
-    # Check if module exists
-    if importlib.util.find_spec(module_name) is None:
+    loaded_module = sys.modules.get(module_name)
+    try:
+        module_spec = importlib.util.find_spec(module_name)
+    except (ImportError, ValueError, AttributeError):
+        module_spec = None
+
+    if loaded_module is None and module_spec is None:
         return None
 
-    loaded_module = sys.modules.get(module_name)
     if loaded_module is not None:
-        return getattr(loaded_module, "__version__", None)
+        loaded_spec = getattr(loaded_module, "__spec__", None)
+        if loaded_spec is None:
+            try:
+                return getattr(loaded_module, "__version__", None)
+            except Exception:
+                return None
 
     distribution_map = {
         "tensorflow": ("tensorflow", "tensorflow-cpu", "tensorflow-intel"),
@@ -110,6 +119,12 @@ def get_backend_version(backend_name: str) -> Optional[str]:
             return importlib.metadata.version(dist_name)
         except importlib.metadata.PackageNotFoundError:
             continue
+        except Exception:
+            return None
+
+    if loaded_module is not None:
+        try:
+            return getattr(loaded_module, "__version__", None)
         except Exception:
             return None
     return None

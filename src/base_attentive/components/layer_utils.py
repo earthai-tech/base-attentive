@@ -82,9 +82,11 @@ class LayerScale(Layer, NNLearner):
     def build(self, input_shape):
         gamma_shape = input_shape[-1:]
         self.gamma = self.add_weight(
-            "gamma",
+            name="gamma",
             shape=gamma_shape,
-            initializer=lambda s, d=None: tf_float32.as_numpy_dtype(self.init_value),
+            initializer=lambda shape, dtype=None: tf_float32.as_numpy_dtype(
+                self.init_value
+            ),
             trainable=True,
         )
         super().build(input_shape)
@@ -110,8 +112,16 @@ class StochasticDepth(Layer, NNLearner):
     """
 
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
-    def __init__(self, drop_prob: float = 0.1, **kw):
+    def __init__(
+        self,
+        drop_prob: float = 0.1,
+        *,
+        drop_rate: float | None = None,
+        **kw,
+    ):
         super().__init__(**kw)
+        if drop_rate is not None:
+            drop_prob = drop_rate
         self.drop_prob = drop_prob
 
     def call(self, x: Tensor, training=False) -> Tensor:
@@ -210,7 +220,11 @@ class Gate(Layer, NNLearner):
 # ------------------------- Helper functions -----------------------
 
 
-def maybe_expand_time(x: Tensor, ref: Tensor, axis: int = 1) -> Tensor:
+def maybe_expand_time(
+    x: Tensor,
+    ref: Tensor | None = None,
+    axis: int = 1,
+) -> Tensor:
     """
     If `x` lacks a time dim but `ref` has one, expand `x` on that axis.
 
@@ -225,6 +239,11 @@ def maybe_expand_time(x: Tensor, ref: Tensor, axis: int = 1) -> Tensor:
     Tensor
         (B,T,F) if expanded, else original `x`.
     """
+    if ref is None:
+        if tf_rank(x) == 2:
+            return tf_expand_dims(x, axis=axis)
+        return x
+
     xr = tf_rank(x)
     rr = tf_rank(ref)
     if rr >= 3 and xr == rr - 1:
@@ -232,7 +251,11 @@ def maybe_expand_time(x: Tensor, ref: Tensor, axis: int = 1) -> Tensor:
     return x
 
 
-def broadcast_like(x: Tensor, target: Tensor) -> Tensor:
+def broadcast_like(
+    x: Tensor,
+    target: Tensor,
+    time_axis: int | None = None,
+) -> Tensor:
     """
     Broadcast `x` so it matches `target` along leading dims.
 
@@ -260,8 +283,12 @@ def broadcast_like(x: Tensor, target: Tensor) -> Tensor:
 
     # Convert list of scalars to int32 tensor
     reps = tf_stack(reps)
-    reps_dtype = tf_shape(tf_shape(x)).dtype  # usually int32
-    reps = tf_cast(reps, reps_dtype)
+    if hasattr(reps, "dtype"):
+        reps_dtype = getattr(tf_shape(x), "dtype", None)
+        if reps_dtype is not None:
+            reps = tf_cast(reps, reps_dtype)
+    else:
+        reps = tuple(int(v) for v in reps)
 
     return tf_tile(x, reps)
 
@@ -301,7 +328,13 @@ def _broadcast_like(x: Tensor, target: Tensor) -> Tensor:
     return tf_tile(x, reps)
 
 
-def ensure_rank_at_least(x: Tensor, min_rank: int, axis_to_expand: int = -1) -> Tensor:
+def ensure_rank_at_least(
+    x: Tensor,
+    min_rank: int | None = None,
+    axis_to_expand: int = -1,
+    *,
+    rank: int | None = None,
+) -> Tensor:
     """
     Pad dimensions (=1) until rank >= min_rank.
 
@@ -316,6 +349,11 @@ def ensure_rank_at_least(x: Tensor, min_rank: int, axis_to_expand: int = -1) -> 
     -------
     Tensor
     """
+    if min_rank is None:
+        min_rank = rank
+    if min_rank is None:
+        raise ValueError("`min_rank` or `rank` must be provided.")
+
     r = tf_rank(x)
     while r < min_rank:
         x = tf_expand_dims(x, axis=axis_to_expand)
