@@ -8,20 +8,32 @@ import os
 import numpy as np
 import pytest
 
-os.environ.setdefault("KERAS_BACKEND", "torch")
-
 # ---------------------------------------------------------------------------
 # Patch missing KERAS_DEPS ops before importing any components
 # ---------------------------------------------------------------------------
 import base_attentive as _ba
 
 _orig_ga = _ba._KerasDeps.__getattr__
+
+# Stub class used as a safe base-class fallback when real Keras classes are unavailable.
+_KerasStub = type(
+    "_KerasStub",
+    (object,),
+    {"__init__": lambda self, *a, **kw: None},
+)
+
 _FALLBACKS = {
     "add_n": lambda tensors, **kw: sum(tensors) if isinstance(tensors, (list, tuple)) else tensors,
     "gather": lambda p, i, axis=None, **kw: p,
     "reduce_logsumexp": lambda x, axis=None, keepdims=False, **kw: x,
     "pow": lambda x, y, **kw: x,
     "rank": lambda x, **kw: len(getattr(x, "shape", [])),
+    # Keras class stubs — must be real classes so they can be used as base classes.
+    "Loss": _KerasStub,
+    "Layer": _KerasStub,
+    "Model": _KerasStub,
+    # Decorator factory stub — must return a callable that accepts a class.
+    "register_keras_serializable": lambda package="Custom", name=None: (lambda cls: cls),
 }
 
 
@@ -29,7 +41,7 @@ def _patched_ga(self, name):
     try:
         return _orig_ga(self, name)
     except (ImportError, AttributeError):
-        val = _FALLBACKS.get(name, lambda *a, **kw: None)
+        val = _FALLBACKS.get(name, _KerasStub)
         self._cache[name] = val
         return val
 
