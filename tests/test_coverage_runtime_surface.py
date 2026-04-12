@@ -11,6 +11,20 @@ import numpy as np
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _restore_keras_deps_getattr(monkeypatch):
+    """Undo any module-level _KerasDeps.__getattr__ patches applied by other
+    test modules (test_cov_components_pure / test_cov_components_keras) so that
+    each test in this file operates against the real resolver logic."""
+    import base_attentive as _ba
+
+    monkeypatch.setattr(
+        _ba._KerasDeps,
+        "__getattr__",
+        _ba._ORIGINAL_KERAS_DEPS_GETATTR,
+    )
+
+
 def _reload(module_name: str):
     sys.modules.pop(module_name, None)
     return importlib.import_module(module_name)

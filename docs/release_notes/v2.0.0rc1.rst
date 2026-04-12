@@ -1,0 +1,75 @@
+.. _release-v2.0.0rc1:
+
+**v2.0.0rc1** — |MAJOR| Release Candidate 1
+=============================================
+
+*Released: April 2026*
+
+Upgrading from v2.0.0rc0
+-------------------------
+
+No user-facing API changes.  This release candidate fixes the PyPI publishing
+pipeline and CI infrastructure so that automated deployment is fully operational.
+
+Bug Fixes
+---------
+
+- |Bugfix| Resolved ``TypeError: function() argument 'code' must be code, not str``
+  during pytest collection on TensorFlow-only environments (backported from rc0
+  work; both ``test_cov_components_pure.py`` and ``test_cov_components_keras.py``
+  now use ``_KerasStub`` as the default fallback instead of a bare lambda).
+
+Infrastructure / CI
+--------------------
+
+- |Internal| Fixed PyPI publishing workflow — ``pypa/gh-action-pypi-publish``
+  now uses API token authentication exclusively:
+
+  - Removed ``id-token: write`` permission (was causing the action to attempt
+    OIDC Trusted Publishing, which requires a publisher to be pre-registered on
+    PyPI; the attempt failed with ``invalid-publisher`` and the step never fell
+    back to the API token).
+  - Added ``attestations: false`` to both ``publish-testpypi`` and
+    ``publish-pypi`` steps, which tells the action to skip the OIDC code path
+    entirely.
+
+- |Internal| Fixed CI hang on Linux and macOS runners:
+
+  - Added ``CUDA_VISIBLE_DEVICES: ''`` — prevents TensorFlow from scanning for
+    CUDA GPUs on CPU-only runners (was causing 20-40 min stalls on Linux).
+  - Added ``TF_CPP_MIN_LOG_LEVEL: '3'`` — suppresses TF C++ logs that were
+    flooding pytest log capture and causing apparent freezes.
+  - Added ``TF_ENABLE_ONEDNN_OPTS: '0'`` — disables oneDNN JIT tuning latency.
+  - Set ``log_cli = false`` and ``log_file_level = WARNING`` in ``pytest.ini``
+    to stop debug-level TF messages from being written to ``tests.log``.
+  - Added ``pytest-timeout>=2.3.0`` and ``--timeout=120`` (2 min per test).
+  - Added ``timeout-minutes: 30`` at the CI job level.
+
+- |Internal| Fixed ``tomllib`` import error in version-detection step of the
+  publish workflow — ``tomllib`` is Python 3.11+ only; replaced with a
+  ``re.search`` on the raw ``pyproject.toml`` text (compatible with Python 3.10).
+
+- |Internal| Fixed secret name mismatch: workflow was referencing
+  ``TEST_PYPI_API_TOKEN`` (singular) but the repository secret is named
+  ``TEST_PYPI_API_TOKENS`` (plural).
+
+Documentation
+-------------
+
+- |Internal| Split ``release_notes.rst`` into ``docs/release_notes/`` directory;
+  each version now has its own file for cleaner navigation and Git history.
+- |Internal| Added five new badges to ``docs/index.rst``: PyPI version,
+  Semantic Versioning, GitHub last commit, Open Issues, PRs Welcome.
+- |Internal| Improved platform badge contrast (``lightgrey`` → ``#4a5568``).
+- |Internal| README logo now uses the raw GitHub URL so it renders on PyPI.
+- |Internal| README Quick Start updated to v2 API (removed
+  ``import tensorflow as tf``, updated parameter names, numpy inputs).
+- |Internal| Citation updated: year 2025 → 2026, title updated to reflect
+  multi-backend design.
+
+Removed from Repository
+-----------------------
+
+- |Internal| ``V2_BACKENDS_IMPLEMENTATION.md``, ``V2_IMPLEMENTATION_PLAN.md``,
+  and ``.claude/`` directory removed from the remote; patterns added to
+  ``.gitignore``.

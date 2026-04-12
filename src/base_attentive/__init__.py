@@ -5,7 +5,11 @@ time series forecasting models with attention mechanisms.
 
 from __future__ import annotations
 
-__version__ = "2.0.0rc0"
+try:
+    from importlib.metadata import version as _meta_version, PackageNotFoundError
+    __version__ = _meta_version("base_attentive")
+except PackageNotFoundError:  # package not installed (e.g. bare source checkout)
+    __version__ = "unknown"
 __author__ = "LKouadio"
 __email__ = "etanoyau@gmail.com"
 __license__ = "Apache-2.0"
@@ -399,6 +403,10 @@ class _KerasDeps:
 
 
 KERAS_DEPS = _KerasDeps()
+
+# Preserve the original (unpatched) __getattr__ so that test fixtures can
+# restore it after per-file monkey-patches applied by test modules.
+_ORIGINAL_KERAS_DEPS_GETATTR = _KerasDeps.__getattr__
 
 
 def dependency_message(module_name: str) -> str:

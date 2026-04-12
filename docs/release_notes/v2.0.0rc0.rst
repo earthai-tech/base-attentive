@@ -1,0 +1,57 @@
+.. _release-v2.0.0rc0:
+
+**v2.0.0rc0** — |MAJOR| Release Candidate
+==========================================
+
+*Released: April 2026*
+
+This is the first release candidate of the **v2 architecture**.  It is feature-complete
+and considered stable for production use; the ``rc0`` tag will be dropped once the CI
+suite is fully green across all three backends (TensorFlow, JAX, PyTorch).
+
+Upgrading from v1.0.0
+---------------------
+
+No user-facing API changes relative to v1.0.0.  The release candidate hardens the
+internal test infrastructure and continuous-integration pipeline.  All constructor
+signatures, parameter names, and return shapes are identical to v1.0.0.
+
+Bug Fixes
+---------
+
+- |Bugfix| Resolved ``TypeError: metaclass conflict`` that prevented importing the
+  four Keras ``Loss`` sub-classes (``MeanSquaredErrorLoss``, ``QuantileLoss``,
+  ``HuberLoss``, ``WeightedLoss``) when the ``NNLearner`` mixin — whose metaclass is
+  incompatible with TensorFlow's trackable metaclass — was present in the inheritance
+  chain.  Fixed by removing ``NNLearner`` from all four loss classes.
+
+- |Bugfix| Resolved ``ModuleNotFoundError: No module named 'torch'`` that caused
+  pytest collection to abort entirely on environments where PyTorch is not installed.
+  The bare ``import torch`` at module level in ``test_cov_implementations_gaps.py``
+  was replaced with ``pytest.importorskip("torch", ...)`` so the file is gracefully
+  skipped rather than failing.
+
+- |Bugfix| Resolved ``TypeError: function() argument 'code' must be code, not str``
+  during test collection on TensorFlow-only environments.  Root cause: the Keras-patch
+  helper in ``test_cov_components_pure.py`` and ``test_cov_components_keras.py`` used
+  ``lambda *a, **kw: None`` as the default fallback for unknown ``KERAS_DEPS``
+  attributes (including ``Loss``, ``Layer``, ``Model``).  Subclassing a lambda triggers
+  Python's ``function`` type as the metaclass, which then receives the class name as a
+  string in place of a code object.  Fixed by:
+
+  - Removing ``os.environ.setdefault("KERAS_BACKEND", "torch")`` — the tests now run
+    against whatever backend is available (TensorFlow on CI).
+  - Introducing ``_KerasStub`` — a genuine Python class — as the default fallback so
+    any unknown Keras base class resolves to a safe, importable stub.
+  - Explicitly mapping ``"Loss"``, ``"Layer"``, and ``"Model"`` in ``_FALLBACKS`` to
+    ``_KerasStub``, and ``"register_keras_serializable"`` to a no-op decorator factory.
+
+Internal
+--------
+
+- |Internal| Test collection: all 178 tests across ``test_cov_components_pure`` and
+  ``test_cov_components_keras`` now collect without errors on TensorFlow-only
+  environments.
+- |Internal| CI matrix continues to target Python 3.10, 3.11, and 3.12 with the
+  TensorFlow backend; JAX and PyTorch jobs are skipped cleanly when the respective
+  backend is absent.

@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=69.0", "wheel"]
+requires = ["setuptools>=61.0,<69.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "base-attentive"
-version = "2.0.0rc0"
+name = "base_attentive"
+version = "2.0.0rc1"
 description = "Kernel for probabilistic forecasting with attentive sequence models."
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "Apache-2.0"}
@@ -70,6 +70,7 @@ dev = [
     "mypy>=1.8.0",
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
+    "pytest-timeout>=2.3.0",
     "pytest-xdist>=3.5.0",
     "ruff>=0.6.0",
     "twine>=5.0.0",
