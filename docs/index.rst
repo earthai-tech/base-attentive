@@ -3,15 +3,33 @@ BaseAttentive Documentation
 
 .. image:: https://img.shields.io/badge/python-3.10%2B-blue.svg
    :target: https://www.python.org/downloads/
+   :alt: Python 3.10+
 
-.. image:: https://img.shields.io/badge/version-1.0.0-brightgreen.svg
+.. image:: https://img.shields.io/badge/version-2.0.0rc0-brightgreen.svg
    :target: release_notes.html
+   :alt: Version 2.0.0rc0
 
-.. image:: https://img.shields.io/badge/license-Apache%202.0-green.svg
-   :target: https://github.com/earthai-tech/base-attentive/blob/main/LICENSE
+.. image:: https://img.shields.io/badge/keras-%E2%89%A53.0-FF6F00.svg
+   :target: https://keras.io/
+   :alt: Keras ≥ 3.0
+
+.. image:: https://img.shields.io/badge/backends-TF%20%7C%20JAX%20%7C%20Torch-7B2D8B.svg
+   :target: backends.html
+   :alt: Backends: TensorFlow, JAX, PyTorch
+
+.. image:: https://img.shields.io/badge/code%20style-ruff-46a758.svg
+   :target: https://docs.astral.sh/ruff/
+   :alt: Code Style: ruff
+
+.. image:: https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml/badge.svg
+   :target: https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml
+   :alt: Tests
+
+.. image:: https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey.svg
+   :alt: Platform: Linux, macOS, Windows
 
 A modular encoder-decoder architecture for sequence-to-sequence time series
-forecasting with layered attention mechanisms — **version 1.0.0 (v2 stable)**.
+forecasting with layered attention mechanisms — **version 2.0.0rc0**.
 
 **BaseAttentive** is a modular encoder-decoder architecture designed to process
 three distinct types of inputs:
