@@ -11,7 +11,6 @@ different models and can be easily extended for future requirements.
 
 from __future__ import annotations
 
-from ..api.property import NNLearner
 from ._config import (
     Loss,
     Tensor,
@@ -39,7 +38,7 @@ SERIALIZATION_PACKAGE = __name__
 
 
 @register_keras_serializable(SERIALIZATION_PACKAGE, name="MeanSquaredErrorLoss")
-class MeanSquaredErrorLoss(Loss, NNLearner):
+class MeanSquaredErrorLoss(Loss):
     """
     Mean Squared Error (MSE) loss function.
 
@@ -66,7 +65,7 @@ class MeanSquaredErrorLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(SERIALIZATION_PACKAGE, name="QuantileLoss")
-class QuantileLoss(Loss, NNLearner):
+class QuantileLoss(Loss):
     """
     Adaptive Quantile Loss layer that computes quantile loss for given
     quantiles.
@@ -106,7 +105,7 @@ class QuantileLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(SERIALIZATION_PACKAGE, name="HuberLoss")
-class HuberLoss(Loss, NNLearner):
+class HuberLoss(Loss):
     """
     Huber loss function which is less sensitive to outliers in data.
 
@@ -146,7 +145,7 @@ class HuberLoss(Loss, NNLearner):
 
 
 @register_keras_serializable(SERIALIZATION_PACKAGE, name="WeightedLoss")
-class WeightedLoss(Loss, NNLearner):
+class WeightedLoss(Loss):
     """
     Weighted loss function to apply different weights for each sample.
 
