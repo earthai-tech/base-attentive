@@ -319,6 +319,10 @@ class _KerasDeps:
 
 KERAS_DEPS = _KerasDeps()
 
+# Preserve the original (unpatched) __getattr__ so that test fixtures can
+# restore it after per-file monkey-patches applied by test modules.
+_ORIGINAL_KERAS_DEPS_GETATTR = _KerasDeps.__getattr__
+
 
 def dependency_message(module_name: str) -> str:
     """Return a dependency message for missing packages."""

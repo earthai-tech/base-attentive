@@ -9,6 +9,7 @@ The conftest.py already adds 'src' to sys.path, so we do NOT re-add it here.
 import os
 import warnings
 
+import numpy as _np
 import pytest
 
 # Patch missing KERAS_DEPS ops before importing anything from components
@@ -24,11 +25,21 @@ _KerasStub = type(
 )
 
 _FALLBACKS = {
+    # Functional ops — numpy-backed so TF never loads
     "add_n": lambda tensors, **kw: sum(tensors) if isinstance(tensors, (list, tuple)) else tensors,
     "gather": lambda p, i, axis=None, **kw: p,
     "reduce_logsumexp": lambda x, axis=None, keepdims=False, **kw: x,
     "pow": lambda x, y, **kw: x,
     "rank": lambda x, **kw: len(getattr(x, "shape", [])),
+    "expand_dims": lambda x, axis=-1, **kw: _np.expand_dims(_np.asarray(x), axis=axis),
+    "cast": lambda x, dtype, **kw: _np.array(x, dtype=dtype),
+    "convert_to_tensor": lambda x, dtype=None, **kw: _np.asarray(x, dtype=dtype),
+    "reduce_mean": lambda x, axis=None, **kw: _np.mean(_np.asarray(x), axis=axis),
+    "reduce_sum": lambda x, axis=None, **kw: _np.sum(_np.asarray(x), axis=axis),
+    "shape": lambda x, **kw: _np.asarray(x).shape,
+    # Scalar dtype stubs
+    "float32": _np.float32,
+    "int32": _np.int32,
     # Keras class stubs — must be real classes so they can be used as base classes.
     "Loss": _KerasStub,
     "Layer": _KerasStub,
@@ -39,12 +50,16 @@ _FALLBACKS = {
 
 
 def _patched_ga(self, name):
+    # Check _FALLBACKS FIRST — prevents any attempt to load TF for known ops
+    if name in _FALLBACKS:
+        val = _FALLBACKS[name]
+        self._cache[name] = val
+        return val
     try:
         return _orig_ga(self, name)
     except (ImportError, AttributeError):
-        val = _FALLBACKS.get(name, _KerasStub)
-        self._cache[name] = val
-        return val
+        self._cache[name] = _KerasStub
+        return _KerasStub
 
 
 _ba._KerasDeps.__getattr__ = _patched_ga
