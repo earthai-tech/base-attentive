@@ -130,3 +130,10 @@ dmypy.json
 .idea/
 *.swp
 *.swo
+
+# Claude Code local config and worktrees
+.claude/
+
+# Local planning / design notes
+_V2_BACKEND*.md
+V2_IMPLEM*.md
