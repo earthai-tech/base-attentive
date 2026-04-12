@@ -89,7 +89,7 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
         run: |
-          twine upload --repository-url https://test.pypi.org/legacy/ --verbose dist/*
+          twine upload --repository-url https://test.pypi.org/legacy/ --skip-existing --verbose dist/*
 
   # ── Production PyPI — stable releases and manual pypi dispatches ─────────────
   publish-pypi:
@@ -115,4 +115,4 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          twine upload --verbose dist/*
+          twine upload --skip-existing --verbose dist/*
