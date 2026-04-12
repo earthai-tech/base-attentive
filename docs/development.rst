@@ -7,7 +7,7 @@ Setting up Development Environment
 Prerequisites
 ~~~~~~~~~~~~~
 
-- Python 3.9+
+- Python 3.10+
 - Git
 - Conda or virtualenv
 
@@ -28,7 +28,7 @@ Quick Setup
    pip install -e ".[dev,tensorflow]"
 
    # Verify
-   python -c "from base_attentive import BaseAttentive; print('✅ Ready')"
+   python -c "from base_attentive import BaseAttentive; print('Ready')"
 
 Running Tests
 ~~~~~~~~~~~~~
@@ -41,8 +41,11 @@ Running Tests
    # Run with coverage
    pytest tests/ --cov=src/base_attentive --cov-report=html
 
-   # Run specific test
+   # Run a specific test file
    pytest tests/test_backend.py -v
+
+   # Run a specific test case
+   pytest tests/test_backend.py::TestBackendUtils::test_normalize_backend_name -v
 
 Code Quality
 ~~~~~~~~~~~~
@@ -73,6 +76,7 @@ Contributing Workflow
 
    - Follow PEP 8 style guide
    - Add docstrings (NumPy format)
+   - Add ``from __future__ import annotations`` at the top of every module
    - Add tests for new functionality
    - Update documentation
 
@@ -89,7 +93,7 @@ Contributing Workflow
    .. code-block:: bash
 
       git add .
-      git commit -m "Add feature: description"
+      git commit -m "feat: Add feature description"
       git push origin feature/description
 
 5. **Create Pull Request**
@@ -118,7 +122,6 @@ Follow **PEP 8** with these conventions:
    from typing import Any
 
    import numpy as np
-   import tensorflow as tf
 
    from .local import LocalClass
 
@@ -129,18 +132,21 @@ All functions must have type hints:
 
 .. code-block:: python
 
-   from typing import Optional, Union, Iterable
+   from __future__ import annotations
+   from typing import Optional, Union
+
+   import numpy as np
 
    def process_features(
-       features: tf.Tensor,
+       features: np.ndarray,
        scale: float = 1.0,
        normalize: bool = True,
-   ) -> tf.Tensor:
-       """Process tensor features with optional scaling.
+   ) -> np.ndarray:
+       """Process array features with optional scaling.
 
        Parameters
        ----------
-       features : tf.Tensor
+       features : np.ndarray
            Input features to process
        scale : float, default=1.0
            Scaling factor
@@ -149,7 +155,7 @@ All functions must have type hints:
 
        Returns
        -------
-       tf.Tensor
+       np.ndarray
            Processed features
        """
        pass
@@ -205,12 +211,18 @@ Test Organization
 .. code-block:: text
 
    tests/
-   ├── conftest.py              # Shared fixtures
-   ├── test_imports.py          # Import tests
-   ├── test_backend.py          # Backend tests
-   ├── test_core.py             # Core functionality
-   ├── test_validation.py       # Input validation
-   └── test_base_attentive_main.py  # Main model
+   ├── conftest.py                       # Shared fixtures
+   ├── test_imports.py                   # Import / public-API surface tests
+   ├── test_backend.py                   # Backend selection and utility tests
+   ├── test_core.py                      # Core functionality
+   ├── test_validation.py                # Input validation
+   ├── test_base_attentive_main.py       # End-to-end model tests
+   ├── test_cov_backend_gaps.py          # Backend module coverage (v2)
+   ├── test_cov_compat_registry.py       # Compat / registry coverage (v2)
+   ├── test_cov_components_keras.py      # Keras component tests (v2)
+   ├── test_cov_components_pure.py       # Pure-Python component utils (v2)
+   ├── test_cov_implementations_gaps.py  # Implementation gaps (v2)
+   └── test_cov_validation_module.py     # Validation module (v2)
 
 Writing Tests
 ~~~~~~~~~~~~~
@@ -253,12 +265,14 @@ Writing Tests
 Test Coverage
 ~~~~~~~~~~~~~
 
-Current coverage: **23%** across all modules
+Coverage has been substantially improved in v1.0.0 with six new dedicated
+coverage test files added alongside the existing suite.
 
-Priority areas for improvement:
-- Component modules (0% coverage)
-- Integration tests
-- Edge cases and error handling
+Priority areas for continued improvement:
+
+- Backend-specific integration paths (JAX, Torch)
+- Serialization round-trips (``get_config`` / ``from_config``)
+- Edge cases and error handling in component constructors
 
 Repository Workflow
 -------------------
@@ -311,19 +325,20 @@ Version Management
 
 Update version in:
 
-1. `src/base_attentive/__init__.py`
+1. ``src/base_attentive/__init__.py``
 
    .. code-block:: python
 
-      __version__ = "0.2.0"
+      __version__ = "1.0.0"
 
-2. `pyproject.toml`
+2. ``pyproject.toml``
 
    .. code-block:: toml
 
-      version = "0.2.0"
+      version = "1.0.0"
 
 Follow Semantic Versioning (MAJOR.MINOR.PATCH):
+
 - **MAJOR**: Incompatible API changes
 - **MINOR**: New features (backward compatible)
 - **PATCH**: Bug fixes
@@ -369,7 +384,12 @@ Local build:
 GitHub Actions:
 
 - ``.github/workflows/documentation.yml`` builds the docs on pushes and pull
-  requests to main
+  requests to main; the built site is uploaded as a workflow artifact
+
+Read the Docs:
+
+- The repository can also be connected to Read the Docs through the
+  root-level ``.readthedocs.yaml`` configuration file.
 
 Troubleshooting
 ---------------
@@ -415,24 +435,16 @@ Resources
 Getting Help
 ~~~~~~~~~~~~
 
-- Open an issue on GitHub
-- Check existing issues
-- Read documentation
-- Ask in discussions
-  requests
-- the built site is uploaded as a workflow artifact
-
-Read the Docs:
-
-- the repository can also be connected to Read the Docs through the
-  root-level ``.readthedocs.yaml`` configuration file
+- Open an issue on `GitHub <https://github.com/earthai-tech/base-attentive/issues>`_
+- Check existing issues and discussions
+- Read the documentation at `<https://base-attentive.readthedocs.io/>`_
 
 Contribution focus
 ------------------
 
 Documentation contributions are especially valuable in these areas:
 
-- runnable examples
-- backend compatibility notes
-- model configuration recipes
-- serialization and deployment guidance
+- Runnable examples with the v2 API
+- Backend compatibility notes (JAX, Torch)
+- Model configuration recipes
+- Serialization and deployment guidance

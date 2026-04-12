@@ -1,7 +1,14 @@
 PyTorch Backend Guide
 =====================
 
-This guide explains how to use BaseAttentive with the PyTorch backend through Keras 3.
+This guide explains how to use BaseAttentive with the PyTorch backend through
+Keras 3.
+
+.. note::
+
+   The PyTorch (Torch) backend is **experimental** in BaseAttentive v1.0.0.
+   The full ``BaseAttentive`` model path is still under evaluation on this
+   runtime. For production use, prefer the TensorFlow backend.
 
 Installation
 ============
@@ -9,92 +16,105 @@ Installation
 Basic PyTorch Installation
 ---------------------------
 
-Install PyTorch (requires version 2.0.0 or higher)::
+Install PyTorch (version 2.0.0 or higher required):
 
-    pip install torch
+.. code-block:: bash
 
-For CUDA support::
+   pip install torch
 
-    # For CUDA 11.8
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+For CUDA support:
 
-    # For CUDA 12.1
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+.. code-block:: bash
 
-For CPU-only (lightweight)::
+   # CUDA 11.8
+   pip install torch torchvision torchaudio \
+       --index-url https://download.pytorch.org/whl/cu118
 
-    pip install torch --index-url https://download.pytorch.org/whl/cpu
+   # CUDA 12.1
+   pip install torch torchvision torchaudio \
+       --index-url https://download.pytorch.org/whl/cu121
 
-For Apple Silicon (M1/M2/M3) with MPS support::
+CPU-only (lightweight):
 
-    pip install torch torchvision torchaudio
+.. code-block:: bash
+
+   pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+Apple Silicon (M1/M2/M3) with MPS support:
+
+.. code-block:: bash
+
+   pip install torch torchvision torchaudio
 
 Setting Up BaseAttentive with Torch
 -------------------------------------
 
-Once PyTorch is installed, BaseAttentive will automatically detect it::
+Once PyTorch is installed, set the backend before importing:
 
-    from base_attentive.backend import get_backend, set_backend
+.. code-block:: python
 
-    # Automatically select best available backend (will prefer Torch if installed)
-    backend = get_backend()
-    
-    # Or explicitly set to Torch
-    backend = set_backend("torch")
+   import os
+   os.environ["KERAS_BACKEND"] = "torch"
+
+   from base_attentive.backend import get_backend, set_backend
+   from base_attentive import BaseAttentive
+
+   backend = set_backend("torch")
 
 Verifying Installation
 ----------------------
 
-Check if PyTorch is properly configured::
+.. code-block:: python
 
-    from base_attentive.backend import torch_is_available, get_torch_version
-    
-    if torch_is_available():
-        print(f"PyTorch version: {get_torch_version()}")
-    else:
-        print("PyTorch not available")
+   from base_attentive.backend import torch_is_available, get_torch_version
+
+   if torch_is_available():
+       print(f"PyTorch version: {get_torch_version()}")
+   else:
+       print("PyTorch not available")
 
 GPU Verification Script
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create a file ``check_torch_setup.py``::
+Create ``check_torch_setup.py``:
 
-    #!/usr/bin/env python
-    """Verify PyTorch GPU setup."""
-    
-    import torch
-    from base_attentive.backend import (
-        get_torch_device,
-        get_torch_version,
-        TorchDeviceManager,
-    )
-    
-    print(f"PyTorch version: {get_torch_version()}")
-    print(f"CUDA available: {torch.cuda.is_available()}")
-    
-    if torch.cuda.is_available():
-        print(f"CUDA version: {torch.version.cuda}")
-        print(f"GPU count: {torch.cuda.device_count()}")
-        for i in range(torch.cuda.device_count()):
-            print(f"  GPU {i}: {torch.cuda.get_device_name(i)}")
-    
-    # Check MPS (Apple Silicon)
-    if hasattr(torch.backends, 'mps'):
-        print(f"MPS available: {torch.backends.mps.is_available()}")
-    
-    # Get selected device
-    print(f"\nSelected device: {get_torch_device()}")
-    
-    # Get device info
-    manager = TorchDeviceManager()
-    info = manager.get_device_info()
-    print(f"\nDevice info:")
-    for key, value in info.items():
-        print(f"  {key}: {value}")
+.. code-block:: python
 
-Run with::
+   #!/usr/bin/env python
+   """Verify PyTorch GPU setup."""
 
-    python check_torch_setup.py
+   import torch
+   from base_attentive.backend import (
+       get_torch_device,
+       get_torch_version,
+       TorchDeviceManager,
+   )
+
+   print(f"PyTorch version: {get_torch_version()}")
+   print(f"CUDA available: {torch.cuda.is_available()}")
+
+   if torch.cuda.is_available():
+       print(f"CUDA version: {torch.version.cuda}")
+       print(f"GPU count: {torch.cuda.device_count()}")
+       for i in range(torch.cuda.device_count()):
+           print(f"  GPU {i}: {torch.cuda.get_device_name(i)}")
+
+   if hasattr(torch.backends, 'mps'):
+       print(f"MPS available: {torch.backends.mps.is_available()}")
+
+   print(f"Selected device: {get_torch_device()}")
+
+   manager = TorchDeviceManager()
+   info    = manager.get_device_info()
+   print("Device info:")
+   for key, value in info.items():
+       print(f"  {key}: {value}")
+
+Run with:
+
+.. code-block:: bash
+
+   python check_torch_setup.py
 
 Device Selection
 ================
@@ -102,56 +122,55 @@ Device Selection
 Automatic Device Selection
 ----------------------------
 
-BaseAttentive automatically selects the best available device::
+BaseAttentive automatically selects the best available device:
 
-    from base_attentive.backend import get_torch_device
-    
-    device = get_torch_device()
-    print(device)  # e.g., "cuda:0", "cpu", or "mps"
+.. code-block:: python
+
+   from base_attentive.backend import get_torch_device
+
+   device = get_torch_device()
+   print(device)   # e.g. "cuda:0", "cpu", or "mps"
 
 Manual Device Preference
 -------------------------
 
-Specify preferred device type::
+.. code-block:: python
 
-    from base_attentive.backend import get_torch_device
-    
-    # Prefer CUDA (default)
-    device = get_torch_device(prefer="cuda", verbose=True)
-    
-    # Prefer CPU
-    device = get_torch_device(prefer="cpu")
-    
-    # Prefer Apple Metal Performance Shaders
-    device = get_torch_device(prefer="mps")
+   from base_attentive.backend import get_torch_device
+
+   device = get_torch_device(prefer="cuda", verbose=True)
+   device = get_torch_device(prefer="cpu")
+   device = get_torch_device(prefer="mps")   # Apple Silicon
 
 Using TorchDeviceManager
 -------------------------
 
-For more control over device management::
+For full device management control:
 
-    from base_attentive.backend import TorchDeviceManager
-    
-    # Create a device manager
-    manager = TorchDeviceManager(prefer="cuda")
-    
-    # Get current device
-    device = manager.device
-    print(f"Using device: {device}")
-    
-    # Get available devices
-    devices = manager.get_available_devices()
-    print(devices)  # {'cuda': True, 'cpu': True, 'mps': False}
-    
-    # Get detailed device information
-    info = manager.get_device_info()
-    print(info)
-    # Output includes: torch_version, cuda_available, current_device,
-    # available_devices, cuda_device_count, cuda_devices, etc.
-    
-    # Change device explicitly
-    manager.set_device("cpu")
-    print(f"Device changed to: {manager.device}")
+.. code-block:: python
+
+   from base_attentive.backend import TorchDeviceManager
+
+   manager = TorchDeviceManager(prefer="cuda")
+
+   # Current device (lazy-loaded, cached)
+   device = manager.device
+   print(f"Using: {device}")
+
+   # Available devices
+   devices = manager.get_available_devices()
+   print(devices)   # {'cuda': True, 'cpu': True, 'mps': False}
+
+   # Detailed info
+   info = manager.get_device_info()
+   # Contains: torch_version, cuda_available, current_device,
+   #           available_devices, cuda_device_count, cuda_devices, etc.
+
+   # Change device explicitly
+   manager.set_device("cpu")
+
+   # Clear GPU cache
+   manager.clear_gpu_cache()
 
 Configuration
 =============
@@ -159,126 +178,82 @@ Configuration
 Environment Variables
 ----------------------
 
-Control backend selection via environment variables::
+.. code-block:: bash
 
-    # Use PyTorch backend explicitly
-    export BASE_ATTENTIVE_BACKEND=torch
-    
-    # Or use Keras standard
-    export KERAS_BACKEND=pytorch
+   # PyTorch backend
+   export BASE_ATTENTIVE_BACKEND=torch
+
+   # Or Keras standard
+   export KERAS_BACKEND=torch
 
 Priority Order
 ~~~~~~~~~~~~~~
 
-Backend selection priority (in order):
+Backend selection (highest to lowest priority):
 
 1. ``BASE_ATTENTIVE_BACKEND`` environment variable
-2. ``KERAS_BACKEND`` environment variable  
-3. Previously set in-process backend
+2. ``KERAS_BACKEND`` environment variable
+3. Previously set in-process backend via ``set_backend()``
 4. Best available backend (auto-detected)
-5. Default backend (TensorFlow, with auto-install if needed)
+5. Default: TensorFlow
 
 Usage Examples
 ==============
 
-Basic Model Training
----------------------
+Basic Model Training with Torch Backend
+-----------------------------------------
 
-::
+.. code-block:: python
 
-    import keras
-    from keras import layers
-    from base_attentive.backend import set_backend
-    
-    # Set PyTorch backend
-    set_backend("torch")
-    
-    # Build model
-    model = keras.Sequential([
-        layers.Dense(128, activation="relu", input_shape=(784,)),
-        layers.Dropout(0.2),
-        layers.Dense(64, activation="relu"),
-        layers.Dense(10, activation="softmax"),
-    ])
-    
-    model.compile(
-        optimizer="adam",
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"],
-    )
-    
-    # Train
-    model.fit(x_train, y_train, epochs=10, batch_size=32)
+   import os
+   os.environ["KERAS_BACKEND"] = "torch"
 
-Vision Model with GPU
-~~~~~~~~~~~~~~~~~~~~~~
+   import numpy as np
+   import keras
+   from base_attentive.backend import set_backend
+   from base_attentive import BaseAttentive
 
-::
+   set_backend("torch")
 
-    import keras
-    from keras import layers, applications
-    from base_attentive.backend import (
-        set_backend,
-        get_torch_device,
-        TorchDeviceManager,
-    )
-    
-    # Set PyTorch backend
-    set_backend("torch")
-    
-    # Get device info for logging
-    manager = TorchDeviceManager()
-    info = manager.get_device_info()
-    print(f"Training on: {info['current_device']}")
-    
-    # Build model
-    base_model = applications.ResNet50(
-        input_shape=(224, 224, 3),
-        include_top=False,
-        weights="imagenet",
-    )
-    
-    model = keras.Sequential([
-        base_model,
-        layers.GlobalAveragePooling2D(),
-        layers.Dense(256, activation="relu"),
-        layers.Dropout(0.5),
-        layers.Dense(10, activation="softmax"),
-    ])
-    
-    model.compile(
-        optimizer="adam",
-        loss="categorical_crossentropy",
-        metrics=["accuracy"],
-    )
-    
-    # Train
-    model.fit(x_train, y_train, epochs=20, batch_size=32)
+   model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=1,
+       forecast_horizon=24,
+       embed_dim=32,
+       num_heads=4,
+   )
+
+   model.compile(optimizer="adam", loss="mse")
+
+   x_static  = np.random.randn(32, 4).astype('float32')
+   x_dynamic = np.random.randn(32, 100, 8).astype('float32')
+   x_future  = np.random.randn(32, 24, 6).astype('float32')
+   y         = np.random.randn(32, 24, 1).astype('float32')
+
+   model.fit([x_static, x_dynamic, x_future], y, epochs=3)
 
 Checking Backend Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
+.. code-block:: python
 
-    from base_attentive.backend import (
-        get_backend,
-        get_backend_capabilities,
-        detect_available_backends,
-    )
-    
-    # Current backend
-    backend = get_backend()
-    print(f"Current backend: {backend}")
-    
-    # Backend capabilities
-    caps = get_backend_capabilities()
-    print(f"Backend version: {caps['version']}")
-    print(f"Supported features: {caps['features']}")
-    
-    # Available backends
-    available = detect_available_backends()
-    for name, info in available.items():
-        print(f"{name}: {info}")
+   from base_attentive.backend import (
+       get_backend,
+       get_backend_capabilities,
+       detect_available_backends,
+   )
+
+   backend = get_backend()
+   print(f"Current backend: {backend}")
+
+   caps = get_backend_capabilities()
+   print(f"Backend version: {caps.get('version')}")
+
+   available = detect_available_backends()
+   for name, info in available.items():
+       print(f"{name}: {info}")
 
 Troubleshooting
 ===============
@@ -286,79 +261,92 @@ Troubleshooting
 PyTorch Not Found
 ------------------
 
-Problem: ``ImportError: No module named 'torch'``
+**Problem:** ``ImportError: No module named 'torch'``
 
-Solution: Install PyTorch::
+**Solution:**
 
-    pip install torch
+.. code-block:: bash
+
+   pip install torch
 
 CUDA Not Available
 -------------------
 
-Problem: Device selection returns "cpu" instead of "cuda:0"
+**Problem:** Device selection returns ``"cpu"`` instead of ``"cuda:0"``
 
-Check GPU availability::
+Check availability:
 
-    import torch
-    print(torch.cuda.is_available())
-    print(torch.cuda.device_count())
+.. code-block:: python
 
-If empty, verify:
+   import torch
+   print(torch.cuda.is_available())
+   print(torch.cuda.device_count())
+
+If CUDA is absent, verify:
 
 1. NVIDIA GPU drivers installed: ``nvidia-smi``
 2. CUDA toolkit installed and compatible
-3. PyTorch built with CUDA support::
+3. PyTorch CUDA build:
 
-    pip install torch --index-url https://download.pytorch.org/whl/cu121
+.. code-block:: bash
+
+   pip install torch --index-url https://download.pytorch.org/whl/cu121
 
 Device Memory Issues
 ---------------------
 
-Problem: ``RuntimeError: CUDA out of memory``
+**Problem:** ``RuntimeError: CUDA out of memory``
 
 Solutions:
 
-1. Reduce batch size::
+1. Reduce batch size:
 
-    model.fit(x_train, y_train, batch_size=16)  # Smaller batch
+   .. code-block:: python
 
-2. Clear GPU cache::
+      model.fit([x_static, x_dynamic, x_future], y, batch_size=16)
 
-    from base_attentive.backend import TorchDeviceManager
-    manager = TorchDeviceManager()
-    manager.clear_gpu_cache()
+2. Clear GPU cache:
 
-3. Use CPU instead::
+   .. code-block:: python
 
-    from base_attentive.backend import TorchDeviceManager
-    manager = TorchDeviceManager(prefer="cpu")
+      from base_attentive.backend import TorchDeviceManager
+      TorchDeviceManager().clear_gpu_cache()
+
+3. Use CPU:
+
+   .. code-block:: python
+
+      from base_attentive.backend import TorchDeviceManager
+      manager = TorchDeviceManager(prefer="cpu")
 
 MPS (Apple Silicon) Issues
 ---------------------------
 
-Problem: MPS device not available on macOS
+**Problem:** MPS not available on macOS
 
-Ensure PyTorch installed for Apple Silicon::
+.. code-block:: bash
 
-    pip install torch==2.0.0  # Or newer
-    python -c "import torch; print(torch.backends.mps.is_available())"
+   pip install torch>=2.0.0
+   python -c "import torch; print(torch.backends.mps.is_available())"
 
 Version Compatibility
 ---------------------
 
-Problem: ``Version check failed for PyTorch``
+**Problem:** Version check failed for PyTorch
 
-BaseAttentive requires PyTorch >= 2.0.0::
+BaseAttentive requires PyTorch >= 2.0.0:
 
-    import torch
-    from base_attentive.backend import check_torch_compatibility
-    
-    is_compatible, msg = check_torch_compatibility()
-    print(msg)
+.. code-block:: python
 
-Upgrade if needed::
+   from base_attentive.backend import check_torch_compatibility
+   ok, msg = check_torch_compatibility()
+   print(msg)
 
-    pip install --upgrade torch
+Upgrade if needed:
+
+.. code-block:: bash
+
+   pip install --upgrade torch
 
 Performance Best Practices
 ==========================
@@ -366,78 +354,67 @@ Performance Best Practices
 GPU Utilization
 ----------------
 
-1. **Use appropriate batch sizes** for your GPU memory::
+1. Use appropriate batch sizes for your GPU memory:
 
-    # Monitor GPU memory with nvidia-smi
-    nvidia-smi --query-gpu=memory.used,memory.total --format=csv -l 1
+   .. code-block:: bash
 
-2. **Pin memory for faster transfers** (when possible in your framework)
+      # Monitor GPU memory
+      nvidia-smi --query-gpu=memory.used,memory.total --format=csv -l 1
 
-3. **Use mixed precision training**::
+2. Minimize device-to-host data transfers within training loops.
 
-    import tensorflow as tf
-    
-    policy = tf.keras.mixed_precision.Policy("mixed_float16")
-    tf.keras.mixed_precision.set_global_policy(policy)
+3. Use mixed precision if supported:
+
+   .. code-block:: python
+
+      import keras
+      keras.mixed_precision.set_global_policy("mixed_float16")
 
 Device Switching
 ----------------
 
-Minimize device switching overhead::
+Set the device once and reuse:
 
-    from base_attentive.backend import TorchDeviceManager
-    
-    # Set once and reuse
-    manager = TorchDeviceManager(prefer="cuda")
-    device = manager.device
-    
-    # Use device consistently in training loop
-    for epoch in range(num_epochs):
-        for batch in data_loader:
-            # All computations on selected device
+.. code-block:: python
+
+   from base_attentive.backend import TorchDeviceManager
+
+   manager = TorchDeviceManager(prefer="cuda")
+   device  = manager.device
 
 Multi-GPU Training
 -------------------
 
-For models spanning multiple GPUs (when supported)::
+For multi-GPU workloads, inspect available GPUs first:
 
-    import torch
-    from base_attentive.backend import TorchDeviceManager
-    
-    manager = TorchDeviceManager()
-    info = manager.get_device_info()
-    
-    if info.get("cuda_device_count", 0) > 1:
-        print(f"Found {info['cuda_device_count']} GPUs")
-        # Model-specific multi-GPU setup needed
-        # (depends on your framework)
+.. code-block:: python
+
+   from base_attentive.backend import TorchDeviceManager
+
+   manager = TorchDeviceManager()
+   info    = manager.get_device_info()
+
+   if info.get("cuda_device_count", 0) > 1:
+       print(f"Found {info['cuda_device_count']} GPUs")
 
 Migration from TensorFlow Backend
 ==================================
 
-Switching from TensorFlow to PyTorch is straightforward::
+Switching is minimal with Keras 3:
 
-    # Before: TensorFlow backend (default)
-    # After: PyTorch backend
-    
-    from base_attentive.backend import set_backend
-    
-    # Set to PyTorch
-    set_backend("torch")
-    
-    # Rest of code remains the same!
-    # (Keras 3 provides unified interface)
+.. code-block:: python
 
-Code changes minimal::
+   # Before: TensorFlow (default)
+   from base_attentive import BaseAttentive
 
-    # OLD: Using TensorFlow implicitly
-    # (no backend specification)
-    
-    # NEW: Specify PyTorch backend
-    from base_attentive.backend import set_backend
-    set_backend("torch")
-    
-    # Everything else identical!
+   # After: PyTorch backend
+   import os
+   os.environ["KERAS_BACKEND"] = "torch"
+   from base_attentive.backend import set_backend
+   set_backend("torch")
+
+   from base_attentive import BaseAttentive
+   # Rest of code is identical
 
 API Reference
 =============
@@ -447,84 +424,72 @@ Core Functions
 
 .. function:: torch_is_available()
 
-    Check if PyTorch is installed and available.
-    
-    :return: True if PyTorch is available, False otherwise
-    :rtype: bool
+   Check if PyTorch is installed.
+
+   :return: ``True`` if available
+   :rtype: bool
 
 .. function:: get_torch_version()
 
-    Get installed PyTorch version.
-    
-    :return: Version string (e.g., "2.0.0") or None if PyTorch not available
-    :rtype: str or None
+   Get installed PyTorch version string.
+
+   :return: Version string (e.g. ``"2.1.0"``) or ``None``
+   :rtype: str or None
 
 .. function:: get_torch_device(prefer="cuda", verbose=False)
 
-    Get the selected device string.
-    
-    :param prefer: Preferred device type ('cuda', 'cpu', 'mps')
-    :type prefer: str
-    :param verbose: Print debug information
-    :type verbose: bool
-    :return: Device string (e.g., "cuda:0", "cpu", "mps")
-    :rtype: str
+   Get the selected device string.
+
+   :param prefer: Preferred device type (``"cuda"``, ``"cpu"``, ``"mps"``)
+   :param verbose: Print debug info
+   :return: Device string (e.g. ``"cuda:0"``, ``"cpu"``, ``"mps"``)
+   :rtype: str
 
 .. function:: check_torch_compatibility(torch_version=None)
 
-    Check if PyTorch version is compatible (>= 2.0.0).
-    
-    :param torch_version: PyTorch version string (detected if None)
-    :type torch_version: str or None
-    :return: Tuple of (is_compatible, message)
-    :rtype: Tuple[bool, str]
+   Check if PyTorch version is compatible (>= 2.0.0).
+
+   :return: Tuple of ``(is_compatible, message)``
+   :rtype: Tuple[bool, str]
 
 TorchDeviceManager Class
 ------------------------
 
 .. class:: TorchDeviceManager(prefer="cuda")
 
-    Manages PyTorch device selection and configuration.
-    
-    .. method:: __init__(prefer="cuda")
-    
-        Initialize device manager.
-        
-        :param prefer: Preferred device type
-        :type prefer: Literal["cuda", "cpu", "mps"]
-    
-    .. attribute:: device
-    
-        Current selected device (lazy-loaded, cached).
-        
-        :type: str
-    
-    .. method:: set_device(device)
-    
-        Set device explicitly.
-        
-        :param device: Device string or name
-        :type device: str
-        :return: The set device string
-        :rtype: str
-    
-    .. method:: get_available_devices()
-    
-        Get availability of different device types.
-        
-        :return: Mapping of device types to availability
-        :rtype: dict[str, bool]
-    
-    .. method:: get_device_info()
-    
-        Get detailed device information.
-        
-        :return: Comprehensive device info including GPU count, memory, etc.
-        :rtype: dict
+   Manages PyTorch device selection and configuration.
+
+   .. attribute:: device
+
+      Current selected device (lazy-loaded, cached).
+      :type: str
+
+   .. method:: set_device(device)
+
+      Set device explicitly.
+      :return: The set device string
+      :rtype: str
+
+   .. method:: get_available_devices()
+
+      Get availability of each device type.
+      :return: ``{'cuda': bool, 'cpu': bool, 'mps': bool}``
+      :rtype: dict[str, bool]
+
+   .. method:: get_device_info()
+
+      Get comprehensive device information.
+      :return: Dict with ``torch_version``, ``cuda_available``,
+               ``current_device``, ``cuda_device_count``, etc.
+      :rtype: dict
+
+   .. method:: clear_gpu_cache()
+
+      Clear the CUDA / MPS memory cache.
 
 See Also
 ========
 
-- :doc:`../index` - Main documentation
-- :doc:`../backends` - Backends overview
-- :doc:`../configuration_guide` - Configuration guide
+- :doc:`backends` — Backends overview
+- :doc:`installation` — Installation instructions
+- :doc:`configuration_guide` — Configuration guide

@@ -8,21 +8,21 @@ Parameter Reference
 Required Parameters
 -------------------
 
-These must be specified when creating a BaseAttentive model:
-
 .. code-block:: python
+
+   from base_attentive import BaseAttentive
 
    model = BaseAttentive(
        static_input_dim=4,      # Number of static features
        dynamic_input_dim=8,     # Number of dynamic features
        future_input_dim=6,      # Number of future features
        output_dim=2,            # Number of output variables
-       forecast_horizon=24,     # Forecast length
+       forecast_horizon=24,     # Forecast horizon (steps)
    )
 
 .. list-table:: Required Parameters
    :header-rows: 1
-   :widths: 20 15 15 50
+   :widths: 22 12 12 54
 
    * - Parameter
      - Type
@@ -30,24 +30,24 @@ These must be specified when creating a BaseAttentive model:
      - Description
    * - ``static_input_dim``
      - int
-     - ≥ 0
-     - Static feature dimension
+     - >= 0
+     - Static feature dimension (0 = no static input)
    * - ``dynamic_input_dim``
      - int
-     - ≥ 0
-     - Dynamic feature dimension
+     - >= 1
+     - Dynamic (historical) feature dimension
    * - ``future_input_dim``
      - int
-     - ≥ 0
-     - Future feature dimension
+     - >= 0
+     - Future covariate dimension (0 = no future input)
    * - ``output_dim``
      - int
-     - ≥ 1
+     - >= 1
      - Number of output variables
    * - ``forecast_horizon``
      - int
-     - ≥ 1
-     - Forecast horizon
+     - >= 1
+     - Forecast length in time steps
 
 Architectural Parameters
 ------------------------
@@ -55,22 +55,21 @@ Architectural Parameters
 .. code-block:: python
 
    model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       # Architectural params:
-       embed_dim=32,           # Default embedding dimension
-       hidden_units=64,        # Dense/LSTM hidden units
-       lstm_units=64,          # LSTM-specific units
-       attention_units=64,     # Attention mechanism units
-       num_heads=4,            # Multi-head attention heads
+       static_input_dim=4, dynamic_input_dim=8, future_input_dim=6,
+       output_dim=2, forecast_horizon=24,
+       embed_dim=32,
+       hidden_units=64,
+       lstm_units=64,
+       attention_units=32,
+       num_heads=4,
+       num_encoder_layers=2,
+       max_window_size=10,
+       memory_size=100,
    )
 
 .. list-table:: Architectural Parameters
    :header-rows: 1
-   :widths: 20 12 12 15 41
+   :widths: 22 10 10 15 43
 
    * - Parameter
      - Type
@@ -81,55 +80,82 @@ Architectural Parameters
      - int
      - 32
      - [8, 512]
-     - Embedding dimension
+     - Shared embedding dimension
    * - ``hidden_units``
      - int
      - 64
      - [16, 1024]
-     - Dense hidden units
+     - Dense hidden layer width
    * - ``lstm_units``
      - int
      - 64
      - [16, 1024]
-     - LSTM units
+     - LSTM hidden size (hybrid mode)
    * - ``attention_units``
      - int
-     - 64
+     - 32
      - [16, 1024]
-     - Attention dimension
+     - Attention projection dimension
    * - ``num_heads``
      - int
      - 4
      - [1, 16]
-     - Multi-head attention heads
+     - Multi-head attention heads (``embed_dim`` must be divisible by ``num_heads``)
+   * - ``num_encoder_layers``
+     - int
+     - 2
+     - [1, 12]
+     - Stacked encoder layer count
+   * - ``max_window_size``
+     - int
+     - 10
+     - [1, oo)
+     - Maximum dynamic time window size
+   * - ``memory_size``
+     - int
+     - 100
+     - [1, oo)
+     - Memory bank size for memory-augmented attention
 
-**Guidance:**
-
-- Increase for complex patterns: 64 → 128 → 256
-- Decrease for faster inference: 32 → 16 → 8
-- Keep embed_dim ≥ num_heads (for attention)
-
-Regularization Parameters
---------------------------
+Temporal Aggregation Parameters
+---------------------------------
 
 .. code-block:: python
 
    model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       # Regularization:
-       dropout_rate=0.2,       # Dropout probability
-       activation='relu',      # Activation function
-       use_batch_norm=False,   # Batch normalization
-       use_residuals=True,     # Residual connections
+       ...,
+       scales=[1, 2, 4],
+       multi_scale_agg="last",
+       final_agg="last",
    )
 
-.. list-table:: Regularization Parameters
+.. list-table:: Temporal Aggregation
    :header-rows: 1
-   :widths: 20 12 12 56
+   :widths: 22 12 12 54
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``scales``
+     - list[int] / 'auto' / None
+     - None
+     - LSTM sub-sampling strides. ``None`` uses single scale ``[1]``. ``'auto'`` selects automatically.
+   * - ``multi_scale_agg``
+     - str
+     - 'last'
+     - Merge multi-scale outputs: ``'last'``, ``'average'``, ``'flatten'``, ``'sum'``, ``'concat'``
+   * - ``final_agg``
+     - str
+     - 'last'
+     - Final temporal aggregation: ``'last'``, ``'average'``, ``'flatten'``
+
+Regularization Parameters
+--------------------------
+
+.. list-table:: Regularization
+   :header-rows: 1
+   :widths: 22 10 10 58
 
    * - Parameter
      - Type
@@ -137,12 +163,12 @@ Regularization Parameters
      - Description
    * - ``dropout_rate``
      - float
-     - 0.2
-     - Dropout probability [0-1]
+     - 0.1
+     - Dropout probability [0, 1]
    * - ``activation``
      - str
      - 'relu'
-     - Activation function
+     - ``'relu'``, ``'elu'``, ``'selu'``, ``'sigmoid'``, ``'tanh'``, ``'linear'``, ``'gelu'``, ``'swish'``
    * - ``use_batch_norm``
      - bool
      - False
@@ -152,365 +178,227 @@ Regularization Parameters
      - True
      - Use residual connections
 
-**Supported Activations:**
-
-- ``'relu'`` - ReLU (common default)
-- ``'elu'`` - ELU
-- ``'selu'`` - SELU
-- ``'sigmoid'`` - Sigmoid
-- ``'tanh'`` - Hyperbolic tangent
-- ``'linear'`` - Linear (no activation)
-
 Feature Processing Parameters
-------------------------------
+-------------------------------
 
-.. code-block:: python
-
-   model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       # Feature processing:
-       use_vsn=True,           # Variable Selection Network
-       feature_processing='vsn',  # Method: 'vsn' or 'dense'
-   )
-
-.. list-table:: Feature Processing Parameters
+.. list-table:: Feature Processing
    :header-rows: 1
-   :widths: 20 13 12 15 40
+   :widths: 22 10 10 58
 
    * - Parameter
      - Type
      - Default
-     - Options
      - Description
    * - ``use_vsn``
      - bool
      - True
-     - —
      - Enable Variable Selection Network
-   * - ``feature_processing``
-     - str
-     - 'vsn'
-     - 'vsn', 'dense'
-     - Feature processing method
+   * - ``vsn_units``
+     - int or None
+     - None
+     - VSN projection size (defaults to ``embed_dim``)
+   * - ``apply_dtw``
+     - bool
+     - True
+     - Apply Dynamic Time Warping alignment
 
-**Variable Selection Network (VSN):**
+Configuration / Routing Parameters
+-------------------------------------
 
-- Learns feature importance dynamically
-- Good for high-dimensional data
-- Slightly more parameters
-
-**Dense Processing:**
-
-- Simple linear transformation
-- Fewer parameters
-- Faster training
-
-Optional Output Parameters
----------------------------
-
-.. code-block:: python
-
-   model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       # Optional outputs:
-       quantiles=[0.1, 0.5, 0.9],  # Probabilistic forecasts
-   )
-
-.. list-table:: Optional Output Parameters
+.. list-table:: Configuration / Routing
    :header-rows: 1
-   :widths: 20 12 15 53
+   :widths: 22 12 12 54
 
    * - Parameter
      - Type
      - Default
      - Description
-   * - ``quantiles``
-     - list[float]
+   * - ``objective``
+     - str
+     - 'hybrid'
+     - Encoder type: ``'hybrid'`` or ``'transformer'``
+   * - ``mode``
+     - str or None
      - None
-     - Quantiles for uncertainty
-
-**Common Quantile Sets:**
-
-- ``None`` - Point forecast only
-- ``[0.5]`` - Median only
-- ``[0.1, 0.5, 0.9]`` - 80% confidence interval
-- ``[0.025, 0.5, 0.975]`` - 95% confidence interval
+     - Mode shortcut: ``'tft'``, ``'tft_like'``, ``'pihal'``, ``'pihal_like'``, or ``None``
+   * - ``attention_levels``
+     - str / list / int / None
+     - None
+     - Decoder attention stack control (see below)
+   * - ``quantiles``
+     - list[float] or None
+     - None
+     - Enables probabilistic output
+   * - ``architecture_config``
+     - dict or None
+     - None
+     - Structural overrides (highest precedence)
+   * - ``verbose``
+     - int
+     - 0
+     - Logging verbosity
 
 Architecture Configuration
 ==========================
 
-Use the ``architecture_config`` dictionary for structural choices:
+Use ``architecture_config`` for structural choices:
 
 .. code-block:: python
 
    config = {
-       "encoder_type": "hybrid",  # or "transformer"
+       "encoder_type": "hybrid",
        "decoder_attention_stack": ["cross", "hierarchical", "memory"],
-       "feature_processing": "vsn",  # or "dense"
+       "feature_processing": "vsn",
    }
 
    model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
+       static_input_dim=4, dynamic_input_dim=8, future_input_dim=6,
+       output_dim=2, forecast_horizon=24,
        architecture_config=config,
    )
 
-Encoder Type
-------------
-
-**Hybrid (Default)**
+Attention Level Shortcuts
+--------------------------
 
 .. code-block:: python
 
-   architecture_config = {
-       "encoder_type": "hybrid"
-   }
+   model = BaseAttentive(..., attention_levels=None)              # all three
+   model = BaseAttentive(..., attention_levels="cross")           # string
+   model = BaseAttentive(..., attention_levels=["cross", "memory"]) # list
+   model = BaseAttentive(..., attention_levels=1)  # 1=cross, 2=hier, 3=memory
 
-- Multi-scale LSTM + Attention
-- Lower computational cost
-- Good for long sequences (T > 500)
-- Recommended for real-time inference
+V2 Schema Configuration
+========================
 
-**Transformer**
-
-.. code-block:: python
-
-   architecture_config = {
-       "encoder_type": "transformer"
-   }
-
-- Pure self-attention
-- Full temporal dependency modeling
-- Good for short-medium sequences (T < 500)
-- Better expressiveness
-
-Decoder Attention Stack
------------------------
+For programmatic, backend-neutral construction use ``BaseAttentiveSpec``:
 
 .. code-block:: python
 
-   # Default stack
-   architecture_config = {
-       "decoder_attention_stack": ["cross", "hierarchical", "memory"]
-   }
+   from base_attentive.config import BaseAttentiveSpec, BaseAttentiveComponentSpec
 
-   # Custom combinations
-   architecture_config = {
-       "decoder_attention_stack": ["cross"]  # Just cross-attention
-   }
-
-   architecture_config = {
-       "decoder_attention_stack": ["cross", "attention"]  # For transformer
-   }
-
-**Available Attention Types:**
-
-.. list-table:: 
-   :header-rows: 1
-   :widths: 15 25 60
-
-   * - Type
-     - Purpose
-     - Use Case
-   * - ``cross``
-     - Encoder-decoder interaction
-     - Used in the default stack
-   * - ``hierarchical``
-     - Multi-level temporal patterns
-     - Seasonal data
-   * - ``memory``
-     - Historical pattern retrieval
-     - Long-range dependencies
-   * - ``attention``
-     - Generic self-attention
-     - Transformer mode
-
-Feature Processing
-------------------
-
-.. code-block:: python
-
-   architecture_config = {
-       "feature_processing": "vsn"  # or "dense"
-   }
-
-- ``"vsn"`` - Variable Selection Network (learns importance)
-- ``"dense"`` - Simple linear embedding
+   spec = BaseAttentiveSpec(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=1,
+       forecast_horizon=24,
+       embed_dim=32,
+       hidden_units=64,
+       attention_heads=4,
+       layer_norm_epsilon=1e-6,
+       dropout_rate=0.1,
+       activation="relu",
+       backend_name="tensorflow",
+       head_type="point",
+       quantiles=(),
+       components=BaseAttentiveComponentSpec(
+           sequence_pooling="pool.last",
+       ),
+   )
 
 Configuration Presets
 =====================
 
-Save and reuse common configurations:
-
 Minimal Configuration
 ---------------------
 
-Smallest model for testing:
-
 .. code-block:: python
 
-   MINIMAL = {
-       "embed_dim": 8,
-       "hidden_units": 16,
-       "lstm_units": 16,
-       "attention_units": 16,
-       "num_heads": 1,
-       "dropout_rate": 0.1,
-   }
+   MINIMAL = dict(embed_dim=8, hidden_units=16, lstm_units=16,
+                  attention_units=16, num_heads=1, dropout_rate=0.1)
 
    model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       **MINIMAL
+       static_input_dim=4, dynamic_input_dim=8, future_input_dim=6,
+       output_dim=2, forecast_horizon=24, **MINIMAL,
    )
 
 Standard Configuration
 ----------------------
 
-General-purpose starting point:
-
 .. code-block:: python
 
-   STANDARD = {
-       "embed_dim": 32,
-       "hidden_units": 64,
-       "lstm_units": 64,
-       "attention_units": 64,
-       "num_heads": 4,
-       "dropout_rate": 0.2,
-       "use_residuals": True,
-   }
-
-   model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       **STANDARD
-   )
+   STANDARD = dict(embed_dim=32, hidden_units=64, lstm_units=64,
+                   attention_units=32, num_heads=4, dropout_rate=0.1,
+                   use_residuals=True)
 
 Large Configuration
 -------------------
-Larger starting point for more demanding datasets:
 
 .. code-block:: python
 
-   LARGE = {
-       "embed_dim": 128,
-       "hidden_units": 256,
-       "lstm_units": 256,
-       "attention_units": 128,
-       "num_heads": 8,
-       "dropout_rate": 0.3,
-       "use_batch_norm": True,
-       "use_residuals": True,
-   }
+   LARGE = dict(embed_dim=128, hidden_units=256, lstm_units=256,
+                attention_units=128, num_heads=8, dropout_rate=0.3,
+                use_batch_norm=True, use_residuals=True)
 
-   model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       output_dim=2,
-       forecast_horizon=24,
-       **LARGE
+Hybrid Preset
+-------------
+
+.. code-block:: python
+
+   HYBRID = dict(
+       objective="hybrid",
+       scales=[1, 2, 4],
+       multi_scale_agg="last",
+       embed_dim=32,
+       num_heads=4,
+       dropout_rate=0.1,
    )
 
-Hybrid vs Transformer Preset
------------------------------
+Transformer Preset
+------------------
 
 .. code-block:: python
 
-   # Hybrid mode
-   HYBRID = {
-       "architecture_config": {
-           "encoder_type": "hybrid",
-           "decoder_attention_stack": ["cross", "hierarchical"],
-           "feature_processing": "vsn"
-       },
-       "embed_dim": 32,
-       "num_heads": 4,
-       "dropout_rate": 0.2,
-   }
-
-   # Transformer mode
-   TRANSFORMER = {
-       "architecture_config": {
-           "encoder_type": "transformer",
-           "decoder_attention_stack": ["cross", "attention"],
-           "feature_processing": "vsn"
-       },
-       "embed_dim": 64,
-       "num_heads": 8,
-       "dropout_rate": 0.15,
-   }
+   TRANSFORMER = dict(
+       objective="transformer",
+       num_encoder_layers=4,
+       embed_dim=64,
+       num_heads=8,
+       dropout_rate=0.15,
+   )
 
 Tuning Guidelines
 =================
 
 For Longer Sequences (T > 500)
-------------------------------
+--------------------------------
 
 .. code-block:: python
 
    model = BaseAttentive(
-       ...,
-       architecture_config={"encoder_type": "hybrid"},
-       embed_dim=32,  # Lower to save memory
-       dropout_rate=0.15,
+       ..., objective="hybrid", scales=[1, 2, 4],
+       embed_dim=32, dropout_rate=0.15,
    )
 
-For More Complex Patterns
--------------------------
+For Complex Patterns
+---------------------
 
 .. code-block:: python
 
    model = BaseAttentive(
-       ...,
-       embed_dim=64,
-       num_heads=8,
-       use_batch_norm=True,
-       use_residuals=True,
-       dropout_rate=0.2,
+       ..., embed_dim=64, num_heads=8,
+       use_batch_norm=True, use_residuals=True, dropout_rate=0.2,
    )
 
 For Fast Inference
--------------------
+------------------
 
 .. code-block:: python
 
    model = BaseAttentive(
-       ...,
-       architecture_config={"encoder_type": "hybrid"},
-       embed_dim=16,
-       hidden_units=32,
-       dropout_rate=0.1,
+       ..., objective="hybrid", embed_dim=16,
+       hidden_units=32, dropout_rate=0.1,
+       attention_levels="cross",
    )
 
 For Probabilistic Forecasts
-----------------------------
+-----------------------------
 
 .. code-block:: python
 
    model = BaseAttentive(
-       ...,
-       quantiles=[0.1, 0.5, 0.9],
-       dropout_rate=0.2,  # Higher for uncertainty
-       use_residuals=True,
+       ..., quantiles=[0.1, 0.5, 0.9],
+       dropout_rate=0.2, use_residuals=True,
    )
 
 Configuration Management
@@ -523,86 +411,51 @@ Get Configuration
 
    config = model.get_config()
    print(config)
-   # {'static_input_dim': 4, 'dynamic_input_dim': 8, ...}
+   # {'static_input_dim': 4, ..., 'scales': None, 'mode': None, ...}
 
 Create from Configuration
 --------------------------
 
 .. code-block:: python
 
-   # Save
-   config = model.get_config()
-
-   # Later: recreate model
-   new_model = BaseAttentive.from_config(config)
+   new_model = BaseAttentive.from_config(model.get_config())
 
 Reconfigure Model
 -----------------
 
-Create variant with updated parameters:
-
 .. code-block:: python
 
-   # Original
-   model1 = BaseAttentive(..., embed_dim=32)
-
-   # Variant with larger embedding
-   model2 = model1.reconfigure(embed_dim=64)
-
-   # Original unchanged
-   print(model1.config['embed_dim'])  # 32
-   print(model2.config['embed_dim'])  # 64
+   model2 = model.reconfigure({"encoder_type": "transformer"})
 
 Common Mistakes
 ===============
 
-❌ **Mismatched input dimensions**
+Mismatched input dimensions
+----------------------------
 
 .. code-block:: python
 
-   # Wrong - features don't match
-   model = BaseAttentive(
-       static_input_dim=4,
-       dynamic_input_dim=8,
-       future_input_dim=6,
-       ...
-   )
-   static = np.random.randn(32, 5)  # 5 features, but model expects 4
+   # Wrong
+   model = BaseAttentive(static_input_dim=4, ...)
+   static = np.random.randn(32, 5)   # 5 features but model expects 4
 
-✅ **Correct**
+   # Correct
+   static = np.random.randn(32, 4)
 
-.. code-block:: python
-
-   static = np.random.randn(32, 4)  # Matches static_input_dim=4
-
-❌ **Too many model parameters**
+num_heads must divide embed_dim
+---------------------------------
 
 .. code-block:: python
 
-   # Wrong - model too large
-   model = BaseAttentive(
-       ...,
-       embed_dim=512,
-       hidden_units=1024,
-       lstm_units=1024,
-       num_heads=16,
-   )
+   # Wrong — 32 / 6 is not integer
+   model = BaseAttentive(..., embed_dim=32, num_heads=6)
 
-✅ **Correct - scale appropriately**
-
-.. code-block:: python
-
-   model = BaseAttentive(
-       ...,
-       embed_dim=64,
-       hidden_units=128,
-       lstm_units=128,
-       num_heads=4,
-   )
+   # Correct
+   model = BaseAttentive(..., embed_dim=32, num_heads=4)
 
 See Also
 ========
 
-- :doc:`quick_start` - Quick start guide
-- :doc:`architecture_guide` - Architecture details
-- :doc:`api_reference` - Full API reference
+- :doc:`quick_start` — Quick start guide
+- :doc:`architecture_guide` — Architecture details
+- :doc:`api_reference` — Full API reference
