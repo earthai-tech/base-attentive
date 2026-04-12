@@ -5,9 +5,17 @@ BaseAttentive Documentation
    :target: https://www.python.org/downloads/
    :alt: Python 3.10+
 
+.. image:: https://img.shields.io/pypi/v/base-attentive.svg
+   :target: https://pypi.org/project/base-attentive/
+   :alt: PyPI version
+
 .. image:: https://img.shields.io/badge/version-2.0.0rc0-brightgreen.svg
    :target: release_notes/index.html
    :alt: Version 2.0.0rc0
+
+.. image:: https://img.shields.io/badge/semver-2.0.0-blueviolet.svg
+   :target: https://semver.org/
+   :alt: Semantic Versioning
 
 .. image:: https://img.shields.io/badge/keras-%E2%89%A53.0-FF6F00.svg
    :target: https://keras.io/
@@ -25,7 +33,19 @@ BaseAttentive Documentation
    :target: https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml
    :alt: Tests
 
-.. image:: https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey.svg
+.. image:: https://img.shields.io/github/last-commit/earthai-tech/base-attentive.svg
+   :target: https://github.com/earthai-tech/base-attentive/commits/master
+   :alt: Last Commit
+
+.. image:: https://img.shields.io/github/issues/earthai-tech/base-attentive.svg
+   :target: https://github.com/earthai-tech/base-attentive/issues
+   :alt: Open Issues
+
+.. image:: https://img.shields.io/badge/PRs-welcome-brightgreen.svg
+   :target: https://github.com/earthai-tech/base-attentive/pulls
+   :alt: PRs Welcome
+
+.. image:: https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-4a5568.svg
    :alt: Platform: Linux, macOS, Windows
 
 A modular encoder-decoder architecture for sequence-to-sequence time series
