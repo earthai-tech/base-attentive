@@ -41,7 +41,7 @@ BaseAttentive Documentation
    :target: https://github.com/earthai-tech/base-attentive/pulls
    :alt: PRs Welcome
 
-.. image:: https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-8B4513.svg
+.. image:: https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-000000.svg
    :alt: Platform: Linux, macOS, Windows
 
 A modular encoder-decoder architecture for sequence-to-sequence time series
