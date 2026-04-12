@@ -73,13 +73,27 @@ class TransformerEncoderBlock(Layer):
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
     def __init__(
         self,
-        embed_dim: int,
-        num_heads: int,
-        ffn_dim: int,
+        embed_dim: int | None = None,
+        num_heads: int = 1,
+        ffn_dim: int | None = None,
         dropout_rate: float = 0.1,
+        *,
+        units: int | None = None,
+        num_layers: int | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
+        if embed_dim is None:
+            embed_dim = units
+        if embed_dim is None:
+            raise ValueError("Provide `embed_dim` or `units`.")
+        if ffn_dim is None:
+            ffn_dim = embed_dim * 4
+        self.embed_dim = embed_dim
+        self.num_heads = num_heads
+        self.ffn_dim = ffn_dim
+        self.dropout_rate = dropout_rate
+        self.num_layers = num_layers
 
         # Multi-Head Self-Attention Layer
         self.mha = MultiHeadAttention(
@@ -159,6 +173,7 @@ class TransformerEncoderBlock(Layer):
                 "num_heads": self.num_heads,
                 "ffn_dim": self.ffn_dim,
                 "dropout_rate": self.dropout_rate,
+                "num_layers": self.num_layers,
             }
         )
         return config
@@ -202,13 +217,27 @@ class TransformerDecoderBlock(Layer):
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
     def __init__(
         self,
-        embed_dim: int,
-        num_heads: int,
-        ffn_dim: int,
+        embed_dim: int | None = None,
+        num_heads: int = 1,
+        ffn_dim: int | None = None,
         dropout_rate: float = 0.1,
+        *,
+        units: int | None = None,
+        num_layers: int | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
+        if embed_dim is None:
+            embed_dim = units
+        if embed_dim is None:
+            raise ValueError("Provide `embed_dim` or `units`.")
+        if ffn_dim is None:
+            ffn_dim = embed_dim * 4
+        self.embed_dim = embed_dim
+        self.num_heads = num_heads
+        self.ffn_dim = ffn_dim
+        self.dropout_rate = dropout_rate
+        self.num_layers = num_layers
 
         # Masked Multi-Head Self-Attention
         self.mha1 = MultiHeadAttention(
@@ -244,7 +273,7 @@ class TransformerDecoderBlock(Layer):
     def call(
         self,
         inputs: Tensor,
-        enc_output: Tensor,
+        enc_output: Tensor | None = None,
         training: bool = False,
         look_ahead_mask: TensorLike | None = None,
         padding_mask: TensorLike | None = None,
@@ -262,6 +291,9 @@ class TransformerDecoderBlock(Layer):
         Returns:
         - output: Tensor of shape (batch_size, seq_len, embed_dim)
         """
+        if enc_output is None and isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+            inputs, enc_output = inputs
+
         # Masked Multi-Head Self-Attention
         attn1_output = self.mha1(
             inputs,
@@ -314,6 +346,7 @@ class TransformerDecoderBlock(Layer):
                 "num_heads": self.num_heads,
                 "ffn_dim": self.ffn_dim,
                 "dropout_rate": self.dropout_rate,
+                "num_layers": self.num_layers,
             }
         )
         return config
@@ -355,14 +388,22 @@ class TransformerEncoderLayer(Layer, NNLearner):
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
     def __init__(
         self,
-        embed_dim: int,
-        num_heads: int,
-        ffn_dim: int,
+        embed_dim: int | None = None,
+        num_heads: int = 1,
+        ffn_dim: int | None = None,
         dropout_rate: float = 0.1,
         ffn_activation: str = "relu",
         layer_norm_epsilon: float = 1e-6,
+        *,
+        units: int | None = None,
         **kwargs,
     ):
+        if embed_dim is None:
+            embed_dim = units
+        if embed_dim is None:
+            raise ValueError("Provide `embed_dim` or `units`.")
+        if ffn_dim is None:
+            ffn_dim = embed_dim * 4
         super().__init__(**kwargs)
         self.embed_dim = embed_dim
         self.num_heads = num_heads
@@ -436,14 +477,22 @@ class TransformerDecoderLayer(Layer, NNLearner):
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
     def __init__(
         self,
-        embed_dim: int,
-        num_heads: int,
-        ffn_dim: int,
+        embed_dim: int | None = None,
+        num_heads: int = 1,
+        ffn_dim: int | None = None,
         dropout_rate: float = 0.1,
         ffn_activation: str = "relu",
         layer_norm_epsilon: float = 1e-6,
+        *,
+        units: int | None = None,
         **kwargs,
     ):
+        if embed_dim is None:
+            embed_dim = units
+        if embed_dim is None:
+            raise ValueError("Provide `embed_dim` or `units`.")
+        if ffn_dim is None:
+            ffn_dim = embed_dim * 4
         super().__init__(**kwargs)
         self.embed_dim = embed_dim
         self.num_heads = num_heads
@@ -481,12 +530,15 @@ class TransformerDecoderLayer(Layer, NNLearner):
     def call(
         self,
         x: Tensor,
-        enc_output: Tensor,
+        enc_output: Tensor | None = None,
         training: bool = False,
         look_ahead_mask: TensorLike | None = None,
         # For encoder output in cross-attention
         padding_mask: TensorLike | None = None,
     ) -> Tensor:
+        if enc_output is None and isinstance(x, (list, tuple)) and len(x) == 2:
+            x, enc_output = x
+
         # Masked Multi-Head Self-Attention (for decoder inputs)
         attn1_output = self.mha1_self_attn(
             query=x,
@@ -596,7 +648,14 @@ class MultiDecoder(Layer, NNLearner):
     """
 
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
-    def __init__(self, output_dim: int, num_horizons: int):
+    def __init__(
+        self,
+        output_dim: int | None = None,
+        num_horizons: int | None = None,
+        *,
+        units: int | None = None,
+        num_heads: int | None = None,
+    ):
         r"""
         Initialize the MultiDecoder.
 
@@ -610,6 +669,10 @@ class MultiDecoder(Layer, NNLearner):
             with its own Dense layer.
         """
         super().__init__()
+        if output_dim is None:
+            output_dim = units if units is not None else 1
+        if num_horizons is None:
+            num_horizons = num_heads if num_heads is not None else 1
         self.output_dim = output_dim
         self.num_horizons = num_horizons
         # Create a Dense decoder for each horizon

@@ -112,12 +112,18 @@ class MultiScaleLSTM(Layer, NNLearner):
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
     def __init__(
         self,
-        lstm_units: int,
+        lstm_units: int | None = None,
         scales: str | list[int] | None = None,
         return_sequences: bool = False,
+        *,
+        units: int | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
+        if lstm_units is None:
+            lstm_units = units
+        if lstm_units is None:
+            raise ValueError("Provide `lstm_units` or `units`.")
         if scales is None or scales == "auto":
             scales = [1]
         # Validate that scales is a list of int
@@ -157,7 +163,7 @@ class MultiScaleLSTM(Layer, NNLearner):
               on the scale sub-sampling.
         """
         outputs = []
-        for scale, lstm in zip(self.scales, self.lstm_layers, strict=False):
+        for scale, lstm in zip(self.scales, self.lstm_layers):
             scaled_input = inputs[:, ::scale, :]
             lstm_output = lstm(scaled_input, training=training)
             outputs.append(lstm_output)
@@ -276,7 +282,12 @@ class DynamicTimeWindow(Layer, NNLearner):
     """
 
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
-    def __init__(self, max_window_size: int):
+    def __init__(
+        self,
+        max_window_size: int | None = None,
+        *,
+        units: int | None = None,
+    ):
         r"""
         Initialize the DynamicTimeWindow layer.
 
@@ -287,6 +298,8 @@ class DynamicTimeWindow(Layer, NNLearner):
             of the sequence.
         """
         super().__init__()
+        if max_window_size is None:
+            max_window_size = units if units is not None else 1
         self.max_window_size = max_window_size
 
     def call(self, inputs, training=False):
