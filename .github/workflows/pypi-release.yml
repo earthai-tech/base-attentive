@@ -63,6 +63,9 @@ jobs:
           path: dist/
 
   # ── Test PyPI — pre-releases and manual testpypi dispatches ─────────────────
+  # NOTE: no `environment:` block — GitHub silently denies repo-level secrets
+  # to jobs that reference a non-existent or protected environment, causing
+  # TWINE_PASSWORD to be empty and the upload to fail with 403.
   publish-testpypi:
     name: Publish → Test PyPI
     needs: build
@@ -70,10 +73,6 @@ jobs:
     if: |
       (github.event_name == 'release'          && github.event.release.prerelease == true) ||
       (github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi')
-
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/project/base-attentive/
 
     steps:
       - name: Download build artifacts
@@ -100,10 +99,6 @@ jobs:
     if: |
       (github.event_name == 'release'          && github.event.release.prerelease == false) ||
       (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
-
-    environment:
-      name: pypi
-      url: https://pypi.org/project/base-attentive/
 
     steps:
       - name: Download build artifacts
