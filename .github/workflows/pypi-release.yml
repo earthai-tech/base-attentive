@@ -82,13 +82,15 @@ jobs:
           name: python-distribution-packages
           path: dist/
 
+      - name: Install twine
+        run: pip install --upgrade twine
+
       - name: Publish to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.TEST_PYPI_API_TOKENS }}
-          repository-url: https://test.pypi.org/legacy/
-          attestations: false
-          verbose: true
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKENS }}
+        run: |
+          twine upload --repository-url https://test.pypi.org/legacy/ --verbose dist/*
 
   # ── Production PyPI — stable releases and manual pypi dispatches ─────────────
   publish-pypi:
@@ -110,9 +112,12 @@ jobs:
           name: python-distribution-packages
           path: dist/
 
+      - name: Install twine
+        run: pip install --upgrade twine
+
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          attestations: false
-          verbose: true
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          twine upload --verbose dist/*
