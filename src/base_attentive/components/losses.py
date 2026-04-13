@@ -243,38 +243,43 @@ class CRPSLoss(Loss, NNLearner):
         sig = tf_abs(y_pred["scale"]) + 1e-6
         w = y_pred["weights"]  # (B,H,K,1)
 
-        # Apple MPS: keras.ops (mean, abs, sum, …) internally call numpy,
-        # which fails for mps:0 tensors.  Move all inputs to CPU so that
-        # every subsequent Keras op runs on plain CPU tensors.
+        # Apple MPS: keras.ops (mean, abs, sum, random.normal, …)
+        # internally call numpy, which fails for mps:0 tensors.
+        # Strategy: move all inputs to CPU once, then also move every
+        # tf_random.normal result to CPU — tf_random.normal defaults to
+        # the Keras backend device (MPS on Apple Silicon) regardless of
+        # the shape argument's device.
         try:
             import torch as _torch
-
-            def _cpu(t):
-                return (
-                    t.cpu()
-                    if isinstance(t, _torch.Tensor)
-                    and t.device.type == "mps"
-                    else t
-                )
-
-            if isinstance(mu, _torch.Tensor) and mu.device.type == "mps":
-                mu = _cpu(mu)
-                sig = _cpu(sig)
-                w = _cpu(w)
-                y_true = _cpu(y_true)
+            _on_mps = (
+                isinstance(mu, _torch.Tensor)
+                and mu.device.type == "mps"
+            )
         except ImportError:
             _torch = None
+            _on_mps = False
+
+        def _cpu(t):
+            if (
+                _torch is not None
+                and isinstance(t, _torch.Tensor)
+                and t.device.type == "mps"
+            ):
+                return t.cpu()
+            return t
+
+        if _on_mps:
+            mu = mu.cpu()
+            sig = _cpu(sig)
+            w = w.cpu()
+            y_true = _cpu(y_true)
 
         # Normalize weights so they sum to 1 over K (axis 2).
         # Use native torch.sum to avoid keras.ops.sum keepdims shape
         # inconsistencies seen on some CI runners ((B,H,1) vs (B,H,1,1)).
-        try:
-            import torch as _torch
-            if isinstance(w, _torch.Tensor):
-                w = w / (w.sum(dim=2, keepdim=True) + 1e-8)
-            else:
-                raise TypeError
-        except (ImportError, TypeError):
+        if _torch is not None and isinstance(w, _torch.Tensor):
+            w = w / (w.sum(dim=2, keepdim=True) + 1e-8)
+        else:
             # Non-torch backend: expand_dims is explicit about the shape.
             w_sum = tf_expand_dims(tf_reduce_sum(w, axis=2), axis=2)
             w = w / (w_sum + 1e-8)
@@ -290,6 +295,8 @@ class CRPSLoss(Loss, NNLearner):
         u = tf_random.normal(
             [B, H, self.mc_samples, 1], mean=0.0, stddev=1.0
         )
+        if _on_mps:
+            u = _cpu(u)
         u = tf_sigmoid(
             u
         )  # uniform-ish [0,1], quick hack (or use stateless_random_uniform)
@@ -343,6 +350,8 @@ class CRPSLoss(Loss, NNLearner):
         eps = tf_random.normal(
             tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32
         )
+        if _on_mps:
+            eps = _cpu(eps)
         X = mu_s + sig_s * eps  # (B,H,S,O)
 
         # term1 = E|X - y|
@@ -354,6 +363,8 @@ class CRPSLoss(Loss, NNLearner):
         eps2 = tf_random.normal(
             tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32
         )
+        if _on_mps:
+            eps2 = _cpu(eps2)
         Xp = mu_s + sig_s * eps2  # (B,H,S,O)
         term2 = 0.5 * tf_reduce_mean(
             tf_abs(X - Xp), axis=2
