@@ -688,6 +688,101 @@ class TestFunctionalOps:
     def test_assert_returns_condition(self):
         assert fb.Assert(True) is True
 
+    def test_rank(self):
+        assert fb.rank(np.ones((2, 3, 4))) == 3
+
+    def test_split_with_int(self):
+        parts = fb.split(np.arange(6), 3)
+        assert len(parts) == 3
+        np.testing.assert_array_equal(parts[0], [0, 1])
+
+    def test_split_with_sizes(self):
+        parts = fb.split(np.arange(6), [1, 2, 3])
+        assert len(parts) == 3
+        np.testing.assert_array_equal(parts[1], [1, 2])
+
+    def test_multiply(self):
+        np.testing.assert_array_equal(fb.multiply([1, 2], [3, 4]), [3, 8])
+
+    def test_cond_true_and_false(self):
+        assert fb.cond(True, lambda: "yes", lambda: "no") == "yes"
+        assert fb.cond(False, lambda: "yes", lambda: "no") == "no"
+
+    def test_equal(self):
+        np.testing.assert_array_equal(fb.equal([1, 2], [1, 3]), [True, False])
+
+    def test_pad(self):
+        result = fb.pad(np.array([1, 2]), [(1, 1)], constant_values=0)
+        np.testing.assert_array_equal(result, [0, 1, 2, 0])
+
+    def test_ones_like(self):
+        result = fb.ones_like(np.array([1, 2]), dtype=fb.float32)
+        assert result.dtype == np.float32
+        np.testing.assert_array_equal(result, [1.0, 1.0])
+
+    def test_abs(self):
+        np.testing.assert_array_equal(fb.abs([-1, 2]), [1, 2])
+
+    def test_pow(self):
+        np.testing.assert_array_equal(fb.pow([2, 3], 2), [4, 9])
+
+    def test_sin_cos_exp_log_sigmoid(self):
+        values = np.array([0.0, 1.0], dtype=np.float32)
+        np.testing.assert_allclose(fb.sin(values), np.sin(values))
+        np.testing.assert_allclose(fb.cos(values), np.cos(values))
+        np.testing.assert_allclose(fb.exp(values), np.exp(values))
+        np.testing.assert_allclose(fb.log(np.array([1.0, np.e], dtype=np.float32)), [0.0, 1.0], atol=1e-6)
+        sigmoid = fb.sigmoid(values)
+        assert np.all((sigmoid > 0.0) & (sigmoid < 1.0))
+
+    def test_cumsum(self):
+        np.testing.assert_array_equal(fb.cumsum([1, 2, 3]), [1, 3, 6])
+
+    def test_gather_axis_zero(self):
+        params = np.arange(12).reshape(3, 4)
+        result = fb.gather(params, [0, 2], axis=0)
+        np.testing.assert_array_equal(result, params[[0, 2]])
+
+    def test_gather_with_batch_dims(self):
+        params = np.arange(24).reshape(2, 3, 4)
+        indices = np.array([[[0], [2]], [[1], [0]]], dtype=np.int32)
+        result = fb.gather(params, indices, axis=1, batch_dims=1)
+        assert result.shape == (2, 2, 1, 4)
+        np.testing.assert_array_equal(result[0, 0, 0], params[0, 0])
+        np.testing.assert_array_equal(result[1, 0, 0], params[1, 1])
+
+    def test_softplus(self):
+        result = fb.softplus(np.array([-1.0, 0.0, 1.0], dtype=np.float32))
+        assert np.all(result > 0.0)
+
+    def test_reduce_logsumexp(self):
+        values = np.array([[0.0, 1.0], [2.0, 3.0]], dtype=np.float32)
+        reduced = fb.reduce_logsumexp(values, axis=1)
+        assert reduced.shape == (2,)
+        kept = fb.reduce_logsumexp(values, axis=1, keepdims=True)
+        assert kept.shape == (2, 1)
+
+    def test_sqrt(self):
+        np.testing.assert_allclose(fb.sqrt([1.0, 4.0]), [1.0, 2.0])
+
+    def test_ones(self):
+        result = fb.ones((2, 3), dtype=fb.float32)
+        assert result.shape == (2, 3)
+        assert result.dtype == np.float32
+
+    def test_floordiv(self):
+        np.testing.assert_array_equal(fb.floordiv([5, 9], 2), [2, 4])
+
+    def test_greater(self):
+        np.testing.assert_array_equal(fb.greater([1, 3], [2, 2]), [False, True])
+
+
+class TestFallbackLayerWeightInit:
+    def test_add_weight_broadcasts_scalar_initializer(self):
+        layer = fb.Layer()
+        weight = layer.add_weight(shape=(2, 2), initializer=3.0, dtype=fb.float32)
+        np.testing.assert_array_equal(np.asarray(weight), np.full((2, 2), 3.0, dtype=np.float32))
+
 
 # ---------------------------------------------------------------------------
 # _AutographExperimental
