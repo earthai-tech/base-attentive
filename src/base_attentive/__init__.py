@@ -10,7 +10,7 @@ try:
     __version__ = _meta_version("base_attentive")
 except PackageNotFoundError:  # package not installed (e.g. bare source checkout)
     __version__ = "unknown"
-__author__ = "LKouadio"
+__author__ = "Laurent Kouadio"
 __email__ = "etanoyau@gmail.com"
 __license__ = "Apache-2.0"
 
