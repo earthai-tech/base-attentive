@@ -7,6 +7,7 @@ runtime is unavailable.
 
 from __future__ import annotations
 
+import builtins
 import math
 from types import SimpleNamespace
 
@@ -461,7 +462,7 @@ class _LinalgNamespace:
     def band_part(x, num_lower, num_upper):
         arr = np.asarray(x)
         rows, cols = arr.shape[-2], arr.shape[-1]
-        mask = np.zeros((rows, cols), dtype=bool)
+        mask = np.zeros((rows, cols), dtype=np.bool_)
         for i in range(rows):
             for j in range(cols):
                 lower_ok = num_lower < 0 or i - j <= num_lower
@@ -560,7 +561,7 @@ def logical_or(x, y):
 
 
 def get_static_value(value):
-    if isinstance(value, (int, float, bool, str)):
+    if isinstance(value, (builtins.int, builtins.float, builtins.bool, builtins.str)):
         return value
     array = np.asarray(value)
     if array.shape == ():
