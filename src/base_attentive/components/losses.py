@@ -738,12 +738,9 @@ class MultiObjectiveLoss(Loss, NNLearner):
         quantile_loss = self.quantile_loss_fn(y_true, y_pred)
 
         if self.anomaly_scores is not None:
-            anomaly_loss = self.anomaly_loss_fn(
-                # Avoid Keras signature to raise error then
-                # pass y_pred as None,
-                self.anomaly_scores,
-                y_pred=None,
-            )
+            # Call .call() directly to avoid Keras Loss.__call__ trying to
+            # convert y_pred=None to a tensor.
+            anomaly_loss = self.anomaly_loss_fn.call(self.anomaly_scores)
             return quantile_loss + anomaly_loss
         return quantile_loss
 
