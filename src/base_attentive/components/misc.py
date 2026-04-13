@@ -149,7 +149,9 @@ class Activation(Layer, NNLearner):
                 self.activation_fn = activations.get(activation)
                 self.activation_str = activation
             except ValueError as err:
-                raise ValueError(f"Unknown activation '{activation}'.") from err
+                raise ValueError(
+                    f"Unknown activation '{activation}'."
+                ) from err
 
         elif callable(activation):
             self.activation_fn = activation
@@ -232,7 +234,9 @@ class Activation(Layer, NNLearner):
         return f"{self.__class__.__name__}(activation={self.activation_str!r})"
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="PositionwiseFeedForward")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="PositionwiseFeedForward"
+)
 class PositionwiseFeedForward(Layer, NNLearner):
     """Implements the Position-wise Feed-Forward Network (FFN) layer.
 
@@ -298,7 +302,9 @@ class PositionwiseFeedForward(Layer, NNLearner):
     >>> # Create a dummy input tensor (batch, sequence_length, embed_dim)
     >>> input_tensor = tf.random.normal((32, 50, 128))
     >>> # Instantiate the FFN layer
-    >>> ffn_layer = PositionwiseFeedForward(embed_dim=128, ffn_dim=512)
+    >>> ffn_layer = PositionwiseFeedForward(
+    ...     embed_dim=128, ffn_dim=512
+    ... )
     >>> # Pass the input through the layer
     >>> output_tensor = ffn_layer(input_tensor, training=True)
     >>> # The output shape remains the same as the input shape
@@ -543,11 +549,15 @@ class PositionalEncoding(Layer, NNLearner):
         Keep config minimal and JSON-serializable.
         """
         config = super().get_config()
-        config.update({"max_length": self.max_length, "d_model": self.d_model})
+        config.update(
+            {"max_length": self.max_length, "d_model": self.d_model}
+        )
         return config
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="PositionalEncoding")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="PositionalEncoding"
+)
 class _PositionalEncoding(Layer, NNLearner):
     r"""Injects positional information into an input tensor.
 
@@ -599,9 +609,13 @@ class _PositionalEncoding(Layer, NNLearner):
 
     >>> # You can visualize the encoding if you wish
     >>> import matplotlib.pyplot as plt
-    >>> pe_matrix = pos_encoding_layer.positional_encoding[0, :, :].numpy()
+    >>> pe_matrix = pos_encoding_layer.positional_encoding[
+    ...     0, :, :
+    ... ].numpy()
     >>> plt.figure(figsize=(10, 5))
-    >>> cax = plt.matshow(pe_matrix, fignum=1, aspect="auto", cmap="viridis")
+    >>> cax = plt.matshow(
+    ...     pe_matrix, fignum=1, aspect="auto", cmap="viridis"
+    ... )
     >>> plt.gcf().colorbar(cax)
     >>> plt.title("Sinusoidal Positional Encoding Matrix")
     >>> plt.xlabel("Feature Dimension")
@@ -786,7 +800,9 @@ class _PositionalEncoding(Layer, NNLearner):
         return config
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="TSPositionalEncoding")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="TSPositionalEncoding"
+)
 class TSPositionalEncoding(Layer, NNLearner):
     """
     Standard Transformer Positional Encoding using sine and cosine functions.
@@ -819,9 +835,13 @@ class TSPositionalEncoding(Layer, NNLearner):
         self.max_position = max_position
         self.embed_dim = embed_dim
         # self.pos_encoding is created once and stored.
-        self.pos_encoding = self._build_positional_encoding(max_position, embed_dim)
+        self.pos_encoding = self._build_positional_encoding(
+            max_position, embed_dim
+        )
 
-    def _build_positional_encoding(self, position: int, d_model: int) -> Tensor:
+    def _build_positional_encoding(
+        self, position: int, d_model: int
+    ) -> Tensor:
         """Builds the positional encoding matrix using NumPy
         then converts to Tensor."""
 
@@ -830,7 +850,9 @@ class TSPositionalEncoding(Layer, NNLearner):
         pos_np = np.arange(position)[:, np.newaxis]
         i_np = np.arange(d_model)[np.newaxis, :]
 
-        angle_rates_np = 1 / np.power(10000, (2 * (i_np // 2)) / np.float32(d_model))
+        angle_rates_np = 1 / np.power(
+            10000, (2 * (i_np // 2)) / np.float32(d_model)
+        )
         angle_rads_np = pos_np * angle_rates_np
 
         # 2. Apply sin to even indices in the array; 2i
@@ -841,7 +863,9 @@ class TSPositionalEncoding(Layer, NNLearner):
 
         # 4. Add a new axis for batch dimension and cast to TensorFlow tensor
         # The self.pos_encoding expects (1, max_position, embed_dim)
-        pos_encoding_tensor = tf_cast(angle_rads_np[np.newaxis, ...], dtype=tf_float32)
+        pos_encoding_tensor = tf_cast(
+            angle_rads_np[np.newaxis, ...], dtype=tf_float32
+        )
 
         return pos_encoding_tensor
 
@@ -866,7 +890,9 @@ class TSPositionalEncoding(Layer, NNLearner):
     def _get_angles(self, pos, i, d_model):
         """Calculates the angle rates for positional encoding."""
         # Use np.power for non-Tensor context
-        angle_rates = 1 / np.power(10000, (2 * (i // 2)) / np.float32(d_model))
+        angle_rates = 1 / np.power(
+            10000, (2 * (i // 2)) / np.float32(d_model)
+        )
         return pos * angle_rates
 
     def _tf_get_angles(self, pos, i, d_model):
@@ -916,14 +942,16 @@ class TSPositionalEncoding(Layer, NNLearner):
         # from numpy at __init__ so it may be a CPU tensor or numpy array;
         # the duck-type .to() guard misses numpy arrays which have no .to()).
         try:
-            import torch as _torch
             import numpy as _np
+            import torch as _torch
+
             if isinstance(x, _torch.Tensor):
                 if isinstance(pos_enc, _torch.Tensor):
                     pos_enc = pos_enc.to(x.device)
                 else:
                     pos_enc = _torch.tensor(
-                        _np.asarray(pos_enc, dtype=_np.float32), device=x.device
+                        _np.asarray(pos_enc, dtype=_np.float32),
+                        device=x.device,
                     )
         except ImportError:
             pass
@@ -940,7 +968,9 @@ class TSPositionalEncoding(Layer, NNLearner):
         return config
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="MultiModalEmbedding")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="MultiModalEmbedding"
+)
 class MultiModalEmbedding(Layer, NNLearner):
     r"""
     MultiModalEmbedding layer for embedding multiple
@@ -1031,7 +1061,9 @@ class MultiModalEmbedding(Layer, NNLearner):
         """
         for modality_shape in input_shape:
             if modality_shape is not None:
-                self.dense_layers.append(Dense(self.embed_dim, activation="relu"))
+                self.dense_layers.append(
+                    Dense(self.embed_dim, activation="relu")
+                )
             else:
                 raise ValueError("Unsupported modality type.")
         super().build(input_shape)

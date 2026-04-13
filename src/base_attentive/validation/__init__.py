@@ -80,7 +80,9 @@ def validate_model_inputs(
             tensors.append(KERAS_DEPS.convert_to_tensor(inp))
         except Exception as exc:
             if error == "raise":
-                raise ValueError(f"Could not convert input to tensor: {exc}") from exc
+                raise ValueError(
+                    f"Could not convert input to tensor: {exc}"
+                ) from exc
             tensors.append(inp)
 
     static, dynamic, future = tensors
@@ -88,14 +90,18 @@ def validate_model_inputs(
     if verbose > 0:
         _logger.info("Validating input tensors...")
         if static is not None:
-            _logger.info("  Static shape: %s", getattr(static, "shape", None))
+            _logger.info(
+                "  Static shape: %s", getattr(static, "shape", None)
+            )
         if dynamic is not None:
             _logger.info(
                 "  Dynamic shape: %s",
                 getattr(dynamic, "shape", None),
             )
         if future is not None:
-            _logger.info("  Future shape: %s", getattr(future, "shape", None))
+            _logger.info(
+                "  Future shape: %s", getattr(future, "shape", None)
+            )
 
     return static, dynamic, future
 

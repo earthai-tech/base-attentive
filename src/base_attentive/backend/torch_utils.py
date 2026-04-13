@@ -70,7 +70,9 @@ def _mps_is_available(torch_module) -> bool:
 
 def _is_valid_device_string(device: str) -> bool:
     """Validate common torch device string formats without importing torch."""
-    return device in {"cpu", "mps"} or bool(_CUDA_DEVICE_RE.fullmatch(device))
+    return device in {"cpu", "mps"} or bool(
+        _CUDA_DEVICE_RE.fullmatch(device)
+    )
 
 
 def torch_is_available() -> bool:
@@ -100,12 +102,16 @@ def get_torch_version() -> Optional[str]:
         return None
 
     try:
-        return str(torch.__version__).split("+")[0]  # Remove CUDA suffix if present
+        return str(torch.__version__).split("+")[
+            0
+        ]  # Remove CUDA suffix if present
     except Exception:
         return None
 
 
-def check_torch_compatibility(torch_version: Optional[str] = None) -> tuple[bool, str]:
+def check_torch_compatibility(
+    torch_version: Optional[str] = None,
+) -> tuple[bool, str]:
     """Check if installed PyTorch version is compatible with BaseAttentive.
 
     Parameters
@@ -132,7 +138,10 @@ def check_torch_compatibility(torch_version: Optional[str] = None) -> tuple[bool
     try:
         major, minor, patch = map(int, torch_version.split(".")[:3])
     except (ValueError, IndexError):
-        return (False, f"Could not parse PyTorch version: {torch_version}")
+        return (
+            False,
+            f"Could not parse PyTorch version: {torch_version}",
+        )
 
     if (major, minor, patch) < (2, 0, 0):
         return (
@@ -186,9 +195,15 @@ def get_torch_device(
     # Try preferred device first
     if prefer == "cuda" and _cuda_is_available(torch):
         device_factory = getattr(torch, "device", None)
-        device = device_factory("cuda:0") if callable(device_factory) else "cuda:0"
+        device = (
+            device_factory("cuda:0")
+            if callable(device_factory)
+            else "cuda:0"
+        )
         if verbose:
-            get_name = getattr(getattr(torch, "cuda", None), "get_device_name", None)
+            get_name = getattr(
+                getattr(torch, "cuda", None), "get_device_name", None
+            )
             device_name = "cuda:0"
             if callable(get_name):
                 try:
@@ -200,7 +215,11 @@ def get_torch_device(
 
     if prefer == "mps" and _mps_is_available(torch):
         device_factory = getattr(torch, "device", None)
-        device = device_factory("mps") if callable(device_factory) else "mps"
+        device = (
+            device_factory("mps")
+            if callable(device_factory)
+            else "mps"
+        )
         if verbose:
             _logger.info("Using MPS device (Apple Metal)")
         return str(device)
@@ -214,7 +233,9 @@ def get_torch_device(
 class TorchDeviceManager:
     """Utility class for managing PyTorch device selection and configuration."""
 
-    def __init__(self, prefer: Literal["cuda", "cpu", "mps"] = "cuda"):
+    def __init__(
+        self, prefer: Literal["cuda", "cpu", "mps"] = "cuda"
+    ):
         """Initialize device manager.
 
         Parameters
@@ -229,10 +250,14 @@ class TorchDeviceManager:
     def device(self) -> str:
         """Get the selected device."""
         if self._device is None:
-            self._device = get_torch_device(self.prefer, verbose=False)
+            self._device = get_torch_device(
+                self.prefer, verbose=False
+            )
         return self._device
 
-    def set_device(self, device: str | Literal["cuda", "cpu", "mps"]) -> str:
+    def set_device(
+        self, device: str | Literal["cuda", "cpu", "mps"]
+    ) -> str:
         """Set the device explicitly.
 
         Parameters
@@ -259,7 +284,12 @@ class TorchDeviceManager:
                 device_factory(device)  # Validate
             elif not _is_valid_device_string(device):
                 raise ValueError(f"Unsupported device '{device}'")
-        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
+        except (
+            AttributeError,
+            RuntimeError,
+            TypeError,
+            ValueError,
+        ) as e:
             raise ValueError(f"Invalid device '{device}': {e}") from e
 
         self._device = device
@@ -345,7 +375,11 @@ class TorchDeviceManager:
             get_props = getattr(cuda, "get_device_properties", None)
 
             try:
-                count = int(device_count()) if callable(device_count) else 0
+                count = (
+                    int(device_count())
+                    if callable(device_count)
+                    else 0
+                )
             except Exception:
                 count = 0
 
@@ -391,7 +425,9 @@ class TorchDeviceManager:
             return
 
         if _cuda_is_available(torch):
-            empty_cache = getattr(getattr(torch, "cuda", None), "empty_cache", None)
+            empty_cache = getattr(
+                getattr(torch, "cuda", None), "empty_cache", None
+            )
             if callable(empty_cache):
                 empty_cache()
             _logger.info("CUDA cache cleared")

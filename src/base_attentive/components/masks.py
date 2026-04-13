@@ -115,7 +115,9 @@ def sequence_mask_3d(
     t = tf_shape(data)[time_axis]
 
     if mask_2d is None:
-        mask_2d = pad_mask_from_lengths(lengths, max_len=t, dtype=tf_bool)
+        mask_2d = pad_mask_from_lengths(
+            lengths, max_len=t, dtype=tf_bool
+        )
     else:
         mask_2d = tf_cast(mask_2d, tf_bool)
 

@@ -48,7 +48,8 @@ def param_deprecated_message(
                     param_name = mapping.get("param")
                     condition = mapping.get("condition")
                     message = mapping.get(
-                        "message", f"Parameter '{param_name}' is deprecated."
+                        "message",
+                        f"Parameter '{param_name}' is deprecated.",
                     )
 
                     if param_name in kwargs:
@@ -59,11 +60,17 @@ def param_deprecated_message(
                             should_warn = bool(condition)
 
                         if should_warn:
-                            warnings.warn(message, warning_category, stacklevel=2)
+                            warnings.warn(
+                                message,
+                                warning_category,
+                                stacklevel=2,
+                            )
 
                 return original_init(self, *args, **kwargs)
 
-            wrapped_init.__signature__ = inspect.signature(original_init)
+            wrapped_init.__signature__ = inspect.signature(
+                original_init
+            )
             func_or_class.__init__ = wrapped_init
             return func_or_class
         else:
@@ -74,7 +81,8 @@ def param_deprecated_message(
                     param_name = mapping.get("param")
                     condition = mapping.get("condition")
                     message = mapping.get(
-                        "message", f"Parameter '{param_name}' is deprecated."
+                        "message",
+                        f"Parameter '{param_name}' is deprecated.",
                     )
 
                     if param_name in kwargs:
@@ -85,7 +93,11 @@ def param_deprecated_message(
                             should_warn = bool(condition)
 
                         if should_warn:
-                            warnings.warn(message, warning_category, stacklevel=2)
+                            warnings.warn(
+                                message,
+                                warning_category,
+                                stacklevel=2,
+                            )
 
                 return func_or_class(*args, **kwargs)
 
@@ -95,7 +107,9 @@ def param_deprecated_message(
     return decorator
 
 
-def delegate_on_error(error_handler: Optional[Callable] = None) -> Callable:
+def delegate_on_error(
+    error_handler: Optional[Callable] = None,
+) -> Callable:
     """
     Decorator to handle errors gracefully.
 

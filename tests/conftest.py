@@ -30,7 +30,9 @@ def sample_inputs():
 
     static = tf.random.normal([batch_size, static_dim])
     dynamic = tf.random.normal([batch_size, time_steps, dynamic_dim])
-    future = tf.random.normal([batch_size, forecast_horizon, future_dim])
+    future = tf.random.normal(
+        [batch_size, forecast_horizon, future_dim]
+    )
 
     return (static, dynamic, future)
 
@@ -94,7 +96,10 @@ def compat_module():
 @pytest.fixture
 def logging_module():
     """Fixture to import logging module."""
-    from base_attentive.logging import OncePerMessageFilter, get_logger
+    from base_attentive.logging import (
+        OncePerMessageFilter,
+        get_logger,
+    )
 
     return {
         "get_logger": get_logger,

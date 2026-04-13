@@ -23,7 +23,9 @@ class ComponentRegistry:
     """Registry of backend-specific component builders."""
 
     def __init__(self):
-        self._registrations: dict[str, dict[str, ComponentRegistration]] = {}
+        self._registrations: dict[
+            str, dict[str, ComponentRegistration]
+        ] = {}
 
     def register(
         self,

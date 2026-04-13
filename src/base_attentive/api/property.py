@@ -20,7 +20,9 @@ class NNLearner:
     @classmethod
     def _get_param_names(cls):
         """Retrieve the names of parameters defined in the constructor."""
-        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+        init = getattr(
+            cls.__init__, "deprecated_original", cls.__init__
+        )
         if init is object.__init__:
             return []
 
@@ -43,9 +45,15 @@ class NNLearner:
         out = {}
         for key in self._get_param_names():
             value = getattr(self, key, None)
-            if deep and hasattr(value, "get_params") and not isinstance(value, type):
+            if (
+                deep
+                and hasattr(value, "get_params")
+                and not isinstance(value, type)
+            ):
                 deep_items = value.get_params().items()
-                out.update((key + "__" + k, val) for k, val in deep_items)
+                out.update(
+                    (key + "__" + k, val) for k, val in deep_items
+                )
             out[key] = value
         return out
 
@@ -75,4 +83,6 @@ class NNLearner:
                 sub_object.set_params(**sub_params)
 
         return self
+
+
 __all__ = ["NNLearner"]

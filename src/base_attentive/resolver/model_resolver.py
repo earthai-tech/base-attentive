@@ -38,7 +38,8 @@ def assemble_model(
     return registration.builder(
         spec=spec,
         backend_context=backend_context,
-        component_registry=component_registry or DEFAULT_COMPONENT_REGISTRY,
+        component_registry=component_registry
+        or DEFAULT_COMPONENT_REGISTRY,
         **kwargs,
     )
 

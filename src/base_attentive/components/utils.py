@@ -9,8 +9,8 @@ from __future__ import annotations
 import warnings
 from typing import Any
 
-from ..utils.generic_utils import select_mode
 from ..logging import get_logger
+from ..utils.generic_utils import select_mode
 
 DEFAULT_ARCHITECTURE = {
     "encoder_type": "hybrid",
@@ -131,7 +131,9 @@ def resolve_attn_levels(
         elif att_levels == 3:
             return ["memory"]
         else:
-            raise ValueError("Invalid integer for attention type. Use 1, 2, or 3.")
+            raise ValueError(
+                "Invalid integer for attention type. Use 1, 2, or 3."
+            )
 
     # If none of the above cases match, raise an error
     else:
@@ -191,7 +193,9 @@ def configure_architecture(
         final_config["feature_processing"] = "dense"
 
     # 2.3: Resolve and apply the `attention_levels` argument to `decoder_attention_stack`
-    final_config["decoder_attention_stack"] = resolve_attn_levels(attention_levels)
+    final_config["decoder_attention_stack"] = resolve_attn_levels(
+        attention_levels
+    )
 
     # Step 3: Merge and override with the user-provided `architecture_config`
     if architecture_config:
@@ -212,7 +216,10 @@ def configure_architecture(
 
     # Step 4: Final validation and reconciliation.
     # Ensure `feature_processing` is consistent with `use_vsn`
-    if not use_vsn and final_config.get("feature_processing") == "vsn":
+    if (
+        not use_vsn
+        and final_config.get("feature_processing") == "vsn"
+    ):
         logger.info(
             "`use_vsn=False` was passed, but `architecture_config` specified"
             " `feature_processing='vsn'`. Reverting to 'dense'."

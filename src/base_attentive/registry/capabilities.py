@@ -34,9 +34,13 @@ def get_backend_capability_report(
         name=normalized_name,
         framework=caps.get("framework", normalized_name),
         available=bool(caps.get("available", False)),
-        uses_keras_runtime=bool(caps.get("uses_keras_runtime", False)),
+        uses_keras_runtime=bool(
+            caps.get("uses_keras_runtime", False)
+        ),
         experimental=bool(caps.get("experimental", False)),
-        supports_base_attentive=bool(caps.get("supports_base_attentive", False)),
+        supports_base_attentive=bool(
+            caps.get("supports_base_attentive", False)
+        ),
         supports_base_attentive_v2=bool(
             caps.get("supports_base_attentive_v2", False)
         ),

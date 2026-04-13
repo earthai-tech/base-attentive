@@ -47,12 +47,16 @@ def ensure_pkg(
             available = sys.modules.get(name) is not None
             if not available:
                 try:
-                    available = importlib.util.find_spec(name) is not None
+                    available = (
+                        importlib.util.find_spec(name) is not None
+                    )
                 except (ImportError, AttributeError, ValueError):
                     available = False
 
             if not available:
-                msg = f"Package '{name}' is required but not installed."
+                msg = (
+                    f"Package '{name}' is required but not installed."
+                )
                 if extra:
                     msg += f" {extra}"
 

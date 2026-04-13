@@ -22,11 +22,15 @@ def _coerce_mapping(value: Any, *, name: str) -> dict[str, Any]:
         return dict(value)
     if is_dataclass(value):
         return asdict(value)
-    raise TypeError(f"{name} must be a mapping or dataclass instance.")
+    raise TypeError(
+        f"{name} must be a mapping or dataclass instance."
+    )
 
 
 def normalize_component_spec(
-    components: BaseAttentiveComponentSpec | Mapping[str, Any] | None = None,
+    components: BaseAttentiveComponentSpec
+    | Mapping[str, Any]
+    | None = None,
     **overrides: Any,
 ) -> BaseAttentiveComponentSpec:
     """Normalize logical component selections for V2."""
@@ -65,7 +69,9 @@ def normalize_base_attentive_spec(
 
     known_fields = BaseAttentiveSpec.__dataclass_fields__.keys()
     extra_fields = {
-        key: value for key, value in list(data.items()) if key not in known_fields
+        key: value
+        for key, value in list(data.items())
+        if key not in known_fields
     }
     for key in extra_fields:
         data.pop(key)
