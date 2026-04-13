@@ -63,6 +63,7 @@ def param_deprecated_message(
 
                 return original_init(self, *args, **kwargs)
 
+            wrapped_init.__signature__ = inspect.signature(original_init)
             func_or_class.__init__ = wrapped_init
             return func_or_class
         else:
@@ -88,6 +89,7 @@ def param_deprecated_message(
 
                 return func_or_class(*args, **kwargs)
 
+            wrapper.__signature__ = inspect.signature(func_or_class)
             return wrapper
 
     return decorator

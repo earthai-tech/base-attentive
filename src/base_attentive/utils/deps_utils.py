@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import importlib.util
+import inspect
 import sys
 from typing import Callable, TypeVar
 
@@ -66,6 +67,7 @@ def ensure_pkg(
             # Call the original function
             return func(*args, **kwargs)
 
+        wrapper.__signature__ = inspect.signature(func)
         return wrapper  # type: ignore[return-value]
 
     return decorator

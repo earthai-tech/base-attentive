@@ -14,6 +14,7 @@ from __future__ import annotations
 from ._config import (
     Loss,
     Tensor,
+    tf_cast,
     register_keras_serializable,
     tf_abs,
     tf_constant,
@@ -232,6 +233,8 @@ def compute_quantile_loss(
             raise ValueError("Provide `quantiles` or `quantile`.")
         quantiles = [quantile]
 
+    y_true = tf_cast(y_true, tf_float32)
+    y_pred = tf_cast(y_pred, tf_float32)
     qs = tf_constant(quantiles, dtype=tf_float32)
     error = y_true - y_pred
     pinball_loss = tf_maximum(qs * error, (qs - 1.0) * error)
