@@ -23,8 +23,14 @@ _KerasStub = type(
     "_KerasStub",
     (object,),
     {
-        "__init__": lambda self, *a, **kw: setattr(self, "built", False) or None,
-        "build": lambda self, input_shape=None: setattr(self, "built", True) or None,
+        "__init__": lambda self, *a, **kw: setattr(
+            self, "built", False
+        )
+        or None,
+        "build": lambda self, input_shape=None: setattr(
+            self, "built", True
+        )
+        or None,
         "call": lambda self, inputs=None, *a, **kw: inputs,
         "__call__": lambda self, *a, **kw: self.call(*a, **kw),
         "get_config": lambda self: {},
@@ -35,7 +41,9 @@ _KerasStub = type(
             initializer="zeros",
             trainable=True,
             dtype=None,
-            **kwargs: np.zeros(shape or (), dtype=np.dtype(dtype or np.float32))
+            **kwargs: np.zeros(
+                shape or (), dtype=np.dtype(dtype or np.float32)
+            )
         ),
     },
 )
@@ -69,32 +77,54 @@ def _to_numpy(value):
 
     return np.asarray(value)
 
+
 _FALLBACKS = {
     # Functional ops — numpy-backed so TF never loads
-    "add_n": lambda tensors, **kw: sum(tensors) if isinstance(tensors, (list, tuple)) else tensors,
+    "add_n": lambda tensors, **kw: sum(tensors)
+    if isinstance(tensors, (list, tuple))
+    else tensors,
     "gather": lambda p, i, axis=None, **kw: p,
     "reduce_logsumexp": lambda x, axis=None, keepdims=False, **kw: x,
     "pow": lambda x, y, **kw: x,
     "rank": lambda x, **kw: len(getattr(x, "shape", [])),
-    "expand_dims": lambda x, axis=-1, **kw: np.expand_dims(_to_numpy(x), axis=axis),
-    "cast": lambda x, dtype, **kw: np.array(_to_numpy(x), dtype=dtype),
-    "convert_to_tensor": lambda x, dtype=None, **kw: np.asarray(_to_numpy(x), dtype=dtype),
-    "reduce_mean": lambda x, axis=None, **kw: np.mean(_to_numpy(x), axis=axis),
-    "reduce_sum": lambda x, axis=None, **kw: np.sum(_to_numpy(x), axis=axis),
-    "reduce_max": lambda x, axis=None, **kw: np.max(_to_numpy(x), axis=axis),
+    "expand_dims": lambda x, axis=-1, **kw: np.expand_dims(
+        _to_numpy(x), axis=axis
+    ),
+    "cast": lambda x, dtype, **kw: np.array(
+        _to_numpy(x), dtype=dtype
+    ),
+    "convert_to_tensor": lambda x, dtype=None, **kw: np.asarray(
+        _to_numpy(x), dtype=dtype
+    ),
+    "reduce_mean": lambda x, axis=None, **kw: np.mean(
+        _to_numpy(x), axis=axis
+    ),
+    "reduce_sum": lambda x, axis=None, **kw: np.sum(
+        _to_numpy(x), axis=axis
+    ),
+    "reduce_max": lambda x, axis=None, **kw: np.max(
+        _to_numpy(x), axis=axis
+    ),
     "shape": lambda x, **kw: np.asarray(_to_numpy(x)).shape,
     "range": _np_range,
-    "greater": lambda x, y, **kw: np.greater(_to_numpy(x), _to_numpy(y)),
-    "logical_and": lambda x, y, **kw: np.logical_and(_to_numpy(x), _to_numpy(y)),
+    "greater": lambda x, y, **kw: np.greater(
+        _to_numpy(x), _to_numpy(y)
+    ),
+    "logical_and": lambda x, y, **kw: np.logical_and(
+        _to_numpy(x), _to_numpy(y)
+    ),
     "logical_not": lambda x, **kw: np.logical_not(_to_numpy(x)),
-    "logical_or": lambda x, y, **kw: np.logical_or(_to_numpy(x), _to_numpy(y)),
+    "logical_or": lambda x, y, **kw: np.logical_or(
+        _to_numpy(x), _to_numpy(y)
+    ),
     "bool": np.bool_,
     # Scalar dtype stubs
     "float32": np.float32,
     "int32": np.int32,
     # Keras class stubs — must be real classes so they can be used as base classes.
     # Decorator factory stub — must return a callable that accepts a class.
-    "register_keras_serializable": lambda package="Custom", name=None: (lambda cls: cls),
+    "register_keras_serializable": lambda package="Custom",
+    name=None: (lambda cls: cls),
 }
 
 
@@ -117,75 +147,84 @@ _ba._KerasDeps.__getattr__ = _patched_ga
 # Now import components
 # ---------------------------------------------------------------------------
 
-from base_attentive.components.masks import pad_mask_from_lengths, sequence_mask_3d
-from base_attentive.components._attention_utils import create_causal_mask, combine_masks
+from base_attentive.components._attention_utils import (
+    combine_masks,
+    create_causal_mask,
+)
 from base_attentive.components._loss_utils import (
-    QuantileLoss,
     HuberLoss,
     MeanSquaredErrorLoss,
+    QuantileLoss,
     WeightedLoss,
-    compute_quantile_loss,
     compute_loss_with_reduction,
+    compute_quantile_loss,
 )
 from base_attentive.components._temporal_utils import (
     aggregate_multiscale,
     aggregate_multiscale_on_3d,
     aggregate_time_window_output,
 )
-from base_attentive.components.layer_utils import (
-    ResidualAdd,
-    LayerScale,
-    StochasticDepth,
-    SqueezeExcite1D,
-    Gate,
-    apply_residual,
-    broadcast_like,
-    ensure_rank_at_least,
-    maybe_expand_time,
-    drop_path,
+from base_attentive.components.attention import (
+    CrossAttention,
+    ExplainableAttention,
+    HierarchicalAttention,
+    MemoryAugmentedAttention,
+    MultiResolutionAttentionFusion,
+    TemporalAttentionLayer,
+)
+from base_attentive.components.encoder_decoder import (
+    MultiDecoder,
+    TransformerDecoderBlock,
+    TransformerDecoderLayer,
+    TransformerEncoderBlock,
+    TransformerEncoderLayer,
 )
 from base_attentive.components.gating_norm import (
     GatedResidualNetwork,
-    VariableSelectionNetwork,
     LearnedNormalization,
     StaticEnrichmentLayer,
-)
-from base_attentive.components.attention import (
-    CrossAttention,
-    TemporalAttentionLayer,
-    HierarchicalAttention,
-    MemoryAugmentedAttention,
-    ExplainableAttention,
-    MultiResolutionAttentionFusion,
-)
-from base_attentive.components.encoder_decoder import (
-    TransformerEncoderLayer,
-    TransformerDecoderLayer,
-    TransformerEncoderBlock,
-    TransformerDecoderBlock,
-    MultiDecoder,
+    VariableSelectionNetwork,
 )
 from base_attentive.components.heads import (
-    PointForecastHead,
-    QuantileHead,
-    QuantileDistributionModeling,
     CombinedHeadLoss,
-    MixtureDensityHead,
     GaussianHead,
+    MixtureDensityHead,
+    PointForecastHead,
+    QuantileDistributionModeling,
+    QuantileHead,
+)
+from base_attentive.components.layer_utils import (
+    Gate,
+    LayerScale,
+    ResidualAdd,
+    SqueezeExcite1D,
+    StochasticDepth,
+    apply_residual,
+    broadcast_like,
+    drop_path,
+    ensure_rank_at_least,
+    maybe_expand_time,
 )
 from base_attentive.components.losses import (
     AdaptiveQuantileLoss,
-    MultiObjectiveLoss,
-    CRPSLoss,
     AnomalyLoss,
+    CRPSLoss,
+    MultiObjectiveLoss,
+)
+from base_attentive.components.masks import (
+    pad_mask_from_lengths,
+    sequence_mask_3d,
 )
 from base_attentive.components.misc import (
-    PositionalEncoding,
-    TSPositionalEncoding,
     Activation,
     MultiModalEmbedding,
+    PositionalEncoding,
+    TSPositionalEncoding,
 )
-from base_attentive.components.temporal import MultiScaleLSTM, DynamicTimeWindow
+from base_attentive.components.temporal import (
+    DynamicTimeWindow,
+    MultiScaleLSTM,
+)
 
 _ba._KerasDeps.__getattr__ = _orig_ga
 
@@ -193,6 +232,7 @@ _ba._KerasDeps.__getattr__ = _orig_ga
 # ---------------------------------------------------------------------------
 # masks.py
 # ---------------------------------------------------------------------------
+
 
 class TestPadMaskFromLengths:
     def test_basic(self):
@@ -212,6 +252,7 @@ class TestPadMaskFromLengths:
 
     def test_float32_dtype(self):
         from base_attentive.components._config import tf_float32
+
         lengths = np.array([2, 3], dtype=np.int32)
         mask = pad_mask_from_lengths(lengths, dtype=tf_float32)
         assert mask is not None
@@ -245,6 +286,7 @@ class TestSequenceMask3D:
 # ---------------------------------------------------------------------------
 # _attention_utils.py
 # ---------------------------------------------------------------------------
+
 
 class TestCreateCausalMask:
     def test_basic(self):
@@ -308,6 +350,7 @@ class TestCombineMasks:
 # _loss_utils.py
 # ---------------------------------------------------------------------------
 
+
 class TestMeanSquaredErrorLoss:
     def test_instantiation(self):
         loss = MeanSquaredErrorLoss()
@@ -328,8 +371,11 @@ class TestQuantileLoss:
 
     def test_call(self):
         loss = QuantileLoss(quantiles=[0.1, 0.5, 0.9])
-        y_true = np.array([[1.0, 2.0, 3.0]], dtype=np.float32)
-        y_pred = np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0], [3.0, 3.0, 3.0]], dtype=np.float32).T
+        np.array([[1.0, 2.0, 3.0]], dtype=np.float32)
+        np.array(
+            [[1.0, 1.0, 1.0], [2.0, 2.0, 2.0], [3.0, 3.0, 3.0]],
+            dtype=np.float32,
+        ).T
         assert loss is not None
 
 
@@ -377,6 +423,7 @@ class TestComputeLossWithReduction:
 # _temporal_utils.py
 # ---------------------------------------------------------------------------
 
+
 class TestAggregateFunctions:
     def test_aggregate_multiscale(self):
         tensors = [
@@ -400,6 +447,7 @@ class TestAggregateFunctions:
 # ---------------------------------------------------------------------------
 # layer_utils.py
 # ---------------------------------------------------------------------------
+
 
 class TestResidualAdd:
     def test_call(self):
@@ -502,6 +550,7 @@ class TestLayerUtils:
 # gating_norm.py
 # ---------------------------------------------------------------------------
 
+
 class TestGatedResidualNetwork:
     def test_instantiation(self):
         layer = GatedResidualNetwork(units=16)
@@ -571,6 +620,7 @@ class TestStaticEnrichmentLayer:
 # ---------------------------------------------------------------------------
 # attention.py
 # ---------------------------------------------------------------------------
+
 
 class TestTemporalAttentionLayer:
     def test_instantiation(self):
@@ -654,6 +704,7 @@ class TestMultiResolutionAttentionFusion:
 # encoder_decoder.py
 # ---------------------------------------------------------------------------
 
+
 class TestTransformerEncoderLayer:
     def test_instantiation(self):
         layer = TransformerEncoderLayer(units=16, num_heads=2)
@@ -681,11 +732,15 @@ class TestTransformerDecoderLayer:
 
 class TestTransformerEncoderBlock:
     def test_instantiation(self):
-        layer = TransformerEncoderBlock(units=16, num_heads=2, num_layers=2)
+        layer = TransformerEncoderBlock(
+            units=16, num_heads=2, num_layers=2
+        )
         assert layer is not None
 
     def test_call(self):
-        layer = TransformerEncoderBlock(units=16, num_heads=2, num_layers=2)
+        layer = TransformerEncoderBlock(
+            units=16, num_heads=2, num_layers=2
+        )
         x = np.ones((2, 5, 16), dtype=np.float32)
         result = layer(x)
         assert result is not None
@@ -693,11 +748,15 @@ class TestTransformerEncoderBlock:
 
 class TestTransformerDecoderBlock:
     def test_instantiation(self):
-        layer = TransformerDecoderBlock(units=16, num_heads=2, num_layers=2)
+        layer = TransformerDecoderBlock(
+            units=16, num_heads=2, num_layers=2
+        )
         assert layer is not None
 
     def test_call(self):
-        layer = TransformerDecoderBlock(units=16, num_heads=2, num_layers=2)
+        layer = TransformerDecoderBlock(
+            units=16, num_heads=2, num_layers=2
+        )
         tgt = np.ones((2, 3, 16), dtype=np.float32)
         mem = np.ones((2, 5, 16), dtype=np.float32)
         result = layer([tgt, mem])
@@ -713,6 +772,7 @@ class TestMultiDecoder:
 # ---------------------------------------------------------------------------
 # heads.py
 # ---------------------------------------------------------------------------
+
 
 class TestPointForecastHead:
     def test_instantiation(self):
@@ -739,7 +799,11 @@ class TestQuantileHead:
         assert layer is not None
 
     def test_call(self):
-        layer = QuantileHead(quantiles=[0.1, 0.5, 0.9], output_dim=1, forecast_horizon=5)
+        layer = QuantileHead(
+            quantiles=[0.1, 0.5, 0.9],
+            output_dim=1,
+            forecast_horizon=5,
+        )
         x = np.ones((2, 16), dtype=np.float32)
         result = layer(x)
         assert result is not None
@@ -794,6 +858,7 @@ class TestGaussianHead:
 # losses.py
 # ---------------------------------------------------------------------------
 
+
 class TestAdaptiveQuantileLoss:
     def test_instantiation(self):
         loss = AdaptiveQuantileLoss(quantiles=[0.1, 0.5, 0.9])
@@ -828,6 +893,7 @@ class TestAnomalyLoss:
 # ---------------------------------------------------------------------------
 # misc.py
 # ---------------------------------------------------------------------------
+
 
 class TestPositionalEncoding:
     def test_instantiation(self):
@@ -879,6 +945,7 @@ class TestMultiModalEmbedding:
 # ---------------------------------------------------------------------------
 # temporal.py
 # ---------------------------------------------------------------------------
+
 
 class TestMultiScaleLSTM:
     def test_instantiation(self):

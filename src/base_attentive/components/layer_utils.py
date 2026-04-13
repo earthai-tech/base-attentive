@@ -54,11 +54,15 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="ResidualAdd")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="ResidualAdd"
+)
 class ResidualAdd(Layer, NNLearner):
     """Y = X + F(X). Assumes shapes match."""
 
-    def call(self, inputs: tuple[Tensor, Tensor], training=False) -> Tensor:
+    def call(
+        self, inputs: tuple[Tensor, Tensor], training=False
+    ) -> Tensor:
         x, f = inputs
         return tf_add(x, f)
 
@@ -81,11 +85,15 @@ class LayerScale(Layer, NNLearner):
 
     def build(self, input_shape):
         gamma_shape = input_shape[-1:]
-        dtype_factory = getattr(tf_float32, "as_numpy_dtype", tf_float32)
+        dtype_factory = getattr(
+            tf_float32, "as_numpy_dtype", tf_float32
+        )
         self.gamma = self.add_weight(
             name="gamma",
             shape=gamma_shape,
-            initializer=lambda shape, dtype=None: dtype_factory(self.init_value),
+            initializer=lambda shape, dtype=None: dtype_factory(
+                self.init_value
+            ),
             trainable=True,
         )
         super().build(input_shape)
@@ -99,7 +107,9 @@ class LayerScale(Layer, NNLearner):
         return cfg
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="StochasticDepth")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="StochasticDepth"
+)
 class StochasticDepth(Layer, NNLearner):
     """
     Wrap a branch with DropPath (stochastic depth).
@@ -132,7 +142,9 @@ class StochasticDepth(Layer, NNLearner):
         return cfg
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="SqueezeExcite1D")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="SqueezeExcite1D"
+)
 class SqueezeExcite1D(Layer, NNLearner):
     """
     Simple SE block for (B,T,C) or (B,C).
@@ -168,14 +180,16 @@ class SqueezeExcite1D(Layer, NNLearner):
         # Ensure s is on the same device as x (handles torch tensor and
         # numpy-array cases; numpy has no .to() so the duck-type guard fails).
         try:
-            import torch as _torch
             import numpy as _np
+            import torch as _torch
+
             if isinstance(x, _torch.Tensor):
                 if isinstance(s, _torch.Tensor):
                     s = s.to(x.device)
                 else:
                     s = _torch.tensor(
-                        _np.asarray(s, dtype=_np.float32), device=x.device
+                        _np.asarray(s, dtype=_np.float32),
+                        device=x.device,
                     )
         except ImportError:
             pass
@@ -327,7 +341,9 @@ def broadcast_like(
         x = tf_expand_dims(x, 1)
         x_shape = _shape_as_list(x)
 
-    reps = tuple(1 if tgt == cur else tgt for cur, tgt in zip(x_shape, t_shape))
+    reps = tuple(
+        1 if tgt == cur else tgt for cur, tgt in zip(x_shape, t_shape)
+    )
     return tf_tile(x, reps)
 
 
@@ -448,14 +464,16 @@ def drop_path(x: Tensor, drop_prob: float, training: bool) -> Tensor:
     # Ensure mask is on the same device as x (handles both torch tensor
     # and numpy-array cases; the numpy fallback has no .to() method).
     try:
-        import torch as _torch
         import numpy as _np
+        import torch as _torch
+
         if isinstance(x, _torch.Tensor):
             if isinstance(mask, _torch.Tensor):
                 mask = mask.to(x.device)
             else:
                 mask = _torch.tensor(
-                    _np.asarray(mask, dtype=_np.float32), device=x.device
+                    _np.asarray(mask, dtype=_np.float32),
+                    device=x.device,
                 )
     except ImportError:
         pass

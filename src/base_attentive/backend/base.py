@@ -15,7 +15,11 @@ __all__ = ["Backend"]
 def _get_backend_helper(name: str):
     """Return helper overrides from ``base_attentive.backend`` when present."""
     backend_module = sys.modules.get("base_attentive.backend")
-    helper = getattr(backend_module, name, None) if backend_module else None
+    helper = (
+        getattr(backend_module, name, None)
+        if backend_module
+        else None
+    )
     current = globals().get(name)
     if callable(helper) and helper is not current:
         return helper
@@ -92,7 +96,9 @@ class Backend:
         """Verify that the required framework is installed."""
         for module_name in self.required_modules:
             if not _has_module(module_name):
-                raise ImportError(f"Backend '{self.name}' requires '{module_name}'.")
+                raise ImportError(
+                    f"Backend '{self.name}' requires '{module_name}'."
+                )
         return True
 
     def _initialize_imports(self):

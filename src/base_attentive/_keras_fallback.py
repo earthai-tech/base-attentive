@@ -143,7 +143,14 @@ def _initialize_value(initializer, shape, dtype):
 class Layer:
     """Minimal Keras-like layer base class."""
 
-    def __init__(self, *args, name=None, dtype=float32, trainable=True, **kwargs):
+    def __init__(
+        self,
+        *args,
+        name=None,
+        dtype=float32,
+        trainable=True,
+        **kwargs,
+    ):
         self.name = name or self.__class__.__name__
         self.dtype = dtype
         self.trainable = trainable
@@ -197,12 +204,16 @@ class Constant:
     def __call__(self, shape=None, dtype=None):
         array = np.asarray(self.value, dtype=_to_numpy_dtype(dtype))
         if shape:
-            array = np.broadcast_to(array, _normalize_shape(shape)).copy()
+            array = np.broadcast_to(
+                array, _normalize_shape(shape)
+            ).copy()
         return array
 
 
 class Dense(Layer):
-    def __init__(self, units, activation=None, use_bias=True, **kwargs):
+    def __init__(
+        self, units, activation=None, use_bias=True, **kwargs
+    ):
         super().__init__(**kwargs)
         self.units = int(units)
         self.activation = activations.get(activation)
@@ -214,12 +225,16 @@ class Dense(Layer):
             x = x.reshape(1)
         out_shape = x.shape[:-1] + (self.units,)
         base = np.mean(x, axis=-1, keepdims=True)
-        out = np.broadcast_to(base, out_shape).astype(np.float32, copy=True)
+        out = np.broadcast_to(base, out_shape).astype(
+            np.float32, copy=True
+        )
         return self.activation(out)
 
     def get_config(self):
         config = super().get_config()
-        config.update({"units": self.units, "use_bias": self.use_bias})
+        config.update(
+            {"units": self.units, "use_bias": self.use_bias}
+        )
         return config
 
 
@@ -283,13 +298,19 @@ class Embedding(Layer):
 
     def call(self, inputs, training=False):
         x = np.asarray(inputs)
-        return np.zeros(x.shape + (self.output_dim,), dtype=np.float32)
+        return np.zeros(
+            x.shape + (self.output_dim,), dtype=np.float32
+        )
 
 
 class Flatten(Layer):
     def call(self, inputs, training=False):
         x = np.asarray(inputs)
-        return x.reshape((x.shape[0], -1)) if x.ndim > 1 else x.reshape((1, -1))
+        return (
+            x.reshape((x.shape[0], -1))
+            if x.ndim > 1
+            else x.reshape((1, -1))
+        )
 
 
 class Concatenate(Layer):
@@ -298,7 +319,9 @@ class Concatenate(Layer):
         self.axis = axis
 
     def call(self, inputs, training=False):
-        return np.concatenate([np.asarray(x) for x in inputs], axis=self.axis)
+        return np.concatenate(
+            [np.asarray(x) for x in inputs], axis=self.axis
+        )
 
 
 class TimeDistributed(Layer):
@@ -353,7 +376,9 @@ class MultiHeadAttention(Layer):
         self.dropout = dropout
 
     def call(self, *args, **kwargs):
-        return_attention_scores = kwargs.pop("return_attention_scores", False)
+        return_attention_scores = kwargs.pop(
+            "return_attention_scores", False
+        )
         query = kwargs.get("query")
         value = kwargs.get("value")
         key = kwargs.get("key")
@@ -381,10 +406,16 @@ class MultiHeadAttention(Layer):
             return output
 
         if query.ndim >= 3 and value.ndim >= 3:
-            batch, tq, tv = query.shape[0], query.shape[-2], value.shape[-2]
+            batch, tq, tv = (
+                query.shape[0],
+                query.shape[-2],
+                value.shape[-2],
+            )
         else:
             batch, tq, tv = 1, 1, 1
-        scores = np.zeros((batch, self.num_heads, tq, tv), dtype=np.float32)
+        scores = np.zeros(
+            (batch, self.num_heads, tq, tv), dtype=np.float32
+        )
         return output, scores
 
 
@@ -393,7 +424,9 @@ class Model(Layer):
 
 
 def Input(shape=None, dtype=float32, **kwargs):
-    return np.zeros(_normalize_shape(shape), dtype=_to_numpy_dtype(dtype))
+    return np.zeros(
+        _normalize_shape(shape), dtype=_to_numpy_dtype(dtype)
+    )
 
 
 def register_keras_serializable(package="Custom", name=None):
@@ -421,19 +454,33 @@ class _Activations:
         if name == "tanh":
             return lambda x: np.tanh(np.asarray(x))
         if name == "elu":
-            return lambda x: np.where(np.asarray(x) > 0, np.asarray(x), np.exp(np.asarray(x)) - 1.0)
+            return lambda x: np.where(
+                np.asarray(x) > 0,
+                np.asarray(x),
+                np.exp(np.asarray(x)) - 1.0,
+            )
         if name == "selu":
             scale = 1.0507009873554805
             alpha = 1.6732632423543772
-            return lambda x: scale * np.where(np.asarray(x) > 0, np.asarray(x), alpha * (np.exp(np.asarray(x)) - 1.0))
+            return lambda x: scale * np.where(
+                np.asarray(x) > 0,
+                np.asarray(x),
+                alpha * (np.exp(np.asarray(x)) - 1.0),
+            )
         if name == "gelu":
-            return lambda x: 0.5 * np.asarray(x) * (1.0 + erf(np.asarray(x) / math.sqrt(2.0)))
+            return (
+                lambda x: 0.5
+                * np.asarray(x)
+                * (1.0 + erf(np.asarray(x) / math.sqrt(2.0)))
+            )
         raise ValueError(f"Unknown activation '{activation}'.")
 
     def serialize(self, activation):
         if isinstance(activation, str):
             return activation
-        return getattr(activation, "__name__", activation.__class__.__name__)
+        return getattr(
+            activation, "__name__", activation.__class__.__name__
+        )
 
 
 activations = _Activations()
@@ -442,15 +489,15 @@ activations = _Activations()
 class _RandomNamespace:
     @staticmethod
     def uniform(shape, minval=0.0, maxval=1.0, dtype=float32):
-        return np.random.uniform(minval, maxval, size=_normalize_shape(shape)).astype(
-            _to_numpy_dtype(dtype)
-        )
+        return np.random.uniform(
+            minval, maxval, size=_normalize_shape(shape)
+        ).astype(_to_numpy_dtype(dtype))
 
     @staticmethod
     def normal(shape, mean=0.0, stddev=1.0, dtype=float32):
-        return np.random.normal(mean, stddev, size=_normalize_shape(shape)).astype(
-            _to_numpy_dtype(dtype)
-        )
+        return np.random.normal(
+            mean, stddev, size=_normalize_shape(shape)
+        ).astype(_to_numpy_dtype(dtype))
 
 
 random = _RandomNamespace()
@@ -484,6 +531,7 @@ class _AutographExperimental:
     @staticmethod
     def do_not_convert(func=None, **kwargs):
         if func is None:
+
             def decorator(inner):
                 return inner
 
@@ -492,7 +540,9 @@ class _AutographExperimental:
 
 
 autograph = SimpleNamespace(experimental=_AutographExperimental())
-debugging = SimpleNamespace(assert_equal=lambda actual, expected, message="", name=None: None)
+debugging = SimpleNamespace(
+    assert_equal=lambda actual, expected, message="", name=None: None
+)
 
 
 def constant(value, dtype=None):
@@ -508,7 +558,10 @@ def shape(value):
 
 
 def reshape(value, new_shape):
-    return np.reshape(np.asarray(value), tuple(int(v) for v in np.asarray(new_shape).tolist()))
+    return np.reshape(
+        np.asarray(value),
+        tuple(int(v) for v in np.asarray(new_shape).tolist()),
+    )
 
 
 def repeat(value, repeats, axis=None):
@@ -578,7 +631,9 @@ def stack(values, axis=0):
 
 def unstack(value, axis=0):
     array = np.asarray(value)
-    return [np.take(array, i, axis=axis) for i in range(array.shape[axis])]
+    return [
+        np.take(array, i, axis=axis) for i in range(array.shape[axis])
+    ]
 
 
 def expand_dims(value, axis=-1, **kwargs):
@@ -586,7 +641,10 @@ def expand_dims(value, axis=-1, **kwargs):
 
 
 def tile(value, reps):
-    return np.tile(np.asarray(value), tuple(int(v) for v in np.asarray(reps).tolist()))
+    return np.tile(
+        np.asarray(value),
+        tuple(int(v) for v in np.asarray(reps).tolist()),
+    )
 
 
 def where(condition, x=None, y=None):
@@ -627,11 +685,18 @@ def equal(x, y):
 
 
 def pad(x, paddings, mode="constant", constant_values=0):
-    return np.pad(np.asarray(x), paddings, mode=mode, constant_values=constant_values)
+    return np.pad(
+        np.asarray(x),
+        paddings,
+        mode=mode,
+        constant_values=constant_values,
+    )
 
 
 def ones_like(x, dtype=None):
-    return np.ones_like(np.asarray(x), dtype=_to_numpy_dtype(dtype) if dtype else None)
+    return np.ones_like(
+        np.asarray(x), dtype=_to_numpy_dtype(dtype) if dtype else None
+    )
 
 
 def abs(x):
@@ -674,11 +739,19 @@ def gather(params, indices, axis=0, batch_dims=0, **kwargs):
         gathered = []
         flat_indices = indices.reshape(indices.shape[0], -1)
         for batch_idx, batch_indices in enumerate(flat_indices):
-            taken = np.take(params[batch_idx], batch_indices, axis=axis - 1 if axis > 0 else axis)
+            taken = np.take(
+                params[batch_idx],
+                batch_indices,
+                axis=axis - 1 if axis > 0 else axis,
+            )
             gathered.append(taken)
         gathered = np.asarray(gathered)
-        trailing = params.shape[axis + 1 :] if axis + 1 < params.ndim else ()
-        return gathered.reshape((params.shape[0],) + indices.shape[1:] + trailing)
+        trailing = (
+            params.shape[axis + 1 :] if axis + 1 < params.ndim else ()
+        )
+        return gathered.reshape(
+            (params.shape[0],) + indices.shape[1:] + trailing
+        )
     return np.take(params, indices, axis=axis)
 
 
@@ -690,7 +763,12 @@ def softplus(x):
 def reduce_logsumexp(x, axis=None, keepdims=False):
     array = np.asarray(x)
     max_x = np.max(array, axis=axis, keepdims=True)
-    result = np.log(np.sum(np.exp(array - max_x), axis=axis, keepdims=True)) + max_x
+    result = (
+        np.log(
+            np.sum(np.exp(array - max_x), axis=axis, keepdims=True)
+        )
+        + max_x
+    )
     if not keepdims and axis is not None:
         result = np.squeeze(result, axis=axis)
     return result
@@ -706,7 +784,9 @@ def erf(x):
 
 
 def ones(shape, dtype=float32):
-    return np.ones(_normalize_shape(shape), dtype=_to_numpy_dtype(dtype))
+    return np.ones(
+        _normalize_shape(shape), dtype=_to_numpy_dtype(dtype)
+    )
 
 
 def floordiv(x, y):
@@ -738,8 +818,12 @@ layers = SimpleNamespace(
 )
 
 losses = SimpleNamespace(Loss=Loss, Reduction=Reduction, get=get)
-saving = SimpleNamespace(register_keras_serializable=register_keras_serializable)
-utils = SimpleNamespace(register_keras_serializable=register_keras_serializable)
+saving = SimpleNamespace(
+    register_keras_serializable=register_keras_serializable
+)
+utils = SimpleNamespace(
+    register_keras_serializable=register_keras_serializable
+)
 ops = SimpleNamespace(
     concat=concat,
     concatenate=concatenate,
@@ -791,4 +875,3 @@ ops = SimpleNamespace(
     floordiv=floordiv,
     greater=greater,
 )
-

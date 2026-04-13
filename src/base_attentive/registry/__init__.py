@@ -1,6 +1,9 @@
 """Registries for V2 components and model assemblers."""
 
-from .capabilities import BackendCapabilityReport, get_backend_capability_report
+from .capabilities import (
+    BackendCapabilityReport,
+    get_backend_capability_report,
+)
 from .component_registry import (
     DEFAULT_COMPONENT_REGISTRY,
     ComponentRegistration,

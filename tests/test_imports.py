@@ -65,7 +65,10 @@ class TestCoreImports:
 
     def test_import_logging(self):
         """Test logging module imports."""
-        from base_attentive.logging import OncePerMessageFilter, get_logger
+        from base_attentive.logging import (
+            OncePerMessageFilter,
+            get_logger,
+        )
 
         assert callable(get_logger)
         assert OncePerMessageFilter is not None
@@ -84,7 +87,9 @@ class TestCoreImports:
 
     def test_import_models(self):
         """Test models module imports."""
-        from base_attentive.models.comp_utils import resolve_attention_levels
+        from base_attentive.models.comp_utils import (
+            resolve_attention_levels,
+        )
         from base_attentive.models.utils import set_default_params
 
         assert callable(resolve_attention_levels)

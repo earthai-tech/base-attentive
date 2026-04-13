@@ -95,7 +95,12 @@ html_context = {
 # Sidebars configuration
 # Sidebars configuration
 html_sidebars = {
-    "**": ["localtoc.html", "relations.html", "sourcelink.html", "searchbox.html"]
+    "**": [
+        "localtoc.html",
+        "relations.html",
+        "sourcelink.html",
+        "searchbox.html",
+    ]
 }
 
 # Badge and substitution definitions for reStructuredText

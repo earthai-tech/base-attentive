@@ -13,7 +13,10 @@ import pytest
 # require a working torch installation; the rest of the file also imports
 # torch implementation symbols at module level, so the cleanest approach is
 # to skip the whole file rather than guard every test individually.
-torch = pytest.importorskip("torch", reason="PyTorch not installed — skipping torch implementation tests")
+torch = pytest.importorskip(
+    "torch",
+    reason="PyTorch not installed — skipping torch implementation tests",
+)
 
 os.environ.setdefault("KERAS_BACKEND", "torch")
 
@@ -25,7 +28,9 @@ import base_attentive as _ba
 
 _orig_ga = _ba._KerasDeps.__getattr__
 _FALLBACKS = {
-    "add_n": lambda tensors, **kw: sum(tensors) if isinstance(tensors, (list, tuple)) else tensors,
+    "add_n": lambda tensors, **kw: sum(tensors)
+    if isinstance(tensors, (list, tuple))
+    else tensors,
     "gather": lambda p, i, axis=None, **kw: p,
     "reduce_logsumexp": lambda x, axis=None, keepdims=False, **kw: x,
     "pow": lambda x, y, **kw: x,
@@ -49,19 +54,19 @@ _ba._KerasDeps.__getattr__ = _patched_ga
 # PyTorch implementation tests
 # ---------------------------------------------------------------------------
 
+import base_attentive.implementations.torch.base_attentive_v2 as _torch_v2_mod
 from base_attentive.implementations.torch.base_attentive_v2 import (
-    _ensure_torch,
-    _TorchTemporalSelfAttentionEncoder,
-    _build_torch_dense_projection,
-    _build_torch_temporal_self_attention_encoder,
-    _build_torch_mean_pool,
-    _build_torch_last_pool,
     _build_torch_concat_fusion,
+    _build_torch_dense_projection,
+    _build_torch_last_pool,
+    _build_torch_mean_pool,
     _build_torch_point_forecast_head,
     _build_torch_quantile_head,
+    _build_torch_temporal_self_attention_encoder,
+    _ensure_torch,
+    _TorchTemporalSelfAttentionEncoder,
     ensure_torch_v2_registered,
 )
-import base_attentive.implementations.torch.base_attentive_v2 as _torch_v2_mod
 
 _ba._KerasDeps.__getattr__ = _orig_ga
 
@@ -74,7 +79,9 @@ class TestEnsureTorch:
         orig = _torch_v2_mod.torch
         try:
             _torch_v2_mod.torch = None
-            with pytest.raises(ImportError, match="PyTorch is required"):
+            with pytest.raises(
+                ImportError, match="PyTorch is required"
+            ):
                 _ensure_torch()
         finally:
             _torch_v2_mod.torch = orig
@@ -92,7 +99,9 @@ class TestTorchTemporalSelfAttentionEncoder:
         assert encoder.units == 32
 
     def test_units_not_divisible_raises(self):
-        with pytest.raises(ValueError, match="divisible by num_heads"):
+        with pytest.raises(
+            ValueError, match="divisible by num_heads"
+        ):
             _TorchTemporalSelfAttentionEncoder(
                 units=30,
                 hidden_units=64,
@@ -128,12 +137,15 @@ class TestTorchTemporalSelfAttentionEncoder:
 class TestBuildTorchDenseProjection:
     def test_returns_linear_layer(self):
         import torch.nn as nn
+
         layer = _build_torch_dense_projection(units=64)
         assert isinstance(layer, nn.Linear)
         assert layer.out_features == 64
 
     def test_with_in_features(self):
-        layer = _build_torch_dense_projection(units=64, in_features=32)
+        layer = _build_torch_dense_projection(
+            units=64, in_features=32
+        )
         assert layer.in_features == 32
 
     def test_raises_when_torch_none(self):
@@ -207,7 +219,10 @@ class TestBuildTorchConcatFusion:
 class TestBuildTorchPointForecastHead:
     def test_returns_linear(self):
         import torch.nn as nn
-        head = _build_torch_point_forecast_head(output_dim=1, forecast_horizon=24)
+
+        head = _build_torch_point_forecast_head(
+            output_dim=1, forecast_horizon=24
+        )
         assert isinstance(head, nn.Linear)
         assert head.out_features == 24
 
@@ -221,6 +236,7 @@ class TestBuildTorchPointForecastHead:
 class TestBuildTorchQuantileHead:
     def test_with_quantiles(self):
         import torch.nn as nn
+
         head = _build_torch_quantile_head(
             output_dim=1,
             forecast_horizon=1,
@@ -231,18 +247,25 @@ class TestBuildTorchQuantileHead:
 
     def test_without_quantiles_uses_default(self):
         """Without quantiles arg, default (0.1, 0.5, 0.9) is used."""
-        head = _build_torch_quantile_head(output_dim=1, forecast_horizon=1)
+        head = _build_torch_quantile_head(
+            output_dim=1, forecast_horizon=1
+        )
         assert head.out_features == 3
 
 
 class TestEnsureTorchV2Registered:
     def test_with_fresh_registry(self):
-        from base_attentive.registry.component_registry import ComponentRegistry
+        from base_attentive.registry.component_registry import (
+            ComponentRegistry,
+        )
+
         reg = ComponentRegistry()
         ensure_torch_v2_registered(reg)
         # Check that core components are registered
         assert reg.has("projection.dense", backend="torch")
-        assert reg.has("encoder.temporal_self_attention", backend="torch")
+        assert reg.has(
+            "encoder.temporal_self_attention", backend="torch"
+        )
         assert reg.has("pool.mean", backend="torch")
         assert reg.has("pool.last", backend="torch")
         assert reg.has("fusion.concat", backend="torch")
@@ -262,27 +285,32 @@ class TestEnsureTorchV2Registered:
 # TensorFlow implementation tests (TF not available - test error paths)
 # ---------------------------------------------------------------------------
 
+
 class TestTensorFlowImplementation:
     def test_ensure_tensorflow_raises_when_not_available(self):
         """_ensure_tensorflow() should raise ImportError when TF not installed."""
+        import base_attentive.implementations.tensorflow.base_attentive_v2 as _tf_v2_mod
         from base_attentive.implementations.tensorflow.base_attentive_v2 import (
             _ensure_tensorflow,
         )
-        import base_attentive.implementations.tensorflow.base_attentive_v2 as _tf_v2_mod
+
         orig_tf = _tf_v2_mod.tf
         try:
             _tf_v2_mod.tf = None
-            with pytest.raises(ImportError, match="TensorFlow is required"):
+            with pytest.raises(
+                ImportError, match="TensorFlow is required"
+            ):
                 _ensure_tensorflow()
         finally:
             _tf_v2_mod.tf = orig_tf
 
     def test_ensure_tensorflow_registered_requires_tf(self):
         """ensure_tensorflow_v2_registered raises when TF not available."""
+        import base_attentive.implementations.tensorflow.base_attentive_v2 as _tf_v2_mod
         from base_attentive.implementations.tensorflow.base_attentive_v2 import (
             ensure_tensorflow_v2_registered,
         )
-        import base_attentive.implementations.tensorflow.base_attentive_v2 as _tf_v2_mod
+
         orig_tf = _tf_v2_mod.tf
         try:
             _tf_v2_mod.tf = None
@@ -296,11 +324,15 @@ class TestTensorFlowImplementation:
 # JAX implementation tests (JAX not available - test error paths)
 # ---------------------------------------------------------------------------
 
+
 class TestJaxImplementation:
     def test_ensure_jax_raises_when_not_available(self):
         """_ensure_jax() should raise ImportError when JAX not installed."""
-        from base_attentive.implementations.jax.base_attentive_v2 import _ensure_jax
         import base_attentive.implementations.jax.base_attentive_v2 as _jax_v2_mod
+        from base_attentive.implementations.jax.base_attentive_v2 import (
+            _ensure_jax,
+        )
+
         orig_jax = _jax_v2_mod.jax
         try:
             _jax_v2_mod.jax = None
@@ -311,10 +343,11 @@ class TestJaxImplementation:
 
     def test_jax_encoder_raises_when_not_available(self):
         """_JaxTemporalSelfAttentionEncoder raises when JAX not available."""
+        import base_attentive.implementations.jax.base_attentive_v2 as _jax_v2_mod
         from base_attentive.implementations.jax.base_attentive_v2 import (
             _JaxTemporalSelfAttentionEncoder,
         )
-        import base_attentive.implementations.jax.base_attentive_v2 as _jax_v2_mod
+
         orig_jax = _jax_v2_mod.jax
         try:
             _jax_v2_mod.jax = None
@@ -327,10 +360,11 @@ class TestJaxImplementation:
 
     def test_ensure_jax_v2_registered_requires_jax(self):
         """ensure_jax_v2_registered raises when JAX not available."""
+        import base_attentive.implementations.jax.base_attentive_v2 as _jax_v2_mod
         from base_attentive.implementations.jax.base_attentive_v2 import (
             ensure_jax_v2_registered,
         )
-        import base_attentive.implementations.jax.base_attentive_v2 as _jax_v2_mod
+
         orig_jax = _jax_v2_mod.jax
         try:
             _jax_v2_mod.jax = None
@@ -344,9 +378,12 @@ class TestJaxImplementation:
 # Generic implementation tests
 # ---------------------------------------------------------------------------
 
+
 class _FakeLayers:
     """Fake Keras layers for testing the generic builder."""
+
     from unittest.mock import MagicMock
+
     Dense = None
     MultiHeadAttention = None
     LayerNormalization = None
@@ -355,12 +392,17 @@ class _FakeLayers:
 
 class _FakeContext:
     """Minimal fake backend context."""
+
     def __init__(self):
-        import keras
         from types import SimpleNamespace
+
+        import keras
+
         self.layers = keras.layers
         self.ops = SimpleNamespace(
-            mean=lambda x, axis=None: x.mean(axis=axis) if hasattr(x, "mean") else x,
+            mean=lambda x, axis=None: x.mean(axis=axis)
+            if hasattr(x, "mean")
+            else x,
             concatenate=lambda inputs, axis=-1: np.concatenate(
                 [np.array(i) for i in inputs], axis=axis
             ),
@@ -368,15 +410,27 @@ class _FakeContext:
 
 
 # Import BaseAttentiveV2 first to resolve circular imports in generic module
-from base_attentive.experimental.base_attentive_v2 import BaseAttentiveV2 as _V2ForCircularImport  # noqa: F401
+from base_attentive.experimental.base_attentive_v2 import (
+    BaseAttentiveV2 as _V2ForCircularImport,  # noqa: F401
+)
+from base_attentive.implementations.generic.base_attentive_v2 import (
+    _build_concat_fusion as _gen_build_concat_fusion,
+)
 
 # Now safe to import generic builders (circular import already resolved)
 from base_attentive.implementations.generic.base_attentive_v2 import (
     _build_dense_projection as _gen_build_dense_projection,
-    _build_mean_pool as _gen_build_mean_pool,
+)
+from base_attentive.implementations.generic.base_attentive_v2 import (
     _build_last_pool as _gen_build_last_pool,
-    _build_concat_fusion as _gen_build_concat_fusion,
+)
+from base_attentive.implementations.generic.base_attentive_v2 import (
+    _build_mean_pool as _gen_build_mean_pool,
+)
+from base_attentive.implementations.generic.base_attentive_v2 import (
     _build_point_forecast_head as _gen_build_point_forecast_head,
+)
+from base_attentive.implementations.generic.base_attentive_v2 import (
     _build_quantile_forecast_head as _gen_build_quantile_forecast_head,
 )
 
@@ -387,12 +441,18 @@ class TestGenericImplementation:
         self._build_mean_pool = _gen_build_mean_pool
         self._build_last_pool = _gen_build_last_pool
         self._build_concat_fusion = _gen_build_concat_fusion
-        self._build_point_forecast_head = _gen_build_point_forecast_head
-        self._build_quantile_forecast_head = _gen_build_quantile_forecast_head
+        self._build_point_forecast_head = (
+            _gen_build_point_forecast_head
+        )
+        self._build_quantile_forecast_head = (
+            _gen_build_quantile_forecast_head
+        )
         self.ctx = _FakeContext()
 
     def test_build_dense_projection(self):
-        layer = self._build_dense_projection(context=self.ctx, units=32)
+        layer = self._build_dense_projection(
+            context=self.ctx, units=32
+        )
         assert layer is not None
 
     def test_build_mean_pool(self):
@@ -431,15 +491,21 @@ class TestGenericImplementation:
 
     def test_build_concat_fusion_no_features_raises(self):
         fuse_fn = self._build_concat_fusion(context=self.ctx, axis=-1)
-        with pytest.raises(ValueError, match="no active feature tensors"):
+        with pytest.raises(
+            ValueError, match="no active feature tensors"
+        ):
             fuse_fn([None, None])
 
     def test_build_point_forecast_head(self):
-        head = self._build_point_forecast_head(context=self.ctx, units=1)
+        head = self._build_point_forecast_head(
+            context=self.ctx, units=1
+        )
         assert head is not None
 
     def test_build_quantile_forecast_head(self):
-        head = self._build_quantile_forecast_head(context=self.ctx, units=3)
+        head = self._build_quantile_forecast_head(
+            context=self.ctx, units=3
+        )
         assert head is not None
 
 
@@ -447,7 +513,9 @@ class TestGenericImplementation:
 # Experimental V2 tests
 # ---------------------------------------------------------------------------
 
-from base_attentive.experimental.base_attentive_v2 import BaseAttentiveV2
+from base_attentive.experimental.base_attentive_v2 import (
+    BaseAttentiveV2,
+)
 
 
 class TestExperimentalBaseAttentiveV2:

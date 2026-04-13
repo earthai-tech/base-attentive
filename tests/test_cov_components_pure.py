@@ -6,7 +6,6 @@ because the components __init__.py imports all submodules including Keras ones.
 The conftest.py already adds 'src' to sys.path, so we do NOT re-add it here.
 """
 
-import os
 import warnings
 
 import numpy as _np
@@ -26,23 +25,34 @@ _KerasStub = type(
 
 _FALLBACKS = {
     # Functional ops — numpy-backed so TF never loads
-    "add_n": lambda tensors, **kw: sum(tensors) if isinstance(tensors, (list, tuple)) else tensors,
+    "add_n": lambda tensors, **kw: sum(tensors)
+    if isinstance(tensors, (list, tuple))
+    else tensors,
     "gather": lambda p, i, axis=None, **kw: p,
     "reduce_logsumexp": lambda x, axis=None, keepdims=False, **kw: x,
     "pow": lambda x, y, **kw: x,
     "rank": lambda x, **kw: len(getattr(x, "shape", [])),
-    "expand_dims": lambda x, axis=-1, **kw: _np.expand_dims(_np.asarray(x), axis=axis),
+    "expand_dims": lambda x, axis=-1, **kw: _np.expand_dims(
+        _np.asarray(x), axis=axis
+    ),
     "cast": lambda x, dtype, **kw: _np.array(x, dtype=dtype),
-    "convert_to_tensor": lambda x, dtype=None, **kw: _np.asarray(x, dtype=dtype),
-    "reduce_mean": lambda x, axis=None, **kw: _np.mean(_np.asarray(x), axis=axis),
-    "reduce_sum": lambda x, axis=None, **kw: _np.sum(_np.asarray(x), axis=axis),
+    "convert_to_tensor": lambda x, dtype=None, **kw: _np.asarray(
+        x, dtype=dtype
+    ),
+    "reduce_mean": lambda x, axis=None, **kw: _np.mean(
+        _np.asarray(x), axis=axis
+    ),
+    "reduce_sum": lambda x, axis=None, **kw: _np.sum(
+        _np.asarray(x), axis=axis
+    ),
     "shape": lambda x, **kw: _np.asarray(x).shape,
     # Scalar dtype stubs
     "float32": _np.float32,
     "int32": _np.int32,
     # Keras class stubs — must be real classes so they can be used as base classes.
     # Decorator factory stub — must return a callable that accepts a class.
-    "register_keras_serializable": lambda package="Custom", name=None: (lambda cls: cls),
+    "register_keras_serializable": lambda package="Custom",
+    name=None: (lambda cls: cls),
 }
 
 
@@ -68,7 +78,9 @@ from base_attentive.components.utils import (
     resolve_fusion_mode,
 )
 from base_attentive.config.schema import BaseAttentiveSpec
-from base_attentive.config.validate import validate_base_attentive_spec
+from base_attentive.config.validate import (
+    validate_base_attentive_spec,
+)
 
 _ba._KerasDeps.__getattr__ = _orig_ga
 
@@ -104,7 +116,9 @@ class TestResolveAttnLevels:
         assert resolve_attn_levels("hier_att") == ["hierarchical"]
 
     def test_hierarchical_attention_string(self):
-        assert resolve_attn_levels("hierarchical_attention") == ["hierarchical"]
+        assert resolve_attn_levels("hierarchical_attention") == [
+            "hierarchical"
+        ]
 
     def test_hier_string(self):
         assert resolve_attn_levels("hier") == ["hierarchical"]
@@ -116,7 +130,9 @@ class TestResolveAttnLevels:
         assert resolve_attn_levels("memo_aug_att") == ["memory"]
 
     def test_memory_augmented_attention_string(self):
-        assert resolve_attn_levels("memory_augmented_attention") == ["memory"]
+        assert resolve_attn_levels("memory_augmented_attention") == [
+            "memory"
+        ]
 
     def test_memory_string(self):
         assert resolve_attn_levels("memory") == ["memory"]
@@ -142,7 +158,9 @@ class TestResolveAttnLevels:
         assert result == ["cross", "hierarchical", "memory"]
 
     def test_invalid_string_raises(self):
-        with pytest.raises(ValueError, match="Invalid attention type"):
+        with pytest.raises(
+            ValueError, match="Invalid attention type"
+        ):
             resolve_attn_levels("bad_attention")
 
     def test_invalid_integer_raises(self):
@@ -154,7 +172,9 @@ class TestResolveAttnLevels:
             resolve_attn_levels(3.14)
 
     def test_list_with_invalid_entry_raises(self):
-        with pytest.raises(ValueError, match="Invalid attention type"):
+        with pytest.raises(
+            ValueError, match="Invalid attention type"
+        ):
             resolve_attn_levels(["cross", "not_valid"])
 
     def test_string_number_1(self):
@@ -192,14 +212,21 @@ class TestConfigureArchitecture:
         assert cfg["decoder_attention_stack"] == ["cross"]
 
     def test_architecture_config_overrides(self):
-        cfg = configure_architecture(architecture_config={"encoder_type": "transformer"})
+        cfg = configure_architecture(
+            architecture_config={"encoder_type": "transformer"}
+        )
         assert cfg["encoder_type"] == "transformer"
 
     def test_deprecated_objective_key_in_config(self):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            cfg = configure_architecture(architecture_config={"objective": "transformer"})
-            assert any(issubclass(warning.category, FutureWarning) for warning in w)
+            cfg = configure_architecture(
+                architecture_config={"objective": "transformer"}
+            )
+            assert any(
+                issubclass(warning.category, FutureWarning)
+                for warning in w
+            )
         assert cfg["encoder_type"] == "transformer"
 
     def test_use_vsn_false_config_sets_vsn_reverts_to_dense(self):
@@ -211,12 +238,18 @@ class TestConfigureArchitecture:
         assert cfg["feature_processing"] == "dense"
 
     def test_architecture_config_adds_extra_keys(self):
-        cfg = configure_architecture(architecture_config={"my_custom": "value"})
+        cfg = configure_architecture(
+            architecture_config={"my_custom": "value"}
+        )
         assert cfg["my_custom"] == "value"
 
     def test_default_attention_levels_none(self):
         cfg = configure_architecture(attention_levels=None)
-        assert cfg["decoder_attention_stack"] == ["cross", "hierarchical", "memory"]
+        assert cfg["decoder_attention_stack"] == [
+            "cross",
+            "hierarchical",
+            "memory",
+        ]
 
     def test_objective_none_defaults_to_hybrid(self):
         cfg = configure_architecture(objective=None)
@@ -303,24 +336,42 @@ class TestValidateBaseAttentiveSpec:
             validate_base_attentive_spec({"dynamic_input_dim": 4})
 
     def test_negative_static_input_dim_raises(self):
-        with pytest.raises(ValueError, match="static_input_dim must be >= 0"):
-            validate_base_attentive_spec(_make_spec(static_input_dim=-1))
+        with pytest.raises(
+            ValueError, match="static_input_dim must be >= 0"
+        ):
+            validate_base_attentive_spec(
+                _make_spec(static_input_dim=-1)
+            )
 
     def test_zero_dynamic_input_dim_raises(self):
-        with pytest.raises(ValueError, match="dynamic_input_dim must be > 0"):
-            validate_base_attentive_spec(_make_spec(dynamic_input_dim=0))
+        with pytest.raises(
+            ValueError, match="dynamic_input_dim must be > 0"
+        ):
+            validate_base_attentive_spec(
+                _make_spec(dynamic_input_dim=0)
+            )
 
     def test_negative_dynamic_input_dim_raises(self):
-        with pytest.raises(ValueError, match="dynamic_input_dim must be > 0"):
-            validate_base_attentive_spec(_make_spec(dynamic_input_dim=-5))
+        with pytest.raises(
+            ValueError, match="dynamic_input_dim must be > 0"
+        ):
+            validate_base_attentive_spec(
+                _make_spec(dynamic_input_dim=-5)
+            )
 
     def test_non_int_dynamic_input_dim_raises(self):
-        with pytest.raises(TypeError, match="dynamic_input_dim must be an integer"):
-            validate_base_attentive_spec(_make_spec(dynamic_input_dim=4.0))
+        with pytest.raises(
+            TypeError, match="dynamic_input_dim must be an integer"
+        ):
+            validate_base_attentive_spec(
+                _make_spec(dynamic_input_dim=4.0)
+            )
 
     def test_dropout_rate_below_zero_raises(self):
         with pytest.raises(ValueError, match="dropout_rate"):
-            validate_base_attentive_spec(_make_spec(dropout_rate=-0.1))
+            validate_base_attentive_spec(
+                _make_spec(dropout_rate=-0.1)
+            )
 
     def test_dropout_rate_above_one_raises(self):
         with pytest.raises(ValueError, match="dropout_rate"):
@@ -328,26 +379,40 @@ class TestValidateBaseAttentiveSpec:
 
     def test_epsilon_zero_raises(self):
         with pytest.raises(ValueError, match="layer_norm_epsilon"):
-            validate_base_attentive_spec(_make_spec(layer_norm_epsilon=0.0))
+            validate_base_attentive_spec(
+                _make_spec(layer_norm_epsilon=0.0)
+            )
 
     def test_epsilon_negative_raises(self):
         with pytest.raises(ValueError, match="layer_norm_epsilon"):
-            validate_base_attentive_spec(_make_spec(layer_norm_epsilon=-1e-6))
+            validate_base_attentive_spec(
+                _make_spec(layer_norm_epsilon=-1e-6)
+            )
 
     def test_invalid_head_type_raises(self):
         with pytest.raises(ValueError, match="head_type"):
-            validate_base_attentive_spec(_make_spec(head_type="invalid"))
+            validate_base_attentive_spec(
+                _make_spec(head_type="invalid")
+            )
 
     def test_unknown_head_type_raises(self):
         with pytest.raises(ValueError, match="head_type"):
-            validate_base_attentive_spec(_make_spec(head_type="regression"))
+            validate_base_attentive_spec(
+                _make_spec(head_type="regression")
+            )
 
     def test_quantile_head_without_quantiles_raises(self):
-        with pytest.raises(ValueError, match="quantile head_type requires"):
-            validate_base_attentive_spec(_make_spec(head_type="quantile", quantiles=()))
+        with pytest.raises(
+            ValueError, match="quantile head_type requires"
+        ):
+            validate_base_attentive_spec(
+                _make_spec(head_type="quantile", quantiles=())
+            )
 
     def test_quantile_head_with_quantiles_passes(self):
-        spec = _make_spec(head_type="quantile", quantiles=(0.1, 0.5, 0.9))
+        spec = _make_spec(
+            head_type="quantile", quantiles=(0.1, 0.5, 0.9)
+        )
         result = validate_base_attentive_spec(spec)
         assert result is spec
 
@@ -362,20 +427,34 @@ class TestValidateBaseAttentiveSpec:
             validate_base_attentive_spec(_make_spec(embed_dim="32"))
 
     def test_negative_output_dim_raises(self):
-        with pytest.raises(ValueError, match="output_dim must be > 0"):
+        with pytest.raises(
+            ValueError, match="output_dim must be > 0"
+        ):
             validate_base_attentive_spec(_make_spec(output_dim=-1))
 
     def test_zero_forecast_horizon_raises(self):
-        with pytest.raises(ValueError, match="forecast_horizon must be > 0"):
-            validate_base_attentive_spec(_make_spec(forecast_horizon=0))
+        with pytest.raises(
+            ValueError, match="forecast_horizon must be > 0"
+        ):
+            validate_base_attentive_spec(
+                _make_spec(forecast_horizon=0)
+            )
 
     def test_zero_attention_heads_raises(self):
-        with pytest.raises(ValueError, match="attention_heads must be > 0"):
-            validate_base_attentive_spec(_make_spec(attention_heads=0))
+        with pytest.raises(
+            ValueError, match="attention_heads must be > 0"
+        ):
+            validate_base_attentive_spec(
+                _make_spec(attention_heads=0)
+            )
 
     def test_non_int_hidden_units_raises(self):
-        with pytest.raises(TypeError, match="hidden_units must be an integer"):
-            validate_base_attentive_spec(_make_spec(hidden_units=64.0))
+        with pytest.raises(
+            TypeError, match="hidden_units must be an integer"
+        ):
+            validate_base_attentive_spec(
+                _make_spec(hidden_units=64.0)
+            )
 
     def test_dropout_rate_zero_passes(self):
         spec = _make_spec(dropout_rate=0.0)

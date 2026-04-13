@@ -34,7 +34,7 @@ def _ensure_jax():
 
 class _JaxTemporalSelfAttentionEncoder:
     """JAX-implemented temporal encoder using pure functional operations.
-    
+
     Advantages:
     - Pure functional implementation (fully composable)
     - XLA compilation via jax.jit
@@ -70,13 +70,16 @@ class _JaxTemporalSelfAttentionEncoder:
         self.layer_norm_eps = layer_norm_epsilon
         self.key_dim = units // num_heads
 
-    def __call__(self, inputs: Any, training: bool = False  # noqa: FBT002
+    def __call__(
+        self,
+        inputs: Any,
+        training: bool = False,  # noqa: FBT002
     ) -> Any:
         """Forward pass implemented in pure JAX.
-        
+
         Note: This is a functional implementation that expects pre-initialized
         parameters to be passed through the computation graph.
-        
+
         This is typically wrapped by a Keras layer in the resolver.
         """
         # JAX implementations are typically stateless
@@ -101,9 +104,9 @@ def _jax_temporal_attention_forward(
     layer_norm_eps: float,
 ) -> Any:
     """JAX functional temporal attention forward pass.
-    
+
     Pure function suitable for jax.jit compilation.
-    
+
     Arguments:
         inputs: Input tensor of shape (batch, seq_len, units)
         units: Model dimension
@@ -111,7 +114,7 @@ def _jax_temporal_attention_forward(
         num_heads: Number of attention heads
         activation: Activation function name
         layer_norm_eps: Layer norm epsilon
-        
+
     Returns:
         Output tensor of same shape as inputs
     """
@@ -151,11 +154,11 @@ def _jax_temporal_attention_forward(
 
 def _jax_layer_norm(x: Any, *, eps: float = 1e-6) -> Any:
     """Simple layer normalization in JAX.
-    
+
     Arguments:
         x: Input array
         eps: Epsilon for numerical stability
-        
+
     Returns:
         Layer-normalized array
     """
@@ -169,13 +172,13 @@ def _jax_scaled_dot_product_attention(
     query: Any, key: Any, value: Any, *, num_heads: int
 ) -> Any:
     """Scaled dot-product attention in JAX.
-    
+
     Arguments:
         query: Query tensor
         key: Key tensor
         value: Value tensor
         num_heads: Number of attention heads
-        
+
     Returns:
         Attention output
     """
@@ -195,15 +198,15 @@ def _build_jax_dense_projection(
     **kwargs,
 ) -> Callable:
     """Build a JAX dense projection function.
-    
+
     Returns a pure function that can be used with jax.jit.
-    
+
     Arguments:
         units: Output dimension
         activation: Activation function name (not applied in this stub)
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         Callable that applies dense projection
     """
@@ -229,12 +232,12 @@ def _build_jax_temporal_self_attention_encoder(
     **kwargs,
 ) -> _JaxTemporalSelfAttentionEncoder:
     """Build a JAX-optimized temporal self-attention encoder.
-    
+
     Advantages:
     - Pure functional implementation
     - XLA-compilable
     - Efficient automatic differentiation
-    
+
     Arguments:
         units: Model dimension
         hidden_units: FFN hidden dimension
@@ -244,7 +247,7 @@ def _build_jax_temporal_self_attention_encoder(
         layer_norm_epsilon: Layer normalization epsilon
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         _JaxTemporalSelfAttentionEncoder instance
     """
@@ -269,13 +272,13 @@ def _build_jax_mean_pool(
     **kwargs,
 ) -> Callable:
     """Build a JAX mean pooling function.
-    
+
     Arguments:
         axis: Axis along which to compute the mean
         keepdims: Whether to keep reduced dimensions
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         Callable that computes mean along axis
     """
@@ -293,11 +296,11 @@ def _build_jax_last_pool(
     **kwargs,
 ) -> Callable:
     """Build a JAX layer that extracts the last timestep.
-    
+
     Arguments:
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         Callable that extracts the last timestep
     """
@@ -316,12 +319,12 @@ def _build_jax_concat_fusion(
     **kwargs,
 ) -> Callable:
     """Build a JAX concatenation function.
-    
+
     Arguments:
         axis: Axis along which to concatenate
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         Callable that concatenates inputs along axis
     """
@@ -342,19 +345,19 @@ def _build_jax_point_forecast_head(
     **kwargs,
 ) -> Callable:
     """Build a JAX point forecast output head.
-    
+
     Arguments:
         output_dim: Output dimension
         forecast_horizon: Number of forecasting steps
         activation: Output activation
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         Callable for point forecasting
     """
     _ensure_jax()
-    total_output = output_dim * forecast_horizon
+    output_dim * forecast_horizon
 
     def point_head_fn(x):
         # Would apply dense layer here
@@ -372,14 +375,14 @@ def _build_jax_quantile_head(
     **kwargs,
 ) -> Callable:
     """Build a JAX quantile forecast output head.
-    
+
     Arguments:
         output_dim: Output dimension
         forecast_horizon: Number of forecasting steps
         quantiles: Tuple of quantile levels
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         Callable for quantile forecasting
     """
@@ -396,10 +399,10 @@ def _build_jax_quantile_head(
 
 def ensure_jax_v2_registered(registry=None) -> None:
     """Register all JAX-optimized V2 components.
-    
+
     This registers JAX-specific implementations that will be preferred
     over generic implementations when the JAX backend is active.
-    
+
     Arguments:
         registry: ComponentRegistry instance. If None, uses DEFAULT_COMPONENT_REGISTRY.
     """
