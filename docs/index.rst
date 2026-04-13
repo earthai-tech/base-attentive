@@ -33,6 +33,14 @@ BaseAttentive Documentation
    :target: https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml
    :alt: Tests
 
+.. image:: https://codecov.io/gh/earthai-tech/base-attentive/graph/badge.svg?token=YEJY7PEREM
+   :target: https://codecov.io/gh/earthai-tech/base-attentive
+   :alt: Coverage
+
+.. image:: https://img.shields.io/github/last-commit/earthai-tech/base-attentive.svg
+   :target: https://github.com/earthai-tech/base-attentive/commits/master
+   :alt: Last Commit
+
 .. image:: https://img.shields.io/github/issues/earthai-tech/base-attentive.svg
    :target: https://github.com/earthai-tech/base-attentive/issues
    :alt: Open Issues
@@ -41,7 +49,7 @@ BaseAttentive Documentation
    :target: https://github.com/earthai-tech/base-attentive/pulls
    :alt: PRs Welcome
 
-.. image:: https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-000000.svg
+.. image:: https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-4a5568.svg
    :alt: Platform: Linux, macOS, Windows
 
 A modular encoder-decoder architecture for sequence-to-sequence time series

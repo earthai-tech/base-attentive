@@ -17,7 +17,7 @@
     <img src="https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg?branch=master" alt="Publish" />
   </a>
   <a href="https://codecov.io/gh/earthai-tech/base-attentive">
-    <img src="https://codecov.io/gh/earthai-tech/base-attentive/branch/master/graph/badge.svg" alt="Coverage" />
+    <img src="https://codecov.io/gh/earthai-tech/base-attentive/graph/badge.svg?token=YEJY7PEREM" alt="Coverage" />
   </a>
   <a href="https://pypi.org/project/base-attentive/">
     <img src="https://img.shields.io/pypi/v/base-attentive.svg" alt="PyPI version" />

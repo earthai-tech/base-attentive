@@ -8,6 +8,9 @@ import os
 import numpy as np
 import pytest
 
+os.environ.setdefault("KERAS_BACKEND", "torch")
+os.environ.setdefault("BASE_ATTENTIVE_BACKEND", "torch")
+
 # ---------------------------------------------------------------------------
 # Patch missing KERAS_DEPS ops before importing any components
 # ---------------------------------------------------------------------------
@@ -19,8 +22,52 @@ _orig_ga = _ba._KerasDeps.__getattr__
 _KerasStub = type(
     "_KerasStub",
     (object,),
-    {"__init__": lambda self, *a, **kw: None},
+    {
+        "__init__": lambda self, *a, **kw: setattr(self, "built", False) or None,
+        "build": lambda self, input_shape=None: setattr(self, "built", True) or None,
+        "call": lambda self, inputs=None, *a, **kw: inputs,
+        "__call__": lambda self, *a, **kw: self.call(*a, **kw),
+        "get_config": lambda self: {},
+        "add_weight": (
+            lambda self,
+            name=None,
+            shape=None,
+            initializer="zeros",
+            trainable=True,
+            dtype=None,
+            **kwargs: np.zeros(shape or (), dtype=np.dtype(dtype or np.float32))
+        ),
+    },
 )
+
+
+def _np_range(start, limit=None, delta=1, dtype=None, **kwargs):
+    if limit is None:
+        start, limit = 0, start
+    np_dtype = None if dtype is None else np.dtype(dtype)
+    return np.arange(start, limit, delta, dtype=np_dtype)
+
+
+def _to_numpy(value):
+    if isinstance(value, (list, tuple)):
+        return type(value)(_to_numpy(item) for item in value)
+
+    detach = getattr(value, "detach", None)
+    if callable(detach):
+        value = detach()
+
+    cpu = getattr(value, "cpu", None)
+    if callable(cpu):
+        value = cpu()
+
+    numpy = getattr(value, "numpy", None)
+    if callable(numpy):
+        try:
+            return numpy()
+        except Exception:
+            pass
+
+    return np.asarray(value)
 
 _FALLBACKS = {
     # Functional ops — numpy-backed so TF never loads
@@ -29,19 +76,23 @@ _FALLBACKS = {
     "reduce_logsumexp": lambda x, axis=None, keepdims=False, **kw: x,
     "pow": lambda x, y, **kw: x,
     "rank": lambda x, **kw: len(getattr(x, "shape", [])),
-    "expand_dims": lambda x, axis=-1, **kw: np.expand_dims(np.asarray(x), axis=axis),
-    "cast": lambda x, dtype, **kw: np.array(x, dtype=dtype),
-    "convert_to_tensor": lambda x, dtype=None, **kw: np.asarray(x, dtype=dtype),
-    "reduce_mean": lambda x, axis=None, **kw: np.mean(np.asarray(x), axis=axis),
-    "reduce_sum": lambda x, axis=None, **kw: np.sum(np.asarray(x), axis=axis),
-    "shape": lambda x, **kw: np.asarray(x).shape,
+    "expand_dims": lambda x, axis=-1, **kw: np.expand_dims(_to_numpy(x), axis=axis),
+    "cast": lambda x, dtype, **kw: np.array(_to_numpy(x), dtype=dtype),
+    "convert_to_tensor": lambda x, dtype=None, **kw: np.asarray(_to_numpy(x), dtype=dtype),
+    "reduce_mean": lambda x, axis=None, **kw: np.mean(_to_numpy(x), axis=axis),
+    "reduce_sum": lambda x, axis=None, **kw: np.sum(_to_numpy(x), axis=axis),
+    "reduce_max": lambda x, axis=None, **kw: np.max(_to_numpy(x), axis=axis),
+    "shape": lambda x, **kw: np.asarray(_to_numpy(x)).shape,
+    "range": _np_range,
+    "greater": lambda x, y, **kw: np.greater(_to_numpy(x), _to_numpy(y)),
+    "logical_and": lambda x, y, **kw: np.logical_and(_to_numpy(x), _to_numpy(y)),
+    "logical_not": lambda x, **kw: np.logical_not(_to_numpy(x)),
+    "logical_or": lambda x, y, **kw: np.logical_or(_to_numpy(x), _to_numpy(y)),
+    "bool": np.bool_,
     # Scalar dtype stubs
     "float32": np.float32,
     "int32": np.int32,
     # Keras class stubs — must be real classes so they can be used as base classes.
-    "Loss": _KerasStub,
-    "Layer": _KerasStub,
-    "Model": _KerasStub,
     # Decorator factory stub — must return a callable that accepts a class.
     "register_keras_serializable": lambda package="Custom", name=None: (lambda cls: cls),
 }
@@ -136,6 +187,8 @@ from base_attentive.components.misc import (
 )
 from base_attentive.components.temporal import MultiScaleLSTM, DynamicTimeWindow
 
+_ba._KerasDeps.__getattr__ = _orig_ga
+
 
 # ---------------------------------------------------------------------------
 # masks.py
@@ -143,7 +196,6 @@ from base_attentive.components.temporal import MultiScaleLSTM, DynamicTimeWindow
 
 class TestPadMaskFromLengths:
     def test_basic(self):
-        import keras
         lengths = np.array([3, 2, 4], dtype=np.int32)
         mask = pad_mask_from_lengths(lengths)
         assert mask is not None

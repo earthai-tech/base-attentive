@@ -239,11 +239,11 @@ class _KerasDeps:
         if name == "newaxis":
             return None
         if name == "bool":
-            return getattr(fallback, "bool", np.bool_)
+            return np.bool_
         if name == "float32":
-            return getattr(fallback, "float32", np.float32)
+            return np.float32
         if name == "int32":
-            return getattr(fallback, "int32", np.int32)
+            return np.int32
         if name == "Assert":
             tf = self._load_tensorflow()
             if tf is not None and hasattr(tf, "Assert"):

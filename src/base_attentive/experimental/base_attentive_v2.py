@@ -135,7 +135,8 @@ class BaseAttentiveV2(Model):
         )
 
     def get_config(self):
-        config = super().get_config()
+        base_get_config = getattr(super(), "get_config", None)
+        config = base_get_config() if callable(base_get_config) else {}
         config.update(asdict(self.spec))
         return config
 
