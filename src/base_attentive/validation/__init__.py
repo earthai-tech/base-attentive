@@ -10,7 +10,7 @@ from ..logging import get_logger
 
 try:
     from .. import KERAS_BACKEND, KERAS_DEPS
-except Exception:
+except Exception:  # pragma: no cover
     KERAS_BACKEND = ""
     KERAS_DEPS = None
 
