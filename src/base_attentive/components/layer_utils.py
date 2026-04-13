@@ -165,11 +165,20 @@ class SqueezeExcite1D(Layer, NNLearner):
         s = self.fc2(self.fc1(z))  # (B,C)
         if tf_rank(x) == 3:
             s = tf_expand_dims(s, 1)  # (B,1,C)
-        # Ensure s is on the same device as x for MPS/CUDA compatibility
-        _dev = getattr(x, 'device', None)
-        _to = getattr(s, 'to', None)
-        if _dev is not None and callable(_to):
-            s = _to(_dev)
+        # Ensure s is on the same device as x (handles torch tensor and
+        # numpy-array cases; numpy has no .to() so the duck-type guard fails).
+        try:
+            import torch as _torch
+            import numpy as _np
+            if isinstance(x, _torch.Tensor):
+                if isinstance(s, _torch.Tensor):
+                    s = s.to(x.device)
+                else:
+                    s = _torch.tensor(
+                        _np.asarray(s, dtype=_np.float32), device=x.device
+                    )
+        except ImportError:
+            pass
         return x * s
 
     def get_config(self):
@@ -436,10 +445,19 @@ def drop_path(x: Tensor, drop_prob: float, training: bool) -> Tensor:
         )
 
     mask = tf_cast(rnd < keep_prob, tf_float32)
-    # Move mask to the same device as x for MPS/CUDA compatibility
-    _dev = getattr(x, 'device', None)
-    _to = getattr(mask, 'to', None)
-    if _dev is not None and callable(_to):
-        mask = _to(_dev)
+    # Ensure mask is on the same device as x (handles both torch tensor
+    # and numpy-array cases; the numpy fallback has no .to() method).
+    try:
+        import torch as _torch
+        import numpy as _np
+        if isinstance(x, _torch.Tensor):
+            if isinstance(mask, _torch.Tensor):
+                mask = mask.to(x.device)
+            else:
+                mask = _torch.tensor(
+                    _np.asarray(mask, dtype=_np.float32), device=x.device
+                )
+    except ImportError:
+        pass
     # rescale to preserve expected value
     return x * mask / keep_prob

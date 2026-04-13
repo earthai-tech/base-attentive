@@ -132,3 +132,119 @@ class TestValidationModule:
         result = fake_runtime.ensure_bh1(x)
 
         assert result.shape == (32, 10, 1)
+
+    # ------------------------------------------------------------------
+    # validate_model_inputs – additional branches
+    # ------------------------------------------------------------------
+
+    def test_validate_model_inputs_verbose_logs_shapes(self, fake_runtime):
+        """verbose=1 should execute info-logger calls without raising."""
+        inputs = [np.ones((2, 3)), np.ones((2, 4, 5)), np.ones((2, 6, 7))]
+        static, dynamic, future = fake_runtime.validate_model_inputs(
+            inputs, verbose=1
+        )
+        assert static.shape == (2, 3)
+        assert dynamic.shape == (2, 4, 5)
+        assert future.shape == (2, 6, 7)
+
+    def test_validate_model_inputs_error_warn_swallows_exception(
+        self, fake_runtime
+    ):
+        """With error='warn', a bad input is kept as-is instead of raising."""
+        static, dynamic, future = fake_runtime.validate_model_inputs(
+            "__boom__", error="warn"
+        )
+        # The raw (unconverted) value is stored in the static slot.
+        assert static == "__boom__"
+        assert dynamic is None
+        assert future is None
+
+    # ------------------------------------------------------------------
+    # maybe_reduce_quantiles_bh – additional branches
+    # ------------------------------------------------------------------
+
+    def test_maybe_reduce_quantiles_bh_no_runtime_passthrough(
+        self, validation_module, monkeypatch
+    ):
+        """Without a runtime the function must return the original object."""
+        monkeypatch.setattr(validation_module, "_has_runtime", lambda: False)
+        x = np.ones((4, 5))
+        result = validation_module.maybe_reduce_quantiles_bh(x)
+        assert result is x
+
+    def test_maybe_reduce_quantiles_bh_rank4_mean(self, fake_runtime):
+        """Rank-4 tensor with reduction='mean' should collapse axis 2."""
+        x = np.ones((2, 5, 3, 1), dtype=np.float32)
+        result = fake_runtime.maybe_reduce_quantiles_bh(x, reduction="mean")
+        assert result.shape == (2, 5, 1)
+
+    def test_maybe_reduce_quantiles_bh_rank4_sum(self, fake_runtime):
+        """Rank-4 tensor with reduction='sum' should collapse axis 2."""
+        x = np.ones((2, 5, 3, 1), dtype=np.float32)
+        result = fake_runtime.maybe_reduce_quantiles_bh(x, reduction="sum")
+        assert result.shape == (2, 5, 1)
+
+    def test_maybe_reduce_quantiles_bh_rank4_callable(self, fake_runtime):
+        """Rank-4 tensor should work with a callable reduction."""
+        x = np.ones((2, 5, 3, 1), dtype=np.float32)
+        result = fake_runtime.maybe_reduce_quantiles_bh(
+            x, reduction=lambda t, axis: np.mean(t, axis=axis)
+        )
+        assert result.shape == (2, 5, 1)
+
+    def test_maybe_reduce_quantiles_bh_3d_last_dim_1_passthrough(
+        self, fake_runtime
+    ):
+        """3D tensor with last dim == 1 should be returned unchanged."""
+        x = np.ones((2, 5, 1), dtype=np.float32)
+        result = fake_runtime.maybe_reduce_quantiles_bh(x, reduction="mean")
+        assert result.shape == (2, 5, 1)
+
+    def test_maybe_reduce_quantiles_bh_3d_sum(self, fake_runtime):
+        """3D tensor with last dim > 1 and reduction='sum' should collapse."""
+        x = np.arange(32 * 10 * 5, dtype=np.float32).reshape(32, 10, 5)
+        result = fake_runtime.maybe_reduce_quantiles_bh(x, reduction="sum")
+        assert result.shape == (32, 10)
+
+    def test_maybe_reduce_quantiles_bh_3d_callable(self, fake_runtime):
+        """3D tensor should work with a callable reduction."""
+        x = np.arange(32 * 10 * 5, dtype=np.float32).reshape(32, 10, 5)
+        result = fake_runtime.maybe_reduce_quantiles_bh(
+            x, reduction=lambda t, axis: np.mean(t, axis=axis)
+        )
+        assert result.shape == (32, 10)
+
+    # ------------------------------------------------------------------
+    # ensure_bh1 – additional branches
+    # ------------------------------------------------------------------
+
+    def test_ensure_bh1_no_runtime_passthrough(
+        self, validation_module, monkeypatch
+    ):
+        """Without a runtime the function must return the original object."""
+        monkeypatch.setattr(validation_module, "_has_runtime", lambda: False)
+        x = np.ones((4, 5))
+        result = validation_module.ensure_bh1(x)
+        assert result is x
+
+    def test_ensure_bh1_reduce_axis_mean(self, fake_runtime):
+        """reduce_axis with 'mean' should collapse the specified axis."""
+        x = np.ones((2, 5, 4), dtype=np.float32)
+        result = fake_runtime.ensure_bh1(x, reduce_axis=2, reduction="mean")
+        assert result.shape == (2, 5)
+
+    def test_ensure_bh1_reduce_axis_sum(self, fake_runtime):
+        """reduce_axis with 'sum' should collapse the specified axis."""
+        x = np.ones((2, 5, 4), dtype=np.float32)
+        result = fake_runtime.ensure_bh1(x, reduce_axis=2, reduction="sum")
+        assert result.shape == (2, 5)
+
+    def test_ensure_bh1_reduce_axis_callable(self, fake_runtime):
+        """reduce_axis with a callable should apply it to the axis."""
+        x = np.ones((2, 5, 4), dtype=np.float32)
+        result = fake_runtime.ensure_bh1(
+            x,
+            reduce_axis=2,
+            reduction=lambda t, axis: np.mean(t, axis=axis),
+        )
+        assert result.shape == (2, 5)
