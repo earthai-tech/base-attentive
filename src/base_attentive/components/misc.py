@@ -878,6 +878,9 @@ class TSPositionalEncoding(Layer, NNLearner):
             tf_range(d_model)[tf_newaxis, :],
             d_model,
         )
+        # Cast to float32 before trig ops — MPS (Apple Silicon) does not
+        # support float64, and _get_angles may produce float64 tensors.
+        angle_rads = tf_cast(angle_rads, tf_float32)
         # Apply sin to even indices in the array; 2i
         angle_rads[:, 0::2] = tf_sin(angle_rads[:, 0::2])
         # Apply cos to odd indices in the array; 2i+1
