@@ -38,6 +38,8 @@ def _to_numpy(x):
 
 pytest.importorskip("keras", reason="Keras not installed; skipping loss tests")
 
+import keras  # noqa: E402
+
 from base_attentive.components.losses import (  # noqa: E402
     AdaptiveQuantileLoss,
     AnomalyLoss,
@@ -55,6 +57,11 @@ from base_attentive.components.losses import (  # noqa: E402
 
 def _y(shape, fill=0.5):
     return np.full(shape, fill, dtype=np.float32)
+
+
+def _t(arr):
+    """Convert numpy array to the active Keras backend tensor."""
+    return keras.ops.convert_to_tensor(arr)
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +96,7 @@ class TestStdNormalHelpers:
 class TestAdaptiveQuantileLoss:
     def test_none_quantiles_returns_zero(self):
         loss_fn = AdaptiveQuantileLoss(quantiles=None)
-        result = loss_fn(_y((4, 10, 1)), _y((4, 10, 1)))
+        result = loss_fn(_t(_y((4, 10, 1))), _t(_y((4, 10, 1))))
         assert float(_to_numpy(result)) == pytest.approx(0.0)
 
     def test_auto_quantiles(self):
@@ -98,15 +105,15 @@ class TestAdaptiveQuantileLoss:
 
     def test_4d_y_pred(self):
         loss_fn = AdaptiveQuantileLoss(quantiles=[0.1, 0.5, 0.9])
-        y_true = _y((2, 5, 1))
-        y_pred = _y((2, 5, 3, 1))
+        y_true = _t(_y((2, 5, 1)))
+        y_pred = _t(_y((2, 5, 3, 1)))
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
     def test_2d_y_pred(self):
         loss_fn = AdaptiveQuantileLoss(quantiles=[0.1, 0.9])
-        y_true = _y((4, 1))
-        y_pred = _y((4, 2))
+        y_true = _t(_y((4, 1)))
+        y_pred = _t(_y((4, 2)))
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
@@ -168,19 +175,18 @@ class TestMultiObjectiveLoss:
         q_fn = AdaptiveQuantileLoss(quantiles=[0.1, 0.5, 0.9])
         a_fn = AnomalyLoss()
         loss_fn = MultiObjectiveLoss(q_fn, a_fn)
-        y_true = _y((2, 5, 1))
-        y_pred = _y((2, 5, 3, 1))
+        y_true = _t(_y((2, 5, 1)))
+        y_pred = _t(_y((2, 5, 3, 1)))
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
     def test_with_anomaly_scores(self):
-        import torch
         q_fn = AdaptiveQuantileLoss(quantiles=[0.1, 0.5, 0.9])
         a_fn = AnomalyLoss(weight=0.5)
-        anomaly = torch.tensor(_y((2, 5, 8)))
+        anomaly = _t(_y((2, 5, 8)))
         loss_fn = MultiObjectiveLoss(q_fn, a_fn, anomaly_scores=anomaly)
-        y_true = torch.tensor(_y((2, 5, 1)))
-        y_pred = torch.tensor(_y((2, 5, 3, 1)))
+        y_true = _t(_y((2, 5, 1)))
+        y_pred = _t(_y((2, 5, 3, 1)))
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
@@ -213,36 +219,36 @@ class TestMultiObjectiveLoss:
 class TestCRPSLoss:
     def test_quantile_mode_tensor(self):
         loss_fn = CRPSLoss(mode="quantile", quantiles=[0.1, 0.5, 0.9])
-        y_true = _y((2, 5, 1))
-        y_pred = _y((2, 5, 3, 1))
+        y_true = _t(_y((2, 5, 1)))
+        y_pred = _t(_y((2, 5, 3, 1)))
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
     def test_quantile_mode_dict(self):
         loss_fn = CRPSLoss(mode="quantile", quantiles=[0.1, 0.5, 0.9])
-        y_true = _y((2, 5, 1))
-        y_pred = {"quantiles": _y((2, 5, 3, 1)), "q_values": [0.1, 0.5, 0.9]}
+        y_true = _t(_y((2, 5, 1)))
+        y_pred = {"quantiles": _t(_y((2, 5, 3, 1))), "q_values": [0.1, 0.5, 0.9]}
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
     def test_quantile_mode_dict_no_q_values(self):
         loss_fn = CRPSLoss(mode="quantile", quantiles=[0.1, 0.5, 0.9])
-        y_true = _y((2, 5, 1))
-        y_pred = {"quantiles": _y((2, 5, 3, 1))}
+        y_true = _t(_y((2, 5, 1)))
+        y_pred = {"quantiles": _t(_y((2, 5, 3, 1)))}
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
     def test_gaussian_mode_dict(self):
         loss_fn = CRPSLoss(mode="gaussian")
-        y_true = _y((2, 5, 1))
-        y_pred = {"loc": _y((2, 5, 1)), "scale": np.full((2, 5, 1), 0.5, dtype=np.float32)}
+        y_true = _t(_y((2, 5, 1)))
+        y_pred = {"loc": _t(_y((2, 5, 1))), "scale": _t(np.full((2, 5, 1), 0.5, dtype=np.float32))}
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
     def test_gaussian_mode_tensor(self):
         loss_fn = CRPSLoss(mode="gaussian")
-        y_true = _y((2, 5))
-        y_pred = _y((2, 5, 2))  # last dim = 2 => [loc, scale]
+        y_true = _t(_y((2, 5)))
+        y_pred = _t(_y((2, 5, 2)))  # last dim = 2 => [loc, scale]
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
@@ -308,22 +314,22 @@ class TestCRPSLoss:
 class TestCRPSLossWrapper:
     def test_quantile_mode(self):
         loss_fn = CRPSLossWrapper(mode="quantile", quantiles=[0.1, 0.5, 0.9])
-        y_true = _y((2, 5, 1))
-        y_pred = _y((2, 5, 3, 1))
+        y_true = _t(_y((2, 5, 1)))
+        y_pred = _t(_y((2, 5, 3, 1)))
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
     def test_gaussian_mode_dict(self):
         loss_fn = CRPSLossWrapper(mode="gaussian")
-        y_true = _y((2, 5, 1))
-        y_pred = {"loc": _y((2, 5, 1)), "scale": np.full((2, 5, 1), 0.5, dtype=np.float32)}
+        y_true = _t(_y((2, 5, 1)))
+        y_pred = {"loc": _t(_y((2, 5, 1))), "scale": _t(np.full((2, 5, 1), 0.5, dtype=np.float32))}
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 
     def test_gaussian_mode_tensor(self):
         loss_fn = CRPSLossWrapper(mode="gaussian")
-        y_true = _y((2, 5))
-        y_pred = _y((2, 5, 2))
+        y_true = _t(_y((2, 5)))
+        y_pred = _t(_y((2, 5, 2)))
         result = loss_fn(y_true, y_pred)
         assert np.isfinite(float(_to_numpy(result)))
 

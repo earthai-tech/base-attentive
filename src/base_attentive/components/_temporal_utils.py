@@ -281,7 +281,7 @@ def aggregate_multiscale_on_3d(
         # 1. Find the maximum sequence length in the list of tensors.
         max_len = 0
         for tensor in lstm_output:
-            if tensor.shape.ndims != 3:
+            if len(tensor.shape) != 3:
                 raise ValueError(
                     "For 'concat' mode, all items in `lstm_output` must be "
                     f"3D tensors, but found shape {tensor.shape}"

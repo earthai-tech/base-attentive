@@ -32,7 +32,15 @@ def _to_numpy(x):
     return np.asarray(x)
 
 
+def _t(arr):
+    """Convert numpy array to the active Keras backend tensor."""
+    import keras as _keras
+    return _keras.ops.convert_to_tensor(arr)
+
+
 pytest.importorskip("keras", reason="Keras not installed")
+
+import keras  # noqa: E402
 
 from base_attentive.components.heads import (  # noqa: E402
     CombinedHeadLoss,
@@ -82,7 +90,7 @@ class TestGaussianHead:
         head = GaussianHead(output_dim=1)
         features = np.random.randn(4, 16).astype(np.float32)
         out = head(features)
-        y_true = np.random.randn(4, 1).astype(np.float32)
+        y_true = _t(np.random.randn(4, 1).astype(np.float32))
         nll = head.nll(y_true, out["mean"], out["scale"])
         assert np.isfinite(float(_to_numpy(nll)))
 
@@ -131,7 +139,7 @@ class TestMixtureDensityHead:
         head = MixtureDensityHead(output_dim=1, num_components=2)
         features = np.random.randn(4, 16).astype(np.float32)
         out = head(features)
-        y_true = np.random.randn(4, 1).astype(np.float32)
+        y_true = _t(np.random.randn(4, 1).astype(np.float32))
         nll = head.nll(y_true, out["weights"], out["means"], out["scales"])
         assert np.isfinite(float(_to_numpy(nll)))
 
@@ -222,7 +230,7 @@ class TestCombinedHeadLoss:
 
     def test_default_loss(self):
         loss_fn = CombinedHeadLoss()
-        y = np.ones((2, 5, 1), dtype=np.float32)
+        y = _t(np.ones((2, 5, 1), dtype=np.float32))
         result = loss_fn({"default": y}, {"default": y})
         assert np.isfinite(float(_to_numpy(result)))
 
@@ -234,7 +242,7 @@ class TestCombinedHeadLoss:
             "b": (AnomalyLoss(weight=2.0), 0.5),
         }
         loss_fn = CombinedHeadLoss(heads, reduction="sum")
-        y = np.ones((2, 4, 2), dtype=np.float32)
+        y = _t(np.ones((2, 4, 2), dtype=np.float32))
         result = loss_fn({"a": y, "b": y}, {"a": y, "b": y})
         assert np.isfinite(float(_to_numpy(result)))
 
@@ -243,7 +251,7 @@ class TestCombinedHeadLoss:
 
         heads = {"x": (AnomalyLoss(), 1.0)}
         loss_fn = CombinedHeadLoss(heads, reduction="mean")
-        y = np.ones((2, 3, 1), dtype=np.float32)
+        y = _t(np.ones((2, 3, 1), dtype=np.float32))
         result = loss_fn({"x": y}, {"x": y})
         assert np.isfinite(float(_to_numpy(result)))
 
@@ -252,7 +260,7 @@ class TestCombinedHeadLoss:
 
         heads = {"x": (AnomalyLoss(), 1.0)}
         loss_fn = CombinedHeadLoss(heads, reduction="invalid")
-        y = np.ones((2, 3, 1), dtype=np.float32)
+        y = _t(np.ones((2, 3, 1), dtype=np.float32))
         with pytest.raises(ValueError):
             loss_fn({"x": y}, {"x": y})
 
@@ -261,7 +269,7 @@ class TestCombinedHeadLoss:
 
         heads = {"a": (AnomalyLoss(), 1.0)}
         loss_fn = CombinedHeadLoss(heads)
-        y = np.ones((2, 3, 1), dtype=np.float32)
+        y = _t(np.ones((2, 3, 1), dtype=np.float32))
         with pytest.raises(KeyError):
             loss_fn({"wrong_key": y}, {"wrong_key": y})
 
@@ -271,7 +279,7 @@ class TestCombinedHeadLoss:
         # Supply single-element tuple (no explicit weight)
         heads = {"a": (AnomalyLoss(),)}
         loss_fn = CombinedHeadLoss(heads)
-        y = np.ones((2, 3, 1), dtype=np.float32)
+        y = _t(np.ones((2, 3, 1), dtype=np.float32))
         result = loss_fn({"a": y}, {"a": y})
         assert np.isfinite(float(_to_numpy(result)))
 
@@ -281,7 +289,7 @@ class TestCombinedHeadLoss:
         # Supply bare callable (no tuple wrapper)
         heads = {"a": AnomalyLoss()}
         loss_fn = CombinedHeadLoss(heads)
-        y = np.ones((2, 3, 1), dtype=np.float32)
+        y = _t(np.ones((2, 3, 1), dtype=np.float32))
         result = loss_fn({"a": y}, {"a": y})
         assert np.isfinite(float(_to_numpy(result)))
 
