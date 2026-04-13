@@ -15,7 +15,6 @@ Key advantages over generic implementations:
 from __future__ import annotations
 
 from .base_attentive_v2 import (
-    _TFTemporalSelfAttentionEncoder,
     _build_tf_concat_fusion,
     _build_tf_dense_projection,
     _build_tf_last_pool,
@@ -23,6 +22,7 @@ from .base_attentive_v2 import (
     _build_tf_point_forecast_head,
     _build_tf_quantile_head,
     _build_tf_temporal_self_attention_encoder,
+    _TFTemporalSelfAttentionEncoder,
     ensure_tensorflow_v2_registered,
 )
 

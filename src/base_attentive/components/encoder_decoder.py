@@ -145,14 +145,18 @@ class TransformerEncoderBlock(Layer):
         attn_output = self.dropout1(attn_output, training=training)
 
         # Add & Norm
-        out1 = self.layernorm1(inputs + attn_output)  # Residual connection
+        out1 = self.layernorm1(
+            inputs + attn_output
+        )  # Residual connection
 
         # Feed-Forward Network
         ffn_output = self.ffn(out1)
         ffn_output = self.dropout2(ffn_output, training=training)
 
         # Add & Norm
-        output = self.layernorm2(out1 + ffn_output)  # Residual connection
+        output = self.layernorm2(
+            out1 + ffn_output
+        )  # Residual connection
 
         return output
 
@@ -197,7 +201,9 @@ class TransformerEncoderBlock(Layer):
         return cls(**config)
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="TransformerDecoderBlock")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="TransformerDecoderBlock"
+)
 class TransformerDecoderBlock(Layer):
     """
     Transformer Decoder Block:
@@ -291,7 +297,11 @@ class TransformerDecoderBlock(Layer):
         Returns:
         - output: Tensor of shape (batch_size, seq_len, embed_dim)
         """
-        if enc_output is None and isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+        if (
+            enc_output is None
+            and isinstance(inputs, (list, tuple))
+            and len(inputs) == 2
+        ):
             inputs, enc_output = inputs
 
         # Masked Multi-Head Self-Attention
@@ -305,7 +315,9 @@ class TransformerDecoderBlock(Layer):
         attn1_output = self.dropout1(attn1_output, training=training)
 
         # Add & Norm
-        out1 = self.layernorm1(inputs + attn1_output)  # Residual connection
+        out1 = self.layernorm1(
+            inputs + attn1_output
+        )  # Residual connection
 
         # Cross-Attention (Decoder attends to Encoder)
         attn2_output = self.mha2(
@@ -318,14 +330,18 @@ class TransformerDecoderBlock(Layer):
         attn2_output = self.dropout2(attn2_output, training=training)
 
         # Add & Norm
-        out2 = self.layernorm2(out1 + attn2_output)  # Residual connection
+        out2 = self.layernorm2(
+            out1 + attn2_output
+        )  # Residual connection
 
         # Feed-Forward Network
         ffn_output = self.ffn(out2)
         ffn_output = self.dropout3(ffn_output, training=training)
 
         # Add & Norm
-        output = self.layernorm3(out2 + ffn_output)  # Residual connection
+        output = self.layernorm3(
+            out2 + ffn_output
+        )  # Residual connection
 
         return output
 
@@ -370,7 +386,9 @@ class TransformerDecoderBlock(Layer):
         return cls(**config)
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="TransformerEncoderLayer")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="TransformerEncoderLayer"
+)
 class TransformerEncoderLayer(Layer, NNLearner):
     """
     A single layer of the Transformer Encoder.
@@ -424,9 +442,15 @@ class TransformerEncoderLayer(Layer, NNLearner):
             ],
             name="encoder_ffn",
         )
-        self.layernorm1 = LayerNormalization(epsilon=layer_norm_epsilon)
-        self.layernorm2 = LayerNormalization(epsilon=layer_norm_epsilon)
-        self.dropout1 = Dropout(dropout_rate)  # MHA output dropout is in MHA layer
+        self.layernorm1 = LayerNormalization(
+            epsilon=layer_norm_epsilon
+        )
+        self.layernorm2 = LayerNormalization(
+            epsilon=layer_norm_epsilon
+        )
+        self.dropout1 = Dropout(
+            dropout_rate
+        )  # MHA output dropout is in MHA layer
         self.dropout_ffn = Dropout(dropout_rate)
 
     @tf_autograph.experimental.do_not_convert
@@ -467,7 +491,9 @@ class TransformerEncoderLayer(Layer, NNLearner):
         return config
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="TransformerDecoderLayer")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="TransformerDecoderLayer"
+)
 class TransformerDecoderLayer(Layer, NNLearner):
     """
     A single layer of the Transformer Decoder.
@@ -519,9 +545,15 @@ class TransformerDecoderLayer(Layer, NNLearner):
             name="decoder_ffn",
         )
 
-        self.layernorm1 = LayerNormalization(epsilon=layer_norm_epsilon)
-        self.layernorm2 = LayerNormalization(epsilon=layer_norm_epsilon)
-        self.layernorm3 = LayerNormalization(epsilon=layer_norm_epsilon)
+        self.layernorm1 = LayerNormalization(
+            epsilon=layer_norm_epsilon
+        )
+        self.layernorm2 = LayerNormalization(
+            epsilon=layer_norm_epsilon
+        )
+        self.layernorm3 = LayerNormalization(
+            epsilon=layer_norm_epsilon
+        )
 
         # Dropout layers if needed beyond MHA's internal dropout
         self.dropout_ffn = Dropout(dropout_rate)
@@ -536,7 +568,11 @@ class TransformerDecoderLayer(Layer, NNLearner):
         # For encoder output in cross-attention
         padding_mask: TensorLike | None = None,
     ) -> Tensor:
-        if enc_output is None and isinstance(x, (list, tuple)) and len(x) == 2:
+        if (
+            enc_output is None
+            and isinstance(x, (list, tuple))
+            and len(x) == 2
+        ):
             x, enc_output = x
 
         # Masked Multi-Head Self-Attention (for decoder inputs)
@@ -580,7 +616,9 @@ class TransformerDecoderLayer(Layer, NNLearner):
         return config
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="MultiDecoder")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="MultiDecoder"
+)
 class MultiDecoder(Layer, NNLearner):
     r"""
     MultiDecoder for multi-horizon forecasting [1]_.
@@ -676,7 +714,9 @@ class MultiDecoder(Layer, NNLearner):
         self.output_dim = output_dim
         self.num_horizons = num_horizons
         # Create a Dense decoder for each horizon
-        self.decoders = [Dense(output_dim) for _ in range(num_horizons)]
+        self.decoders = [
+            Dense(output_dim) for _ in range(num_horizons)
+        ]
 
     @tf_autograph.experimental.do_not_convert
     def call(self, x, training=False):

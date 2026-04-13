@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib
 import sys
 import types
-import warnings
 
 import numpy as np
 import pytest
@@ -42,7 +41,9 @@ class _FakeTensorLike:
 
 
 class _FakeIntervalWithInclusive:
-    def __init__(self, type_, left, right, *, closed="right", inclusive=None):
+    def __init__(
+        self, type_, left, right, *, closed="right", inclusive=None
+    ):
         self.type_ = type_
         self.left = left
         self.right = right
@@ -84,18 +85,27 @@ class _FakeKerasValidationOps:
         return np.asarray(value, dtype=dtype)
 
 
-def test_top_level_runtime_helpers_cover_scalar_and_lazy_import_paths(monkeypatch):
+def test_top_level_runtime_helpers_cover_scalar_and_lazy_import_paths(
+    monkeypatch,
+):
     """The top-level runtime helpers should gracefully handle fallbacks."""
     import base_attentive as package
 
     assert package._normalize_configured_backend(None) == "tensorflow"
-    assert package._normalize_configured_backend(" pytorch ") == "torch"
+    assert (
+        package._normalize_configured_backend(" pytorch ") == "torch"
+    )
     assert package._safe_import("math").sqrt(9) == 3
-    assert package._safe_import("definitely_missing_package_xyz") is None
+    assert (
+        package._safe_import("definitely_missing_package_xyz") is None
+    )
 
     assert package._resolve_scalar(3) == 3
     assert package._resolve_scalar(_FakeTensorLike(5)) == 5
-    assert package._resolve_scalar(_FakeTensorLike(7, item_error=True)) == 7
+    assert (
+        package._resolve_scalar(_FakeTensorLike(7, item_error=True))
+        == 7
+    )
 
     fake_tf = types.SimpleNamespace(get_static_value=lambda value: 11)
     monkeypatch.setattr(
@@ -106,7 +116,9 @@ def test_top_level_runtime_helpers_cover_scalar_and_lazy_import_paths(monkeypatc
     assert package._get_static_value(object()) == 11
 
     broken_tf = types.SimpleNamespace(
-        get_static_value=lambda value: (_ for _ in ()).throw(RuntimeError("boom"))
+        get_static_value=lambda value: (_ for _ in ()).throw(
+            RuntimeError("boom")
+        )
     )
     monkeypatch.setattr(
         package,
@@ -117,13 +129,20 @@ def test_top_level_runtime_helpers_cover_scalar_and_lazy_import_paths(monkeypatc
 
     decorator = package._KerasAutographExperimental.do_not_convert()
     assert decorator("sentinel") == "sentinel"
-    assert package._KerasAutographExperimental.do_not_convert("value") == "value"
+    assert (
+        package._KerasAutographExperimental.do_not_convert("value")
+        == "value"
+    )
 
     assert package._KerasDebuggingNamespace.assert_equal(4, 4) is None
     with pytest.raises(AssertionError, match="mismatch"):
-        package._KerasDebuggingNamespace.assert_equal(1, 2, message="mismatch")
+        package._KerasDebuggingNamespace.assert_equal(
+            1, 2, message="mismatch"
+        )
 
-    fake_linalg = types.SimpleNamespace(band_part=lambda x, n1, n2: ("band", x, n1, n2))
+    fake_linalg = types.SimpleNamespace(
+        band_part=lambda x, n1, n2: ("band", x, n1, n2)
+    )
     monkeypatch.setattr(
         package,
         "_safe_import",
@@ -131,10 +150,17 @@ def test_top_level_runtime_helpers_cover_scalar_and_lazy_import_paths(monkeypatc
         if name == "tensorflow"
         else None,
     )
-    assert package._KerasLinalgNamespace.band_part("x", 1, 0) == ("band", "x", 1, 0)
+    assert package._KerasLinalgNamespace.band_part("x", 1, 0) == (
+        "band",
+        "x",
+        1,
+        0,
+    )
 
     monkeypatch.setattr(package, "_safe_import", lambda name: None)
-    with pytest.raises(ImportError, match="only available with TensorFlow"):
+    with pytest.raises(
+        ImportError, match="only available with TensorFlow"
+    ):
         package._KerasLinalgNamespace.band_part("x", 1, 0)
 
 
@@ -153,27 +179,47 @@ def test_top_level_runtime_backend_resolution_prefers_env_then_detected_backend(
     assert package._resolve_runtime_backend() == "jax"
 
     monkeypatch.delenv("KERAS_BACKEND", raising=False)
-    monkeypatch.setattr(package, "select_best_backend", lambda require_supported=False: "torch")
+    monkeypatch.setattr(
+        package,
+        "select_best_backend",
+        lambda require_supported=False: "torch",
+    )
     assert package._resolve_runtime_backend() == "torch"
 
-    monkeypatch.setattr(package, "select_best_backend", lambda require_supported=False: None)
-    monkeypatch.setattr(package, "ensure_default_backend", lambda **kwargs: "tensorflow")
+    monkeypatch.setattr(
+        package,
+        "select_best_backend",
+        lambda require_supported=False: None,
+    )
+    monkeypatch.setattr(
+        package,
+        "ensure_default_backend",
+        lambda **kwargs: "tensorflow",
+    )
     assert package._resolve_runtime_backend() == "tensorflow"
 
 
-def test_top_level_keras_deps_resolve_symbols_from_keras_and_tensorflow(monkeypatch):
+def test_top_level_keras_deps_resolve_symbols_from_keras_and_tensorflow(
+    monkeypatch,
+):
     """The runtime namespace resolver should search keras, then TensorFlow."""
     import base_attentive as package
 
-    fake_reduction = types.SimpleNamespace(AUTO="auto", SUM="sum", NONE="none")
+    fake_reduction = types.SimpleNamespace(
+        AUTO="auto", SUM="sum", NONE="none"
+    )
 
     fake_keras = types.SimpleNamespace(
         __name__="keras",
         activations=types.SimpleNamespace(relu="relu"),
         random=types.SimpleNamespace(normal="normal"),
         ops=types.SimpleNamespace(concatenate="concat-op"),
-        saving=types.SimpleNamespace(register_keras_serializable="register-op"),
-        losses=types.SimpleNamespace(get="loss-get", Reduction=fake_reduction),
+        saving=types.SimpleNamespace(
+            register_keras_serializable="register-op"
+        ),
+        losses=types.SimpleNamespace(
+            get="loss-get", Reduction=fake_reduction
+        ),
     )
     fake_tf = types.SimpleNamespace(
         zeros="tf-zeros",
@@ -182,7 +228,9 @@ def test_top_level_keras_deps_resolve_symbols_from_keras_and_tensorflow(monkeypa
         Assert="tf-assert",
         debugging=types.SimpleNamespace(assert_equal="tf-debug"),
         linalg="tf-linalg",
-        keras=types.SimpleNamespace(utils=types.SimpleNamespace(custom="custom-util")),
+        keras=types.SimpleNamespace(
+            utils=types.SimpleNamespace(custom="custom-util")
+        ),
     )
 
     monkeypatch.setattr(package, "KERAS_BACKEND", "tensorflow")
@@ -223,13 +271,20 @@ def test_top_level_keras_deps_resolve_symbols_from_keras_and_tensorflow(monkeypa
     assert fallback_deps.Tensor is object
     assert fallback_deps.TensorShape is tuple
 
-    with pytest.raises(ImportError, match="Cannot import missing_symbol"):
+    with pytest.raises(
+        ImportError, match="Cannot import missing_symbol"
+    ):
         _ = fallback_deps.missing_symbol
 
-    assert "Keras is required for models" in package.dependency_message("models")
+    assert (
+        "Keras is required for models"
+        in package.dependency_message("models")
+    )
 
 
-def test_top_level_lazy_export_handles_success_and_failure(monkeypatch):
+def test_top_level_lazy_export_handles_success_and_failure(
+    monkeypatch,
+):
     """The package-level ``BaseAttentive`` export should remain lazy."""
     import base_attentive as package
 
@@ -239,10 +294,14 @@ def test_top_level_lazy_export_handles_success_and_failure(monkeypatch):
         "base_attentive.core",
         types.SimpleNamespace(BaseAttentive="BaseAttentiveClass"),
     )
-    assert package.__getattr__("BaseAttentive") == "BaseAttentiveClass"
+    assert (
+        package.__getattr__("BaseAttentive") == "BaseAttentiveClass"
+    )
 
     package.__dict__.pop("BaseAttentive", None)
-    monkeypatch.setitem(sys.modules, "base_attentive.core", types.ModuleType("core"))
+    monkeypatch.setitem(
+        sys.modules, "base_attentive.core", types.ModuleType("core")
+    )
     with pytest.raises(AttributeError):
         package.__getattr__("BaseAttentive")
 
@@ -284,47 +343,78 @@ def test_api_property_handles_param_discovery_and_nested_updates():
     with pytest.raises(ValueError, match="Invalid parameter"):
         parent.set_params(unknown=1)
 
-    with pytest.raises(RuntimeError, match="should not have variable positional"):
+    with pytest.raises(
+        RuntimeError, match="should not have variable positional"
+    ):
         Bad._get_param_names()
 
 
 def test_models_and_generic_utils_cover_alias_and_error_branches():
     """The model helper modules should normalize aliases and defaults."""
-    from base_attentive.models import resolve_attention_levels as resolve_from_package
-    from base_attentive.models import set_default_params as set_defaults_from_package
-    from base_attentive.models.comp_utils import resolve_attention_levels
+    from base_attentive.models import (
+        resolve_attention_levels as resolve_from_package,
+    )
+    from base_attentive.models import (
+        set_default_params as set_defaults_from_package,
+    )
+    from base_attentive.models.comp_utils import (
+        resolve_attention_levels,
+    )
     from base_attentive.models.utils import set_default_params
     from base_attentive.utils.generic_utils import select_mode
 
     assert resolve_from_package()["attention_heads"] == 4
-    assert set_defaults_from_package({"a": 1}, b=2) == {"a": 1, "b": 2}
+    assert set_defaults_from_package({"a": 1}, b=2) == {
+        "a": 1,
+        "b": 2,
+    }
     assert resolve_attention_levels("cross_attention") == ["cross"]
-    assert resolve_attention_levels(["hier_att", "memory_augmented_attention"]) == [
+    assert resolve_attention_levels(
+        ["hier_att", "memory_augmented_attention"]
+    ) == [
         "hierarchical",
         "memory",
     ]
     with pytest.raises(ValueError, match="Unknown attention level"):
         resolve_attention_levels("unknown")
-    with pytest.raises(TypeError, match="must be a dict, string, or sequence"):
+    with pytest.raises(
+        TypeError, match="must be a dict, string, or sequence"
+    ):
         resolve_attention_levels(42)
-    with pytest.raises(TypeError, match="must contain only string values"):
+    with pytest.raises(
+        TypeError, match="must contain only string values"
+    ):
         resolve_attention_levels(["cross", 1])
 
-    quantiles, scales, return_sequences = set_default_params([0.1, 0.9], None, "mean")
+    quantiles, scales, return_sequences = set_default_params(
+        [0.1, 0.9], None, "mean"
+    )
     assert quantiles == [0.1, 0.9]
     assert scales == [1]
     assert return_sequences is True
 
     assert select_mode(None, default="fallback") == "fallback"
-    assert select_mode("tft-like", canonical=["hybrid", "transformer"]) == "tft_like"
-    assert select_mode("transformer", canonical=["hybrid", "transformer"]) == "transformer"
+    assert (
+        select_mode("tft-like", canonical=["hybrid", "transformer"])
+        == "tft_like"
+    )
+    assert (
+        select_mode(
+            "transformer", canonical=["hybrid", "transformer"]
+        )
+        == "transformer"
+    )
 
 
 def test_dependency_decorator_warns_or_ignores_missing_packages():
     """Dependency guards should support raise, warn, and ignore modes."""
     from base_attentive.utils.deps_utils import ensure_pkg
 
-    @ensure_pkg("definitely_missing_package_xyz", error="warn", extra="Install it.")
+    @ensure_pkg(
+        "definitely_missing_package_xyz",
+        error="warn",
+        extra="Install it.",
+    )
     def warned():
         return "warned"
 
@@ -341,30 +431,51 @@ def test_dependency_decorator_warns_or_ignores_missing_packages():
     def raised():
         return "raised"
 
-    with pytest.raises(ImportError, match="required but not installed"):
+    with pytest.raises(
+        ImportError, match="required but not installed"
+    ):
         raised()
 
 
-def test_validation_module_covers_verbose_and_reduction_branches(monkeypatch, caplog):
+def test_validation_module_covers_verbose_and_reduction_branches(
+    monkeypatch, caplog
+):
     """Validation helpers should cover runtime logging and reduction variants."""
     import base_attentive.validation as validation_module
 
-    monkeypatch.setattr(validation_module, "KERAS_BACKEND", "tensorflow")
-    monkeypatch.setattr(validation_module, "KERAS_DEPS", _FakeKerasValidationOps())
+    monkeypatch.setattr(
+        validation_module, "KERAS_BACKEND", "tensorflow"
+    )
+    monkeypatch.setattr(
+        validation_module, "KERAS_DEPS", _FakeKerasValidationOps()
+    )
 
     assert validation_module._has_runtime() is True
-    assert validation_module._normalize_inputs((1, 2, 3, 4)) == [1, 2, 3]
+    assert validation_module._normalize_inputs((1, 2, 3, 4)) == [
+        1,
+        2,
+        3,
+    ]
 
     caplog.clear()
     with caplog.at_level("INFO"):
-        static, dynamic, future = validation_module.validate_model_inputs(
-            [np.ones((2, 1)), np.ones((2, 3, 1)), np.ones((2, 2, 1))],
-            verbose=1,
+        static, dynamic, future = (
+            validation_module.validate_model_inputs(
+                [
+                    np.ones((2, 1)),
+                    np.ones((2, 3, 1)),
+                    np.ones((2, 2, 1)),
+                ],
+                verbose=1,
+            )
         )
     assert static.shape == (2, 1)
     assert dynamic.shape == (2, 3, 1)
     assert future.shape == (2, 2, 1)
-    assert any("Validating input tensors" in message for message in caplog.messages)
+    assert any(
+        "Validating input tensors" in message
+        for message in caplog.messages
+    )
 
     static, dynamic, future = validation_module.validate_model_inputs(
         ["__boom__", None, np.ones((1, 2, 1))],
@@ -382,7 +493,9 @@ def test_validation_module_covers_verbose_and_reduction_branches(monkeypatch, ca
     assert reduced_rank4.shape == (2, 3, 1)
 
     rank3 = np.arange(12, dtype=np.float32).reshape(2, 2, 3)
-    reduced_rank3 = validation_module.maybe_reduce_quantiles_bh(rank3, reduction="sum")
+    reduced_rank3 = validation_module.maybe_reduce_quantiles_bh(
+        rank3, reduction="sum"
+    )
     assert reduced_rank3.shape == (2, 2)
 
     ensured = validation_module.ensure_bh1(
@@ -395,30 +508,44 @@ def test_validation_module_covers_verbose_and_reduction_branches(monkeypatch, ca
     assert ensured.dtype == np.float32
 
 
-def test_compat_module_covers_interval_variants_and_validate_params(monkeypatch):
+def test_compat_module_covers_interval_variants_and_validate_params(
+    monkeypatch,
+):
     """The sklearn compat layer should handle old and new call signatures."""
     import base_attentive.compat as compat_module
 
     monkeypatch.setattr(compat_module, "sklearn_Interval", None)
-    with pytest.raises(ImportError, match="does not have Interval support"):
+    with pytest.raises(
+        ImportError, match="does not have Interval support"
+    ):
         compat_module.Interval(int, 0, 1)
 
-    monkeypatch.setattr(compat_module, "sklearn_Interval", _FakeIntervalWithInclusive)
+    monkeypatch.setattr(
+        compat_module, "sklearn_Interval", _FakeIntervalWithInclusive
+    )
     interval = compat_module.Interval(int, 0, 10, inclusive=True)
     assert interval.type_.__name__ == "Integral"
     assert interval.inclusive is True
 
-    monkeypatch.setattr(compat_module, "sklearn_Interval", _FakeIntervalWithoutInclusive)
+    monkeypatch.setattr(
+        compat_module,
+        "sklearn_Interval",
+        _FakeIntervalWithoutInclusive,
+    )
     interval = compat_module.Interval(float, 0.0, 1.0, closed="both")
     assert interval.closed == "both"
 
-    monkeypatch.setattr(compat_module, "sklearn_validate_params", None)
+    monkeypatch.setattr(
+        compat_module, "sklearn_validate_params", None
+    )
     decorator = compat_module.validate_params({})
     assert decorator(lambda x: x)(1) == 1
 
     calls = {}
 
-    def fake_validate_with_prefer(params, *args, prefer_skip_nested_validation=None, **kwargs):
+    def fake_validate_with_prefer(
+        params, *args, prefer_skip_nested_validation=None, **kwargs
+    ):
         calls["prefer"] = prefer_skip_nested_validation
 
         def decorator(func):
@@ -426,8 +553,14 @@ def test_compat_module_covers_interval_variants_and_validate_params(monkeypatch)
 
         return decorator
 
-    monkeypatch.setattr(compat_module, "sklearn_validate_params", fake_validate_with_prefer)
-    compat_module.validate_params({}, prefer_skip_nested_validation=False)
+    monkeypatch.setattr(
+        compat_module,
+        "sklearn_validate_params",
+        fake_validate_with_prefer,
+    )
+    compat_module.validate_params(
+        {}, prefer_skip_nested_validation=False
+    )
     assert calls["prefer"] is False
 
     def fake_validate_without_prefer(params, *args, **kwargs):
@@ -438,21 +571,33 @@ def test_compat_module_covers_interval_variants_and_validate_params(monkeypatch)
 
         return decorator
 
-    monkeypatch.setattr(compat_module, "sklearn_validate_params", fake_validate_without_prefer)
-    compat_module.validate_params({}, prefer_skip_nested_validation=False)
+    monkeypatch.setattr(
+        compat_module,
+        "sklearn_validate_params",
+        fake_validate_without_prefer,
+    )
+    compat_module.validate_params(
+        {}, prefer_skip_nested_validation=False
+    )
     assert "prefer_skip_nested_validation" not in calls["kwargs"]
 
 
 def test_types_module_exports_aliases():
     """Type aliases should stay importable for callers and docs."""
-    from base_attentive.compat.types import DatasetLike, PathLike, TensorLike
+    from base_attentive.compat.types import (
+        DatasetLike,
+        PathLike,
+        TensorLike,
+    )
 
     assert TensorLike is object or TensorLike is not None
     assert DatasetLike is object or DatasetLike is not None
     assert PathLike is not None
 
 
-def test_version_check_utilities_cover_metadata_and_error_paths(monkeypatch):
+def test_version_check_utilities_cover_metadata_and_error_paths(
+    monkeypatch,
+):
     """Version helpers should parse runtime versions across fallbacks."""
     import base_attentive.backend.version_check as version_check
 
@@ -460,11 +605,21 @@ def test_version_check_utilities_cover_metadata_and_error_paths(monkeypatch):
     assert version_check.version_at_least("2.15.0", "2.10.0") is True
     assert version_check.get_backend_version("unknown") is None
 
-    monkeypatch.setattr(version_check.importlib.util, "find_spec", lambda name: None)
+    monkeypatch.setattr(
+        version_check.importlib.util, "find_spec", lambda name: None
+    )
     assert version_check.get_backend_version("tensorflow") is None
 
-    monkeypatch.setattr(version_check.importlib.util, "find_spec", lambda name: object())
-    monkeypatch.setitem(sys.modules, "tensorflow", types.SimpleNamespace(__version__="9.9.9"))
+    monkeypatch.setattr(
+        version_check.importlib.util,
+        "find_spec",
+        lambda name: object(),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "tensorflow",
+        types.SimpleNamespace(__version__="9.9.9"),
+    )
     assert version_check.get_backend_version("tensorflow") == "9.9.9"
     monkeypatch.delitem(sys.modules, "tensorflow", raising=False)
 
@@ -478,7 +633,11 @@ def test_version_check_utilities_cover_metadata_and_error_paths(monkeypatch):
             return "2.16.1"
         raise AssertionError(name)
 
-    monkeypatch.setattr(version_check.importlib.metadata, "version", fake_metadata_version)
+    monkeypatch.setattr(
+        version_check.importlib.metadata,
+        "version",
+        fake_metadata_version,
+    )
     assert version_check.get_backend_version("tensorflow") == "2.16.1"
     assert calls == ["tensorflow", "tensorflow-cpu"]
 
@@ -493,14 +652,30 @@ def test_version_check_utilities_cover_metadata_and_error_paths(monkeypatch):
         False,
         "TensorFlow not installed",
     )
-    assert version_check.check_tensorflow_compatibility("2.9.0")[0] is False
-    assert version_check.check_tensorflow_compatibility("2.10.0")[0] is True
-    assert version_check.check_torch_compatibility(None) == (False, "PyTorch not installed")
-    assert version_check.check_torch_compatibility("1.13.0")[0] is False
-    assert version_check.check_torch_compatibility("2.0.1+cu118")[0] is True
+    assert (
+        version_check.check_tensorflow_compatibility("2.9.0")[0]
+        is False
+    )
+    assert (
+        version_check.check_tensorflow_compatibility("2.10.0")[0]
+        is True
+    )
+    assert version_check.check_torch_compatibility(None) == (
+        False,
+        "PyTorch not installed",
+    )
+    assert (
+        version_check.check_torch_compatibility("1.13.0")[0] is False
+    )
+    assert (
+        version_check.check_torch_compatibility("2.0.1+cu118")[0]
+        is True
+    )
 
 
-def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypatch):
+def test_detector_and_backend_runtime_cover_selection_and_install_paths(
+    monkeypatch,
+):
     """Backend selection should cover environment, fallback, and install paths."""
     import subprocess
 
@@ -551,12 +726,20 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
             "pytorch": ExperimentalBackend,
         },
     )
-    monkeypatch.setattr(detector, "_CANONICAL_BACKENDS", ("tensorflow", "jax", "torch"))
-    monkeypatch.setattr(detector, "get_backend_version", lambda name: f"{name}-1.0")
+    monkeypatch.setattr(
+        detector,
+        "_CANONICAL_BACKENDS",
+        ("tensorflow", "jax", "torch"),
+    )
+    monkeypatch.setattr(
+        detector, "get_backend_version", lambda name: f"{name}-1.0"
+    )
 
     detected = detector.detect_available_backends()
     assert detected["tensorflow"]["available"] is True
-    assert detected["tensorflow"]["supports_base_attentive_v2"] is True
+    assert (
+        detected["tensorflow"]["supports_base_attentive_v2"] is True
+    )
     assert detected["torch"]["error"] == "boom"
 
     monkeypatch.setenv("KERAS_BACKEND", "jax")
@@ -564,8 +747,16 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
     monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "jax")
     assert detector.select_best_backend(prefer="tensorflow") == "jax"
     monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
-    assert detector.select_best_backend(prefer="tensorflow") == "tensorflow"
-    assert detector.select_best_backend(prefer="torch", require_supported=False) == "tensorflow"
+    assert (
+        detector.select_best_backend(prefer="tensorflow")
+        == "tensorflow"
+    )
+    assert (
+        detector.select_best_backend(
+            prefer="torch", require_supported=False
+        )
+        == "tensorflow"
+    )
 
     monkeypatch.setattr(
         detector,
@@ -576,27 +767,59 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
             "torch": {"available": False, "supported": False},
         },
     )
-    assert detector.select_best_backend(require_supported=False) == "jax"
+    assert (
+        detector.select_best_backend(require_supported=False) == "jax"
+    )
 
-    monkeypatch.setattr(detector, "select_best_backend", lambda require_supported: "tensorflow" if require_supported else None)
+    monkeypatch.setattr(
+        detector,
+        "select_best_backend",
+        lambda require_supported: "tensorflow"
+        if require_supported
+        else None,
+    )
     assert detector.ensure_default_backend() == "tensorflow"
 
-    monkeypatch.setattr(detector, "select_best_backend", lambda require_supported: None if require_supported else "jax")
+    monkeypatch.setattr(
+        detector,
+        "select_best_backend",
+        lambda require_supported: None
+        if require_supported
+        else "jax",
+    )
     assert detector.ensure_default_backend() == "jax"
 
-    monkeypatch.setattr(detector, "select_best_backend", lambda require_supported: None)
-    with pytest.raises(RuntimeError, match="No compatible backend installed"):
+    monkeypatch.setattr(
+        detector,
+        "select_best_backend",
+        lambda require_supported: None,
+    )
+    with pytest.raises(
+        RuntimeError, match="No compatible backend installed"
+    ):
         detector.ensure_default_backend(auto_install=False)
 
     installs = []
-    monkeypatch.setattr(detector.subprocess, "check_call", lambda cmd, stdout=None, stderr=None: installs.append(cmd) or 0)
-    assert detector.ensure_default_backend(auto_install=True, install_tensorflow=False) == "jax"
+    monkeypatch.setattr(
+        detector.subprocess,
+        "check_call",
+        lambda cmd, stdout=None, stderr=None: installs.append(cmd)
+        or 0,
+    )
+    assert (
+        detector.ensure_default_backend(
+            auto_install=True, install_tensorflow=False
+        )
+        == "jax"
+    )
     assert installs[0][-1] == "jax"
 
     monkeypatch.setattr(
         detector.subprocess,
         "check_call",
-        lambda *args, **kwargs: (_ for _ in ()).throw(subprocess.CalledProcessError(1, "pip")),
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            subprocess.CalledProcessError(1, "pip")
+        ),
     )
     with pytest.raises(RuntimeError, match="Failed to install"):
         detector.ensure_default_backend(auto_install=True)
@@ -611,7 +834,10 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
             "pytorch": ExperimentalBackend,
         },
     )
-    assert detector.get_available_backends() == ["tensorflow", "torch"]
+    assert detector.get_available_backends() == [
+        "tensorflow",
+        "torch",
+    ]
 
     fake_keras = types.SimpleNamespace(
         layers=types.SimpleNamespace(
@@ -659,23 +885,52 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
             "pytorch": ExperimentalBackend,
         },
     )
-    monkeypatch.setattr(backend_module, "normalize_backend_name", lambda name: str(name).strip().lower())
-    monkeypatch.setattr(backend_module, "get_available_backends", lambda: ["jax"])
-    monkeypatch.setattr(backend_module, "select_best_backend", lambda require_supported=True: "tensorflow")
-    monkeypatch.setattr(backend_module, "ensure_default_backend", lambda auto_install=True: "tensorflow")
-    monkeypatch.setattr(backend_module, "get_backend_version", lambda name: f"{name}-version")
-    monkeypatch.setattr(backend_module, "check_tensorflow_compatibility", lambda: (False, "tf warn"))
-    monkeypatch.setattr(backend_module, "_CURRENT_BACKEND", AvailableBackend())
+    monkeypatch.setattr(
+        backend_module,
+        "normalize_backend_name",
+        lambda name: str(name).strip().lower(),
+    )
+    monkeypatch.setattr(
+        backend_module, "get_available_backends", lambda: ["jax"]
+    )
+    monkeypatch.setattr(
+        backend_module,
+        "select_best_backend",
+        lambda require_supported=True: "tensorflow",
+    )
+    monkeypatch.setattr(
+        backend_module,
+        "ensure_default_backend",
+        lambda auto_install=True: "tensorflow",
+    )
+    monkeypatch.setattr(
+        backend_module,
+        "get_backend_version",
+        lambda name: f"{name}-version",
+    )
+    monkeypatch.setattr(
+        backend_module,
+        "check_tensorflow_compatibility",
+        lambda: (False, "tf warn"),
+    )
+    monkeypatch.setattr(
+        backend_module, "_CURRENT_BACKEND", AvailableBackend()
+    )
     monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
     monkeypatch.delenv("KERAS_BACKEND", raising=False)
 
-    assert backend_module.get_backend() is backend_module._CURRENT_BACKEND
+    assert (
+        backend_module.get_backend()
+        is backend_module._CURRENT_BACKEND
+    )
 
     backend_module._CURRENT_BACKEND = None
     assert isinstance(backend_module.get_backend(), AvailableBackend)
     with pytest.raises(ValueError, match="Unknown backend"):
         backend_module.get_backend("invalid")
-    with pytest.raises(ValueError, match="Backend 'torch' is not available"):
+    with pytest.raises(
+        ValueError, match="Backend 'torch' is not available"
+    ):
         backend_module.get_backend("torch")
 
     backend_module._CURRENT_BACKEND = None
@@ -695,7 +950,12 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
     monkeypatch.setattr(
         backend_module,
         "_BACKENDS",
-        {"tensorflow": ExplodingBackend, "jax": ExperimentalBackend, "torch": MissingBackend, "pytorch": ExperimentalBackend},
+        {
+            "tensorflow": ExplodingBackend,
+            "jax": ExperimentalBackend,
+            "torch": MissingBackend,
+            "pytorch": ExperimentalBackend,
+        },
     )
     caps = backend_module.get_backend_capabilities("tensorflow")
     assert caps["available"] is False
@@ -704,7 +964,12 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
     monkeypatch.setattr(
         backend_module,
         "_BACKENDS",
-        {"tensorflow": AvailableBackend, "jax": ExperimentalBackend, "torch": MissingBackend, "pytorch": ExperimentalBackend},
+        {
+            "tensorflow": AvailableBackend,
+            "jax": ExperimentalBackend,
+            "torch": MissingBackend,
+            "pytorch": ExperimentalBackend,
+        },
     )
     import base_attentive.backend.base as backend_base
 
@@ -713,17 +978,32 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypa
         "_read_loaded_keras_backend",
         lambda: "jax",
     )
-    monkeypatch.setattr(backend_module, "get_backend", lambda name=None: AvailableBackend())
+    monkeypatch.setattr(
+        backend_module,
+        "get_backend",
+        lambda name=None: AvailableBackend(),
+    )
     with pytest.warns(RuntimeWarning):
         backend = backend_module.set_backend("tensorflow")
     assert isinstance(backend, AvailableBackend)
     assert backend_module._CURRENT_BACKEND is backend
-    assert backend_module.os.environ["BASE_ATTENTIVE_BACKEND"] == "tensorflow"
+    assert (
+        backend_module.os.environ["BASE_ATTENTIVE_BACKEND"]
+        == "tensorflow"
+    )
     assert backend_module.os.environ["KERAS_BACKEND"] == "tensorflow"
 
     monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
     monkeypatch.delenv("KERAS_BACKEND", raising=False)
-    monkeypatch.setattr(backend_module, "select_best_backend", lambda require_supported=True: "jax" if require_supported else None)
+    monkeypatch.setattr(
+        backend_module,
+        "select_best_backend",
+        lambda require_supported=True: "jax"
+        if require_supported
+        else None,
+    )
     backend_module._auto_initialize()
-    assert backend_module.os.environ["BASE_ATTENTIVE_BACKEND"] == "jax"
+    assert (
+        backend_module.os.environ["BASE_ATTENTIVE_BACKEND"] == "jax"
+    )
     assert backend_module.os.environ["KERAS_BACKEND"] == "jax"

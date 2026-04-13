@@ -9,7 +9,10 @@ import types
 import numpy as np
 
 from base_attentive.config import normalize_base_attentive_spec
-from base_attentive.registry import ComponentRegistry, get_backend_capability_report
+from base_attentive.registry import (
+    ComponentRegistry,
+    get_backend_capability_report,
+)
 
 
 def test_normalize_base_attentive_spec_applies_defaults_and_aliases():
@@ -62,8 +65,14 @@ def test_normalize_base_attentive_spec_adds_temporal_encoder_defaults():
     )
 
     assert spec.attention_heads == 4
-    assert spec.components.dynamic_encoder == "encoder.temporal_self_attention"
-    assert spec.components.future_encoder == "encoder.temporal_self_attention"
+    assert (
+        spec.components.dynamic_encoder
+        == "encoder.temporal_self_attention"
+    )
+    assert (
+        spec.components.future_encoder
+        == "encoder.temporal_self_attention"
+    )
 
 
 def test_backend_capability_report_exposes_v2_support():
@@ -80,19 +89,32 @@ def test_component_registry_prefers_backend_specific_registration():
     """Registry resolution should prefer exact backend matches."""
     registry = ComponentRegistry()
 
-    registry.register("head.point_forecast", lambda **_: "generic", backend="generic")
-    registry.register("head.point_forecast", lambda **_: "torch", backend="torch")
+    registry.register(
+        "head.point_forecast",
+        lambda **_: "generic",
+        backend="generic",
+    )
+    registry.register(
+        "head.point_forecast", lambda **_: "torch", backend="torch"
+    )
 
     assert (
-        registry.resolve("head.point_forecast", backend="torch").backend == "torch"
+        registry.resolve(
+            "head.point_forecast", backend="torch"
+        ).backend
+        == "torch"
     )
     assert (
-        registry.resolve("head.point_forecast", backend="tensorflow").backend
+        registry.resolve(
+            "head.point_forecast", backend="tensorflow"
+        ).backend
         == "generic"
     )
 
 
-def test_import_and_run_base_attentive_v2_with_fake_keras_runtime(monkeypatch):
+def test_import_and_run_base_attentive_v2_with_fake_keras_runtime(
+    monkeypatch,
+):
     """The experimental V2 model should run on a lightweight fake Keras runtime."""
 
     class FakeModel:
@@ -132,7 +154,9 @@ def test_import_and_run_base_attentive_v2_with_fake_keras_runtime(monkeypatch):
             return np.asarray(inputs, dtype=np.float32)
 
     class FakeMultiHeadAttention:
-        def __init__(self, num_heads, key_dim, dropout=0.0, name=None):
+        def __init__(
+            self, num_heads, key_dim, dropout=0.0, name=None
+        ):
             self.num_heads = num_heads
             self.key_dim = key_dim
             self.dropout = dropout
@@ -160,7 +184,9 @@ def test_import_and_run_base_attentive_v2_with_fake_keras_runtime(monkeypatch):
         Layer=object,
     )
     fake_keras.losses = types.SimpleNamespace(
-        Reduction=types.SimpleNamespace(AUTO="auto", SUM="sum", NONE="none"),
+        Reduction=types.SimpleNamespace(
+            AUTO="auto", SUM="sum", NONE="none"
+        ),
         get=lambda config: config,
     )
     fake_keras.saving = types.SimpleNamespace(
@@ -235,7 +261,9 @@ def test_import_and_run_base_attentive_v2_with_fake_keras_runtime(monkeypatch):
 
         assert quantile_outputs.shape == (2, 4, 3, 1)
 
-        restored = BaseAttentiveV2.from_config(quantile_model.get_config())
+        restored = BaseAttentiveV2.from_config(
+            quantile_model.get_config()
+        )
         assert restored.spec.head_type == "quantile"
         assert restored.spec.quantiles == (0.1, 0.5, 0.9)
     finally:

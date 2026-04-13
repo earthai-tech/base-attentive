@@ -8,7 +8,10 @@ from typing import Any
 
 from .. import KERAS_BACKEND, KERAS_DEPS
 from ..backend import normalize_backend_name
-from ..registry import BackendCapabilityReport, get_backend_capability_report
+from ..registry import (
+    BackendCapabilityReport,
+    get_backend_capability_report,
+)
 
 
 def _resolve_optional_attr(namespace: Any, name: str) -> Any:
@@ -34,7 +37,9 @@ class BackendContext:
     def layers(self) -> Any:
         return SimpleNamespace(
             Dense=self.keras_deps.Dense,
-            Dropout=_resolve_optional_attr(self.keras_deps, "Dropout"),
+            Dropout=_resolve_optional_attr(
+                self.keras_deps, "Dropout"
+            ),
             Layer=self.keras_deps.Layer,
             Model=self.keras_deps.Model,
             MultiHeadAttention=_resolve_optional_attr(
@@ -49,8 +54,12 @@ class BackendContext:
 
     @classmethod
     def current(cls, name: str | None = None) -> "BackendContext":
-        normalized_name = normalize_backend_name(name or KERAS_BACKEND)
-        capability_report = get_backend_capability_report(normalized_name)
+        normalized_name = normalize_backend_name(
+            name or KERAS_BACKEND
+        )
+        capability_report = get_backend_capability_report(
+            normalized_name
+        )
         return cls(
             name=normalized_name,
             capability_report=capability_report,

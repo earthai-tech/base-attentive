@@ -83,7 +83,9 @@ class _TemporalSelfAttentionEncoder:
         )
 
     def __call__(self, inputs, training: bool = False):
-        attention_output = self.attention(inputs, inputs, training=training)
+        attention_output = self.attention(
+            inputs, inputs, training=training
+        )
         encoded = self.norm1(inputs + attention_output)
         ffn_output = self.ffn_hidden(encoded)
         ffn_output = self.ffn_output(ffn_output)
@@ -115,7 +117,9 @@ def _build_temporal_self_attention_encoder(
     )
 
 
-def _build_mean_pool(*, context, axis: int = 1, name: str | None = None):
+def _build_mean_pool(
+    *, context, axis: int = 1, name: str | None = None
+):
     del name
 
     def pool(inputs):
@@ -124,11 +128,15 @@ def _build_mean_pool(*, context, axis: int = 1, name: str | None = None):
     return pool
 
 
-def _build_last_pool(*, context, axis: int = 1, name: str | None = None):
+def _build_last_pool(
+    *, context, axis: int = 1, name: str | None = None
+):
     del context, name
 
     if axis != 1:
-        raise ValueError("generic last-pool currently supports axis=1 only.")
+        raise ValueError(
+            "generic last-pool currently supports axis=1 only."
+        )
 
     def pool(inputs):
         return inputs[:, -1, :]
@@ -136,13 +144,19 @@ def _build_last_pool(*, context, axis: int = 1, name: str | None = None):
     return pool
 
 
-def _build_concat_fusion(*, context, axis: int = -1, name: str | None = None):
+def _build_concat_fusion(
+    *, context, axis: int = -1, name: str | None = None
+):
     del name
 
     def fuse(features):
-        active = [feature for feature in features if feature is not None]
+        active = [
+            feature for feature in features if feature is not None
+        ]
         if not active:
-            raise ValueError("fusion received no active feature tensors.")
+            raise ValueError(
+                "fusion received no active feature tensors."
+            )
         if len(active) == 1:
             return active[0]
         return context.ops.concatenate(active, axis=axis)
@@ -150,7 +164,9 @@ def _build_concat_fusion(*, context, axis: int = -1, name: str | None = None):
     return fuse
 
 
-def _build_point_forecast_head(*, context, units: int, name: str | None = None):
+def _build_point_forecast_head(
+    *, context, units: int, name: str | None = None
+):
     return context.layers.Dense(units, name=name)
 
 
@@ -265,7 +281,10 @@ def _assemble_base_attentive_v2(
     )
 
     dropout = None
-    if spec.dropout_rate > 0 and backend_context.layers.Dropout is not None:
+    if (
+        spec.dropout_rate > 0
+        and backend_context.layers.Dropout is not None
+    ):
         dropout = backend_context.layers.Dropout(
             spec.dropout_rate,
             name="v2_dropout",
@@ -292,7 +311,9 @@ def ensure_generic_v2_registered(
     model_registry: ModelRegistry | None = None,
 ):
     """Register the generic V2 builders once."""
-    active_component_registry = component_registry or DEFAULT_COMPONENT_REGISTRY
+    active_component_registry = (
+        component_registry or DEFAULT_COMPONENT_REGISTRY
+    )
     active_model_registry = model_registry or DEFAULT_MODEL_REGISTRY
 
     component_defs = [
@@ -363,7 +384,9 @@ def ensure_generic_v2_registered(
                 experimental=True,
             )
 
-    if not active_model_registry.has("base_attentive.v2", backend="generic"):
+    if not active_model_registry.has(
+        "base_attentive.v2", backend="generic"
+    ):
         active_model_registry.register(
             "base_attentive.v2",
             _assemble_base_attentive_v2,
