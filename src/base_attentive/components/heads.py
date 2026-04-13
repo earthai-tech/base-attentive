@@ -503,7 +503,7 @@ class CombinedHeadLoss(Loss, NNLearner):
                     f"Missing key '{head}' in y_true/y_pred for CombinedHeadLoss."
                 )
             lt = loss_fn(y_true[head], y_pred[head])
-            total_terms.append(tf_cast(w, tf_float32) * lt)
+            total_terms.append(float(w) * lt)
 
         if self._reduction_mode == "sum":
             return tf_add_n(total_terms)
