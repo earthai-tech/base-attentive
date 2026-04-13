@@ -162,6 +162,13 @@ class MultiScaleLSTM(Layer, NNLearner):
               (B, T', lstm_units), where T' depends
               on the scale sub-sampling.
         """
+        # On macOS MPS, aten::linalg_qr is not implemented; enabling the
+        # PyTorch CPU fallback flag allows those ops to run on CPU transparently.
+        _dev = getattr(inputs, 'device', None)
+        if _dev is not None and str(_dev).startswith('mps'):
+            import os
+            os.environ.setdefault('PYTORCH_ENABLE_MPS_FALLBACK', '1')
+
         outputs = []
         for scale, lstm in zip(self.scales, self.lstm_layers):
             scaled_input = inputs[:, ::scale, :]
