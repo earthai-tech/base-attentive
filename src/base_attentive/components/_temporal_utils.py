@@ -298,7 +298,7 @@ def aggregate_multiscale_on_3d(
                 [0, max_len - current_len],
                 [0, 0],
             ]
-            padded_tensors.append(tf_pad(tensor, paddings, "CONSTANT"))
+            padded_tensors.append(tf_pad(tensor, paddings, "constant"))
 
         # 3. Concatenate along the feature axis (-1).
         return tf_concat(padded_tensors, axis=-1)
