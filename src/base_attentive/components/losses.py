@@ -184,7 +184,7 @@ class CRPSLoss(Loss, NNLearner):
         qs = tf_constant(qs, tf_float32)
         qs = tf_reshape(qs, [1, 1, tf_shape(qs)[0], 1])
 
-        y_true = tf_cast(y_true, tf_float32)
+        y_true = tf_constant(y_true, dtype=tf_float32)
         y_true_exp = tf_expand_dims(y_true, axis=2)  # (B,H,1,O)
         err = y_true_exp - yq  # (B,H,Q,O)
         pinball = tf_maximum(qs * err, (qs - 1.0) * err)
@@ -435,7 +435,7 @@ class AdaptiveQuantileLoss(Loss, NNLearner):
         """
         if self.quantiles is None:
             return 0.0
-        y_true = tf_cast(y_true, tf_float32)
+        y_true = tf_constant(y_true, dtype=tf_float32)
         quantiles = tf_constant(self.quantiles, dtype=tf_float32)
         if len(getattr(y_pred, "shape", ())) <= 2:
             error = y_true - y_pred
@@ -882,7 +882,7 @@ class CRPSLossWrapper(Loss, NNLearner):
         y_pred: (B, H, Q, O)
         """
         # Expand true to match quantile dim
-        y_true = tf_cast(y_true, tf_float32)
+        y_true = tf_constant(y_true, dtype=tf_float32)
         y_true_exp = tf_expand_dims(y_true, axis=2)  # (B,H,1,O)
         err = y_true_exp - y_pred  # (B,H,Q,O)
 
