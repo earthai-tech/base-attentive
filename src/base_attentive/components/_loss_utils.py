@@ -236,8 +236,28 @@ def compute_quantile_loss(
     y_true = tf_cast(y_true, tf_float32)
     y_pred = tf_cast(y_pred, tf_float32)
     qs = tf_constant(quantiles, dtype=tf_float32)
+    # Align qs to the same device as y_pred (MPS/CUDA compatibility)
+    _dev = getattr(y_pred, 'device', None)
+    _to = getattr(qs, 'to', None)
+    if _dev is not None and callable(_to):
+        qs = _to(_dev)
     error = y_true - y_pred
-    pinball_loss = tf_maximum(qs * error, (qs - 1.0) * error)
+    a = qs * error
+    b = (qs - 1.0) * error
+    # Use torch.maximum directly when torch tensors are present to avoid
+    # the numpy-based fallback that cannot handle MPS tensors.
+    try:
+        import torch as _torch
+        if isinstance(a, _torch.Tensor):
+            if not isinstance(b, _torch.Tensor):
+                b = _torch.as_tensor(b, device=a.device)
+            elif a.device != b.device:
+                b = b.to(a.device)
+            pinball_loss = _torch.maximum(a, b)
+        else:
+            pinball_loss = tf_maximum(a, b)
+    except ImportError:
+        pinball_loss = tf_maximum(a, b)
     try:
         return tf_reduce_mean(pinball_loss, axis=2)
     except Exception:
