@@ -41,6 +41,7 @@ from ._config import (
     tf_random,
     tf_range,
     tf_reduce_mean,
+    tf_reduce_sum,
     tf_reshape,
     tf_shape,
     tf_sigmoid,
@@ -241,12 +242,23 @@ class CRPSLoss(Loss, NNLearner):
         mu = y_pred["loc"]  # (B,H,K,O)
         sig = tf_abs(y_pred["scale"]) + 1e-6
         w = y_pred["weights"]  # (B,H,K,1)
-        # Normalize weights just in case
-        w = w / tf_reduce_mean(
-            tf_reduce_mean(w, axis=2, keepdims=True),
-            axis=3,
-            keepdims=True,
-        )
+        # Normalize weights so they sum to 1 over K (axis 2).
+        # keras.ops.sum/mean trigger internal numpy conversion on Apple MPS
+        # tensors, raising TypeError. Use native torch.sum when available.
+        # Also avoids keepdims=True shape inconsistencies across Keras versions
+        # (some return (B,H,1) instead of (B,H,1,1) for a 4-D input).
+        _w_normalized = False
+        try:
+            import torch as _torch
+            if isinstance(w, _torch.Tensor):
+                w = w / (w.sum(dim=2, keepdim=True) + 1e-8)
+                _w_normalized = True
+        except ImportError:
+            pass
+        if not _w_normalized:
+            # Non-torch backend: expand_dims avoids the keepdims shape bug.
+            w_sum = tf_expand_dims(tf_reduce_sum(w, axis=2), axis=2)
+            w = w / (w_sum + 1e-8)
 
         B, H, K, output_dim = [tf_shape(mu)[i] for i in range(4)]
 
