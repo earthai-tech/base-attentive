@@ -3,7 +3,11 @@
 
 from __future__ import annotations
 
+import importlib
 import os
+from pathlib import Path
+import sys
+import types
 
 import numpy as np
 import pytest
@@ -265,31 +269,29 @@ class TestEnsureTorchV2Registered:
 class TestTensorFlowImplementation:
     def test_ensure_tensorflow_raises_when_not_available(self):
         """_ensure_tensorflow() should raise ImportError when TF not installed."""
-        from base_attentive.implementations.tensorflow.base_attentive_v2 import (
-            _ensure_tensorflow,
+        patcher, module = _load_tensorflow_impl_module(
+            "base_attentive.implementations.tensorflow._coverage_missing_tf_ensure",
+            tensorflow_module=None,
+            tensorflow_keras_module=None,
         )
-        import base_attentive.implementations.tensorflow.base_attentive_v2 as _tf_v2_mod
-        orig_tf = _tf_v2_mod.tf
         try:
-            _tf_v2_mod.tf = None
             with pytest.raises(ImportError, match="TensorFlow is required"):
-                _ensure_tensorflow()
+                module._ensure_tensorflow()
         finally:
-            _tf_v2_mod.tf = orig_tf
+            patcher.undo()
 
     def test_ensure_tensorflow_registered_requires_tf(self):
         """ensure_tensorflow_v2_registered raises when TF not available."""
-        from base_attentive.implementations.tensorflow.base_attentive_v2 import (
-            ensure_tensorflow_v2_registered,
+        patcher, module = _load_tensorflow_impl_module(
+            "base_attentive.implementations.tensorflow._coverage_missing_tf_register",
+            tensorflow_module=None,
+            tensorflow_keras_module=None,
         )
-        import base_attentive.implementations.tensorflow.base_attentive_v2 as _tf_v2_mod
-        orig_tf = _tf_v2_mod.tf
         try:
-            _tf_v2_mod.tf = None
             with pytest.raises(ImportError):
-                ensure_tensorflow_v2_registered()
+                module.ensure_tensorflow_v2_registered()
         finally:
-            _tf_v2_mod.tf = orig_tf
+            patcher.undo()
 
 
 # ---------------------------------------------------------------------------
@@ -338,6 +340,410 @@ class TestJaxImplementation:
                 ensure_jax_v2_registered()
         finally:
             _jax_v2_mod.jax = orig_jax
+
+
+def _install_fake_jax(monkeypatch):
+    import base_attentive.implementations.jax.base_attentive_v2 as mod
+
+    class _FakeJnp:
+        @staticmethod
+        def asarray(x):
+            return np.asarray(x, dtype=np.float32)
+
+        @staticmethod
+        def mean(x, axis=None, keepdims=False):
+            return np.mean(np.asarray(x), axis=axis, keepdims=keepdims)
+
+        @staticmethod
+        def std(x, axis=None, keepdims=False):
+            return np.std(np.asarray(x), axis=axis, keepdims=keepdims)
+
+        @staticmethod
+        def sqrt(x):
+            return np.sqrt(x)
+
+        @staticmethod
+        def matmul(a, b):
+            return np.matmul(np.asarray(a), np.asarray(b))
+
+        @staticmethod
+        def tanh(x):
+            return np.tanh(np.asarray(x))
+
+        @staticmethod
+        def take(x, indices, axis=None, unique_indices=False):
+            del unique_indices
+            return np.take(np.asarray(x), indices, axis=axis)
+
+        @staticmethod
+        def concatenate(inputs, axis=-1):
+            return np.concatenate([np.asarray(x) for x in inputs], axis=axis)
+
+    def _softmax(x, axis=-1):
+        x = np.asarray(x)
+        shifted = x - np.max(x, axis=axis, keepdims=True)
+        exp = np.exp(shifted)
+        return exp / np.sum(exp, axis=axis, keepdims=True)
+
+    fake_jax = types.SimpleNamespace(
+        nn=types.SimpleNamespace(
+            relu=lambda x: np.maximum(np.asarray(x), 0.0),
+            gelu=lambda x: np.asarray(x) * 0.5,
+            softmax=_softmax,
+        )
+    )
+
+    monkeypatch.setattr(mod, "jax", fake_jax)
+    monkeypatch.setattr(mod, "jnp", _FakeJnp)
+    monkeypatch.setattr(mod, "lax", types.SimpleNamespace())
+    return mod
+
+
+class _FakeLayer:
+    def __init__(self, name=None, **kwargs):
+        self.name = name
+        self.kwargs = kwargs
+
+    def __call__(self, *args, **kwargs):
+        return self.call(*args, **kwargs)
+
+    def call(self, inputs, *args, **kwargs):
+        return inputs
+
+    def get_config(self):
+        return {"name": self.name}
+
+
+def _named_activation(name):
+    def _activation(x):
+        return x
+
+    _activation.__name__ = name
+    return _activation
+
+
+class _FakeDense(_FakeLayer):
+    def __init__(self, units, activation=None, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.units = units
+        self.activation = None if activation is None else _named_activation(activation)
+
+
+class _FakeMultiHeadAttention(_FakeLayer):
+    def __init__(
+        self,
+        num_heads,
+        key_dim,
+        dropout=0.0,
+        attention_axes=None,
+        name=None,
+        dtype=None,
+        **kwargs,
+    ):
+        super().__init__(name=name, dtype=dtype, attention_axes=attention_axes, **kwargs)
+        self.num_heads = num_heads
+        self.key_dim = key_dim
+        self.dropout = dropout
+
+    def call(self, query, value, attention_mask=None, training=False):
+        del value, attention_mask, training
+        return np.asarray(query)
+
+
+class _FakeLayerNormalization(_FakeLayer):
+    def __init__(self, epsilon=1e-6, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.epsilon = epsilon
+
+
+class _FakeDropout(_FakeLayer):
+    def __init__(self, rate, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.rate = rate
+
+
+class _FakeLambda(_FakeLayer):
+    def __init__(self, function, name=None, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.function = function
+
+    def call(self, inputs):
+        return self.function(inputs)
+
+
+def _load_tensorflow_impl_module(
+    module_name,
+    *,
+    tensorflow_module,
+    tensorflow_keras_module,
+):
+    patcher = pytest.MonkeyPatch()
+    patcher.setitem(sys.modules, "tensorflow", tensorflow_module)
+    patcher.setitem(sys.modules, "tensorflow.keras", tensorflow_keras_module)
+
+    module_path = (
+        Path(__file__).resolve().parents[1]
+        / "src"
+        / "base_attentive"
+        / "implementations"
+        / "tensorflow"
+        / "base_attentive_v2.py"
+    )
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    patcher.setitem(sys.modules, module_name, module)
+    spec.loader.exec_module(module)
+    return patcher, module
+
+
+@pytest.fixture
+def fake_tf_impl():
+    fake_layers = types.SimpleNamespace(
+        Layer=_FakeLayer,
+        Dense=_FakeDense,
+        MultiHeadAttention=_FakeMultiHeadAttention,
+        LayerNormalization=_FakeLayerNormalization,
+        Dropout=_FakeDropout,
+        Lambda=_FakeLambda,
+    )
+
+    fake_tf = types.ModuleType("tensorflow")
+    fake_tf.reduce_mean = lambda x, axis=None, keepdims=False: np.mean(
+        np.asarray(x), axis=axis, keepdims=keepdims
+    )
+    fake_tf.gather = lambda x, indices, axis=-1: np.take(np.asarray(x), indices, axis=axis)
+    fake_tf.concat = lambda inputs, axis=-1: np.concatenate(
+        [np.asarray(x) for x in inputs], axis=axis
+    )
+
+    fake_tf_keras = types.ModuleType("tensorflow.keras")
+    fake_tf_keras.layers = fake_layers
+    fake_tf.keras = fake_tf_keras
+
+    patcher, module = _load_tensorflow_impl_module(
+        "base_attentive.implementations.tensorflow._coverage_fake_base_attentive_v2",
+        tensorflow_module=fake_tf,
+        tensorflow_keras_module=fake_tf_keras,
+    )
+
+    try:
+        yield module
+    finally:
+        patcher.undo()
+
+
+class TestJaxImplementationExtended:
+    def test_encoder_rejects_non_divisible_units(self, monkeypatch):
+        mod = _install_fake_jax(monkeypatch)
+
+        with pytest.raises(ValueError, match="divisible by num_heads"):
+            mod._JaxTemporalSelfAttentionEncoder(
+                units=10,
+                hidden_units=16,
+                num_heads=4,
+            )
+
+    def test_encoder_call_returns_expected_shape(self, monkeypatch):
+        mod = _install_fake_jax(monkeypatch)
+        encoder = mod._JaxTemporalSelfAttentionEncoder(
+            units=8,
+            hidden_units=16,
+            num_heads=2,
+            activation="relu",
+        )
+        x = np.ones((2, 4, 8), dtype=np.float32)
+
+        out = encoder(x, training=True)
+
+        assert out.shape == (2, 4, 8)
+
+    @pytest.mark.parametrize("activation", ["relu", "gelu", "tanh"])
+    def test_temporal_attention_forward_supports_activations(
+        self, monkeypatch, activation
+    ):
+        mod = _install_fake_jax(monkeypatch)
+        x = np.ones((2, 3, 4), dtype=np.float32)
+
+        out = mod._jax_temporal_attention_forward(
+            x,
+            units=4,
+            hidden_units=8,
+            num_heads=2,
+            activation=activation,
+            layer_norm_eps=1e-6,
+        )
+
+        assert out.shape == x.shape
+
+    def test_temporal_attention_forward_rejects_unknown_activation(self, monkeypatch):
+        mod = _install_fake_jax(monkeypatch)
+
+        with pytest.raises(ValueError, match="Unknown activation"):
+            mod._jax_temporal_attention_forward(
+                np.ones((2, 3, 4), dtype=np.float32),
+                units=4,
+                hidden_units=8,
+                num_heads=2,
+                activation="swish",
+                layer_norm_eps=1e-6,
+            )
+
+    def test_jax_layer_norm_normalizes_last_axis(self, monkeypatch):
+        mod = _install_fake_jax(monkeypatch)
+        x = np.array([[1.0, 2.0], [3.0, 5.0]], dtype=np.float32)
+
+        out = mod._jax_layer_norm(x, eps=1e-6)
+
+        assert out.shape == x.shape
+        np.testing.assert_allclose(np.mean(out, axis=-1), np.zeros(2), atol=1e-5)
+
+    def test_scaled_dot_product_attention_returns_projected_value(self, monkeypatch):
+        mod = _install_fake_jax(monkeypatch)
+        q = np.ones((2, 3, 4), dtype=np.float32)
+
+        out = mod._jax_scaled_dot_product_attention(q, q, q, num_heads=2)
+
+        assert out.shape == q.shape
+
+    def test_jax_builders_return_working_callables(self, monkeypatch):
+        mod = _install_fake_jax(monkeypatch)
+        x = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+
+        dense = mod._build_jax_dense_projection(units=5)
+        np.testing.assert_array_equal(dense(x), x)
+
+        encoder = mod._build_jax_temporal_self_attention_encoder(
+            units=4,
+            hidden_units=8,
+            num_heads=2,
+            activation="relu",
+        )
+        assert isinstance(encoder, mod._JaxTemporalSelfAttentionEncoder)
+
+        mean_pool = mod._build_jax_mean_pool(axis=1, keepdims=True)
+        assert mean_pool(x).shape == (2, 1, 4)
+
+        last_pool = mod._build_jax_last_pool()
+        assert last_pool(x).shape == (2, 4)
+
+        concat = mod._build_jax_concat_fusion(axis=-1)
+        assert concat([x, x]).shape == (2, 3, 8)
+
+        point_head = mod._build_jax_point_forecast_head(output_dim=2, forecast_horizon=3)
+        np.testing.assert_array_equal(point_head(x), x)
+
+        quantile_head = mod._build_jax_quantile_head()
+        np.testing.assert_array_equal(quantile_head(x), x)
+
+    def test_ensure_jax_v2_registered_with_custom_registry(self, monkeypatch):
+        mod = _install_fake_jax(monkeypatch)
+        from base_attentive.registry.component_registry import ComponentRegistry
+
+        registry = ComponentRegistry()
+        mod.ensure_jax_v2_registered(registry)
+
+        assert registry.has("projection.dense", backend="jax")
+        assert registry.has("encoder.temporal_self_attention", backend="jax")
+        assert registry.has("head.quantile", backend="jax")
+
+    def test_ensure_jax_v2_registered_with_default_registry(self, monkeypatch):
+        mod = _install_fake_jax(monkeypatch)
+        import base_attentive.registry as registry_mod
+        from base_attentive.registry.component_registry import ComponentRegistry
+
+        registry = ComponentRegistry()
+        monkeypatch.setattr(registry_mod, "DEFAULT_COMPONENT_REGISTRY", registry)
+
+        mod.ensure_jax_v2_registered()
+
+        assert registry.has("fusion.concat", backend="jax")
+
+
+class TestTensorFlowImplementationExtended:
+    def test_ensure_tensorflow_accepts_fake_runtime(self, fake_tf_impl):
+        fake_tf_impl._ensure_tensorflow()
+
+    def test_tf_temporal_self_attention_encoder_call_and_config(self, fake_tf_impl):
+        encoder = fake_tf_impl._TFTemporalSelfAttentionEncoder(
+            units=8,
+            hidden_units=16,
+            num_heads=2,
+            activation="relu",
+            dropout_rate=0.1,
+            layer_norm_epsilon=1e-5,
+            name="enc",
+        )
+        x = np.ones((2, 4, 8), dtype=np.float32)
+
+        out = encoder(x, training=True)
+        config = encoder.get_config()
+
+        assert out.shape == x.shape
+        assert config["units"] == 8
+        assert config["hidden_units"] == 16
+        assert config["num_heads"] == 2
+        assert config["dropout_rate"] == 0.1
+        assert config["layer_norm_epsilon"] == 1e-5
+
+    def test_tf_builder_functions_return_expected_layers(self, fake_tf_impl):
+        x = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+
+        dense = fake_tf_impl._build_tf_dense_projection(units=6, activation="relu", name="dense")
+        assert dense.units == 6
+        assert dense.activation.__name__ == "relu"
+
+        encoder = fake_tf_impl._build_tf_temporal_self_attention_encoder(
+            units=4,
+            hidden_units=8,
+            num_heads=2,
+        )
+        assert isinstance(encoder, fake_tf_impl._TFTemporalSelfAttentionEncoder)
+
+        mean_pool = fake_tf_impl._build_tf_mean_pool(axis=1, keepdims=True)
+        assert mean_pool(x).shape == (2, 1, 4)
+
+        last_pool = fake_tf_impl._build_tf_last_pool()
+        assert last_pool(x).shape == (2, 1, 4)
+
+        concat = fake_tf_impl._build_tf_concat_fusion(axis=-1)
+        assert concat([x, x]).shape == (2, 3, 8)
+
+        point_head = fake_tf_impl._build_tf_point_forecast_head(
+            output_dim=2,
+            forecast_horizon=3,
+        )
+        assert point_head.units == 6
+
+        quantile_head = fake_tf_impl._build_tf_quantile_head(
+            output_dim=2,
+            forecast_horizon=2,
+        )
+        assert quantile_head.units == 12
+
+    def test_ensure_tensorflow_v2_registered_with_custom_registry(self, fake_tf_impl):
+        from base_attentive.registry.component_registry import ComponentRegistry
+
+        registry = ComponentRegistry()
+        fake_tf_impl.ensure_tensorflow_v2_registered(registry)
+
+        assert registry.has("projection.dense", backend="tensorflow")
+        assert registry.has("pool.last", backend="tensorflow")
+        assert registry.has("head.point_forecast", backend="tensorflow")
+
+    def test_ensure_tensorflow_v2_registered_with_default_registry(
+        self, fake_tf_impl, monkeypatch
+    ):
+        import base_attentive.registry as registry_mod
+        from base_attentive.registry.component_registry import ComponentRegistry
+
+        registry = ComponentRegistry()
+        monkeypatch.setattr(registry_mod, "DEFAULT_COMPONENT_REGISTRY", registry)
+
+        fake_tf_impl.ensure_tensorflow_v2_registered()
+
+        assert registry.has("head.quantile", backend="tensorflow")
 
 
 # ---------------------------------------------------------------------------

@@ -284,6 +284,50 @@ class TestCRPSLoss:
         mode = loss_fn._infer_mode(_y((2, 5)))
         assert mode == "gaussian"
 
+    def test_mixture_mode_dict(self):
+        import base_attentive.components.losses as losses_mod
+
+        loss_fn = CRPSLoss(mode="mixture", mc_samples=4)
+        y_true = _t(_y((2, 3, 1)))
+        y_pred = {
+            "loc": _t(_y((2, 3, 2, 1), fill=0.5)),
+            "scale": _t(_y((2, 3, 2, 1), fill=0.2)),
+            "weights": _t(np.array(
+                [
+                    [[[0.4], [0.6]], [[0.5], [0.5]], [[0.2], [0.8]]],
+                    [[[0.7], [0.3]], [[0.6], [0.4]], [[0.5], [0.5]]],
+                ],
+                dtype=np.float32,
+            )),
+        }
+        original_reduce_mean = losses_mod.tf_reduce_mean
+        original_gather = losses_mod.tf_gather
+        try:
+            losses_mod.tf_reduce_mean = (
+                lambda x, axis=None, keepdims=False: np.mean(
+                    np.asarray(x),
+                    axis=axis,
+                    keepdims=keepdims,
+                )
+            )
+            losses_mod.tf_gather = (
+                lambda params, indices, batch_dims=1: np.repeat(
+                    np.asarray(params)[:, np.newaxis, :1, :],
+                    np.asarray(indices).shape[1],
+                    axis=1,
+                )
+            )
+            result = loss_fn(y_true, y_pred)
+        finally:
+            losses_mod.tf_reduce_mean = original_reduce_mean
+            losses_mod.tf_gather = original_gather
+        assert np.isfinite(float(_to_numpy(result)))
+
+    def test_mixture_mode_requires_dict(self):
+        loss_fn = CRPSLoss(mode="mixture", mc_samples=2)
+        with pytest.raises(ValueError, match="expects dict"):
+            loss_fn._crps_mixture_mc(_t(_y((1, 1, 1))), _t(_y((1, 1, 1))))
+
     def test_unsupported_mode_raises(self):
         loss_fn = CRPSLoss(mode="quantile", quantiles=[0.5])
         loss_fn.mode = "invalid"

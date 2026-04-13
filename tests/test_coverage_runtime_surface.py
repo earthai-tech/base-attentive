@@ -229,6 +229,85 @@ def test_top_level_keras_deps_resolve_symbols_from_keras_and_tensorflow(monkeypa
     assert "Keras is required for models" in package.dependency_message("models")
 
 
+def test_top_level_runtime_dtype_and_namespace_helpers_cover_remaining_paths(
+    monkeypatch,
+):
+    """Exercise dtype normalization and namespace fallback branches."""
+    import base_attentive as package
+
+    assert package._get_static_value(object()) is None
+    assert package._normalize_dtype(None) is None
+    assert package._normalize_dtype("float32") == "float32"
+    assert package._normalize_dtype(types.SimpleNamespace(name="int32")) == "int32"
+
+    class _BrokenAsNumpy:
+        as_numpy_dtype = object()
+
+    broken_dtype = _BrokenAsNumpy()
+    assert package._normalize_dtype(broken_dtype) is broken_dtype
+
+    fake_ops = types.SimpleNamespace(
+        convert_to_tensor=lambda value, dtype=None: ("tensor", value, dtype),
+        cast=lambda value, dtype=None: ("cast", value, dtype),
+    )
+    fake_keras = types.SimpleNamespace(
+        __name__="fake_keras",
+        ops=fake_ops,
+    )
+    fake_tf = types.SimpleNamespace(
+        keras=types.SimpleNamespace(
+            utils=types.SimpleNamespace(custom_symbol="from-utils"),
+            fallback_symbol="from-keras-root",
+        )
+    )
+    fake_fallback = types.SimpleNamespace(
+        activations="fallback-activations",
+        register_keras_serializable="fallback-register",
+    )
+
+    monkeypatch.setattr(package, "KERAS_BACKEND", "torch")
+    monkeypatch.setattr(
+        package,
+        "_safe_import",
+        lambda name: {
+            "keras": fake_keras,
+            "tensorflow": fake_tf,
+            "base_attentive._keras_fallback": fake_fallback,
+        }.get(name),
+    )
+
+    deps = package._KerasDeps()
+    assert deps._load_keras_root() is fake_keras
+    assert deps._load_namespace(object(), "missing") is None
+
+    constant = deps._resolve_from_keras("constant")
+    assert constant("x") == ("tensor", "x", None)
+    assert constant("x", dtype=np.float32) == ("tensor", "x", "float32")
+
+    cast = deps._resolve_from_keras("cast")
+    assert cast("x", np.float32) == ("cast", "x", "float32")
+
+    monkeypatch.setattr(package, "KERAS_BACKEND", "jax")
+    monkeypatch.setattr(package, "_safe_import", lambda name: None)
+    assert package._KerasDeps()._load_keras_root() is None
+
+    monkeypatch.setattr(package, "KERAS_BACKEND", "tensorflow")
+    monkeypatch.setattr(
+        package,
+        "_safe_import",
+        lambda name: {
+            "tensorflow": fake_tf,
+            "base_attentive._keras_fallback": fake_fallback,
+        }.get(name),
+    )
+    deps = package._KerasDeps()
+    assert deps._resolve_special("newaxis") is None
+    assert deps._resolve_from_tensorflow("custom_symbol") == "from-utils"
+    assert deps._resolve_from_tensorflow("fallback_symbol") == "from-keras-root"
+    assert deps._resolve_from_fallback("register_keras_serializable") == "fallback-register"
+    assert deps._resolve_from_fallback("activations") == "fallback-activations"
+
+
 def test_top_level_lazy_export_handles_success_and_failure(monkeypatch):
     """The package-level ``BaseAttentive`` export should remain lazy."""
     import base_attentive as package
@@ -498,6 +577,44 @@ def test_version_check_utilities_cover_metadata_and_error_paths(monkeypatch):
     assert version_check.check_torch_compatibility(None) == (False, "PyTorch not installed")
     assert version_check.check_torch_compatibility("1.13.0")[0] is False
     assert version_check.check_torch_compatibility("2.0.1+cu118")[0] is True
+
+
+def test_version_check_utilities_cover_parse_and_loaded_module_fallbacks(
+    monkeypatch, caplog
+):
+    """Version helpers should cover logger, find_spec, and loaded-module fallbacks."""
+    import base_attentive.backend.version_check as version_check
+
+    caplog.set_level("WARNING")
+    assert version_check.parse_version("not.a.version") == (0, 0, 0)
+    assert "Could not parse version string" in caplog.text
+
+    monkeypatch.setattr(
+        version_check.importlib.util,
+        "find_spec",
+        lambda name: (_ for _ in ()).throw(ValueError("broken spec")),
+    )
+    assert version_check.get_backend_version("torch") is None
+
+    class _BrokenLoadedModule:
+        __spec__ = None
+
+        @property
+        def __version__(self):
+            raise RuntimeError("broken")
+
+    monkeypatch.setitem(sys.modules, "torch", _BrokenLoadedModule())
+    monkeypatch.setattr(version_check.importlib.util, "find_spec", lambda name: object())
+    assert version_check.get_backend_version("torch") is None
+
+    loaded = types.SimpleNamespace(__version__="0.4.31", __spec__=object())
+    monkeypatch.setitem(sys.modules, "jax", loaded)
+
+    def _missing_metadata(name):
+        raise version_check.importlib.metadata.PackageNotFoundError
+
+    monkeypatch.setattr(version_check.importlib.metadata, "version", _missing_metadata)
+    assert version_check.get_backend_version("jax") == "0.4.31"
 
 
 def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypatch):
