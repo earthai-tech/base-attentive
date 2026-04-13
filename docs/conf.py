@@ -125,20 +125,48 @@ html_sidebars = {
     ]
 }
 
-# Badge and substitution definitions for reStructuredText.
-# Plain-text replacements are used instead of shields.io image badges so
-# that labels always render regardless of network access or RTD image policy.
+# Badge and substitution definitions for reStructuredText
 rst_prolog = """
-.. |Feature|      replace:: **[Feature]**
-.. |Fix|          replace:: **[Fix]**
-.. |Bug|          replace:: **[Bug]**
-.. |Bugfix|       replace:: **[Bugfix]**
-.. |Dependencies| replace:: **[Dependencies]**
-.. |Internal|     replace:: **[Internal]**
-.. |MAJOR|        replace:: **[MAJOR]**
-.. |MINOR|        replace:: **[MINOR]**
-.. |PATCH|        replace:: **[PATCH]**
-.. |Breaking|     replace:: **[Breaking]**
-.. |Deprecated|   replace:: **[Deprecated]**
-.. |Security|     replace:: **[Security]**
+.. |Feature| image:: https://img.shields.io/badge/type-feature-brightgreen.svg
+   :alt: Feature
+   :target: #features
+
+.. |Fix| image:: https://img.shields.io/badge/type-fix-blue.svg
+   :alt: Bug Fix
+   :target: #bug-fixes
+
+.. |Bug| image:: https://img.shields.io/badge/type-bug_fix-blue.svg
+   :alt: Bug Fix
+   :target: #bug-fixes
+
+.. |Bugfix| image:: https://img.shields.io/badge/type-bugfix-blue.svg
+   :alt: Bug Fix
+   :target: #bug-fixes
+
+.. |Dependencies| image:: https://img.shields.io/badge/type-dependencies-orange.svg
+   :alt: Dependencies
+   :target: #dependencies
+
+.. |Internal| image:: https://img.shields.io/badge/type-internal-lightgrey.svg
+   :alt: Internal
+   :target: #internal
+
+.. |MAJOR| image:: https://img.shields.io/badge/version-MAJOR-red.svg
+   :alt: MAJOR Version Change
+
+.. |MINOR| image:: https://img.shields.io/badge/version-MINOR-yellow.svg
+   :alt: MINOR Version Change
+
+.. |PATCH| image:: https://img.shields.io/badge/version-PATCH-green.svg
+   :alt: PATCH Version Change
+
+.. |Breaking| image:: https://img.shields.io/badge/breaking-yes-red.svg
+   :alt: Breaking Change
+
+.. |Deprecated| image:: https://img.shields.io/badge/status-deprecated-yellow.svg
+   :alt: Deprecated
+
+.. |Security| image:: https://img.shields.io/badge/type-security-red.svg
+   :alt: Security
+   :target: #security
 """
