@@ -41,9 +41,6 @@ _FALLBACKS = {
     "float32": _np.float32,
     "int32": _np.int32,
     # Keras class stubs — must be real classes so they can be used as base classes.
-    "Loss": _KerasStub,
-    "Layer": _KerasStub,
-    "Model": _KerasStub,
     # Decorator factory stub — must return a callable that accepts a class.
     "register_keras_serializable": lambda package="Custom", name=None: (lambda cls: cls),
 }
@@ -72,6 +69,8 @@ from base_attentive.components.utils import (
 )
 from base_attentive.config.schema import BaseAttentiveSpec
 from base_attentive.config.validate import validate_base_attentive_spec
+
+_ba._KerasDeps.__getattr__ = _orig_ga
 
 
 # ---------------------------------------------------------------------------

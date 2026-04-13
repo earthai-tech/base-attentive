@@ -81,12 +81,11 @@ class LayerScale(Layer, NNLearner):
 
     def build(self, input_shape):
         gamma_shape = input_shape[-1:]
+        dtype_factory = getattr(tf_float32, "as_numpy_dtype", tf_float32)
         self.gamma = self.add_weight(
             name="gamma",
             shape=gamma_shape,
-            initializer=lambda shape, dtype=None: tf_float32.as_numpy_dtype(
-                self.init_value
-            ),
+            initializer=lambda shape, dtype=None: dtype_factory(self.init_value),
             trainable=True,
         )
         super().build(input_shape)

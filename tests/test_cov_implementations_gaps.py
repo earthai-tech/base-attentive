@@ -63,6 +63,8 @@ from base_attentive.implementations.torch.base_attentive_v2 import (
 )
 import base_attentive.implementations.torch.base_attentive_v2 as _torch_v2_mod
 
+_ba._KerasDeps.__getattr__ = _orig_ga
+
 
 class TestEnsureTorch:
     def test_does_not_raise_when_torch_available(self):

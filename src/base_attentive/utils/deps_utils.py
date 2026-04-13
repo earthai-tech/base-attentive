@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import importlib.util
+import sys
 from typing import Callable, TypeVar
 
 _T = TypeVar("_T")
@@ -42,10 +43,12 @@ def ensure_pkg(
     def decorator(func: _T) -> _T:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            try:
-                available = importlib.util.find_spec(name) is not None
-            except (ImportError, AttributeError, ValueError):
-                available = False
+            available = sys.modules.get(name) is not None
+            if not available:
+                try:
+                    available = importlib.util.find_spec(name) is not None
+                except (ImportError, AttributeError, ValueError):
+                    available = False
 
             if not available:
                 msg = f"Package '{name}' is required but not installed."

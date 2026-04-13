@@ -97,7 +97,7 @@ def get_backend_version(backend_name: str) -> Optional[str]:
     except (ImportError, ValueError, AttributeError):
         module_spec = None
 
-    if loaded_module is None and module_spec is None:
+    if module_spec is None:
         return None
 
     if loaded_module is not None:
