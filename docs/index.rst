@@ -86,7 +86,7 @@ Main Elements
    - ``BaseAttentiveSpec`` / ``BaseAttentiveComponentSpec`` for backend-neutral config
    - ``ComponentRegistry`` and ``ModelRegistry`` for pluggable components
    - ``BaseAttentiveV2Assembly`` resolver/assembler pattern
-   - Multi-backend: TensorFlow (stable), JAX, PyTorch (experimental)
+   - Multi-backend: TensorFlow, Torch, and JAX (all supported in v2)
 
 **Runtime support**
    - Keras 3 based implementation
@@ -136,8 +136,7 @@ Quick Example
    :maxdepth: 2
    :caption: User Guide
 
-   backends
-   torch_backend_guide
+   backends/index
    usage
    architecture_guide
    configuration_guide

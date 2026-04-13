@@ -40,6 +40,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
     "sphinx.ext.coverage",
+    "sphinx_copybutton",
 ]
 
 root_doc = "index"
