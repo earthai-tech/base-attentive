@@ -242,21 +242,40 @@ class CRPSLoss(Loss, NNLearner):
         mu = y_pred["loc"]  # (B,H,K,O)
         sig = tf_abs(y_pred["scale"]) + 1e-6
         w = y_pred["weights"]  # (B,H,K,1)
+
+        # Apple MPS: keras.ops (mean, abs, sum, …) internally call numpy,
+        # which fails for mps:0 tensors.  Move all inputs to CPU so that
+        # every subsequent Keras op runs on plain CPU tensors.
+        try:
+            import torch as _torch
+
+            def _cpu(t):
+                return (
+                    t.cpu()
+                    if isinstance(t, _torch.Tensor)
+                    and t.device.type == "mps"
+                    else t
+                )
+
+            if isinstance(mu, _torch.Tensor) and mu.device.type == "mps":
+                mu = _cpu(mu)
+                sig = _cpu(sig)
+                w = _cpu(w)
+                y_true = _cpu(y_true)
+        except ImportError:
+            _torch = None
+
         # Normalize weights so they sum to 1 over K (axis 2).
-        # keras.ops.sum/mean trigger internal numpy conversion on Apple MPS
-        # tensors, raising TypeError. Use native torch.sum when available.
-        # Also avoids keepdims=True shape inconsistencies across Keras versions
-        # (some return (B,H,1) instead of (B,H,1,1) for a 4-D input).
-        _w_normalized = False
+        # Use native torch.sum to avoid keras.ops.sum keepdims shape
+        # inconsistencies seen on some CI runners ((B,H,1) vs (B,H,1,1)).
         try:
             import torch as _torch
             if isinstance(w, _torch.Tensor):
                 w = w / (w.sum(dim=2, keepdim=True) + 1e-8)
-                _w_normalized = True
-        except ImportError:
-            pass
-        if not _w_normalized:
-            # Non-torch backend: expand_dims avoids the keepdims shape bug.
+            else:
+                raise TypeError
+        except (ImportError, TypeError):
+            # Non-torch backend: expand_dims is explicit about the shape.
             w_sum = tf_expand_dims(tf_reduce_sum(w, axis=2), axis=2)
             w = w / (w_sum + 1e-8)
 
