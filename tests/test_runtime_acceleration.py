@@ -35,7 +35,9 @@ class _FakeModel:
         return {"inputs": inputs, "training": training}
 
 
-def test_make_fast_predict_fn_wraps_model_with_tf_function(monkeypatch):
+def test_make_fast_predict_fn_wraps_model_with_tf_function(
+    monkeypatch,
+):
     """The helper should build a traced inference callable."""
     from base_attentive import runtime
 
@@ -63,17 +65,23 @@ def test_make_fast_predict_fn_wraps_model_with_tf_function(monkeypatch):
     assert fake_model.calls[-1] == (["batch"], False)
 
 
-def test_make_fast_predict_fn_requires_tensorflow_backend(monkeypatch):
+def test_make_fast_predict_fn_requires_tensorflow_backend(
+    monkeypatch,
+):
     """The helper should fail fast on unsupported backends."""
     from base_attentive import runtime
 
     monkeypatch.setattr(runtime, "KERAS_BACKEND", "torch")
 
-    with pytest.raises(RuntimeError, match="requires the TensorFlow backend"):
+    with pytest.raises(
+        RuntimeError, match="requires the TensorFlow backend"
+    ):
         runtime.make_fast_predict_fn(_FakeModel())
 
 
-def test_make_fast_predict_fn_raises_helpful_error_when_tf_missing(monkeypatch):
+def test_make_fast_predict_fn_raises_helpful_error_when_tf_missing(
+    monkeypatch,
+):
     """Missing TensorFlow should produce a clear import error."""
     from base_attentive import runtime
 
@@ -85,7 +93,9 @@ def test_make_fast_predict_fn_raises_helpful_error_when_tf_missing(monkeypatch):
             raise ImportError("tensorflow missing")
         raise AssertionError(f"Unexpected import: {name}")
 
-    monkeypatch.setattr(runtime.importlib, "import_module", _missing_tensorflow)
+    monkeypatch.setattr(
+        runtime.importlib, "import_module", _missing_tensorflow
+    )
 
     with pytest.raises(ImportError, match="TensorFlow is required"):
         runtime.make_fast_predict_fn(_FakeModel())

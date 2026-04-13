@@ -6,9 +6,13 @@ time series forecasting models with attention mechanisms.
 from __future__ import annotations
 
 try:
-    from importlib.metadata import version as _meta_version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _meta_version
+
     __version__ = _meta_version("base_attentive")
-except PackageNotFoundError:  # package not installed (e.g. bare source checkout)
+except (
+    PackageNotFoundError
+):  # package not installed (e.g. bare source checkout)
     __version__ = "unknown"
 __author__ = "Laurent Kouadio"
 __email__ = "etanoyau@gmail.com"
@@ -94,9 +98,13 @@ def _get_static_value(value: Any) -> Any:
         get_static_value = getattr(tensor, "get_static_value", None)
         if callable(get_static_value):
             try:
-                return get_static_value(value)
+                result = get_static_value(value)
+                # TF returns the input unchanged for non-tensor objects;
+                # only propagate the result if it differs from the input.
+                if result is not value:
+                    return result
             except Exception:
-                return None
+                pass
     return None
 
 
@@ -150,7 +158,9 @@ class _KerasDebuggingNamespace:
             and expected_value is not None
             and actual_value != expected_value
         ):
-            raise AssertionError(message or f"{actual_value} != {expected_value}")
+            raise AssertionError(
+                message or f"{actual_value} != {expected_value}"
+            )
         return None
 
 
@@ -196,7 +206,9 @@ class _KerasDeps:
 
     def _load_fallback_runtime(self):
         if self._fallback_runtime is None:
-            self._fallback_runtime = _safe_import("base_attentive._keras_fallback")
+            self._fallback_runtime = _safe_import(
+                "base_attentive._keras_fallback"
+            )
         return self._fallback_runtime
 
     def _load_keras_root(self):
@@ -251,7 +263,10 @@ class _KerasDeps:
             return getattr(
                 fallback,
                 "Assert",
-                lambda condition, data=None, summarize=None, name=None: condition,
+                lambda condition,
+                data=None,
+                summarize=None,
+                name=None: condition,
             )
         if name == "Tensor":
             tf = self._load_tensorflow()
@@ -280,7 +295,9 @@ class _KerasDeps:
             tf = self._load_tensorflow()
             if tf is not None and hasattr(tf, "linalg"):
                 return tf.linalg
-            return getattr(fallback, "linalg", _KerasLinalgNamespace())
+            return getattr(
+                fallback, "linalg", _KerasLinalgNamespace()
+            )
         return None
 
     def _resolve_from_keras(self, name: str) -> Any:
@@ -290,8 +307,12 @@ class _KerasDeps:
 
         if name == "register_keras_serializable":
             for namespace_name in ("saving", "utils"):
-                namespace = self._load_namespace(keras, namespace_name)
-                value = getattr(namespace, "register_keras_serializable", None)
+                namespace = self._load_namespace(
+                    keras, namespace_name
+                )
+                value = getattr(
+                    namespace, "register_keras_serializable", None
+                )
                 if value is not None:
                     return value
 
@@ -310,8 +331,11 @@ class _KerasDeps:
         ops = self._load_namespace(keras, "ops")
 
         if name == "constant":
-            convert_to_tensor = getattr(ops, "convert_to_tensor", None)
+            convert_to_tensor = getattr(
+                ops, "convert_to_tensor", None
+            )
             if callable(convert_to_tensor):
+
                 def _constant(value, dtype=None):
                     normalized = _normalize_dtype(dtype)
                     if normalized is None:
@@ -353,7 +377,12 @@ class _KerasDeps:
 
         keras = getattr(tf, "keras", None)
         if keras is not None:
-            for namespace_name in ("layers", "losses", "initializers", "utils"):
+            for namespace_name in (
+                "layers",
+                "losses",
+                "initializers",
+                "utils",
+            ):
                 namespace = getattr(keras, namespace_name, None)
                 if namespace is None:
                     continue
@@ -375,7 +404,9 @@ class _KerasDeps:
             "register_keras_serializable": "register_keras_serializable",
             "get": "get",
         }
-        target_name = namespace_map.get(name, self._OP_ALIASES.get(name, name))
+        target_name = namespace_map.get(
+            name, self._OP_ALIASES.get(name, name)
+        )
         return getattr(fallback, target_name, None)
 
     def __getattr__(self, name: str) -> Any:
@@ -417,6 +448,7 @@ def dependency_message(module_name: str) -> str:
         f"or `keras torch`."
     )
 
+
 __all__ = [
     "BaseAttentive",
     "KERAS_BACKEND",
@@ -441,7 +473,9 @@ def __getattr__(name: str):
     }
 
     if name not in lazy_exports:
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+        raise AttributeError(
+            f"module {__name__!r} has no attribute {name!r}"
+        )
 
     try:
         module_name, export_name = lazy_exports[name]

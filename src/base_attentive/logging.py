@@ -37,7 +37,9 @@ class OncePerMessageFilter(logging.Filter):
         return False
 
 
-def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
+def get_logger(
+    name: str, level: int = logging.INFO
+) -> logging.Logger:
     """Get or create a logger for the module.
 
     Parameters

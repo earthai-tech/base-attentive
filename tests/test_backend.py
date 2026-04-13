@@ -28,7 +28,9 @@ def _fake_keras_module(runtime: str = "jax"):
 class TestBackendModule:
     """Test backend abstraction system."""
 
-    def test_get_available_backends_uses_lightweight_detection(self, monkeypatch):
+    def test_get_available_backends_uses_lightweight_detection(
+        self, monkeypatch
+    ):
         """Availability probing should not need to import heavy runtimes."""
         from base_attentive import backend as backend_module
 
@@ -49,7 +51,9 @@ class TestBackendModule:
         with pytest.raises(ValueError):
             get_backend("invalid_backend_xyz")
 
-    def test_get_backend_respects_keras_backend_env(self, monkeypatch):
+    def test_get_backend_respects_keras_backend_env(
+        self, monkeypatch
+    ):
         """The default lookup should fall back to KERAS_BACKEND."""
         from base_attentive import backend as backend_module
 
@@ -77,7 +81,9 @@ class TestBackendModule:
         assert backend.name == "jax"
         assert backend.framework == "jax"
 
-    def test_set_backend_normalizes_torch_alias_and_syncs_env(self, monkeypatch):
+    def test_set_backend_normalizes_torch_alias_and_syncs_env(
+        self, monkeypatch
+    ):
         """Setting the backend should normalize aliases and sync env vars."""
         from base_attentive import backend as backend_module
 
@@ -105,7 +111,9 @@ class TestBackendModule:
         assert backend.framework == "torch"
         assert backend_module.get_backend().name == "torch"
 
-    def test_get_backend_capabilities_reports_experimental_runtimes(self, monkeypatch):
+    def test_get_backend_capabilities_reports_experimental_runtimes(
+        self, monkeypatch
+    ):
         """Capability reports should document JAX/Torch as provisional."""
         from base_attentive import backend as backend_module
 
@@ -124,7 +132,9 @@ class TestBackendModule:
         assert capabilities["blockers"]
         assert capabilities["v2_blockers"]
 
-    def test_set_backend_warns_when_keras_runtime_is_already_loaded(self, monkeypatch):
+    def test_set_backend_warns_when_keras_runtime_is_already_loaded(
+        self, monkeypatch
+    ):
         """Switching after Keras is loaded should emit a restart warning."""
         from base_attentive import backend as backend_module
 

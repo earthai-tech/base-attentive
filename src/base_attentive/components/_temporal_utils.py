@@ -32,7 +32,9 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="aggregate_multiscale")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="aggregate_multiscale"
+)
 def aggregate_multiscale(lstm_output, mode="auto"):
     r"""Aggregate multi-scale LSTM outputs using
     specified temporal fusion strategy.
@@ -159,9 +161,13 @@ def aggregate_multiscale(lstm_output, mode="auto"):
     (32, 192)
 
     # Flatten mode (requires manual padding for equal T')
-    >>> padded_outputs = [tf.pad(o, [[0, 0], [0, 3], [0, 0]]) for o in outputs[:2]]
+    >>> padded_outputs = [
+    ...     tf.pad(o, [[0, 0], [0, 3], [0, 0]]) for o in outputs[:2]
+    ... ]
     >>> padded_outputs.append(outputs[2])
-    >>> agg_flat = aggregate_multiscale(padded_outputs, mode="flatten")
+    >>> agg_flat = aggregate_multiscale(
+    ...     padded_outputs, mode="flatten"
+    ... )
     >>> agg_flat.shape
     (32, 1280)  # (10+3)*64*3 = 13*192 = 2496? Wait need to check dimensions
 
@@ -188,36 +194,52 @@ def aggregate_multiscale(lstm_output, mode="auto"):
         averaged_outputs = [
             tf_reduce_mean(o, axis=1) for o in lstm_output
         ]  # Each is (B, units)
-        lstm_features = tf_concat(averaged_outputs, axis=-1)  # (B, units * len(scales))
+        lstm_features = tf_concat(
+            averaged_outputs, axis=-1
+        )  # (B, units * len(scales))
 
     elif mode == "flatten":
         # Flatten time and feature dimensions for all scales
         # Assume equal time lengths for all scales
-        concatenated = tf_concat(lstm_output, axis=-1)  # (B, T', units*len(scales))
+        concatenated = tf_concat(
+            lstm_output, axis=-1
+        )  # (B, T', units*len(scales))
         shape = tf_shape(concatenated)
         (batch_size, time_dim, feat_dim) = (
             shape[0],
             shape[1],
             shape[2],
         )
-        lstm_features = tf_reshape(concatenated, [batch_size, time_dim * feat_dim])
+        lstm_features = tf_reshape(
+            concatenated, [batch_size, time_dim * feat_dim]
+        )
     elif mode == "sum":
         # Sum over time dimension for each scale and concatenate
-        summed_outputs = [tf_reduce_sum(o, axis=1) for o in lstm_output]
+        summed_outputs = [
+            tf_reduce_sum(o, axis=1) for o in lstm_output
+        ]
         lstm_features = tf_concat(summed_outputs, axis=-1)
 
     elif mode == "concat":
         # Concatenate along the feature dimension for each
         # time step and take the last time step
-        concatenated = tf_concat(lstm_output, axis=-1)  # (B, T', units * len(scales))
-        last_output = concatenated[:, -1, :]  # (B, units * len(scales))
+        concatenated = tf_concat(
+            lstm_output, axis=-1
+        )  # (B, T', units * len(scales))
+        last_output = concatenated[
+            :, -1, :
+        ]  # (B, units * len(scales))
         lstm_features = last_output
 
     else:  # "last" or "auto"
         # Default fallback: take the last time step from each scale
         # and concatenate
-        last_outputs = [o[:, -1, :] for o in lstm_output]  # (B, units)
-        lstm_features = tf_concat(last_outputs, axis=-1)  # (B, units * len(scales))
+        last_outputs = [
+            o[:, -1, :] for o in lstm_output
+        ]  # (B, units)
+        lstm_features = tf_concat(
+            last_outputs, axis=-1
+        )  # (B, units * len(scales))
 
     return lstm_features
 
@@ -305,11 +327,15 @@ def aggregate_multiscale_on_3d(
 
     # --- Existing modes that reduce to a 2D tensor ---
     elif mode == "average":
-        averaged_outputs = [tf_reduce_mean(o, axis=1) for o in lstm_output]
+        averaged_outputs = [
+            tf_reduce_mean(o, axis=1) for o in lstm_output
+        ]
         return tf_concat(averaged_outputs, axis=-1)
 
     elif mode == "sum":
-        summed_outputs = [tf_reduce_sum(o, axis=1) for o in lstm_output]
+        summed_outputs = [
+            tf_reduce_sum(o, axis=1) for o in lstm_output
+        ]
         return tf_concat(summed_outputs, axis=-1)
 
     elif mode == "flatten":
@@ -321,7 +347,9 @@ def aggregate_multiscale_on_3d(
             shape[1],
             shape[2],
         )
-        return tf_reshape(concatenated, [batch_size, time_dim * feat_dim])
+        return tf_reshape(
+            concatenated, [batch_size, time_dim * feat_dim]
+        )
 
     else:  # Default for "last" or "auto"
         # Takes the last time step from each sequence and concatenates.
@@ -333,7 +361,9 @@ def aggregate_multiscale_on_3d(
     SERIALIZATION_PACKAGE,
     name="aggregate_time_window_output",
 )
-def aggregate_time_window_output(time_window_output: Tensor, mode: str | None = None):
+def aggregate_time_window_output(
+    time_window_output: Tensor, mode: str | None = None
+):
     """
     Aggregates time window output features based on the specified
     aggregation method.
@@ -392,7 +422,9 @@ def aggregate_time_window_output(time_window_output: Tensor, mode: str | None = 
 
     Examples
     --------
-    >>> from geoprior.nn.components import aggregate_time_window_output
+    >>> from geoprior.nn.components import (
+    ...     aggregate_time_window_output,
+    ... )
     >>> import tensorflow as tf
     >>> # Create a dummy tensor with shape (2, 3, 4)
     >>> dummy = tf.random.uniform((2, 3, 4))

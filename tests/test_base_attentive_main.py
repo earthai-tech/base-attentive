@@ -103,7 +103,9 @@ class FakeKerasDeps:
 def base_attentive_module(monkeypatch):
     """Import the BaseAttentive module with lightweight stub dependencies."""
     monkeypatch.setenv("KERAS_BACKEND", "")
-    monkeypatch.setitem(sys.modules, "keras", types.ModuleType("keras"))
+    monkeypatch.setitem(
+        sys.modules, "keras", types.ModuleType("keras")
+    )
 
     for module_name in (
         "base_attentive",
@@ -128,12 +130,16 @@ def base_attentive_module(monkeypatch):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
-        module = importlib.import_module("base_attentive.core.base_attentive")
+        module = importlib.import_module(
+            "base_attentive.core.base_attentive"
+        )
 
     monkeypatch.setattr(
         module,
         "Activation",
-        lambda activation: types.SimpleNamespace(activation_str=activation),
+        lambda activation: types.SimpleNamespace(
+            activation_str=activation
+        ),
         raising=False,
     )
     monkeypatch.setattr(
@@ -260,8 +266,13 @@ def test_reconfigure_returns_new_model_without_mutating_original(
 
     assert reconfigured is not model
     assert model.architecture_config == original_architecture
-    assert reconfigured.architecture_config["encoder_type"] == "transformer"
-    assert reconfigured.architecture_config["decoder_attention_stack"] == ["cross"]
+    assert (
+        reconfigured.architecture_config["encoder_type"]
+        == "transformer"
+    )
+    assert reconfigured.architecture_config[
+        "decoder_attention_stack"
+    ] == ["cross"]
 
 
 def test_call_validates_tft_future_span_and_returns_decoder_output(
@@ -287,7 +298,9 @@ def test_call_validates_tft_future_span_and_returns_decoder_output(
     model.run_encoder_decoder_core = lambda **kwargs: FakeTensor(
         (2, 4, 8), name="encoded"
     )
-    model.multi_decoder = lambda final_features, training=False: decoded
+    model.multi_decoder = (
+        lambda final_features, training=False: decoded
+    )
 
     result = model.call(
         [
@@ -323,8 +336,12 @@ def test_call_uses_quantile_distribution_when_quantiles_are_enabled(
     model.run_encoder_decoder_core = lambda **kwargs: FakeTensor(
         (2, 3, 8), name="encoded"
     )
-    model.multi_decoder = lambda final_features, training=False: decoded
-    model.quantile_distribution_modeling = lambda outputs, training=False: quantiles
+    model.multi_decoder = (
+        lambda final_features, training=False: decoded
+    )
+    model.quantile_distribution_modeling = (
+        lambda outputs, training=False: quantiles
+    )
 
     result = model.call(
         [
@@ -358,7 +375,9 @@ def test_call_raises_when_future_span_does_not_match_mode(
         "run_encoder_decoder_core should not run for invalid future spans"
     )
 
-    with pytest.raises(AssertionError, match="Expected time dimension of 4"):
+    with pytest.raises(
+        AssertionError, match="Expected time dimension of 4"
+    ):
         model.call(
             [
                 FakeTensor((2, 2), name="static"),

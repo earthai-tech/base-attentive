@@ -3,9 +3,8 @@
 
 from __future__ import annotations
 
-import sys
 import os
-import importlib
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,9 +18,7 @@ os.environ.setdefault("KERAS_BACKEND", "torch")
 
 from base_attentive.compat import (
     Interval,
-    StrOptions,
     validate_params,
-    check_is_fitted,
 )
 
 
@@ -32,12 +29,12 @@ class TestInterval:
         assert iv is not None
 
     def test_interval_with_float_type(self):
-        import numbers
         iv = Interval(float, 0.0, 1.0, closed="right")
         assert iv is not None
 
     def test_interval_real_type(self):
         import numbers
+
         iv = Interval(numbers.Real, 0.0, None, closed="left")
         assert iv is not None
 
@@ -56,13 +53,16 @@ class TestSklearnMissing:
     def test_validate_params_fallback_with_none_sklearn(self):
         """When sklearn_validate_params is None, returns identity decorator."""
         import base_attentive.compat as compat_mod
+
         original = compat_mod.sklearn_validate_params
         try:
             compat_mod.sklearn_validate_params = None
             decorator = compat_mod.validate_params({"x": [int]})
+
             # Should be an identity decorator
             def my_func(x):
                 return x
+
             result = decorator(my_func)
             assert result is my_func
         finally:
@@ -70,16 +70,18 @@ class TestSklearnMissing:
 
     def test_check_is_fitted_fallback(self):
         """check_is_fitted fallback should not raise when sklearn not available."""
-        import base_attentive.compat as compat_mod
-        original = compat_mod.check_is_fitted
 
         # Test the fallback version directly
-        def fallback_check_is_fitted(estimator, attributes, *, msg=None, all_or_any=all):
+        def fallback_check_is_fitted(
+            estimator, attributes, *, msg=None, all_or_any=all
+        ):
             """Simple fallback for check_is_fitted."""
             pass
 
         # The fallback accepts any estimator and doesn't raise
-        fallback_check_is_fitted(object(), ["some_attr"])  # should not raise
+        fallback_check_is_fitted(
+            object(), ["some_attr"]
+        )  # should not raise
 
 
 class TestValidateParams:
@@ -111,6 +113,7 @@ class TestCompatFallbackPaths:
     def test_interval_raises_when_sklearn_none(self):
         """Interval raises ImportError when sklearn_Interval is None."""
         import base_attentive.compat as compat_mod
+
         original = compat_mod.sklearn_Interval
         try:
             compat_mod.sklearn_Interval = None
@@ -126,11 +129,10 @@ class TestCompatFallbackPaths:
 
 from base_attentive.compat.tf import (
     TFConfig,
+    optional_tf_function,
     standalone_keras,
     suppress_tf_warnings,
-    optional_tf_function,
     tf_debugging_assert_equal,
-    HAS_TF,
 )
 
 
@@ -149,7 +151,6 @@ class TestStandaloneKeras:
     def test_with_keras_available(self):
         """standalone_keras should return a module from keras."""
         # keras is available via torch backend
-        import keras
         result = standalone_keras("layers")
         assert result is not None
 
@@ -161,7 +162,10 @@ class TestStandaloneKeras:
 
     def test_tf_keras_fallback_then_standalone(self):
         """Test that when tf.keras fails, standalone keras is tried."""
-        with patch.dict(sys.modules, {"tensorflow": None, "tensorflow.keras": None}):
+        with patch.dict(
+            sys.modules,
+            {"tensorflow": None, "tensorflow.keras": None},
+        ):
             # With tf not available, should fallback to standalone keras
             result = standalone_keras("layers")
             assert result is not None
@@ -184,6 +188,7 @@ class TestSuppressTfWarnings:
     def test_when_tf_not_available(self):
         """suppress_tf_warnings does nothing when HAS_TF is False."""
         import base_attentive.compat.tf as tf_mod
+
         original = tf_mod.HAS_TF
         try:
             tf_mod.HAS_TF = False
@@ -194,6 +199,7 @@ class TestSuppressTfWarnings:
     def test_when_tf_available(self):
         """suppress_tf_warnings calls TF logger when HAS_TF is True."""
         import base_attentive.compat.tf as tf_mod
+
         original_has_tf = tf_mod.HAS_TF
         original_tf = tf_mod.tf
 
@@ -214,12 +220,15 @@ class TestOptionalTfFunction:
     def test_when_tf_not_available_returns_decorator(self):
         """optional_tf_function returns identity decorator when HAS_TF=False."""
         import base_attentive.compat.tf as tf_mod
+
         original = tf_mod.HAS_TF
         try:
             tf_mod.HAS_TF = False
             dec = optional_tf_function()
+
             def my_fn():
                 return 42
+
             result = dec(my_fn)
             # Function should be passed through
             assert result is my_fn
@@ -229,13 +238,16 @@ class TestOptionalTfFunction:
     def test_when_tf_not_available_function_works(self):
         """Decorated function still works when TF unavailable."""
         import base_attentive.compat.tf as tf_mod
+
         original = tf_mod.HAS_TF
         try:
             tf_mod.HAS_TF = False
             dec = optional_tf_function()
+
             @dec
             def add(a, b):
                 return a + b
+
             assert add(2, 3) == 5
         finally:
             tf_mod.HAS_TF = original
@@ -245,6 +257,7 @@ class TestTfDebuggingAssertEqual:
     def test_when_tf_not_available_returns_none(self):
         """tf_debugging_assert_equal returns None when HAS_TF=False."""
         import base_attentive.compat.tf as tf_mod
+
         original = tf_mod.HAS_TF
         try:
             tf_mod.HAS_TF = False
@@ -256,6 +269,7 @@ class TestTfDebuggingAssertEqual:
     def test_when_tf_available_calls_tf(self):
         """tf_debugging_assert_equal calls tf.debugging when HAS_TF=True."""
         import base_attentive.compat.tf as tf_mod
+
         original_has_tf = tf_mod.HAS_TF
         original_tf = tf_mod.tf
 
@@ -285,8 +299,8 @@ class TestTfDebuggingAssertEqual:
 # ---------------------------------------------------------------------------
 
 from base_attentive.registry.component_registry import (
-    ComponentRegistry,
     ComponentRegistration,
+    ComponentRegistry,
 )
 
 
@@ -298,24 +312,36 @@ class TestComponentRegistry:
         return None
 
     def test_register_basic(self):
-        reg = self.reg.register("my.comp", self._dummy_builder, backend="generic")
+        reg = self.reg.register(
+            "my.comp", self._dummy_builder, backend="generic"
+        )
         assert isinstance(reg, ComponentRegistration)
         assert reg.key == "my.comp"
 
     def test_register_duplicate_raises(self):
         """Registering same key+backend twice raises KeyError."""
-        self.reg.register("my.comp", self._dummy_builder, backend="generic")
+        self.reg.register(
+            "my.comp", self._dummy_builder, backend="generic"
+        )
         with pytest.raises(KeyError, match="already registered"):
-            self.reg.register("my.comp", self._dummy_builder, backend="generic")
+            self.reg.register(
+                "my.comp", self._dummy_builder, backend="generic"
+            )
 
     def test_register_replace_works(self):
         """replace=True allows re-registering."""
-        self.reg.register("my.comp", self._dummy_builder, backend="generic")
-        reg2 = self.reg.register("my.comp", lambda: 42, backend="generic", replace=True)
+        self.reg.register(
+            "my.comp", self._dummy_builder, backend="generic"
+        )
+        reg2 = self.reg.register(
+            "my.comp", lambda: 42, backend="generic", replace=True
+        )
         assert reg2 is not None
 
     def test_has_key_present(self):
-        self.reg.register("my.comp", self._dummy_builder, backend="generic")
+        self.reg.register(
+            "my.comp", self._dummy_builder, backend="generic"
+        )
         assert self.reg.has("my.comp") is True
 
     def test_has_key_missing(self):
@@ -323,17 +349,23 @@ class TestComponentRegistry:
         assert self.reg.has("nonexistent.comp") is False
 
     def test_has_key_with_backend(self):
-        self.reg.register("my.comp", self._dummy_builder, backend="torch")
+        self.reg.register(
+            "my.comp", self._dummy_builder, backend="torch"
+        )
         assert self.reg.has("my.comp", backend="torch") is True
         assert self.reg.has("my.comp", backend="jax") is False
 
     def test_resolve_existing(self):
-        self.reg.register("my.comp", self._dummy_builder, backend="torch")
+        self.reg.register(
+            "my.comp", self._dummy_builder, backend="torch"
+        )
         reg = self.reg.resolve("my.comp", backend="torch")
         assert reg.key == "my.comp"
 
     def test_resolve_generic_fallback(self):
-        self.reg.register("my.comp", self._dummy_builder, backend="generic")
+        self.reg.register(
+            "my.comp", self._dummy_builder, backend="generic"
+        )
         reg = self.reg.resolve("my.comp", backend="torch")
         assert reg.backend == "generic"
 
@@ -344,19 +376,33 @@ class TestComponentRegistry:
 
     def test_resolve_no_generic_no_allow_generic_raises(self):
         """resolve() with allow_generic=False and no matching backend raises KeyError."""
-        self.reg.register("my.comp", self._dummy_builder, backend="torch")
-        with pytest.raises(KeyError, match="not registered for backend"):
-            self.reg.resolve("my.comp", backend="jax", allow_generic=False)
+        self.reg.register(
+            "my.comp", self._dummy_builder, backend="torch"
+        )
+        with pytest.raises(
+            KeyError, match="not registered for backend"
+        ):
+            self.reg.resolve(
+                "my.comp", backend="jax", allow_generic=False
+            )
 
     def test_resolve_no_generic_fallback_raises(self):
         """resolve() raises when no specific or generic registration exists."""
-        self.reg.register("my.comp", self._dummy_builder, backend="torch")
+        self.reg.register(
+            "my.comp", self._dummy_builder, backend="torch"
+        )
         with pytest.raises(KeyError):
-            self.reg.resolve("my.comp", backend="jax", allow_generic=False)
+            self.reg.resolve(
+                "my.comp", backend="jax", allow_generic=False
+            )
 
     def test_list_keys(self):
-        self.reg.register("comp.a", self._dummy_builder, backend="generic")
-        self.reg.register("comp.b", self._dummy_builder, backend="generic")
+        self.reg.register(
+            "comp.a", self._dummy_builder, backend="generic"
+        )
+        self.reg.register(
+            "comp.b", self._dummy_builder, backend="generic"
+        )
         keys = self.reg.list_keys()
         assert "comp.a" in keys
         assert "comp.b" in keys
@@ -367,11 +413,15 @@ class TestComponentRegistry:
         assert keys == []
 
     def test_clone_creates_independent_copy(self):
-        self.reg.register("my.comp", self._dummy_builder, backend="generic")
+        self.reg.register(
+            "my.comp", self._dummy_builder, backend="generic"
+        )
         cloned = self.reg.clone()
         assert cloned.has("my.comp") is True
         # Modifying clone doesn't affect original
-        cloned.register("clone.only", self._dummy_builder, backend="generic")
+        cloned.register(
+            "clone.only", self._dummy_builder, backend="generic"
+        )
         assert self.reg.has("clone.only") is False
 
     def test_clone_empty_registry(self):
@@ -399,6 +449,7 @@ class TestComponentRegistry:
     def test_resolve_returns_correct_builder(self):
         def builder_fn():
             return "built!"
+
         self.reg.register("my.comp", builder_fn, backend="generic")
         reg = self.reg.resolve("my.comp", backend="generic")
         assert reg.builder() == "built!"
@@ -409,8 +460,8 @@ class TestComponentRegistry:
 # ---------------------------------------------------------------------------
 
 from base_attentive.registry.model_registry import (
-    ModelRegistry,
     ModelRegistration,
+    ModelRegistry,
 )
 
 
@@ -422,19 +473,29 @@ class TestModelRegistry:
         return None
 
     def test_register_basic(self):
-        reg = self.reg.register("my.model", self._dummy_builder, backend="generic")
+        reg = self.reg.register(
+            "my.model", self._dummy_builder, backend="generic"
+        )
         assert isinstance(reg, ModelRegistration)
         assert reg.key == "my.model"
 
     def test_register_duplicate_raises(self):
         """Line 45: Registering same key+backend twice raises KeyError."""
-        self.reg.register("my.model", self._dummy_builder, backend="generic")
+        self.reg.register(
+            "my.model", self._dummy_builder, backend="generic"
+        )
         with pytest.raises(KeyError, match="already registered"):
-            self.reg.register("my.model", self._dummy_builder, backend="generic")
+            self.reg.register(
+                "my.model", self._dummy_builder, backend="generic"
+            )
 
     def test_register_replace_works(self):
-        self.reg.register("my.model", self._dummy_builder, backend="generic")
-        reg2 = self.reg.register("my.model", lambda: 42, backend="generic", replace=True)
+        self.reg.register(
+            "my.model", self._dummy_builder, backend="generic"
+        )
+        reg2 = self.reg.register(
+            "my.model", lambda: 42, backend="generic", replace=True
+        )
         assert reg2 is not None
 
     def test_has_key_missing(self):
@@ -443,7 +504,9 @@ class TestModelRegistry:
 
     def test_has_key_with_backend_missing(self):
         """Line 86: backend check in has()."""
-        self.reg.register("my.model", self._dummy_builder, backend="torch")
+        self.reg.register(
+            "my.model", self._dummy_builder, backend="torch"
+        )
         assert self.reg.has("my.model", backend="jax") is False
 
     def test_resolve_empty_raises(self):
@@ -453,21 +516,33 @@ class TestModelRegistry:
 
     def test_resolve_no_matching_backend_raises(self):
         """Lines 93-94: no generic fallback, allow_generic=False → KeyError."""
-        self.reg.register("my.model", self._dummy_builder, backend="torch")
-        with pytest.raises(KeyError, match="not registered for backend"):
-            self.reg.resolve("my.model", backend="jax", allow_generic=False)
+        self.reg.register(
+            "my.model", self._dummy_builder, backend="torch"
+        )
+        with pytest.raises(
+            KeyError, match="not registered for backend"
+        ):
+            self.reg.resolve(
+                "my.model", backend="jax", allow_generic=False
+            )
 
     def test_resolve_generic_fallback(self):
-        self.reg.register("my.model", self._dummy_builder, backend="generic")
+        self.reg.register(
+            "my.model", self._dummy_builder, backend="generic"
+        )
         reg = self.reg.resolve("my.model", backend="torch")
         assert reg.backend == "generic"
 
     def test_resolve_exact_backend(self):
-        self.reg.register("my.model", self._dummy_builder, backend="torch")
+        self.reg.register(
+            "my.model", self._dummy_builder, backend="torch"
+        )
         reg = self.reg.resolve("my.model", backend="torch")
         assert reg.key == "my.model"
 
     def test_register_with_backend_normalization(self):
         """pytorch alias normalized to torch."""
-        reg = self.reg.register("my.model", self._dummy_builder, backend="pytorch")
+        reg = self.reg.register(
+            "my.model", self._dummy_builder, backend="pytorch"
+        )
         assert reg.backend == "torch"

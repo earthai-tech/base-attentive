@@ -305,15 +305,15 @@ class TestCRPSLoss:
         try:
             losses_mod.tf_reduce_mean = (
                 lambda x, axis=None, keepdims=False: np.mean(
-                    np.asarray(x),
+                    _to_numpy(x),
                     axis=axis,
                     keepdims=keepdims,
                 )
             )
             losses_mod.tf_gather = (
                 lambda params, indices, batch_dims=1: np.repeat(
-                    np.asarray(params)[:, np.newaxis, :1, :],
-                    np.asarray(indices).shape[1],
+                    _to_numpy(params)[:, np.newaxis, :1, :],
+                    _to_numpy(indices).shape[1],
                     axis=1,
                 )
             )

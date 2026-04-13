@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import importlib
-import importlib.util
 import os
 import sys
 
@@ -17,15 +15,13 @@ os.environ.setdefault("KERAS_BACKEND", "torch")
 # backend/__init__.py
 # ---------------------------------------------------------------------------
 
-from base_attentive.backend import (
-    get_backend,
-    set_backend,
-    get_backend_capabilities,
-    get_available_backends,
-    normalize_backend_name,
-    TorchBackend,
-)
 import base_attentive.backend as _backend_mod
+from base_attentive.backend import (
+    TorchBackend,
+    get_backend,
+    get_backend_capabilities,
+    set_backend,
+)
 
 
 class TestGetBackend:
@@ -71,8 +67,11 @@ class TestGetBackendCapabilities:
     def test_capabilities_contains_required_keys(self):
         caps = get_backend_capabilities("torch")
         required = [
-            "name", "available", "uses_keras_runtime",
-            "experimental", "supports_base_attentive",
+            "name",
+            "available",
+            "uses_keras_runtime",
+            "experimental",
+            "supports_base_attentive",
         ]
         for key in required:
             assert key in caps, f"Missing key: {key}"
@@ -99,6 +98,7 @@ class TestGetBackendCapabilities:
         """When get_backend() fails, falls back to tensorflow name."""
         orig_gb = _backend_mod.get_backend
         try:
+
             def raising_get_backend(name=None):
                 if name is None:
                     raise RuntimeError("simulated error")
@@ -109,7 +109,7 @@ class TestGetBackendCapabilities:
             # The code has `except Exception: name = "tensorflow"`
             # so it won't crash but may raise ValueError for unknown tf
             try:
-                caps = _backend_mod.get_backend_capabilities()
+                _backend_mod.get_backend_capabilities()
             except (ValueError, Exception):
                 pass  # Expected behavior
         finally:
@@ -167,7 +167,6 @@ class TestAutoInitialize:
 # ---------------------------------------------------------------------------
 
 from base_attentive.backend.base import (
-    Backend,
     _get_backend_helper,
     _has_module,
     _import_module,
@@ -194,12 +193,15 @@ class TestGetBackendHelper:
     def test_uses_override_when_present(self):
         """_get_backend_helper returns the helper when it exists in the module."""
         import base_attentive.backend as backend_module
+
         original = getattr(backend_module, "_test_override_fn", None)
         try:
+
             def test_helper():
                 return "overridden"
+
             backend_module._test_override_fn = test_helper
-            result = _get_backend_helper("_test_override_fn")
+            _get_backend_helper("_test_override_fn")
             # May or may not return the helper depending on globals check
         finally:
             if original is None:
@@ -224,6 +226,7 @@ class TestImportModule:
     def test_import_os(self):
         result = _import_module("os")
         import os as os_mod
+
         assert result is os_mod
 
     def test_import_nonexistent_raises(self):
@@ -247,6 +250,7 @@ class TestReadLoadedKerasBackend:
     def test_exception_path(self):
         """If keras.backend.backend() raises, returns None."""
         import base_attentive.backend.base as base_mod
+
         orig_sys_modules = sys.modules.copy()
 
         class FakeKerasBackend:
@@ -285,14 +289,14 @@ class TestBackendClass:
 # backend/torch_utils.py
 # ---------------------------------------------------------------------------
 
+import base_attentive.backend.torch_utils as _torch_utils_mod
 from base_attentive.backend.torch_utils import (
-    torch_is_available,
-    get_torch_version,
+    TorchDeviceManager,
     check_torch_compatibility,
     get_torch_device,
-    TorchDeviceManager,
+    get_torch_version,
+    torch_is_available,
 )
-import base_attentive.backend.torch_utils as _torch_utils_mod
 
 
 class TestTorchIsAvailable:
@@ -303,6 +307,7 @@ class TestTorchIsAvailable:
         """Line 42: torch_is_available() returns False when find_spec returns None."""
         with pytest.MonkeyPatch().context() as mp:
             import importlib.util as iutil
+
             original_find_spec = iutil.find_spec
 
             def patched_find_spec(name):
@@ -312,7 +317,6 @@ class TestTorchIsAvailable:
 
             mp.setattr(iutil, "find_spec", patched_find_spec)
             # Need to test the actual function
-            from base_attentive.backend.torch_utils import torch_is_available as tia
             # Can't easily re-execute since importlib.util is cached
             # Instead, test directly
             result = patched_find_spec("torch")
@@ -392,7 +396,9 @@ class TestCheckTorchCompatibility:
         orig = _torch_utils_mod.get_torch_version
         try:
             _torch_utils_mod.get_torch_version = lambda: None
-            is_compat, msg = _torch_utils_mod.check_torch_compatibility()
+            is_compat, msg = (
+                _torch_utils_mod.check_torch_compatibility()
+            )
             assert is_compat is False
             assert "not installed" in msg
         finally:
@@ -422,6 +428,7 @@ class TestGetTorchDevice:
     def test_prefer_cuda_falls_back_to_cpu(self):
         """When CUDA not available, falls back to CPU."""
         import torch
+
         if torch.cuda.is_available():
             pytest.skip("CUDA is available on this machine")
         device = get_torch_device(prefer="cuda", verbose=False)
@@ -430,6 +437,7 @@ class TestGetTorchDevice:
     def test_prefer_mps_falls_back_to_cpu(self):
         """When MPS not available, falls back to CPU."""
         import torch
+
         if torch.backends.mps.is_available():
             pytest.skip("MPS is available on this machine")
         device = get_torch_device(prefer="mps", verbose=False)
@@ -462,7 +470,9 @@ class TestTorchDeviceManager:
         try:
             _torch_utils_mod.torch_is_available = lambda: False
             mgr = TorchDeviceManager()
-            with pytest.raises(RuntimeError, match="PyTorch not available"):
+            with pytest.raises(
+                RuntimeError, match="PyTorch not available"
+            ):
                 mgr.set_device("cpu")
         finally:
             _torch_utils_mod.torch_is_available = orig

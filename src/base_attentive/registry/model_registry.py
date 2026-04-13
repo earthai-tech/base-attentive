@@ -23,7 +23,9 @@ class ModelRegistry:
     """Registry of backend-specific model assemblers."""
 
     def __init__(self):
-        self._registrations: dict[str, dict[str, ModelRegistration]] = {}
+        self._registrations: dict[
+            str, dict[str, ModelRegistration]
+        ] = {}
 
     def register(
         self,

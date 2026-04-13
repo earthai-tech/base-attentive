@@ -40,11 +40,15 @@ def parse_version(version_string: str) -> Tuple[int, ...]:
     try:
         return tuple(int(x) for x in version_string.split(".")[:3])
     except (ValueError, IndexError):
-        _logger.warning(f"Could not parse version string: {version_string}")
+        _logger.warning(
+            f"Could not parse version string: {version_string}"
+        )
         return (0, 0, 0)
 
 
-def version_at_least(version: str, min_required: Tuple[int, ...] | str) -> bool:
+def version_at_least(
+    version: str, min_required: Tuple[int, ...] | str
+) -> bool:
     """Check if version is at least the minimum required version.
 
     Parameters
@@ -109,12 +113,18 @@ def get_backend_version(backend_name: str) -> Optional[str]:
                 return None
 
     distribution_map = {
-        "tensorflow": ("tensorflow", "tensorflow-cpu", "tensorflow-intel"),
+        "tensorflow": (
+            "tensorflow",
+            "tensorflow-cpu",
+            "tensorflow-intel",
+        ),
         "jax": ("jax",),
         "torch": ("torch",),
     }
 
-    for dist_name in distribution_map.get(module_name, (module_name,)):
+    for dist_name in distribution_map.get(
+        module_name, (module_name,)
+    ):
         try:
             return importlib.metadata.version(dist_name)
         except importlib.metadata.PackageNotFoundError:
@@ -163,7 +173,9 @@ def check_tensorflow_compatibility(
     return (True, f"TensorFlow {tf_version} is compatible")
 
 
-def check_torch_compatibility(torch_version: Optional[str] = None) -> Tuple[bool, str]:
+def check_torch_compatibility(
+    torch_version: Optional[str] = None,
+) -> Tuple[bool, str]:
     """Check if installed PyTorch is compatible with BaseAttentive.
 
     Parameters

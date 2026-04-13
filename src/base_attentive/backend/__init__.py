@@ -292,20 +292,31 @@ def get_backend_capabilities(
         try:
             backend = get_backend()
             caps = backend.get_capabilities()
-            caps.setdefault("name", getattr(backend, "name", "unknown"))
+            caps.setdefault(
+                "name", getattr(backend, "name", "unknown")
+            )
             caps.setdefault(
                 "framework",
-                getattr(backend, "framework", getattr(backend, "name", "unknown")),
+                getattr(
+                    backend,
+                    "framework",
+                    getattr(backend, "name", "unknown"),
+                ),
             )
             caps.setdefault(
                 "available",
-                backend.is_available() if hasattr(backend, "is_available") else True,
+                backend.is_available()
+                if hasattr(backend, "is_available")
+                else True,
             )
             caps.setdefault(
                 "uses_keras_runtime",
                 getattr(backend, "uses_keras_runtime", False),
             )
-            caps.setdefault("experimental", getattr(backend, "experimental", False))
+            caps.setdefault(
+                "experimental",
+                getattr(backend, "experimental", False),
+            )
             caps.setdefault(
                 "supports_base_attentive",
                 getattr(backend, "supports_base_attentive", False),
@@ -314,11 +325,18 @@ def get_backend_capabilities(
                 "supports_base_attentive_v2",
                 getattr(backend, "supports_base_attentive_v2", False),
             )
-            caps.setdefault("blockers", list(getattr(backend, "blockers", ())))
-            caps.setdefault("v2_blockers", list(getattr(backend, "v2_blockers", ())))
+            caps.setdefault(
+                "blockers", list(getattr(backend, "blockers", ()))
+            )
+            caps.setdefault(
+                "v2_blockers",
+                list(getattr(backend, "v2_blockers", ())),
+            )
             caps.setdefault(
                 "version",
-                get_backend_version(getattr(backend, "name", "tensorflow")),
+                get_backend_version(
+                    getattr(backend, "name", "tensorflow")
+                ),
             )
             return caps
         except Exception:
@@ -340,13 +358,17 @@ def get_backend_capabilities(
         )
         caps.setdefault(
             "available",
-            backend.is_available() if hasattr(backend, "is_available") else True,
+            backend.is_available()
+            if hasattr(backend, "is_available")
+            else True,
         )
         caps.setdefault(
             "uses_keras_runtime",
             getattr(backend, "uses_keras_runtime", False),
         )
-        caps.setdefault("experimental", getattr(backend, "experimental", False))
+        caps.setdefault(
+            "experimental", getattr(backend, "experimental", False)
+        )
         caps.setdefault(
             "supports_base_attentive",
             getattr(backend, "supports_base_attentive", False),
@@ -355,27 +377,43 @@ def get_backend_capabilities(
             "supports_base_attentive_v2",
             getattr(backend, "supports_base_attentive_v2", False),
         )
-        caps.setdefault("blockers", list(getattr(backend, "blockers", ())))
-        caps.setdefault("v2_blockers", list(getattr(backend, "v2_blockers", ())))
+        caps.setdefault(
+            "blockers", list(getattr(backend, "blockers", ()))
+        )
+        caps.setdefault(
+            "v2_blockers", list(getattr(backend, "v2_blockers", ()))
+        )
         caps["version"] = get_backend_version(normalized)
         return caps
     except Exception as e:
         return {
             "name": normalized,
-            "framework": getattr(_BACKENDS[normalized], "framework", normalized),
+            "framework": getattr(
+                _BACKENDS[normalized], "framework", normalized
+            ),
             "available": False,
             "uses_keras_runtime": getattr(
                 _BACKENDS[normalized], "uses_keras_runtime", False
             ),
-            "experimental": getattr(_BACKENDS[normalized], "experimental", False),
+            "experimental": getattr(
+                _BACKENDS[normalized], "experimental", False
+            ),
             "supports_base_attentive": getattr(
-                _BACKENDS[normalized], "supports_base_attentive", False
+                _BACKENDS[normalized],
+                "supports_base_attentive",
+                False,
             ),
             "supports_base_attentive_v2": getattr(
-                _BACKENDS[normalized], "supports_base_attentive_v2", False
+                _BACKENDS[normalized],
+                "supports_base_attentive_v2",
+                False,
             ),
-            "blockers": list(getattr(_BACKENDS[normalized], "blockers", ())),
-            "v2_blockers": list(getattr(_BACKENDS[normalized], "v2_blockers", ())),
+            "blockers": list(
+                getattr(_BACKENDS[normalized], "blockers", ())
+            ),
+            "v2_blockers": list(
+                getattr(_BACKENDS[normalized], "v2_blockers", ())
+            ),
             "version": get_backend_version(normalized),
             "error": str(e),
         }

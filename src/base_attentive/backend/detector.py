@@ -13,7 +13,12 @@ import sys
 from typing import Optional, Type
 
 from .base import Backend
-from .implementations import JaxBackend, PyTorchBackend, TensorFlowBackend, TorchBackend
+from .implementations import (
+    JaxBackend,
+    PyTorchBackend,
+    TensorFlowBackend,
+    TorchBackend,
+)
 from .version_check import get_backend_version
 
 __all__ = [
@@ -62,7 +67,9 @@ def normalize_backend_name(name: Optional[str]) -> str:
     if not normalized:
         return "tensorflow"
     if normalized == "keras":
-        return normalize_backend_name(os.environ.get("KERAS_BACKEND", "tensorflow"))
+        return normalize_backend_name(
+            os.environ.get("KERAS_BACKEND", "tensorflow")
+        )
     return _BACKEND_ALIASES.get(normalized, normalized)
 
 
@@ -222,7 +229,9 @@ def ensure_default_backend(
         )
 
     # Auto-install default backend
-    install_package = "tensorflow[and-cuda]" if install_tensorflow else "jax"
+    install_package = (
+        "tensorflow[and-cuda]" if install_tensorflow else "jax"
+    )
     _logger.info(f"No backend found. Installing {install_package}...")
 
     try:
@@ -234,7 +243,9 @@ def ensure_default_backend(
         _logger.info(f"Successfully installed {install_package}")
         return "tensorflow" if install_tensorflow else "jax"
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Failed to install {install_package}: {e}") from e
+        raise RuntimeError(
+            f"Failed to install {install_package}: {e}"
+        ) from e
 
 
 def get_available_backends() -> list[str]:

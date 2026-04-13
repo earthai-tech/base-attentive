@@ -15,7 +15,6 @@ Key advantages over generic implementations:
 from __future__ import annotations
 
 from .base_attentive_v2 import (
-    _TorchTemporalSelfAttentionEncoder,
     _build_torch_concat_fusion,
     _build_torch_dense_projection,
     _build_torch_last_pool,
@@ -23,6 +22,7 @@ from .base_attentive_v2 import (
     _build_torch_point_forecast_head,
     _build_torch_quantile_head,
     _build_torch_temporal_self_attention_encoder,
+    _TorchTemporalSelfAttentionEncoder,
     ensure_torch_v2_registered,
 )
 

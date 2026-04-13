@@ -3,22 +3,20 @@
 
 from __future__ import annotations
 
-import os
-
 import numpy as np
 import pytest
 
-from base_attentive.validation import (
-    validate_model_inputs,
-    maybe_reduce_quantiles_bh,
-    ensure_bh1,
-)
 import base_attentive.validation as _val_mod
-
+from base_attentive.validation import (
+    ensure_bh1,
+    maybe_reduce_quantiles_bh,
+    validate_model_inputs,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _has_runtime():
     return _val_mod._has_runtime()
@@ -76,7 +74,6 @@ class TestValidateModelInputs:
         assert len(result) == 3
 
     def test_verbose_logging(self, caplog):
-        import logging
         a = np.ones((2, 4), dtype=np.float32)
         b = np.ones((2, 5, 4), dtype=np.float32)
         c = np.ones((2, 3, 2), dtype=np.float32)
@@ -118,15 +115,19 @@ class TestValidateModelInputs:
         if not _has_runtime():
             pytest.skip("No runtime available")
 
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock
 
         original_deps = _val_mod.KERAS_DEPS
         try:
             mock_deps = MagicMock()
-            mock_deps.convert_to_tensor = MagicMock(side_effect=Exception("bad input"))
+            mock_deps.convert_to_tensor = MagicMock(
+                side_effect=Exception("bad input")
+            )
             _val_mod.KERAS_DEPS = mock_deps
 
-            with pytest.raises(ValueError, match="Could not convert input to tensor"):
+            with pytest.raises(
+                ValueError, match="Could not convert input to tensor"
+            ):
                 validate_model_inputs(
                     [np.ones((2, 4), dtype=np.float32)],
                     error="raise",
@@ -145,7 +146,9 @@ class TestValidateModelInputs:
         try:
             a = np.ones((2, 4), dtype=np.float32)
             mock_deps = MagicMock()
-            mock_deps.convert_to_tensor = MagicMock(side_effect=Exception("bad input"))
+            mock_deps.convert_to_tensor = MagicMock(
+                side_effect=Exception("bad input")
+            )
             _val_mod.KERAS_DEPS = mock_deps
 
             result = validate_model_inputs([a], error="warn")
@@ -288,7 +291,6 @@ class TestEnsureBh1:
     def test_with_dtype_cast(self):
         if not _has_runtime():
             pytest.skip("No runtime available")
-        import keras
         x = np.ones((2, 5, 1), dtype=np.float32)
         result = ensure_bh1(x, dtype="float32")
         assert result is not None
