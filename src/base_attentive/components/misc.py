@@ -912,11 +912,21 @@ class TSPositionalEncoding(Layer, NNLearner):
                     input_seq_len = int(input_seq_len.item())
         # Add positional encoding up to the length of the input sequence.
         pos_enc = self.pos_encoding[:, :input_seq_len, :]
-        # Move pos_encoding to the same device as x for MPS compatibility
-        _dev = getattr(x, 'device', None)
-        _to = getattr(pos_enc, 'to', None)
-        if _dev is not None and callable(_to):
-            pos_enc = _to(_dev)
+        # Ensure pos_enc is on the same device as x (pos_encoding is built
+        # from numpy at __init__ so it may be a CPU tensor or numpy array;
+        # the duck-type .to() guard misses numpy arrays which have no .to()).
+        try:
+            import torch as _torch
+            import numpy as _np
+            if isinstance(x, _torch.Tensor):
+                if isinstance(pos_enc, _torch.Tensor):
+                    pos_enc = pos_enc.to(x.device)
+                else:
+                    pos_enc = _torch.tensor(
+                        _np.asarray(pos_enc, dtype=_np.float32), device=x.device
+                    )
+        except ImportError:
+            pass
         return x + pos_enc
 
     def get_config(self):
