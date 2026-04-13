@@ -46,6 +46,7 @@ from ._config import (
     tf_sigmoid,
     tf_sqrt,
     tf_square,
+    tf_subtract,
     tf_unstack,
 )
 
@@ -184,9 +185,10 @@ class CRPSLoss(Loss, NNLearner):
         qs = tf_constant(qs, tf_float32)
         qs = tf_reshape(qs, [1, 1, tf_shape(qs)[0], 1])
 
-        y_true = tf_constant(y_true, dtype=tf_float32)
-        y_true_exp = tf_expand_dims(y_true, axis=2)  # (B,H,1,O)
-        err = y_true_exp - yq  # (B,H,Q,O)
+        y_true_exp = tf_expand_dims(
+            tf_constant(y_true, dtype=tf_float32), axis=2
+        )  # (B,H,1,O)
+        err = tf_subtract(y_true_exp, yq)  # (B,H,Q,O)
         pinball = tf_maximum(qs * err, (qs - 1.0) * err)
         crps = (2.0 / tf_cast(tf_shape(qs)[2], tf_float32)) * tf_reduce_mean(
             pinball, axis=2
@@ -435,14 +437,15 @@ class AdaptiveQuantileLoss(Loss, NNLearner):
         """
         if self.quantiles is None:
             return 0.0
-        y_true = tf_constant(y_true, dtype=tf_float32)
         quantiles = tf_constant(self.quantiles, dtype=tf_float32)
         if len(getattr(y_pred, "shape", ())) <= 2:
-            error = y_true - y_pred
+            error = tf_subtract(y_true, y_pred)
             quantiles = tf_reshape(quantiles, [1, len(self.quantiles)])
         else:
-            y_true_expanded = tf_expand_dims(y_true, axis=2)  # => (B, H, 1, O)
-            error = y_true_expanded - y_pred
+            y_true_expanded = tf_expand_dims(
+                tf_constant(y_true, dtype=tf_float32), axis=2
+            )  # => (B, H, 1, O)
+            error = tf_subtract(y_true_expanded, y_pred)
             quantiles = tf_reshape(quantiles, [1, 1, len(self.quantiles), 1])
         # quantile loss
         quantile_loss = tf_maximum(quantiles * error, (quantiles - 1) * error)
@@ -882,9 +885,10 @@ class CRPSLossWrapper(Loss, NNLearner):
         y_pred: (B, H, Q, O)
         """
         # Expand true to match quantile dim
-        y_true = tf_constant(y_true, dtype=tf_float32)
-        y_true_exp = tf_expand_dims(y_true, axis=2)  # (B,H,1,O)
-        err = y_true_exp - y_pred  # (B,H,Q,O)
+        y_true_exp = tf_expand_dims(
+            tf_constant(y_true, dtype=tf_float32), axis=2
+        )  # (B,H,1,O)
+        err = tf_subtract(y_true_exp, y_pred)  # (B,H,Q,O)
 
         # Pinball / quantile loss
         # max(q*e, (q-1)*e)

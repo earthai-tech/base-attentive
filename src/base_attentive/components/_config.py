@@ -133,6 +133,7 @@ tf_floordiv = KERAS_DEPS.floordiv
 tf_greater = KERAS_DEPS.greater
 tf_float32 = KERAS_DEPS.float32
 tf_reduce_max = KERAS_DEPS.reduce_max
+tf_subtract = KERAS_DEPS.subtract
 
 _logger = get_logger(__name__)
 
@@ -214,6 +215,7 @@ __all__ = [
     "tf_ones",
     "tf_ones_like",
     "tf_unstack",
+    "tf_subtract",
     "_logger",
     "DEP_MSG",
     "KERAS_DEPS",
