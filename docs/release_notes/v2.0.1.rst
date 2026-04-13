@@ -54,3 +54,37 @@ Documentation
 - |Internal| README badges synchronised with ``docs/index.rst``: added
   version, semver, Keras ≥ 3.0, backends, last-commit, open-issues,
   PRs-welcome, and platform badges.
+
+Examples
+--------
+
+- |Feature| **Two new Jupyter notebooks** added to ``examples/`` and
+  rendered as HTML pages within the documentation (see
+  :ref:`examples-notebooks`):
+
+  - ``06_crps_probabilistic_forecasting.ipynb`` — covers all three
+    :class:`~base_attentive.components.losses.CRPSLoss` modes
+    (``"quantile"``, ``"gaussian"``, ``"mixture"``), Monte Carlo
+    sample-count guidance, output-shape interpretation per mode, and a
+    sketch of a custom ``GradientTape``-style training loop.
+
+  - ``07_v2_spec_registry.ipynb`` — end-to-end walkthrough of the v2
+    declarative configuration system: ``BaseAttentiveSpec`` creation,
+    JSON round-trip serialisation, ``BaseAttentiveComponentSpec``,
+    registering a custom encoder via ``ComponentRegistry``,
+    ``ModelRegistry``, and ``BaseAttentiveV2Assembly``.
+
+- |Internal| **Notebook rendering via nbsphinx** integrated into the
+  Sphinx build pipeline:
+
+  - ``nbsphinx`` added to ``extensions`` in ``docs/conf.py`` with
+    ``nbsphinx_execute = "never"`` so ReadTheDocs renders notebooks
+    without requiring an ML runtime.
+  - ``docs/conf.py`` auto-copies ``examples/*.ipynb`` →
+    ``docs/notebooks/`` at build time, keeping ``examples/`` as the
+    single source of truth.
+  - New **Examples** section added to the documentation sidebar
+    (``docs/notebooks/index.rst``) with a summary table of all seven
+    notebooks and a Binder badge for interactive execution.
+  - ``nbsphinx>=0.9.0`` and ``ipython>=8.0.0`` added to the
+    ``[docs]`` optional dependency group in ``pyproject.toml``.
