@@ -44,7 +44,8 @@ def select_mode(
 
     if canonical:
         canonical_map = {
-            value.strip().lower().replace("-", "_"): value for value in canonical
+            value.strip().lower().replace("-", "_"): value
+            for value in canonical
         }
         if normalized in canonical_map:
             return canonical_map[normalized]

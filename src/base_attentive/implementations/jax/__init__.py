@@ -14,7 +14,6 @@ Key advantages over generic implementations:
 from __future__ import annotations
 
 from .base_attentive_v2 import (
-    _JaxTemporalSelfAttentionEncoder,
     _build_jax_concat_fusion,
     _build_jax_dense_projection,
     _build_jax_last_pool,
@@ -22,6 +21,7 @@ from .base_attentive_v2 import (
     _build_jax_point_forecast_head,
     _build_jax_quantile_head,
     _build_jax_temporal_self_attention_encoder,
+    _JaxTemporalSelfAttentionEncoder,
     ensure_jax_v2_registered,
 )
 

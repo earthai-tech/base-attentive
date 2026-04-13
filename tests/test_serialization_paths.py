@@ -37,7 +37,10 @@ def _has_serialization_package_alias(tree: ast.Module) -> bool:
             continue
         if target.id != "SERIALIZATION_PACKAGE":
             continue
-        return isinstance(node.value, ast.Name) and node.value.id == "__name__"
+        return (
+            isinstance(node.value, ast.Name)
+            and node.value.id == "__name__"
+        )
     return False
 
 
@@ -72,7 +75,9 @@ def test_register_keras_serializable_uses_real_module_paths():
         )
 
         decorators = list(_register_decorators(tree))
-        assert decorators, f"{path} should contain serializable decorators"
+        assert decorators, (
+            f"{path} should contain serializable decorators"
+        )
 
         for decorator in decorators:
             assert decorator.args, (

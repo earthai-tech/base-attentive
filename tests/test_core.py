@@ -33,28 +33,41 @@ class TestValidateNestedParam:
         checks = _import_core_submodule("base_attentive.core.checks")
         value = [1, 2, 3]
 
-        assert checks.validate_nested_param(value, list[int], "levels") == value
+        assert (
+            checks.validate_nested_param(value, list[int], "levels")
+            == value
+        )
 
     def test_rejects_non_list_for_list_type(self):
         """A non-list value should raise a clear type error."""
         checks = _import_core_submodule("base_attentive.core.checks")
 
         with pytest.raises(TypeError, match="levels must be a list"):
-            checks.validate_nested_param("not-a-list", list[int], "levels")
+            checks.validate_nested_param(
+                "not-a-list", list[int], "levels"
+            )
 
     def test_rejects_wrong_list_element_type(self):
         """The failing element index should be included in the error."""
         checks = _import_core_submodule("base_attentive.core.checks")
 
-        with pytest.raises(TypeError, match=r"levels\[1\] must be int"):
-            checks.validate_nested_param([1, "two", 3], list[int], "levels")
+        with pytest.raises(
+            TypeError, match=r"levels\[1\] must be int"
+        ):
+            checks.validate_nested_param(
+                [1, "two", 3], list[int], "levels"
+            )
 
     def test_rejects_wrong_scalar_type(self):
         """Scalar type mismatches should mention the parameter name."""
         checks = _import_core_submodule("base_attentive.core.checks")
 
-        with pytest.raises(TypeError, match="forecast_horizon must be int"):
-            checks.validate_nested_param("24", int, "forecast_horizon")
+        with pytest.raises(
+            TypeError, match="forecast_horizon must be int"
+        ):
+            checks.validate_nested_param(
+                "24", int, "forecast_horizon"
+            )
 
 
 class TestParamDeprecatedMessage:
@@ -62,7 +75,9 @@ class TestParamDeprecatedMessage:
 
     def test_warns_for_deprecated_function_keyword(self):
         """A matching deprecated keyword should emit the configured warning."""
-        handlers = _import_core_submodule("base_attentive.core.handlers")
+        handlers = _import_core_submodule(
+            "base_attentive.core.handlers"
+        )
 
         @handlers.param_deprecated_message(
             [
@@ -77,12 +92,16 @@ class TestParamDeprecatedMessage:
         def sample_function(*, legacy_mode=False):
             return legacy_mode
 
-        with pytest.warns(FutureWarning, match="legacy_mode is deprecated"):
+        with pytest.warns(
+            FutureWarning, match="legacy_mode is deprecated"
+        ):
             assert sample_function(legacy_mode=True) is True
 
     def test_warns_for_deprecated_class_keyword(self):
         """Class decorators should apply the same warning behavior to __init__."""
-        handlers = _import_core_submodule("base_attentive.core.handlers")
+        handlers = _import_core_submodule(
+            "base_attentive.core.handlers"
+        )
 
         @handlers.param_deprecated_message(
             [
@@ -98,14 +117,18 @@ class TestParamDeprecatedMessage:
             def __init__(self, *, legacy_mode=False):
                 self.legacy_mode = legacy_mode
 
-        with pytest.warns(FutureWarning, match="legacy_mode is deprecated"):
+        with pytest.warns(
+            FutureWarning, match="legacy_mode is deprecated"
+        ):
             instance = Example(legacy_mode=True)
 
         assert instance.legacy_mode is True
 
     def test_skips_warning_when_condition_is_not_met(self):
         """No warning should be emitted when the condition evaluates false."""
-        handlers = _import_core_submodule("base_attentive.core.handlers")
+        handlers = _import_core_submodule(
+            "base_attentive.core.handlers"
+        )
 
         @handlers.param_deprecated_message(
             [
@@ -132,7 +155,9 @@ class TestDelegateOnError:
 
     def test_delegates_exception_to_handler(self):
         """Exceptions should be converted by the provided handler."""
-        handlers = _import_core_submodule("base_attentive.core.handlers")
+        handlers = _import_core_submodule(
+            "base_attentive.core.handlers"
+        )
 
         @handlers.delegate_on_error(
             lambda error: f"handled {type(error).__name__}: {error}"
@@ -144,7 +169,9 @@ class TestDelegateOnError:
 
     def test_reraises_when_no_handler_is_provided(self):
         """Without a handler, the original exception should propagate."""
-        handlers = _import_core_submodule("base_attentive.core.handlers")
+        handlers = _import_core_submodule(
+            "base_attentive.core.handlers"
+        )
 
         @handlers.delegate_on_error()
         def explode():
@@ -155,7 +182,9 @@ class TestDelegateOnError:
 
     def test_returns_success_value_without_using_handler(self):
         """Successful calls should pass through untouched."""
-        handlers = _import_core_submodule("base_attentive.core.handlers")
+        handlers = _import_core_submodule(
+            "base_attentive.core.handlers"
+        )
 
         @handlers.delegate_on_error(lambda error: "unused")
         def add(a, b):

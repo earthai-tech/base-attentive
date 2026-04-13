@@ -11,8 +11,6 @@ components with optimizations including:
 
 from __future__ import annotations
 
-from typing import Any
-
 try:
     import torch
     import torch.nn as nn
@@ -34,7 +32,7 @@ def _ensure_torch():
 
 class _TorchTemporalSelfAttentionEncoder(nn.Module if nn else object):
     """PyTorch-optimized temporal encoder with multi-head attention.
-    
+
     Advantages over generic version:
     - Uses native torch.nn.MultiheadAttention (highly optimized C++ backend)
     - Support for CUDA/device acceleration
@@ -84,10 +82,12 @@ class _TorchTemporalSelfAttentionEncoder(nn.Module if nn else object):
         activation_fn = getattr(F, activation, None)
         if activation_fn is None:
             # Try as module
-            activation_module = getattr(nn, activation.capitalize(), None)
+            activation_module = getattr(
+                nn, activation.capitalize(), None
+            )
             if activation_module is None:
                 raise ValueError(f"Unknown activation: {activation}")
-        
+
         self.ffn_hidden = nn.Linear(units, hidden_units)
         self.activation_fn = (
             (lambda x: activation_fn(x))
@@ -95,14 +95,16 @@ class _TorchTemporalSelfAttentionEncoder(nn.Module if nn else object):
             else activation_module()
         )
         self.ffn_output = nn.Linear(hidden_units, units)
-        
+
         self.dropout = (
             nn.Dropout(p=dropout_rate) if dropout_rate > 0 else None
         )
         self.norm2 = nn.LayerNorm(units, eps=layer_norm_epsilon)
 
     def forward(
-        self, inputs: torch.Tensor, training: bool = False  # noqa: FBT002
+        self,
+        inputs: torch.Tensor,
+        training: bool = False,  # noqa: FBT002
     ) -> torch.Tensor:
         """Forward pass with residual connections and layer normalization."""
         # Set training mode
@@ -120,10 +122,10 @@ class _TorchTemporalSelfAttentionEncoder(nn.Module if nn else object):
                 ffn_output = self.activation_fn(ffn_output)
             else:
                 ffn_output = self.activation_fn(ffn_output)
-            
+
             if self.dropout is not None:
                 ffn_output = self.dropout(ffn_output)
-            
+
             ffn_output = self.ffn_output(ffn_output)
             return self.norm2(x + ffn_output)
         finally:
@@ -138,13 +140,13 @@ def _build_torch_dense_projection(
     **kwargs,
 ) -> nn.Linear:
     """Build a PyTorch Linear projection layer.
-    
+
     Arguments:
         units: Output dimension
         activation: Activation function name (ignored; torch uses forward hooks)
         name: Layer name (torch doesn't use this directly)
         **kwargs: Additional kwargs
-        
+
     Returns:
         nn.Linear layer (user can wrap with activation if needed)
     """
@@ -166,12 +168,12 @@ def _build_torch_temporal_self_attention_encoder(
     **kwargs,
 ) -> _TorchTemporalSelfAttentionEncoder:
     """Build a PyTorch-optimized temporal self-attention encoder.
-    
+
     Advantages:
     - Native PyTorch MultiheadAttention (C++ backend acceleration)
     - Automatic device placement support
     - Native CUDA support
-    
+
     Arguments:
         units: Model dimension
         hidden_units: FFN hidden dimension
@@ -181,7 +183,7 @@ def _build_torch_temporal_self_attention_encoder(
         layer_norm_epsilon: Layer normalization epsilon
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         _TorchTemporalSelfAttentionEncoder instance
     """
@@ -206,13 +208,13 @@ def _build_torch_mean_pool(
     **kwargs,
 ):
     """Build a pooling layer using PyTorch's functional API.
-    
+
     Arguments:
         axis: Axis along which to compute the mean (PyTorch uses dim)
         keepdims: Whether to keep reduced dimensions
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         Callable that computes mean along axis
     """
@@ -235,18 +237,20 @@ def _build_torch_last_pool(
     **kwargs,
 ):
     """Build a layer that extracts the last timestep.
-    
+
     Arguments:
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         Callable that extracts the last timestep
     """
     _ensure_torch()
 
     def last_pool_fn(x):
-        return x[:, -1:, :]  # Keep sequence dimension for compatibility
+        return x[
+            :, -1:, :
+        ]  # Keep sequence dimension for compatibility
 
     return last_pool_fn
 
@@ -258,12 +262,12 @@ def _build_torch_concat_fusion(
     **kwargs,
 ):
     """Build a concatenation layer using PyTorch's cat operation.
-    
+
     Arguments:
         axis: Axis along which to concatenate (PyTorch uses dim)
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         Callable that concatenates inputs along axis
     """
@@ -284,14 +288,14 @@ def _build_torch_point_forecast_head(
     **kwargs,
 ) -> nn.Linear:
     """Build a PyTorch-optimized point forecast output head.
-    
+
     Arguments:
         output_dim: Output dimension (e.g., 1 for univariate)
         forecast_horizon: Number of forecasting steps
         activation: Output activation (not typically used)
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         nn.Linear for point forecasting
     """
@@ -309,14 +313,14 @@ def _build_torch_quantile_head(
     **kwargs,
 ) -> nn.Linear:
     """Build a PyTorch-optimized quantile forecast output head.
-    
+
     Arguments:
         output_dim: Output dimension
         forecast_horizon: Number of forecasting steps
         quantiles: Tuple of quantile levels
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         nn.Linear for quantile forecasting
     """
@@ -330,10 +334,10 @@ def _build_torch_quantile_head(
 
 def ensure_torch_v2_registered(registry=None) -> None:
     """Register all PyTorch-optimized V2 components.
-    
+
     This registers PyTorch-specific implementations that will be preferred
     over generic implementations when the PyTorch backend is active.
-    
+
     Arguments:
         registry: ComponentRegistry instance. If None, uses DEFAULT_COMPONENT_REGISTRY.
     """

@@ -129,7 +129,9 @@ class TestModelUtils:
 
     def test_resolve_attention_levels(self):
         """Test resolve_attention_levels function."""
-        from base_attentive.models.comp_utils import resolve_attention_levels
+        from base_attentive.models.comp_utils import (
+            resolve_attention_levels,
+        )
 
         config = resolve_attention_levels()
         assert isinstance(config, dict)
@@ -137,9 +139,14 @@ class TestModelUtils:
 
     def test_resolve_attention_levels_custom(self):
         """Test resolve_attention_levels with custom config."""
-        from base_attentive.models.comp_utils import resolve_attention_levels
+        from base_attentive.models.comp_utils import (
+            resolve_attention_levels,
+        )
 
-        custom = {"decoder_attention_stack": ["custom"], "new_key": "value"}
+        custom = {
+            "decoder_attention_stack": ["custom"],
+            "new_key": "value",
+        }
         config = resolve_attention_levels(custom)
         assert config["decoder_attention_stack"] == ["custom"]
         assert config["new_key"] == "value"

@@ -35,7 +35,9 @@ try:
     from sklearn.utils.validation import check_is_fitted
 except ImportError:
 
-    def check_is_fitted(estimator, attributes, *, msg=None, all_or_any=all):
+    def check_is_fitted(
+        estimator, attributes, *, msg=None, all_or_any=all
+    ):
         """Simple fallback for check_is_fitted."""
         pass
 
@@ -50,7 +52,9 @@ class Interval:
     parameter for newer versions.
     """
 
-    def __new__(cls, type_, left, right, *, closed="right", inclusive=None):
+    def __new__(
+        cls, type_, left, right, *, closed="right", inclusive=None
+    ):
         """
         Create a compatible Interval object based on the scikit-learn version.
 
@@ -121,7 +125,9 @@ def validate_params(
     sig = inspect.signature(sklearn_validate_params)
     if "prefer_skip_nested_validation" in sig.parameters:
         # Newer version - pass the parameter
-        kwargs["prefer_skip_nested_validation"] = prefer_skip_nested_validation
+        kwargs["prefer_skip_nested_validation"] = (
+            prefer_skip_nested_validation
+        )
 
     # Call the actual validate_params
     return sklearn_validate_params(params, *args, **kwargs)

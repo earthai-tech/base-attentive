@@ -31,7 +31,11 @@ def resolve_attention_levels(
 
     # Default attention configuration
     default_attention = {
-        "decoder_attention_stack": ["cross", "hierarchical", "memory"],
+        "decoder_attention_stack": [
+            "cross",
+            "hierarchical",
+            "memory",
+        ],
         "attention_heads": 4,
         "attention_dim": 64,
     }
