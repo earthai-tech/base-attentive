@@ -98,9 +98,13 @@ def _get_static_value(value: Any) -> Any:
         get_static_value = getattr(tensor, "get_static_value", None)
         if callable(get_static_value):
             try:
-                return get_static_value(value)
+                result = get_static_value(value)
+                # TF returns the input unchanged for non-tensor objects;
+                # only propagate the result if it differs from the input.
+                if result is not value:
+                    return result
             except Exception:
-                return None
+                pass
     return None
 
 
