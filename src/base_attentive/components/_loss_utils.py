@@ -14,15 +14,14 @@ from __future__ import annotations
 from ._config import (
     Loss,
     Tensor,
-    tf_cast,
     register_keras_serializable,
     tf_abs,
+    tf_cast,
     tf_constant,
     tf_float32,
     tf_maximum,
     tf_reduce_mean,
     tf_reduce_sum,
-    tf_reshape,
     tf_square,
     tf_where,
 )
@@ -44,7 +43,9 @@ def _normalize_loss_reduction(reduction: str | None) -> str | None:
     return reduction
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="MeanSquaredErrorLoss")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="MeanSquaredErrorLoss"
+)
 class MeanSquaredErrorLoss(Loss):
     """
     Mean Squared Error (MSE) loss function.
@@ -54,8 +55,12 @@ class MeanSquaredErrorLoss(Loss):
       'auto', 'sum', 'mean', or 'none'.
     """
 
-    def __init__(self, reduction: str = "auto", name: str = "MSELoss"):
-        super().__init__(reduction=_normalize_loss_reduction(reduction), name=name)
+    def __init__(
+        self, reduction: str = "auto", name: str = "MSELoss"
+    ):
+        super().__init__(
+            reduction=_normalize_loss_reduction(reduction), name=name
+        )
 
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
         """
@@ -71,7 +76,9 @@ class MeanSquaredErrorLoss(Loss):
         return tf_reduce_mean(tf_square(y_true - y_pred))
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="QuantileLoss")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="QuantileLoss"
+)
 class QuantileLoss(Loss):
     """
     Adaptive Quantile Loss layer that computes quantile loss for given
@@ -87,14 +94,18 @@ class QuantileLoss(Loss):
         reduction: str = "auto",
         name: str = "AdaptiveQuantileLoss",
     ):
-        super().__init__(reduction=_normalize_loss_reduction(reduction), name=name)
+        super().__init__(
+            reduction=_normalize_loss_reduction(reduction), name=name
+        )
         self.quantiles = quantiles
         self.q = len(quantiles)
         self._qs = tf_constant(quantiles, dtype=tf_float32)
 
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
         """Compute quantile loss across common rank-2 and rank-4 layouts."""
-        return compute_quantile_loss(y_true, y_pred, quantiles=self.quantiles)
+        return compute_quantile_loss(
+            y_true, y_pred, quantiles=self.quantiles
+        )
 
 
 @register_keras_serializable(SERIALIZATION_PACKAGE, name="HuberLoss")
@@ -112,7 +123,9 @@ class HuberLoss(Loss):
         reduction: str = "auto",
         name: str = "HuberLoss",
     ):
-        super().__init__(reduction=_normalize_loss_reduction(reduction), name=name)
+        super().__init__(
+            reduction=_normalize_loss_reduction(reduction), name=name
+        )
         self.delta = delta
 
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
@@ -134,10 +147,14 @@ class HuberLoss(Loss):
         squared_loss = tf_square(error) / 2
         linear_loss = self.delta * (abs_error - (self.delta / 2))
 
-        return tf_reduce_mean(tf_where(condition, squared_loss, linear_loss))
+        return tf_reduce_mean(
+            tf_where(condition, squared_loss, linear_loss)
+        )
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="WeightedLoss")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="WeightedLoss"
+)
 class WeightedLoss(Loss):
     """
     Weighted loss function to apply different weights for each sample.
@@ -153,7 +170,9 @@ class WeightedLoss(Loss):
         reduction: str = "auto",
         name: str = "WeightedLoss",
     ):
-        super().__init__(reduction=_normalize_loss_reduction(reduction), name=name)
+        super().__init__(
+            reduction=_normalize_loss_reduction(reduction), name=name
+        )
         self.base_loss = base_loss
         self.weight = weight
 
@@ -170,7 +189,9 @@ class WeightedLoss(Loss):
         """
         if self.base_loss is not None:
             return self.weight * self.base_loss(y_true, y_pred)
-        return self.weight * tf_reduce_mean(tf_square(y_true - y_pred))
+        return self.weight * tf_reduce_mean(
+            tf_square(y_true - y_pred)
+        )
 
 
 ### Utility Functions for Losses ###
@@ -237,8 +258,8 @@ def compute_quantile_loss(
     y_pred = tf_cast(y_pred, tf_float32)
     qs = tf_constant(quantiles, dtype=tf_float32)
     # Align qs to the same device as y_pred (MPS/CUDA compatibility)
-    _dev = getattr(y_pred, 'device', None)
-    _to = getattr(qs, 'to', None)
+    _dev = getattr(y_pred, "device", None)
+    _to = getattr(qs, "to", None)
     if _dev is not None and callable(_to):
         qs = _to(_dev)
     error = y_true - y_pred
@@ -248,6 +269,7 @@ def compute_quantile_loss(
     # the numpy-based fallback that cannot handle MPS tensors.
     try:
         import torch as _torch
+
         if isinstance(a, _torch.Tensor):
             if not isinstance(b, _torch.Tensor):
                 b = _torch.as_tensor(b, device=a.device)

@@ -33,7 +33,9 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="MultiScaleLSTM")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="MultiScaleLSTM"
+)
 class MultiScaleLSTM(Layer, NNLearner):
     r"""
     MultiScaleLSTM layer applying multiple LSTMs
@@ -86,7 +88,9 @@ class MultiScaleLSTM(Layer, NNLearner):
     >>> import tensorflow as tf
     >>> x = tf.random.normal((32, 20, 16))  # (B, T, D)
     >>> # Instantiating a multi-scale LSTM
-    >>> mslstm = MultiScaleLSTM(lstm_units=32, scales=[1, 2], return_sequences=False)
+    >>> mslstm = MultiScaleLSTM(
+    ...     lstm_units=32, scales=[1, 2], return_sequences=False
+    ... )
     >>> y = mslstm(x)  # shape => (32, 64)
     >>> # because scale=1 and scale=2 each produce 32 units,
     ... # which are concatenated => 64
@@ -135,7 +139,8 @@ class MultiScaleLSTM(Layer, NNLearner):
 
         # Create an LSTM for each scale
         self.lstm_layers = [
-            LSTM(lstm_units, return_sequences=return_sequences) for _ in scales
+            LSTM(lstm_units, return_sequences=return_sequences)
+            for _ in scales
         ]
 
     @tf_autograph.experimental.do_not_convert
@@ -164,10 +169,11 @@ class MultiScaleLSTM(Layer, NNLearner):
         """
         # On macOS MPS, aten::linalg_qr is not implemented; enabling the
         # PyTorch CPU fallback flag allows those ops to run on CPU transparently.
-        _dev = getattr(inputs, 'device', None)
-        if _dev is not None and str(_dev).startswith('mps'):
+        _dev = getattr(inputs, "device", None)
+        if _dev is not None and str(_dev).startswith("mps"):
             import os
-            os.environ.setdefault('PYTORCH_ENABLE_MPS_FALLBACK', '1')
+
+            os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
 
         outputs = []
         for scale, lstm in zip(self.scales, self.lstm_layers):
@@ -225,7 +231,9 @@ class MultiScaleLSTM(Layer, NNLearner):
         return cls(**config)
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="DynamicTimeWindow")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="DynamicTimeWindow"
+)
 class DynamicTimeWindow(Layer, NNLearner):
     r"""
     DynamicTimeWindow layer that slices the last

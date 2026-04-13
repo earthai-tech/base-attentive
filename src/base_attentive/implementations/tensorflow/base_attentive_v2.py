@@ -30,9 +30,11 @@ def _ensure_tensorflow():
         )
 
 
-class _TFTemporalSelfAttentionEncoder(layers.Layer if layers else object):
+class _TFTemporalSelfAttentionEncoder(
+    layers.Layer if layers else object
+):
     """TensorFlow-optimized temporal encoder with multi-head attention.
-    
+
     Advantages over generic version:
     - Uses native TensorFlow MultiHeadAttention (highly optimized)
     - Supports tf.function compilation
@@ -111,17 +113,21 @@ class _TFTemporalSelfAttentionEncoder(layers.Layer if layers else object):
 
     def get_config(self):
         config = super().get_config()
-        config.update({
-            "units": self.ffn_output.units,
-            "hidden_units": self.ffn_hidden.units,
-            "num_heads": self.attention.num_heads,
-            "key_dim": self.attention.key_dim,
-            "activation": self.ffn_hidden.activation.__name__
-            if self.ffn_hidden.activation
-            else None,
-            "dropout_rate": self.dropout.rate if self.dropout else 0.0,
-            "layer_norm_epsilon": self.norm1.epsilon,
-        })
+        config.update(
+            {
+                "units": self.ffn_output.units,
+                "hidden_units": self.ffn_hidden.units,
+                "num_heads": self.attention.num_heads,
+                "key_dim": self.attention.key_dim,
+                "activation": self.ffn_hidden.activation.__name__
+                if self.ffn_hidden.activation
+                else None,
+                "dropout_rate": self.dropout.rate
+                if self.dropout
+                else 0.0,
+                "layer_norm_epsilon": self.norm1.epsilon,
+            }
+        )
         return config
 
 
@@ -133,18 +139,20 @@ def _build_tf_dense_projection(
     **kwargs,
 ) -> layers.Dense:
     """Build a TensorFlow Dense projection layer.
-    
+
     Arguments:
         units: Output dimension
         activation: Activation function name (e.g., 'relu', 'sigmoid')
         name: Layer name
         **kwargs: Additional kwargs passed to Dense
-        
+
     Returns:
         layers.Dense with optional activation
     """
     _ensure_tensorflow()
-    return layers.Dense(units, activation=activation, name=name, **kwargs)
+    return layers.Dense(
+        units, activation=activation, name=name, **kwargs
+    )
 
 
 def _build_tf_temporal_self_attention_encoder(
@@ -159,12 +167,12 @@ def _build_tf_temporal_self_attention_encoder(
     **kwargs,
 ) -> _TFTemporalSelfAttentionEncoder:
     """Build a TensorFlow-optimized temporal self-attention encoder.
-    
+
     Advantages:
     - Native TensorFlow implementation (no abstraction overhead)
     - Optimized attention kernels via tf.function compilation
     - Better memory management and gradient computation
-    
+
     Arguments:
         units: Model dimension
         hidden_units: FFN hidden dimension
@@ -174,7 +182,7 @@ def _build_tf_temporal_self_attention_encoder(
         layer_norm_epsilon: Layer normalization epsilon
         name: Layer name
         **kwargs: Additional kwargs passed to the layer
-        
+
     Returns:
         _TFTemporalSelfAttentionEncoder instance
     """
@@ -199,16 +207,16 @@ def _build_tf_mean_pool(
     **kwargs,
 ):
     """Build a pooling layer using TensorFlow's Lambda layer.
-    
+
     For simple operations like mean pooling, a Lambda layer is efficient.
     In TensorFlow, ops are highly optimized and graph-compiled.
-    
+
     Arguments:
         axis: Axis along which to compute the mean
         keepdims: Whether to keep reduced dimensions
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         layers.Lambda that computes mean along axis
     """
@@ -226,13 +234,13 @@ def _build_tf_last_pool(
     **kwargs,
 ):
     """Build a layer that extracts the last timestep.
-    
+
     In TensorFlow, direct indexing is efficient and can be graph-compiled.
-    
+
     Arguments:
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         layers.Lambda that extracts the last timestep
     """
@@ -251,14 +259,14 @@ def _build_tf_concat_fusion(
     **kwargs,
 ):
     """Build a concatenation layer using TensorFlow's optimized ops.
-    
+
     TensorFlow has highly optimized concatenation kernels.
-    
+
     Arguments:
         axis: Axis along which to concatenate
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         layers.Lambda that concatenates inputs along axis
     """
@@ -279,20 +287,25 @@ def _build_tf_point_forecast_head(
     **kwargs,
 ) -> layers.Dense:
     """Build a TensorFlow-optimized point forecast output head.
-    
+
     Arguments:
         output_dim: Output dimension (e.g., 1 for univariate)
         forecast_horizon: Number of forecasting steps
         activation: Output activation
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         layers.Dense for point forecasting
     """
     _ensure_tensorflow()
     total_output = output_dim * forecast_horizon
-    return layers.Dense(total_output, activation=activation, name=name or "head", **kwargs)
+    return layers.Dense(
+        total_output,
+        activation=activation,
+        name=name or "head",
+        **kwargs,
+    )
 
 
 def _build_tf_quantile_head(
@@ -304,14 +317,14 @@ def _build_tf_quantile_head(
     **kwargs,
 ) -> layers.Dense:
     """Build a TensorFlow-optimized quantile forecast output head.
-    
+
     Arguments:
         output_dim: Output dimension
         forecast_horizon: Number of forecasting steps
         quantiles: Tuple of quantile levels
         name: Layer name
         **kwargs: Additional kwargs
-        
+
     Returns:
         layers.Dense for quantile forecasting
     """
@@ -321,7 +334,10 @@ def _build_tf_quantile_head(
     num_quantiles = len(quantiles)
     total_output = output_dim * forecast_horizon * num_quantiles
     return layers.Dense(
-        total_output, activation=None, name=name or "quantile_head", **kwargs
+        total_output,
+        activation=None,
+        name=name or "quantile_head",
+        **kwargs,
     )
 
 
@@ -329,10 +345,10 @@ def ensure_tensorflow_v2_registered(
     registry=None,
 ) -> None:
     """Register all TensorFlow-optimized V2 components.
-    
+
     This registers TensorFlow-specific implementations that will be preferred
     over generic implementations when the TensorFlow backend is active.
-    
+
     Arguments:
         registry: ComponentRegistry instance. If None, uses DEFAULT_COMPONENT_REGISTRY.
     """

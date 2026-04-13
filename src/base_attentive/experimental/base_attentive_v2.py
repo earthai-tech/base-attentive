@@ -61,7 +61,9 @@ class BaseAttentiveV2(Model):
             backend_name=backend_name,
             head_type=head_type,
         )
-        self.backend_context = BackendContext.current(self.spec.backend_name)
+        self.backend_context = BackendContext.current(
+            self.spec.backend_name
+        )
         self._assembly = assemble_model(
             "base_attentive.v2",
             spec=self.spec,
@@ -88,11 +90,18 @@ class BaseAttentiveV2(Model):
     def call(self, inputs, training: bool = False):
         static_x, dynamic_x, future_x = self._normalize_inputs(inputs)
         if dynamic_x is None:
-            raise ValueError("dynamic input is required for BaseAttentiveV2.")
+            raise ValueError(
+                "dynamic input is required for BaseAttentiveV2."
+            )
 
         features = []
-        if self._assembly.static_projection is not None and static_x is not None:
-            features.append(self._assembly.static_projection(static_x))
+        if (
+            self._assembly.static_projection is not None
+            and static_x is not None
+        ):
+            features.append(
+                self._assembly.static_projection(static_x)
+            )
 
         dynamic_encoded = self._assembly.dynamic_projection(dynamic_x)
         if self._assembly.dynamic_encoder is not None:
@@ -102,14 +111,21 @@ class BaseAttentiveV2(Model):
             )
         features.append(self._assembly.sequence_pool(dynamic_encoded))
 
-        if self._assembly.future_projection is not None and future_x is not None:
-            future_encoded = self._assembly.future_projection(future_x)
+        if (
+            self._assembly.future_projection is not None
+            and future_x is not None
+        ):
+            future_encoded = self._assembly.future_projection(
+                future_x
+            )
             if self._assembly.future_encoder is not None:
                 future_encoded = self._assembly.future_encoder(
                     future_encoded,
                     training=training,
                 )
-            features.append(self._assembly.sequence_pool(future_encoded))
+            features.append(
+                self._assembly.sequence_pool(future_encoded)
+            )
 
         fused = self._assembly.fusion(features)
         hidden = self._assembly.hidden_projection(fused)
@@ -136,7 +152,9 @@ class BaseAttentiveV2(Model):
 
     def get_config(self):
         base_get_config = getattr(super(), "get_config", None)
-        config = base_get_config() if callable(base_get_config) else {}
+        config = (
+            base_get_config() if callable(base_get_config) else {}
+        )
         config.update(asdict(self.spec))
         return config
 

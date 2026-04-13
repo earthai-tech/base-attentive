@@ -97,7 +97,9 @@ def tf_debugging_assert_equal(x, y, message="", name="assert_equal"):
     """TensorFlow assert_equal wrapper."""
     tensorflow = _import_tensorflow()
     if HAS_TF and tensorflow is not None:
-        return tensorflow.debugging.assert_equal(x, y, message=message, name=name)
+        return tensorflow.debugging.assert_equal(
+            x, y, message=message, name=name
+        )
     return None
 
 

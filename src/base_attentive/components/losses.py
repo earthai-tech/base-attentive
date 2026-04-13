@@ -132,7 +132,9 @@ class CRPSLoss(Loss, NNLearner):
         reduction: str = Reduction.AUTO,
         name: str = "CRPSLoss",
     ):
-        super().__init__(reduction=_normalize_loss_reduction(reduction), name=name)
+        super().__init__(
+            reduction=_normalize_loss_reduction(reduction), name=name
+        )
         self.mode = mode.lower()
         self.quantiles = list(quantiles) if quantiles else None
         self.mc_samples = int(mc_samples)
@@ -144,7 +146,11 @@ class CRPSLoss(Loss, NNLearner):
 
     @tf_autograph.experimental.do_not_convert
     def call(self, y_true: Tensor, y_pred: Any) -> Tensor:
-        mode = self._infer_mode(y_pred) if self.mode == "auto" else self.mode
+        mode = (
+            self._infer_mode(y_pred)
+            if self.mode == "auto"
+            else self.mode
+        )
         if mode == "quantile":
             return self._crps_quantile(y_true, y_pred)
         if mode == "gaussian":
@@ -180,7 +186,9 @@ class CRPSLoss(Loss, NNLearner):
             yq = y_pred
             qs = self.quantiles
         if qs is None:
-            raise ValueError("Quantile values needed for quantile CRPS.")
+            raise ValueError(
+                "Quantile values needed for quantile CRPS."
+            )
 
         qs = tf_constant(qs, tf_float32)
         qs = tf_reshape(qs, [1, 1, tf_shape(qs)[0], 1])
@@ -190,9 +198,9 @@ class CRPSLoss(Loss, NNLearner):
         )  # (B,H,1,O)
         err = tf_subtract(y_true_exp, yq)  # (B,H,Q,O)
         pinball = tf_maximum(qs * err, (qs - 1.0) * err)
-        crps = (2.0 / tf_cast(tf_shape(qs)[2], tf_float32)) * tf_reduce_mean(
-            pinball, axis=2
-        )
+        crps = (
+            2.0 / tf_cast(tf_shape(qs)[2], tf_float32)
+        ) * tf_reduce_mean(pinball, axis=2)
         return tf_reduce_mean(crps)
 
     def _crps_gaussian(self, y_true: Tensor, y_pred: Any) -> Tensor:
@@ -214,7 +222,9 @@ class CRPSLoss(Loss, NNLearner):
         crps = sigma * term
         return tf_reduce_mean(crps)
 
-    def _crps_mixture_mc(self, y_true: Tensor, y_pred: dict[str, Tensor]) -> Tensor:
+    def _crps_mixture_mc(
+        self, y_true: Tensor, y_pred: dict[str, Tensor]
+    ) -> Tensor:
         """
         Monte‑Carlo approx:
            CRPS = E|X - y| - 0.5 E|X - X'|
@@ -246,7 +256,9 @@ class CRPSLoss(Loss, NNLearner):
         # NOTE: TF doesn't have native categorical for batched, so
         # we do inverse-CDF sampling manually.
         cdf = tf_cumsum(w, axis=2)  # (B,H,K,1)  needs tf_math exposed
-        u = tf_random.normal([B, H, self.mc_samples, 1], mean=0.0, stddev=1.0)
+        u = tf_random.normal(
+            [B, H, self.mc_samples, 1], mean=0.0, stddev=1.0
+        )
         u = tf_sigmoid(
             u
         )  # uniform-ish [0,1], quick hack (or use stateless_random_uniform)
@@ -256,7 +268,9 @@ class CRPSLoss(Loss, NNLearner):
         # reshape for broadcasting
         cdf_exp = tf_expand_dims(cdf, axis=2)  # (B,H,1,K,1)
         u_exp = tf_expand_dims(u, axis=3)  # (B,H,S,1,1)
-        mask = tf_cast(u_exp <= cdf_exp, tf_float32)  # True where cdf >= u
+        mask = tf_cast(
+            u_exp <= cdf_exp, tf_float32
+        )  # True where cdf >= u
         # first True along K dimension:
         # cummax to find first
         # We'll compute argmax over K after applying cumulative max trick
@@ -295,7 +309,9 @@ class CRPSLoss(Loss, NNLearner):
         sig_s = tf_reshape(sig_s, [B, H, self.mc_samples, output_dim])
 
         # Sample from Gaussian N(mu_s, sig_s)
-        eps = tf_random.normal(tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32)
+        eps = tf_random.normal(
+            tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32
+        )
         X = mu_s + sig_s * eps  # (B,H,S,O)
 
         # term1 = E|X - y|
@@ -304,9 +320,13 @@ class CRPSLoss(Loss, NNLearner):
 
         # term2 = 0.5 E|X - X'|
         # second independent sample
-        eps2 = tf_random.normal(tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32)
+        eps2 = tf_random.normal(
+            tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32
+        )
         Xp = mu_s + sig_s * eps2  # (B,H,S,O)
-        term2 = 0.5 * tf_reduce_mean(tf_abs(X - Xp), axis=2)  # (B,H,O)
+        term2 = 0.5 * tf_reduce_mean(
+            tf_abs(X - Xp), axis=2
+        )  # (B,H,O)
 
         crps = term1 - term2
         return tf_reduce_mean(crps)
@@ -327,7 +347,9 @@ class CRPSLoss(Loss, NNLearner):
         return cls(**config)
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="AdaptiveQuantileLoss")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="AdaptiveQuantileLoss"
+)
 class AdaptiveQuantileLoss(Loss, NNLearner):
     r"""
     Adaptive Quantile Loss layer that computes
@@ -448,7 +470,9 @@ class AdaptiveQuantileLoss(Loss, NNLearner):
             error = tf_subtract(y_true_expanded, y_pred)
             quantiles = tf_reshape(quantiles, [1, 1, len(self.quantiles), 1])
         # quantile loss
-        quantile_loss = tf_maximum(quantiles * error, (quantiles - 1) * error)
+        quantile_loss = tf_maximum(
+            quantiles * error, (quantiles - 1) * error
+        )
         return tf_reduce_mean(quantile_loss)
 
     def get_config(self):
@@ -482,7 +506,9 @@ class AdaptiveQuantileLoss(Loss, NNLearner):
         return cls(**config)
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="AnomalyLoss")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="AnomalyLoss"
+)
 class AnomalyLoss(Loss, NNLearner):
     r"""
     Anomaly Loss layer computing mean squared
@@ -609,7 +635,9 @@ class AnomalyLoss(Loss, NNLearner):
         return cls(**config)
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="MultiObjectiveLoss")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="MultiObjectiveLoss"
+)
 class MultiObjectiveLoss(Loss, NNLearner):
     r"""
     Multi-Objective Loss layer combining quantile
@@ -788,15 +816,21 @@ class MultiObjectiveLoss(Loss, NNLearner):
             and anomaly losses.
         """
         # Rebuild sub-layers from their configs
-        quantile_loss_fn = AdaptiveQuantileLoss.from_config(config["quantile_loss_fn"])
-        anomaly_loss_fn = AnomalyLoss.from_config(config["anomaly_loss_fn"])
+        quantile_loss_fn = AdaptiveQuantileLoss.from_config(
+            config["quantile_loss_fn"]
+        )
+        anomaly_loss_fn = AnomalyLoss.from_config(
+            config["anomaly_loss_fn"]
+        )
         return cls(
             quantile_loss_fn=quantile_loss_fn,
             anomaly_loss_fn=anomaly_loss_fn,
         )
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="CRPSLossWrapper")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="CRPSLossWrapper"
+)
 class CRPSLossWrapper(Loss, NNLearner):
     r"""
     Continuous Ranked Probability Score (CRPS) wrapper.
@@ -857,19 +891,25 @@ class CRPSLossWrapper(Loss, NNLearner):
         reduction: str = Reduction.AUTO,
         name: str = "CRPSLossWrapper",
     ):
-        super().__init__(reduction=_normalize_loss_reduction(reduction), name=name)
+        super().__init__(
+            reduction=_normalize_loss_reduction(reduction), name=name
+        )
         mode = mode.lower()
         if mode not in {"quantile", "gaussian"}:
             raise ValueError("mode must be 'quantile' or 'gaussian'.")
         if mode == "quantile" and not quantiles:
-            raise ValueError("quantiles required when mode='quantile'.")
+            raise ValueError(
+                "quantiles required when mode='quantile'."
+            )
         self.mode = mode
         self.quantiles = quantiles
 
         # Pre-cache tensors for quantiles if given
         if self.mode == "quantile":
             qs = tf_constant(quantiles, dtype=tf_float32)
-            self._qs = tf_reshape(qs, [1, 1, len(quantiles), 1])  # (1,1,Q,1)
+            self._qs = tf_reshape(
+                qs, [1, 1, len(quantiles), 1]
+            )  # (1,1,Q,1)
 
     @tf_autograph.experimental.do_not_convert
     def call(self, y_true: Tensor, y_pred: Any) -> Tensor:
@@ -879,7 +919,9 @@ class CRPSLossWrapper(Loss, NNLearner):
             return self._crps_gaussian(y_true, y_pred)
 
     # ------------------------ Quantile CRPS ------------------------
-    def _crps_quantile(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
+    def _crps_quantile(
+        self, y_true: Tensor, y_pred: Tensor
+    ) -> Tensor:
         """
         y_true: (B, H, O)
         y_pred: (B, H, Q, O)
@@ -923,7 +965,9 @@ class CRPSLossWrapper(Loss, NNLearner):
         # Standard normal pdf φ and cdf Φ
         sqrt_2pi = tf_constant(np.sqrt(2.0 * np.pi), dtype=tf_float32)
         phi = tf_exp(-0.5 * tf_square(z)) / sqrt_2pi
-        Phi = 0.5 * (1.0 + tf_erf(z / tf_sqrt(tf_constant(2.0, tf_float32))))
+        Phi = 0.5 * (
+            1.0 + tf_erf(z / tf_sqrt(tf_constant(2.0, tf_float32)))
+        )
 
         term = (
             z * (2.0 * Phi - 1.0)
@@ -951,4 +995,6 @@ def _std_normal_pdf(z: Tensor) -> Tensor:
 
 def _std_normal_cdf(z: Tensor) -> Tensor:
     # Φ(z) = 0.5 * (1 + erf(z / sqrt(2)))
-    return 0.5 * (1.0 + tf_erf(z / tf_sqrt(tf_constant(2.0, tf_float32))))
+    return 0.5 * (
+        1.0 + tf_erf(z / tf_sqrt(tf_constant(2.0, tf_float32)))
+    )
