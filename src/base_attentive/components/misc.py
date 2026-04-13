@@ -893,7 +893,23 @@ class TSPositionalEncoding(Layer, NNLearner):
             raise RuntimeError(
                 "PositionalEncodingTF layer requires a Keras backend (TensorFlow)."
             )
-        input_seq_len = tf_shape(x)[1]
+        input_seq_len = x.shape[1]
+        if input_seq_len is None:
+            input_seq_len = tf_shape(x)[1]
+            if hasattr(input_seq_len, "item"):
+                try:
+                    input_seq_len = int(input_seq_len.item())
+                except Exception:
+                    pass
+            if not isinstance(input_seq_len, int):
+                detach = getattr(input_seq_len, "detach", None)
+                if callable(detach):
+                    input_seq_len = detach()
+                cpu = getattr(input_seq_len, "cpu", None)
+                if callable(cpu):
+                    input_seq_len = cpu()
+                if hasattr(input_seq_len, "item"):
+                    input_seq_len = int(input_seq_len.item())
         # Add positional encoding up to the length of the input sequence.
         return x + self.pos_encoding[:, :input_seq_len, :]
 

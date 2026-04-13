@@ -263,6 +263,73 @@ def broadcast_like(
 
     NOTE: Uses dynamic shapes; avoid for huge dims.
     """
+    del time_axis
+
+    def _to_python_scalar(value):
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, int):
+            return value
+        if hasattr(value, "item"):
+            try:
+                return int(value.item())
+            except Exception:
+                pass
+        detach = getattr(value, "detach", None)
+        if callable(detach):
+            value = detach()
+        cpu = getattr(value, "cpu", None)
+        if callable(cpu):
+            value = cpu()
+        if hasattr(value, "item"):
+            try:
+                return int(value.item())
+            except Exception:
+                pass
+        return int(value)
+
+    def _shape_as_list(value):
+        shape = getattr(value, "shape", None)
+        if shape is not None:
+            dims = []
+            for dim in shape:
+                if dim is None:
+                    dims = []
+                    break
+                try:
+                    dims.append(_to_python_scalar(dim))
+                except Exception:
+                    dims = []
+                    break
+            if dims:
+                return dims
+
+        return [_to_python_scalar(dim) for dim in tf_shape(value)]
+
+    x_shape = _shape_as_list(x)
+    t_shape = _shape_as_list(target)
+
+    while len(x_shape) < len(t_shape):
+        x = tf_expand_dims(x, 1)
+        x_shape = _shape_as_list(x)
+
+    reps = tuple(1 if tgt == cur else tgt for cur, tgt in zip(x_shape, t_shape))
+    return tf_tile(x, reps)
+
+
+def _broadcast_like(x: Tensor, target: Tensor) -> Tensor:
+    """
+    Broadcast `x` so it matches `target` along leading dims.
+
+    If last dim already matches, tile/expand others.
+    Example: x:(B,1,F) target:(B,T,F) -> repeat T times.
+
+    NOTE: Uses dynamic shapes; avoid for huge dims.
+
+    Returns
+    -------
+    Tensor
+    """
     x_shape = tf_shape(x)
     t_shape = tf_shape(target)
 
@@ -289,41 +356,6 @@ def broadcast_like(
     else:
         reps = tuple(int(v) for v in reps)
 
-    return tf_tile(x, reps)
-
-
-def _broadcast_like(x: Tensor, target: Tensor) -> Tensor:
-    """
-    Broadcast `x` so it matches `target` along leading dims.
-
-    If last dim already matches, tile/expand others.
-    Example: x:(B,1,F) target:(B,T,F) -> repeat T times.
-
-    NOTE: Uses dynamic shapes; avoid for huge dims.
-
-    Returns
-    -------
-    Tensor
-    """
-    x_shape = tf_shape(x)
-    t_shape = tf_shape(target)
-
-    # pad ranks
-    while tf_rank(x) < tf_rank(target):
-        x = tf_expand_dims(x, 1)
-        x_shape = tf_shape(x)
-
-    # repeat along mismatching axes
-    reps = []
-    for i in range(tf_rank(target)):
-        reps_i = tf_where(t_shape[i] == x_shape[i], 1, t_shape[i])
-        reps.append(reps_i)
-    reps = tf_cast(
-        reps,
-        tf_int32 := tf_shape(  # noqa
-            tf_shape(x)
-        ).dtype,
-    )
     return tf_tile(x, reps)
 
 
