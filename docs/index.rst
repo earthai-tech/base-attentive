@@ -150,6 +150,12 @@ Quick Example
    components_reference
 
 .. toctree::
+   :maxdepth: 1
+   :caption: Examples
+
+   notebooks/index
+
+.. toctree::
    :maxdepth: 2
    :caption: Resources
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import re
+import shutil
 import sys
 from datetime import date
 from pathlib import Path
@@ -13,6 +14,17 @@ SRC = ROOT / "src"
 PACKAGE_INIT = SRC / "base_attentive" / "__init__.py"
 
 sys.path.insert(0, str(SRC))
+
+# ---------------------------------------------------------------------------
+# Auto-copy notebooks from examples/ into docs/notebooks/ before Sphinx runs.
+# This keeps examples/ as the single source of truth while making the
+# notebooks reachable by nbsphinx (which requires files inside the source dir).
+# ---------------------------------------------------------------------------
+_EXAMPLES_DIR  = ROOT / "examples"
+_NOTEBOOKS_DIR = Path(__file__).parent / "notebooks"
+_NOTEBOOKS_DIR.mkdir(exist_ok=True)
+for _nb in _EXAMPLES_DIR.glob("*.ipynb"):
+    shutil.copy(_nb, _NOTEBOOKS_DIR / _nb.name)
 
 
 def _read_version() -> str:
@@ -41,7 +53,16 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.coverage",
     "sphinx_copybutton",
+    "nbsphinx",
 ]
+
+# nbsphinx — never re-execute notebooks during the doc build.
+# Cells are rendered as-is (with any saved outputs).
+# On ReadTheDocs there is no ML runtime available, so execution must be off.
+nbsphinx_execute = "never"
+
+# Allow nbsphinx to process notebooks even when they have no outputs.
+nbsphinx_allow_errors = False
 
 root_doc = "index"
 templates_path: list[str] = ["_templates"]

@@ -37,6 +37,7 @@ htmlcov/
 .nox/
 .coverage
 .coverage.*
+covdata/
 .cache
 tests.log
 nosetests.xml
@@ -78,6 +79,8 @@ venv.bak/
 # Sphinx documentation
 docs/_build/
 docs/source/_build/
+# Auto-generated notebook copies (built from examples/ by docs/conf.py)
+docs/notebooks/*.ipynb
 
 # PyBuilder
 target/
