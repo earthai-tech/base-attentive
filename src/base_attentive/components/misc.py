@@ -911,7 +911,13 @@ class TSPositionalEncoding(Layer, NNLearner):
                 if hasattr(input_seq_len, "item"):
                     input_seq_len = int(input_seq_len.item())
         # Add positional encoding up to the length of the input sequence.
-        return x + self.pos_encoding[:, :input_seq_len, :]
+        pos_enc = self.pos_encoding[:, :input_seq_len, :]
+        # Move pos_encoding to the same device as x for MPS compatibility
+        _dev = getattr(x, 'device', None)
+        _to = getattr(pos_enc, 'to', None)
+        if _dev is not None and callable(_to):
+            pos_enc = _to(_dev)
+        return x + pos_enc
 
     def get_config(self):
         config = super().get_config()

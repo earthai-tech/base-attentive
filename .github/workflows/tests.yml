@@ -46,6 +46,11 @@ jobs:
     - name: Test with pytest and coverage
       id: pytest_cov
       continue-on-error: true
+      env:
+        # Allow PyTorch to fall back to CPU for ops not yet implemented on MPS
+        # (e.g. aten::linalg_qr used by LSTM on Apple Silicon).  No-op on
+        # non-MPS platforms.
+        PYTORCH_ENABLE_MPS_FALLBACK: '1'
       run: |
         python -m coverage run -m pytest tests/ -v --tb=short -x
         python -m coverage xml
@@ -53,6 +58,8 @@ jobs:
 
     - name: Fallback test without coverage
       if: steps.pytest_cov.outcome == 'failure' && hashFiles('coverage.xml') == ''
+      env:
+        PYTORCH_ENABLE_MPS_FALLBACK: '1'
       run: |
         python -m pytest tests/ -v --tb=short
     

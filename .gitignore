@@ -134,6 +134,7 @@ dmypy.json
 
 # Claude Code local config and worktrees
 .claude/
+.claire/
 
 # Local planning / design notes
 _V2_BACKEND*.md

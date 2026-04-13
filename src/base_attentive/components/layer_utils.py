@@ -165,6 +165,11 @@ class SqueezeExcite1D(Layer, NNLearner):
         s = self.fc2(self.fc1(z))  # (B,C)
         if tf_rank(x) == 3:
             s = tf_expand_dims(s, 1)  # (B,1,C)
+        # Ensure s is on the same device as x for MPS/CUDA compatibility
+        _dev = getattr(x, 'device', None)
+        _to = getattr(s, 'to', None)
+        if _dev is not None and callable(_to):
+            s = _to(_dev)
         return x * s
 
     def get_config(self):
@@ -431,5 +436,10 @@ def drop_path(x: Tensor, drop_prob: float, training: bool) -> Tensor:
         )
 
     mask = tf_cast(rnd < keep_prob, tf_float32)
+    # Move mask to the same device as x for MPS/CUDA compatibility
+    _dev = getattr(x, 'device', None)
+    _to = getattr(mask, 'to', None)
+    if _dev is not None and callable(_to):
+        mask = _to(_dev)
     # rescale to preserve expected value
     return x * mask / keep_prob
