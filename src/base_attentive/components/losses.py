@@ -284,6 +284,41 @@ class CRPSLoss(Loss, NNLearner):
             w_sum = tf_expand_dims(tf_reduce_sum(w, axis=2), axis=2)
             w = w / (w_sum + 1e-8)
 
+        # --- MPS fast path: pure native PyTorch (no keras.ops) -------------------
+        # keras.ops functions can silently re-dispatch CPU tensors to the default
+        # Keras device (MPS on Apple Silicon), so bypassing them entirely when the
+        # original inputs were on MPS is the only reliable fix.
+        if _on_mps:
+            # mu, sig, w, y_true are already on CPU (moved above).
+            _t = _torch
+            B, H, K, O = mu.shape   # concrete Python ints from CPU tensor
+            S = self.mc_samples
+            cdf = _t.cumsum(w, dim=2)                       # (B,H,K,1) CPU
+            u   = _t.sigmoid(_t.randn(B, H, S, 1))         # (B,H,S,1) CPU
+            cdf_exp = cdf.unsqueeze(2)                      # (B,H,1,K,1)
+            u_exp   = u.unsqueeze(3)                        # (B,H,S,1,1)
+            mask  = (u_exp <= cdf_exp).float()              # (B,H,S,K,1)
+            cum   = _t.cumsum(mask, dim=3)
+            first = (cum == 1.0).float()                    # (B,H,S,K,1)
+            k_idx = _t.arange(K, dtype=_t.float32)         # (K,) CPU
+            idxs  = (
+                k_idx[None, None, None, :, None] * first
+            ).sum(dim=3).long()                             # (B,H,S,1)
+            BH     = B * H
+            mu_r   = mu.reshape(BH, K, O)
+            sig_r  = sig.reshape(BH, K, O)
+            idxs_g = idxs.reshape(BH, S, 1).expand(-1, -1, O)  # (BH,S,O)
+            mu_s   = _t.gather(mu_r,  1, idxs_g).reshape(B, H, S, O)
+            sig_s  = _t.gather(sig_r, 1, idxs_g).reshape(B, H, S, O)
+            eps    = _t.randn_like(mu_s)                    # CPU
+            X      = mu_s + sig_s * eps
+            y_exp  = y_true.unsqueeze(2)                    # (B,H,1,O)
+            term1  = (X - y_exp).abs().mean(dim=2)         # (B,H,O)
+            eps2   = _t.randn_like(mu_s)
+            Xp     = mu_s + sig_s * eps2
+            term2  = 0.5 * (X - Xp).abs().mean(dim=2)     # (B,H,O)
+            return (term1 - term2).mean()
+
         B, H, K, output_dim = [tf_shape(mu)[i] for i in range(4)]
 
         # --- Sample indices from categorical weights
@@ -291,27 +326,21 @@ class CRPSLoss(Loss, NNLearner):
         # Use cumulative weights to sample indices.
         # NOTE: TF doesn't have native categorical for batched, so
         # we do inverse-CDF sampling manually.
-        cdf = tf_cumsum(w, axis=2)  # (B,H,K,1)  needs tf_math exposed
+        cdf = tf_cumsum(w, axis=2)  # (B,H,K,1)
         u = tf_random.normal(
             [B, H, self.mc_samples, 1], mean=0.0, stddev=1.0
         )
-        if _on_mps:
-            u = _cpu(u)
         u = tf_sigmoid(
             u
         )  # uniform-ish [0,1], quick hack (or use stateless_random_uniform)
 
         # broadcast cdf to compare: (B,H,K,1) vs (B,H,S,1)
         # We'll pick first index where u <= cdf
-        # reshape for broadcasting
         cdf_exp = tf_expand_dims(cdf, axis=2)  # (B,H,1,K,1)
         u_exp = tf_expand_dims(u, axis=3)  # (B,H,S,1,1)
         mask = tf_cast(
             u_exp <= cdf_exp, tf_float32
         )  # True where cdf >= u
-        # first True along K dimension:
-        # cummax to find first
-        # We'll compute argmax over K after applying cumulative max trick
         cum = tf_cumsum(mask, axis=3)
         first = tf_cast(tf_equal(cum, 1.0), tf_float32)
         idxs = tf_reduce_mean(
@@ -330,16 +359,12 @@ class CRPSLoss(Loss, NNLearner):
             tf_int32,
         )  # (B,H,S,1)
 
-        # Gather μ,σ
-        # XXX TODO:
-        # We need a helper to gather along K; easiest: reshape then tf.gather with batch dims.
-        # Simpler path: flatten (B*H) then gather.
+        # Gather μ,σ — flatten (B*H) then gather.
         BH = B * H
         mu_r = tf_reshape(mu, [BH, K, output_dim])
         sig_r = tf_reshape(sig, [BH, K, output_dim])
 
         idxs_r = tf_reshape(idxs, [BH, self.mc_samples, 1])
-        # gather over axis=1
         mu_s = tf_gather(mu_r, idxs_r, batch_dims=1)  # (BH,S,1,O)
         sig_s = tf_gather(sig_r, idxs_r, batch_dims=1)  # (BH,S,1,O)
 
@@ -350,8 +375,6 @@ class CRPSLoss(Loss, NNLearner):
         eps = tf_random.normal(
             tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32
         )
-        if _on_mps:
-            eps = _cpu(eps)
         X = mu_s + sig_s * eps  # (B,H,S,O)
 
         # term1 = E|X - y|
@@ -359,12 +382,9 @@ class CRPSLoss(Loss, NNLearner):
         term1 = tf_reduce_mean(tf_abs(X - y_exp), axis=2)  # (B,H,O)
 
         # term2 = 0.5 E|X - X'|
-        # second independent sample
         eps2 = tf_random.normal(
             tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32
         )
-        if _on_mps:
-            eps2 = _cpu(eps2)
         Xp = mu_s + sig_s * eps2  # (B,H,S,O)
         term2 = 0.5 * tf_reduce_mean(
             tf_abs(X - Xp), axis=2
