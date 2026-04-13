@@ -304,17 +304,19 @@ class TestCRPSLoss:
         original_gather = losses_mod.tf_gather
         try:
             losses_mod.tf_reduce_mean = (
-                lambda x, axis=None, keepdims=False: np.mean(
-                    _to_numpy(x),
-                    axis=axis,
-                    keepdims=keepdims,
+                lambda x, axis=None, keepdims=False: keras.ops.convert_to_tensor(
+                    np.mean(_to_numpy(x), axis=axis, keepdims=keepdims).astype(
+                        np.float32
+                    )
                 )
             )
             losses_mod.tf_gather = (
-                lambda params, indices, batch_dims=1: np.repeat(
-                    _to_numpy(params)[:, np.newaxis, :1, :],
-                    _to_numpy(indices).shape[1],
-                    axis=1,
+                lambda params, indices, batch_dims=1: keras.ops.convert_to_tensor(
+                    np.repeat(
+                        _to_numpy(params)[:, np.newaxis, :1, :],
+                        _to_numpy(indices).shape[1],
+                        axis=1,
+                    ).astype(np.float32)
                 )
             )
             result = loss_fn(y_true, y_pred)
