@@ -41,6 +41,7 @@ from ._config import (
     tf_random,
     tf_range,
     tf_reduce_mean,
+    tf_reduce_sum,
     tf_reshape,
     tf_shape,
     tf_sigmoid,
@@ -241,12 +242,10 @@ class CRPSLoss(Loss, NNLearner):
         mu = y_pred["loc"]  # (B,H,K,O)
         sig = tf_abs(y_pred["scale"]) + 1e-6
         w = y_pred["weights"]  # (B,H,K,1)
-        # Normalize weights just in case
-        w = w / tf_reduce_mean(
-            tf_reduce_mean(w, axis=2, keepdims=True),
-            axis=3,
-            keepdims=True,
-        )
+        # Normalize weights so they sum to 1 over K.
+        # Use reduce_sum (not reduce_mean) — keras.ops.mean with keepdims
+        # triggers __array__ on Apple MPS in some Keras versions.
+        w = w / (tf_reduce_sum(w, axis=2, keepdims=True) + 1e-8)
 
         B, H, K, output_dim = [tf_shape(mu)[i] for i in range(4)]
 
