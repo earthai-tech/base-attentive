@@ -14,10 +14,10 @@
     <img src="https://img.shields.io/pypi/v/base-attentive.svg" alt="PyPI version" />
   </a>
   <a href="https://github.com/earthai-tech/base-attentive/releases">
-    <img src="https://img.shields.io/badge/version-2.0.0-brightgreen.svg" alt="Version 2.0.0" />
+    <img src="https://img.shields.io/badge/version-2.0.1-brightgreen.svg" alt="Version 2.0.1" />
   </a>
   <a href="https://semver.org/">
-    <img src="https://img.shields.io/badge/semver-2.0.0-blueviolet.svg" alt="Semantic Versioning" />
+    <img src="https://img.shields.io/badge/semver-2.0.1-blueviolet.svg" alt="Semantic Versioning" />
   </a>
   <a href="https://keras.io/">
     <img src="https://img.shields.io/badge/keras-%E2%89%A53.0-FF6F00.svg" alt="Keras ≥ 3.0" />
@@ -216,7 +216,7 @@ This project is licensed under the Apache License 2.0 — see [LICENSE](LICENSE)
   author  = {Kouadio, L.},
   title   = {BaseAttentive: Modular Multi-Backend Encoder-Decoder Architecture for Probabilistic Time Series Forecasting},
   year    = {2026},
-  version = {2.0.0},
+  version = {2.0.1},
   url     = {https://github.com/earthai-tech/base-attentive}
 }
 ```
