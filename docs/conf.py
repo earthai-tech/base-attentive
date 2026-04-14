@@ -129,27 +129,21 @@ html_sidebars = {
 rst_prolog = """
 .. |Feature| image:: https://img.shields.io/badge/type-feature-brightgreen.svg
    :alt: Feature
-   :target: #features
 
 .. |Fix| image:: https://img.shields.io/badge/type-fix-blue.svg
    :alt: Bug Fix
-   :target: #bug-fixes
 
 .. |Bug| image:: https://img.shields.io/badge/type-bug_fix-blue.svg
    :alt: Bug Fix
-   :target: #bug-fixes
 
 .. |Bugfix| image:: https://img.shields.io/badge/type-bugfix-blue.svg
    :alt: Bug Fix
-   :target: #bug-fixes
 
 .. |Dependencies| image:: https://img.shields.io/badge/type-dependencies-orange.svg
    :alt: Dependencies
-   :target: #dependencies
 
 .. |Internal| image:: https://img.shields.io/badge/type-internal-gray.svg
    :alt: Internal
-   :target: #internal
 
 .. |MAJOR| image:: https://img.shields.io/badge/version-MAJOR-red.svg
    :alt: MAJOR Version Change
