@@ -29,16 +29,19 @@ _FALLBACKS = {
     if isinstance(tensors, (list, tuple))
     else tensors,
     "gather": lambda p, i, axis=None, **kw: p,
-    "reduce_logsumexp": lambda x, axis=None, keepdims=False, **kw: x,
+    "reduce_logsumexp": lambda x,
+    axis=None,
+    keepdims=False,
+    **kw: x,
     "pow": lambda x, y, **kw: x,
     "rank": lambda x, **kw: len(getattr(x, "shape", [])),
     "expand_dims": lambda x, axis=-1, **kw: _np.expand_dims(
         _np.asarray(x), axis=axis
     ),
     "cast": lambda x, dtype, **kw: _np.array(x, dtype=dtype),
-    "convert_to_tensor": lambda x, dtype=None, **kw: _np.asarray(
-        x, dtype=dtype
-    ),
+    "convert_to_tensor": lambda x,
+    dtype=None,
+    **kw: _np.asarray(x, dtype=dtype),
     "reduce_mean": lambda x, axis=None, **kw: _np.mean(
         _np.asarray(x), axis=axis
     ),
@@ -110,29 +113,37 @@ class TestResolveAttnLevels:
         assert resolve_attn_levels("cross_att") == ["cross"]
 
     def test_cross_attention_alias(self):
-        assert resolve_attn_levels("cross_attention") == ["cross"]
+        assert resolve_attn_levels("cross_attention") == [
+            "cross"
+        ]
 
     def test_hier_att_string(self):
-        assert resolve_attn_levels("hier_att") == ["hierarchical"]
-
-    def test_hierarchical_attention_string(self):
-        assert resolve_attn_levels("hierarchical_attention") == [
+        assert resolve_attn_levels("hier_att") == [
             "hierarchical"
         ]
+
+    def test_hierarchical_attention_string(self):
+        assert resolve_attn_levels(
+            "hierarchical_attention"
+        ) == ["hierarchical"]
 
     def test_hier_string(self):
         assert resolve_attn_levels("hier") == ["hierarchical"]
 
     def test_hierarchical_string(self):
-        assert resolve_attn_levels("hierarchical") == ["hierarchical"]
+        assert resolve_attn_levels("hierarchical") == [
+            "hierarchical"
+        ]
 
     def test_memo_aug_att_string(self):
-        assert resolve_attn_levels("memo_aug_att") == ["memory"]
-
-    def test_memory_augmented_attention_string(self):
-        assert resolve_attn_levels("memory_augmented_attention") == [
+        assert resolve_attn_levels("memo_aug_att") == [
             "memory"
         ]
+
+    def test_memory_augmented_attention_string(self):
+        assert resolve_attn_levels(
+            "memory_augmented_attention"
+        ) == ["memory"]
 
     def test_memory_string(self):
         assert resolve_attn_levels("memory") == ["memory"]
@@ -150,7 +161,9 @@ class TestResolveAttnLevels:
         assert resolve_attn_levels(3) == ["memory"]
 
     def test_list_inputs(self):
-        result = resolve_attn_levels(["cross", "hier_att", "memory"])
+        result = resolve_attn_levels(
+            ["cross", "hier_att", "memory"]
+        )
         assert result == ["cross", "hierarchical", "memory"]
 
     def test_list_string_numbers(self):
@@ -164,7 +177,9 @@ class TestResolveAttnLevels:
             resolve_attn_levels("bad_attention")
 
     def test_invalid_integer_raises(self):
-        with pytest.raises(ValueError, match="Invalid integer"):
+        with pytest.raises(
+            ValueError, match="Invalid integer"
+        ):
             resolve_attn_levels(99)
 
     def test_invalid_type_raises(self):
@@ -197,7 +212,9 @@ class TestConfigureArchitecture:
         cfg = configure_architecture()
         assert cfg["encoder_type"] == "hybrid"
         assert cfg["feature_processing"] == "vsn"
-        assert isinstance(cfg["decoder_attention_stack"], list)
+        assert isinstance(
+            cfg["decoder_attention_stack"], list
+        )
 
     def test_objective_transformer(self):
         cfg = configure_architecture(objective="transformer")
@@ -213,7 +230,9 @@ class TestConfigureArchitecture:
 
     def test_architecture_config_overrides(self):
         cfg = configure_architecture(
-            architecture_config={"encoder_type": "transformer"}
+            architecture_config={
+                "encoder_type": "transformer"
+            }
         )
         assert cfg["encoder_type"] == "transformer"
 
@@ -221,7 +240,9 @@ class TestConfigureArchitecture:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             cfg = configure_architecture(
-                architecture_config={"objective": "transformer"}
+                architecture_config={
+                    "objective": "transformer"
+                }
             )
             assert any(
                 issubclass(warning.category, FutureWarning)
@@ -229,7 +250,9 @@ class TestConfigureArchitecture:
             )
         assert cfg["encoder_type"] == "transformer"
 
-    def test_use_vsn_false_config_sets_vsn_reverts_to_dense(self):
+    def test_use_vsn_false_config_sets_vsn_reverts_to_dense(
+        self,
+    ):
         # use_vsn=False but config says vsn → reverts to dense
         cfg = configure_architecture(
             use_vsn=False,
@@ -270,13 +293,17 @@ class TestResolveFusionMode:
         assert resolve_fusion_mode(None) == "integrated"
 
     def test_integrated(self):
-        assert resolve_fusion_mode("integrated") == "integrated"
+        assert (
+            resolve_fusion_mode("integrated") == "integrated"
+        )
 
     def test_disjoint(self):
         assert resolve_fusion_mode("disjoint") == "disjoint"
 
     def test_independent(self):
-        assert resolve_fusion_mode("independent") == "disjoint"
+        assert (
+            resolve_fusion_mode("independent") == "disjoint"
+        )
 
     def test_isolated(self):
         assert resolve_fusion_mode("isolated") == "disjoint"
@@ -286,13 +313,17 @@ class TestResolveFusionMode:
         assert result == "integrated"
 
     def test_case_insensitive_integrated(self):
-        assert resolve_fusion_mode("INTEGRATED") == "integrated"
+        assert (
+            resolve_fusion_mode("INTEGRATED") == "integrated"
+        )
 
     def test_case_insensitive_disjoint(self):
         assert resolve_fusion_mode("DISJOINT") == "disjoint"
 
     def test_independent_upper(self):
-        assert resolve_fusion_mode("INDEPENDENT") == "disjoint"
+        assert (
+            resolve_fusion_mode("INDEPENDENT") == "disjoint"
+        )
 
     def test_isolated_upper(self):
         assert resolve_fusion_mode("ISOLATED") == "disjoint"
@@ -328,12 +359,18 @@ class TestValidateBaseAttentiveSpec:
         assert result is spec
 
     def test_non_spec_raises_type_error(self):
-        with pytest.raises(TypeError, match="BaseAttentiveSpec"):
+        with pytest.raises(
+            TypeError, match="BaseAttentiveSpec"
+        ):
             validate_base_attentive_spec("not_a_spec")
 
     def test_non_spec_dict_raises_type_error(self):
-        with pytest.raises(TypeError, match="BaseAttentiveSpec"):
-            validate_base_attentive_spec({"dynamic_input_dim": 4})
+        with pytest.raises(
+            TypeError, match="BaseAttentiveSpec"
+        ):
+            validate_base_attentive_spec(
+                {"dynamic_input_dim": 4}
+            )
 
     def test_negative_static_input_dim_raises(self):
         with pytest.raises(
@@ -361,7 +398,8 @@ class TestValidateBaseAttentiveSpec:
 
     def test_non_int_dynamic_input_dim_raises(self):
         with pytest.raises(
-            TypeError, match="dynamic_input_dim must be an integer"
+            TypeError,
+            match="dynamic_input_dim must be an integer",
         ):
             validate_base_attentive_spec(
                 _make_spec(dynamic_input_dim=4.0)
@@ -375,16 +413,22 @@ class TestValidateBaseAttentiveSpec:
 
     def test_dropout_rate_above_one_raises(self):
         with pytest.raises(ValueError, match="dropout_rate"):
-            validate_base_attentive_spec(_make_spec(dropout_rate=1.1))
+            validate_base_attentive_spec(
+                _make_spec(dropout_rate=1.1)
+            )
 
     def test_epsilon_zero_raises(self):
-        with pytest.raises(ValueError, match="layer_norm_epsilon"):
+        with pytest.raises(
+            ValueError, match="layer_norm_epsilon"
+        ):
             validate_base_attentive_spec(
                 _make_spec(layer_norm_epsilon=0.0)
             )
 
     def test_epsilon_negative_raises(self):
-        with pytest.raises(ValueError, match="layer_norm_epsilon"):
+        with pytest.raises(
+            ValueError, match="layer_norm_epsilon"
+        ):
             validate_base_attentive_spec(
                 _make_spec(layer_norm_epsilon=-1e-6)
             )
@@ -424,13 +468,17 @@ class TestValidateBaseAttentiveSpec:
 
     def test_non_int_embed_dim_raises(self):
         with pytest.raises(TypeError):
-            validate_base_attentive_spec(_make_spec(embed_dim="32"))
+            validate_base_attentive_spec(
+                _make_spec(embed_dim="32")
+            )
 
     def test_negative_output_dim_raises(self):
         with pytest.raises(
             ValueError, match="output_dim must be > 0"
         ):
-            validate_base_attentive_spec(_make_spec(output_dim=-1))
+            validate_base_attentive_spec(
+                _make_spec(output_dim=-1)
+            )
 
     def test_zero_forecast_horizon_raises(self):
         with pytest.raises(

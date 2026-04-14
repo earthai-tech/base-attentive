@@ -35,7 +35,9 @@ def _normalize_shape(shape) -> tuple[int, ...]:
 
 
 def _ensure_array(value, dtype=None):
-    np_dtype = _to_numpy_dtype(dtype) if dtype is not None else None
+    np_dtype = (
+        _to_numpy_dtype(dtype) if dtype is not None else None
+    )
     return np.asarray(value, dtype=np_dtype)
 
 
@@ -105,7 +107,9 @@ Tensor = np.ndarray
 def _infer_input_shape(value):
     if isinstance(value, (list, tuple)):
         return [_infer_input_shape(item) for item in value]
-    return TensorShape(getattr(np.asarray(value), "shape", ()))
+    return TensorShape(
+        getattr(np.asarray(value), "shape", ())
+    )
 
 
 def _initialize_value(initializer, shape, dtype):
@@ -128,13 +132,17 @@ def _initialize_value(initializer, shape, dtype):
             value = initializer(shape)
         value = np.asarray(value, dtype=np_dtype)
         if value.shape == () and shape:
-            value = np.full(shape, value.item(), dtype=np_dtype)
+            value = np.full(
+                shape, value.item(), dtype=np_dtype
+            )
     elif initializer is None:
         value = np.zeros(shape, dtype=np_dtype)
     else:
         value = np.asarray(initializer, dtype=np_dtype)
         if value.shape == () and shape:
-            value = np.full(shape, value.item(), dtype=np_dtype)
+            value = np.full(
+                shape, value.item(), dtype=np_dtype
+            )
 
     if value.shape != shape and shape:
         value = np.broadcast_to(value, shape).copy()
@@ -203,7 +211,9 @@ class Constant:
         self.value = value
 
     def __call__(self, shape=None, dtype=None):
-        array = np.asarray(self.value, dtype=_to_numpy_dtype(dtype))
+        array = np.asarray(
+            self.value, dtype=_to_numpy_dtype(dtype)
+        )
         if shape:
             array = np.broadcast_to(
                 array, _normalize_shape(shape)
@@ -283,7 +293,9 @@ class Softmax(Layer):
         x = np.asarray(inputs, dtype=np.float32)
         shifted = x - np.max(x, axis=self.axis, keepdims=True)
         exp_x = np.exp(shifted)
-        return exp_x / np.sum(exp_x, axis=self.axis, keepdims=True)
+        return exp_x / np.sum(
+            exp_x, axis=self.axis, keepdims=True
+        )
 
     def get_config(self):
         config = super().get_config()
@@ -334,7 +346,9 @@ class TimeDistributed(Layer):
         x = np.asarray(inputs)
         if x.ndim < 3:
             return self.layer(x)
-        outputs = [self.layer(x[:, i, :]) for i in range(x.shape[1])]
+        outputs = [
+            self.layer(x[:, i, :]) for i in range(x.shape[1])
+        ]
         return np.stack(outputs, axis=1)
 
 
@@ -354,7 +368,9 @@ class Sequential(Layer):
 
 
 class LSTM(Layer):
-    def __init__(self, units, return_sequences=False, **kwargs):
+    def __init__(
+        self, units, return_sequences=False, **kwargs
+    ):
         super().__init__(**kwargs)
         self.units = int(units)
         self.return_sequences = return_sequences
@@ -370,7 +386,9 @@ class LSTM(Layer):
 
 
 class MultiHeadAttention(Layer):
-    def __init__(self, num_heads, key_dim, dropout=0.0, **kwargs):
+    def __init__(
+        self, num_heads, key_dim, dropout=0.0, **kwargs
+    ):
         super().__init__(**kwargs)
         self.num_heads = int(num_heads)
         self.key_dim = int(key_dim)
@@ -451,7 +469,9 @@ class _Activations:
         if name == "relu":
             return lambda x: np.maximum(np.asarray(x), 0.0)
         if name == "sigmoid":
-            return lambda x: 1.0 / (1.0 + np.exp(-np.asarray(x)))
+            return lambda x: 1.0 / (
+                1.0 + np.exp(-np.asarray(x))
+            )
         if name == "tanh":
             return lambda x: np.tanh(np.asarray(x))
         if name == "elu":
@@ -474,13 +494,17 @@ class _Activations:
                 * np.asarray(x)
                 * (1.0 + erf(np.asarray(x) / math.sqrt(2.0)))
             )
-        raise ValueError(f"Unknown activation '{activation}'.")
+        raise ValueError(
+            f"Unknown activation '{activation}'."
+        )
 
     def serialize(self, activation):
         if isinstance(activation, str):
             return activation
         return getattr(
-            activation, "__name__", activation.__class__.__name__
+            activation,
+            "__name__",
+            activation.__class__.__name__,
         )
 
 
@@ -521,7 +545,9 @@ class _LinalgNamespace:
 linalg = _LinalgNamespace()
 
 
-Reduction = SimpleNamespace(AUTO="auto", SUM="sum", NONE="none")
+Reduction = SimpleNamespace(
+    AUTO="auto", SUM="sum", NONE="none"
+)
 
 
 def Assert(condition, data=None, summarize=None, name=None):
@@ -540,9 +566,14 @@ class _AutographExperimental:
         return func
 
 
-autograph = SimpleNamespace(experimental=_AutographExperimental())
+autograph = SimpleNamespace(
+    experimental=_AutographExperimental()
+)
 debugging = SimpleNamespace(
-    assert_equal=lambda actual, expected, message="", name=None: None
+    assert_equal=lambda actual,
+    expected,
+    message="",
+    name=None: None
 )
 
 
@@ -578,7 +609,9 @@ def maximum(x, y):
 
 
 def mean(x, axis=None, keepdims=False):
-    return np.mean(np.asarray(x), axis=axis, keepdims=keepdims)
+    return np.mean(
+        np.asarray(x), axis=axis, keepdims=keepdims
+    )
 
 
 def reduce_mean(x, axis=None, keepdims=False):
@@ -587,7 +620,9 @@ def reduce_mean(x, axis=None, keepdims=False):
 
 def add_n(values, **kwargs):
     arrays = [np.asarray(v) for v in values]
-    result = np.zeros_like(arrays[0], dtype=np.result_type(*arrays))
+    result = np.zeros_like(
+        arrays[0], dtype=np.result_type(*arrays)
+    )
     for array in arrays:
         result = result + array
     return result
@@ -614,7 +649,15 @@ def logical_or(x, y):
 
 
 def get_static_value(value):
-    if isinstance(value, (builtins.int, builtins.float, builtins.bool, builtins.str)):
+    if isinstance(
+        value,
+        (
+            builtins.int,
+            builtins.float,
+            builtins.bool,
+            builtins.str,
+        ),
+    ):
         return value
     array = np.asarray(value)
     if array.shape == ():
@@ -627,13 +670,16 @@ def reduce_sum(x, axis=None, keepdims=False):
 
 
 def stack(values, axis=0):
-    return np.stack([np.asarray(v) for v in values], axis=axis)
+    return np.stack(
+        [np.asarray(v) for v in values], axis=axis
+    )
 
 
 def unstack(value, axis=0):
     array = np.asarray(value)
     return [
-        np.take(array, i, axis=axis) for i in range(array.shape[axis])
+        np.take(array, i, axis=axis)
+        for i in range(array.shape[axis])
     ]
 
 
@@ -657,7 +703,9 @@ def where(condition, x=None, y=None):
 def range(start, limit=None, delta=1, dtype=None):
     if limit is None:
         start, limit = 0, start
-    np_dtype = _to_numpy_dtype(dtype) if dtype is not None else None
+    np_dtype = (
+        _to_numpy_dtype(dtype) if dtype is not None else None
+    )
     return np.arange(start, limit, delta, dtype=np_dtype)
 
 
@@ -668,7 +716,9 @@ def rank(value, **kwargs):
 def split(value, num_or_size_splits, axis=0):
     array = np.asarray(value)
     if isinstance(num_or_size_splits, int):
-        return np.array_split(array, num_or_size_splits, axis=axis)
+        return np.array_split(
+            array, num_or_size_splits, axis=axis
+        )
     indices = np.cumsum(num_or_size_splits)[:-1]
     return np.split(array, indices, axis=axis)
 
@@ -696,7 +746,8 @@ def pad(x, paddings, mode="constant", constant_values=0):
 
 def ones_like(x, dtype=None):
     return np.ones_like(
-        np.asarray(x), dtype=_to_numpy_dtype(dtype) if dtype else None
+        np.asarray(x),
+        dtype=_to_numpy_dtype(dtype) if dtype else None,
     )
 
 
@@ -739,7 +790,9 @@ def gather(params, indices, axis=0, batch_dims=0, **kwargs):
     if batch_dims == 1 and params.ndim >= 2:
         gathered = []
         flat_indices = indices.reshape(indices.shape[0], -1)
-        for batch_idx, batch_indices in enumerate(flat_indices):
+        for batch_idx, batch_indices in enumerate(
+            flat_indices
+        ):
             taken = np.take(
                 params[batch_idx],
                 batch_indices,
@@ -748,7 +801,9 @@ def gather(params, indices, axis=0, batch_dims=0, **kwargs):
             gathered.append(taken)
         gathered = np.asarray(gathered)
         trailing = (
-            params.shape[axis + 1 :] if axis + 1 < params.ndim else ()
+            params.shape[axis + 1 :]
+            if axis + 1 < params.ndim
+            else ()
         )
         return gathered.reshape(
             (params.shape[0],) + indices.shape[1:] + trailing
@@ -766,7 +821,11 @@ def reduce_logsumexp(x, axis=None, keepdims=False):
     max_x = np.max(array, axis=axis, keepdims=True)
     result = (
         np.log(
-            np.sum(np.exp(array - max_x), axis=axis, keepdims=True)
+            np.sum(
+                np.exp(array - max_x),
+                axis=axis,
+                keepdims=True,
+            )
         )
         + max_x
     )
@@ -818,7 +877,9 @@ layers = SimpleNamespace(
     TimeDistributed=TimeDistributed,
 )
 
-losses = SimpleNamespace(Loss=Loss, Reduction=Reduction, get=get)
+losses = SimpleNamespace(
+    Loss=Loss, Reduction=Reduction, get=get
+)
 saving = SimpleNamespace(
     register_keras_serializable=register_keras_serializable
 )

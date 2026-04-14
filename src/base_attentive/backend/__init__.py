@@ -39,7 +39,10 @@ Usage Examples
 --------------
 Basic usage::
 
-    from base_attentive.backend import get_backend, set_backend
+    from base_attentive.backend import (
+        get_backend,
+        set_backend,
+    )
 
     # Automatically select best available backend
     backend = get_backend()
@@ -48,7 +51,9 @@ Basic usage::
     backend = set_backend("tensorflow")
 
     # Query backend capabilities
-    from base_attentive.backend import get_backend_capabilities
+    from base_attentive.backend import (
+        get_backend_capabilities,
+    )
 
     caps = get_backend_capabilities()
     print(caps["version"])  # e.g., "2.15.0"
@@ -245,7 +250,9 @@ def get_backend(name: Optional[str] = None) -> Backend:
         if env_name is None:
             name = select_best_backend(require_supported=True)
             if name is None:
-                name = ensure_default_backend(auto_install=True)
+                name = ensure_default_backend(
+                    auto_install=True
+                )
         else:
             name = env_name
 
@@ -319,14 +326,21 @@ def get_backend_capabilities(
             )
             caps.setdefault(
                 "supports_base_attentive",
-                getattr(backend, "supports_base_attentive", False),
+                getattr(
+                    backend, "supports_base_attentive", False
+                ),
             )
             caps.setdefault(
                 "supports_base_attentive_v2",
-                getattr(backend, "supports_base_attentive_v2", False),
+                getattr(
+                    backend,
+                    "supports_base_attentive_v2",
+                    False,
+                ),
             )
             caps.setdefault(
-                "blockers", list(getattr(backend, "blockers", ()))
+                "blockers",
+                list(getattr(backend, "blockers", ())),
             )
             caps.setdefault(
                 "v2_blockers",
@@ -351,10 +365,14 @@ def get_backend_capabilities(
     try:
         backend = _BACKENDS[normalized](load_runtime=False)
         caps = backend.get_capabilities()
-        caps.setdefault("name", getattr(backend, "name", normalized))
+        caps.setdefault(
+            "name", getattr(backend, "name", normalized)
+        )
         caps.setdefault(
             "framework",
-            getattr(_BACKENDS[normalized], "framework", normalized),
+            getattr(
+                _BACKENDS[normalized], "framework", normalized
+            ),
         )
         caps.setdefault(
             "available",
@@ -367,21 +385,27 @@ def get_backend_capabilities(
             getattr(backend, "uses_keras_runtime", False),
         )
         caps.setdefault(
-            "experimental", getattr(backend, "experimental", False)
+            "experimental",
+            getattr(backend, "experimental", False),
         )
         caps.setdefault(
             "supports_base_attentive",
-            getattr(backend, "supports_base_attentive", False),
+            getattr(
+                backend, "supports_base_attentive", False
+            ),
         )
         caps.setdefault(
             "supports_base_attentive_v2",
-            getattr(backend, "supports_base_attentive_v2", False),
+            getattr(
+                backend, "supports_base_attentive_v2", False
+            ),
         )
         caps.setdefault(
             "blockers", list(getattr(backend, "blockers", ()))
         )
         caps.setdefault(
-            "v2_blockers", list(getattr(backend, "v2_blockers", ()))
+            "v2_blockers",
+            list(getattr(backend, "v2_blockers", ())),
         )
         caps["version"] = get_backend_version(normalized)
         return caps
@@ -393,7 +417,9 @@ def get_backend_capabilities(
             ),
             "available": False,
             "uses_keras_runtime": getattr(
-                _BACKENDS[normalized], "uses_keras_runtime", False
+                _BACKENDS[normalized],
+                "uses_keras_runtime",
+                False,
             ),
             "experimental": getattr(
                 _BACKENDS[normalized], "experimental", False
@@ -412,7 +438,9 @@ def get_backend_capabilities(
                 getattr(_BACKENDS[normalized], "blockers", ())
             ),
             "v2_blockers": list(
-                getattr(_BACKENDS[normalized], "v2_blockers", ())
+                getattr(
+                    _BACKENDS[normalized], "v2_blockers", ()
+                )
             ),
             "version": get_backend_version(normalized),
             "error": str(e),
@@ -476,9 +504,13 @@ def set_backend(name: str) -> Backend:
 def _auto_initialize():
     """Auto-initialize backend on module import."""
     try:
-        configured_backend = os.environ.get("BASE_ATTENTIVE_BACKEND")
+        configured_backend = os.environ.get(
+            "BASE_ATTENTIVE_BACKEND"
+        )
         if configured_backend:
-            normalized = normalize_backend_name(configured_backend)
+            normalized = normalize_backend_name(
+                configured_backend
+            )
             os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
             os.environ.setdefault("KERAS_BACKEND", normalized)
             return
@@ -499,7 +531,9 @@ def _auto_initialize():
             return
 
         # Fall back to any available
-        available = select_best_backend(require_supported=False)
+        available = select_best_backend(
+            require_supported=False
+        )
         if available:
             normalized = normalize_backend_name(available)
             os.environ["BASE_ATTENTIVE_BACKEND"] = normalized

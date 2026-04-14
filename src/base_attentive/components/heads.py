@@ -24,24 +24,24 @@ from ._config import (
     Tensor,
     get_loss,
     register_keras_serializable,
-    tf_add_n,
-    tf_autograph,
-    tf_cast,
-    tf_concat,
-    tf_constant,
-    tf_expand_dims,
-    tf_float32,
-    tf_log,
-    tf_newaxis,
-    tf_reduce_logsumexp,
-    tf_reduce_mean,
-    tf_reduce_sum,
-    tf_reshape,
-    tf_shape,
-    tf_softplus,
-    tf_square,
-    tf_stack,
-    tf_tile,
+    add_n,
+    do_not_convert,
+    cast,
+    concat,
+    constant,
+    expand_dims,
+    float32,
+    log,
+    newaxis,
+    reduce_logsumexp,
+    reduce_mean,
+    reduce_sum,
+    reshape,
+    shape,
+    softplus,
+    square,
+    stack,
+    tile,
 )
 
 __all__ = [
@@ -65,8 +65,11 @@ def _append_shape(shape, *tail):
     if shape_dtype is None:
         return tuple(shape[:-1]) + tuple(tail)
 
-    return tf_concat(
-        [shape[:-1], tf_constant(list(tail), dtype=shape_dtype)],
+    return concat(
+        [
+            shape[:-1],
+            constant(list(tail), dtype=shape_dtype),
+        ],
         axis=0,
     )
 
@@ -108,25 +111,27 @@ class GaussianHead(Layer, NNLearner):
         self.min_scale = float(min_scale)
         self.forecast_horizon = forecast_horizon
         # Predict 2 * O parameters (μ and raw σ)
-        self.proj = Dense(2 * output_dim, name="gaussian_head_dense")
+        self.proj = Dense(
+            2 * output_dim, name="gaussian_head_dense"
+        )
 
     def call(
         self, features: Tensor, training: bool = False
     ) -> dict[str, Tensor]:
         params = self.proj(features)  # (B,[H], 2*O)
-        shp = tf_shape(params)
+        shp = shape(params)
         new_shape = _append_shape(shp, 2, self.output_dim)
 
-        params = tf_reshape(params, new_shape)
+        params = reshape(params, new_shape)
 
         mean = params[..., 0, :]  # (..., O)
         raw_s = params[..., 1, :]  # (..., O)
         # Softplus for strict positivity
-        scale = tf_softplus(raw_s) + self.min_scale
+        scale = softplus(raw_s) + self.min_scale
 
         return {"mean": mean, "scale": scale}
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def nll(
         self, y_true: Tensor, mean: Tensor, scale: Tensor
     ) -> Tensor:
@@ -141,15 +146,15 @@ class GaussianHead(Layer, NNLearner):
         -------
         scalar Tensor
         """
-        two_pi = tf_constant(2.0 * _PI, dtype=tf_float32)
-        var = tf_square(scale)
+        two_pi = constant(2.0 * _PI, dtype=float32)
+        var = square(scale)
         # log σ + (y-μ)^2 / (2 σ^2) + 0.5 log(2π)
         log_prob = (
-            tf_log(scale)
-            + tf_square(y_true - mean) / (2.0 * var)
-            + 0.5 * tf_log(two_pi)
+            log(scale)
+            + square(y_true - mean) / (2.0 * var)
+            + 0.5 * log(two_pi)
         )
-        return tf_reduce_mean(log_prob)
+        return reduce_mean(log_prob)
 
     def get_config(self):
         cfg = super().get_config()
@@ -227,8 +232,10 @@ class MixtureDensityHead(Layer, NNLearner):
     def call(
         self, features: Tensor, training: bool = False
     ) -> dict[str, Tensor]:
-        raw = self.param_proj(features)  # (B,[H], K*(2*O) + K)
-        shp = tf_shape(raw)
+        raw = self.param_proj(
+            features
+        )  # (B,[H], K*(2*O) + K)
+        shp = shape(raw)
         # last = shp[-1] # noqa
 
         # Split: first K for weights, remaining 2*K*O for μ/σ
@@ -242,24 +249,24 @@ class MixtureDensityHead(Layer, NNLearner):
         # Reshape rest → (..., K, 2, O)
         rest_shape = _append_shape(shp, k, 2, o)
 
-        rest = tf_reshape(rest, rest_shape)
+        rest = reshape(rest, rest_shape)
         means = rest[..., 0, :]  # (..., K, O)
         raw_s = rest[..., 1, :]  # (..., K, O)
-        scales = tf_softplus(raw_s) + self.min_scale
+        scales = softplus(raw_s) + self.min_scale
 
         # weights: if K==1, skip softmax and set weights=1
         if k == 1:
-            one = tf_constant(1.0, dtype=w_raw.dtype)
-            w = tf_expand_dims(
+            one = constant(1.0, dtype=w_raw.dtype)
+            w = expand_dims(
                 w_raw * 0.0 + one, axis=-1
             )  # (B,[H], 1, 1)
         else:
             w = self.softmax(
-                tf_expand_dims(w_raw, axis=-1)
+                expand_dims(w_raw, axis=-1)
             )  # (B,[H], K, 1)
 
         if o > 1:
-            w = tf_tile(
+            w = tile(
                 w, [1] * (len(w.shape) - 1) + [o]
             )  # (B,[H], K, O)
 
@@ -270,7 +277,7 @@ class MixtureDensityHead(Layer, NNLearner):
         }
 
     # Negative log-likelihood for mixtures
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def nll(
         self,
         y_true: Tensor,
@@ -292,28 +299,28 @@ class MixtureDensityHead(Layer, NNLearner):
         -------
         scalar Tensor
         """
-        two_pi = tf_constant(2.0 * _PI, dtype=tf_float32)
-        var = tf_square(scales)
+        two_pi = constant(2.0 * _PI, dtype=float32)
+        var = square(scales)
 
         # log N = -0.5 * [log(2πσ^2) + (y-μ)^2/σ^2]
         log_norm = -0.5 * (
-            tf_log(two_pi * var)
-            + tf_square(y_true[..., tf_newaxis, :] - means) / var
+            log(two_pi * var)
+            + square(y_true[..., newaxis, :] - means) / var
         )  # (B,[H], K, O)
 
         # log Σ_k π_k exp(log_norm)  (log-sum-exp per O)
         # weights in prob space -> convert to log
-        # log_w = tf_log(weights)
-        eps = tf_constant(1e-8, dtype=weights.dtype)
-        log_w = tf_log(weights + eps)
+        # log_w = log(weights)
+        eps = constant(1e-8, dtype=weights.dtype)
+        log_w = log(weights + eps)
 
-        log_mix = tf_reduce_logsumexp(
+        log_mix = reduce_logsumexp(
             log_w + log_norm, axis=-2
         )  # sum over K
 
         # Sum across O, then mean over batch/time
         # If you consider independence across O: sum log p(o)
-        nll = -tf_reduce_mean(tf_reduce_sum(log_mix, axis=-1))
+        nll = -reduce_mean(reduce_sum(log_mix, axis=-1))
         return nll
 
     def get_config(self):
@@ -418,7 +425,9 @@ class QuantileHead(Layer, NNLearner):
     ):
         super().__init__(**kwargs)
         if not quantiles:
-            raise ValueError("Quantiles list must be non‑empty.")
+            raise ValueError(
+                "Quantiles list must be non‑empty."
+            )
         self.quantiles = quantiles
         self.output_dim = output_dim
         self.q = len(quantiles)
@@ -440,10 +449,12 @@ class QuantileHead(Layer, NNLearner):
         """
         # Supports (B, F) or (B,H,F). Output should insert Q dimension before O.
         out = self.proj(features)  # (B,[H], Q*O)
-        shp = tf_shape(out)  # dynamic shape
-        new_shape = _append_shape(shp, self.q, self.output_dim)
+        shp = shape(out)  # dynamic shape
+        new_shape = _append_shape(
+            shp, self.q, self.output_dim
+        )
 
-        out = tf_reshape(out, new_shape)
+        out = reshape(out, new_shape)
         return out
 
     def get_config(self) -> dict:
@@ -500,7 +511,8 @@ class CombinedHeadLoss(Loss, NNLearner):
     )
     def __init__(
         self,
-        heads_losses: Mapping[str, tuple[Loss, float]] | None = None,
+        heads_losses: Mapping[str, tuple[Loss, float]]
+        | None = None,
         reduction: str = "sum",
         name: str = "CombinedHeadLoss",
         output_dim: int | None = None,
@@ -512,7 +524,7 @@ class CombinedHeadLoss(Loss, NNLearner):
         if not heads_losses:
 
             def default_loss(y_true, y_pred):
-                return tf_reduce_mean(tf_square(y_true - y_pred))
+                return reduce_mean(square(y_true - y_pred))
 
             heads_losses = {"default": (default_loss, 1.0)}
 
@@ -549,9 +561,9 @@ class CombinedHeadLoss(Loss, NNLearner):
             total_terms.append(float(w) * lt)
 
         if self._reduction_mode == "sum":
-            return tf_add_n(total_terms)
+            return add_n(total_terms)
         elif self._reduction_mode == "mean":
-            return tf_reduce_mean(tf_stack(total_terms))
+            return reduce_mean(stack(total_terms))
         else:
             raise ValueError(
                 f"Unknown reduction '{self._reduction_mode}'."
@@ -608,7 +620,7 @@ class QuantileDistributionModeling(Layer, NNLearner):
     Depending on whether `quantiles` is specified,
     this layer:
       - Returns (B, H, O) if `quantiles` is None.
-      - Returns (B, H, Q, O) otherwise, where Q
+      - Returns (B, H, O, Q) otherwise, where Q
         is the number of quantiles.
 
     .. math::
@@ -652,7 +664,7 @@ class QuantileDistributionModeling(Layer, NNLearner):
     >>> qdm = QuantileDistributionModeling(
     ...     [0.25, 0.5, 0.75], output_dim=1
     ... )
-    >>> # Forward pass => (B, H, Q, O) => (32, 10, 3, 1)
+    >>> # Forward pass => (B, H, O, Q) => (32, 10, 1, 3)
     >>> y = qdm(x)
 
     See Also
@@ -707,7 +719,7 @@ class QuantileDistributionModeling(Layer, NNLearner):
         else:
             self.output_layer = Dense(output_dim)
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, training=False):
         r"""
         Forward pass projecting to quantile outputs
@@ -726,7 +738,7 @@ class QuantileDistributionModeling(Layer, NNLearner):
         tf.Tensor
             - If `quantiles` is None:
               (B, H, O)
-            - Else: (B, H, Q, O)
+            - Else: (B, H, O, Q)
         """
         # ensure last dim is statically known (Keras2 reload safety)
         try:
@@ -736,7 +748,9 @@ class QuantileDistributionModeling(Layer, NNLearner):
                 and inputs.shape[-1] is None
             ):
                 inputs.set_shape(
-                    inputs.shape[:-1].concatenate([self.output_dim])
+                    inputs.shape[:-1].concatenate(
+                        [self.output_dim]
+                    )
                 )
         except Exception:
             pass
@@ -745,12 +759,12 @@ class QuantileDistributionModeling(Layer, NNLearner):
         if self.quantiles is None:
             return self.output_layer(inputs)
 
-        # Quantile predictions => (B, H, Q, O)
+        # Quantile predictions => (B, H, O, Q)
         outputs = []
         for output_layer in self.output_layers:
             quantile_output = output_layer(inputs)
             outputs.append(quantile_output)
-        return tf_stack(outputs, axis=2)
+        return stack(outputs, axis=-1)
 
     def get_config(self):
         r"""

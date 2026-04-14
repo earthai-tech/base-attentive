@@ -126,7 +126,8 @@ class TestValidateModelInputs:
             _val_mod.KERAS_DEPS = mock_deps
 
             with pytest.raises(
-                ValueError, match="Could not convert input to tensor"
+                ValueError,
+                match="Could not convert input to tensor",
             ):
                 validate_model_inputs(
                     [np.ones((2, 4), dtype=np.float32)],
@@ -182,7 +183,9 @@ class TestMaybeReduceQuantilesBh:
         if not _has_runtime():
             pytest.skip("No runtime available")
         x = np.ones((2, 5, 3, 4), dtype=np.float32)
-        result = maybe_reduce_quantiles_bh(x, reduction="mean")
+        result = maybe_reduce_quantiles_bh(
+            x, reduction="mean"
+        )
         assert result is not None
 
     def test_rank4_sum_reduction(self):
@@ -200,16 +203,22 @@ class TestMaybeReduceQuantilesBh:
 
         def my_reduce(t, axis=None):
             called["axis"] = axis
-            return t.mean(axis=axis) if hasattr(t, "mean") else t
+            return (
+                t.mean(axis=axis) if hasattr(t, "mean") else t
+            )
 
-        result = maybe_reduce_quantiles_bh(x, reduction=my_reduce)
+        result = maybe_reduce_quantiles_bh(
+            x, reduction=my_reduce
+        )
         assert result is not None
 
     def test_rank3_with_last_dim_greater_1_mean(self):
         if not _has_runtime():
             pytest.skip("No runtime available")
         x = np.ones((2, 5, 4), dtype=np.float32)
-        result = maybe_reduce_quantiles_bh(x, reduction="mean")
+        result = maybe_reduce_quantiles_bh(
+            x, reduction="mean"
+        )
         assert result is not None
 
     def test_rank3_with_last_dim_greater_1_sum(self):
@@ -227,14 +236,18 @@ class TestMaybeReduceQuantilesBh:
         def my_reduce(t, axis=None):
             return t
 
-        result = maybe_reduce_quantiles_bh(x, reduction=my_reduce)
+        result = maybe_reduce_quantiles_bh(
+            x, reduction=my_reduce
+        )
         assert result is not None
 
     def test_rank3_with_last_dim_1_unchanged(self):
         if not _has_runtime():
             pytest.skip("No runtime available")
         x = np.ones((2, 5, 1), dtype=np.float32)
-        result = maybe_reduce_quantiles_bh(x, reduction="mean")
+        result = maybe_reduce_quantiles_bh(
+            x, reduction="mean"
+        )
         # Last dim is 1, should be returned unchanged
         assert result is not None
 
@@ -242,7 +255,9 @@ class TestMaybeReduceQuantilesBh:
         if not _has_runtime():
             pytest.skip("No runtime available")
         x = np.ones((2, 5), dtype=np.float32)
-        result = maybe_reduce_quantiles_bh(x, reduction="mean")
+        result = maybe_reduce_quantiles_bh(
+            x, reduction="mean"
+        )
         assert result is not None
 
 
@@ -299,7 +314,9 @@ class TestEnsureBh1:
         if not _has_runtime():
             pytest.skip("No runtime available")
         x = np.ones((2, 5, 4), dtype=np.float32)
-        result = ensure_bh1(x, reduce_axis=2, reduction="mean")
+        result = ensure_bh1(
+            x, reduce_axis=2, reduction="mean"
+        )
         assert result is not None
 
     def test_with_reduce_axis_sum(self):
@@ -317,7 +334,9 @@ class TestEnsureBh1:
         def my_reduce(t, axis=None):
             return t
 
-        result = ensure_bh1(x, reduce_axis=2, reduction=my_reduce)
+        result = ensure_bh1(
+            x, reduce_axis=2, reduction=my_reduce
+        )
         assert result is not None
 
     def test_rank3_with_high_last_dim_no_reduce(self):

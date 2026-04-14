@@ -17,8 +17,12 @@ def _import_core_submodule(module_name: str):
 
 def test_core_utility_modules_are_importable():
     """Core utility submodules should remain importable independently."""
-    checks = _import_core_submodule("base_attentive.core.checks")
-    handlers = _import_core_submodule("base_attentive.core.handlers")
+    checks = _import_core_submodule(
+        "base_attentive.core.checks"
+    )
+    handlers = _import_core_submodule(
+        "base_attentive.core.handlers"
+    )
 
     assert callable(checks.validate_nested_param)
     assert callable(handlers.param_deprecated_message)
@@ -30,26 +34,36 @@ class TestValidateNestedParam:
 
     def test_accepts_valid_list_element_types(self):
         """Lists with the expected element type should be returned unchanged."""
-        checks = _import_core_submodule("base_attentive.core.checks")
+        checks = _import_core_submodule(
+            "base_attentive.core.checks"
+        )
         value = [1, 2, 3]
 
         assert (
-            checks.validate_nested_param(value, list[int], "levels")
+            checks.validate_nested_param(
+                value, list[int], "levels"
+            )
             == value
         )
 
     def test_rejects_non_list_for_list_type(self):
         """A non-list value should raise a clear type error."""
-        checks = _import_core_submodule("base_attentive.core.checks")
+        checks = _import_core_submodule(
+            "base_attentive.core.checks"
+        )
 
-        with pytest.raises(TypeError, match="levels must be a list"):
+        with pytest.raises(
+            TypeError, match="levels must be a list"
+        ):
             checks.validate_nested_param(
                 "not-a-list", list[int], "levels"
             )
 
     def test_rejects_wrong_list_element_type(self):
         """The failing element index should be included in the error."""
-        checks = _import_core_submodule("base_attentive.core.checks")
+        checks = _import_core_submodule(
+            "base_attentive.core.checks"
+        )
 
         with pytest.raises(
             TypeError, match=r"levels\[1\] must be int"
@@ -60,7 +74,9 @@ class TestValidateNestedParam:
 
     def test_rejects_wrong_scalar_type(self):
         """Scalar type mismatches should mention the parameter name."""
-        checks = _import_core_submodule("base_attentive.core.checks")
+        checks = _import_core_submodule(
+            "base_attentive.core.checks"
+        )
 
         with pytest.raises(
             TypeError, match="forecast_horizon must be int"
@@ -180,7 +196,9 @@ class TestDelegateOnError:
         with pytest.raises(ValueError, match="boom"):
             explode()
 
-    def test_returns_success_value_without_using_handler(self):
+    def test_returns_success_value_without_using_handler(
+        self,
+    ):
         """Successful calls should pass through untouched."""
         handlers = _import_core_submodule(
             "base_attentive.core.handlers"

@@ -24,7 +24,8 @@ class _FakeDebugging:
         expected_value = getattr(expected, "value", expected)
         if actual_value != expected_value:
             raise AssertionError(
-                message or f"{actual_value} != {expected_value}"
+                message
+                or f"{actual_value} != {expected_value}"
             )
         return None
 
@@ -131,7 +132,9 @@ def base_attentive_module(monkeypatch):
         lambda name: f"{name} dependencies",
     )
 
-    sys.modules.pop("base_attentive.core.base_attentive", None)
+    sys.modules.pop(
+        "base_attentive.core.base_attentive", None
+    )
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
@@ -173,28 +176,49 @@ def _patch_layer_builders(monkeypatch, module):
         raising=False,
     )
     monkeypatch.setattr(
-        module, "GatedResidualNetwork", make_factory(), raising=False
+        module,
+        "GatedResidualNetwork",
+        make_factory(),
+        raising=False,
     )
     monkeypatch.setattr(
         module, "Dense", make_factory(), raising=False
     )
     monkeypatch.setattr(
-        module, "MultiScaleLSTM", make_factory(), raising=False
+        module,
+        "MultiScaleLSTM",
+        make_factory(),
+        raising=False,
     )
     monkeypatch.setattr(
-        module, "MultiHeadAttention", make_factory(), raising=False
+        module,
+        "MultiHeadAttention",
+        make_factory(),
+        raising=False,
     )
     monkeypatch.setattr(
-        module, "LayerNormalization", make_factory(), raising=False
+        module,
+        "LayerNormalization",
+        make_factory(),
+        raising=False,
     )
     monkeypatch.setattr(
-        module, "PositionalEncoding", make_factory(), raising=False
+        module,
+        "PositionalEncoding",
+        make_factory(),
+        raising=False,
     )
     monkeypatch.setattr(
-        module, "HierarchicalAttention", make_factory(), raising=False
+        module,
+        "HierarchicalAttention",
+        make_factory(),
+        raising=False,
     )
     monkeypatch.setattr(
-        module, "CrossAttention", make_factory(), raising=False
+        module,
+        "CrossAttention",
+        make_factory(),
+        raising=False,
     )
     monkeypatch.setattr(
         module,
@@ -209,7 +233,10 @@ def _patch_layer_builders(monkeypatch, module):
         raising=False,
     )
     monkeypatch.setattr(
-        module, "DynamicTimeWindow", make_factory(), raising=False
+        module,
+        "DynamicTimeWindow",
+        make_factory(),
+        raising=False,
     )
     monkeypatch.setattr(
         module, "MultiDecoder", make_factory(), raising=False
@@ -220,7 +247,9 @@ def _patch_layer_builders(monkeypatch, module):
         make_factory(),
         raising=False,
     )
-    monkeypatch.setattr(module, "Add", make_factory(), raising=False)
+    monkeypatch.setattr(
+        module, "Add", make_factory(), raising=False
+    )
 
 
 def test_build_attentive_layers_vsn_hybrid_with_residuals(
@@ -288,18 +317,28 @@ def test_run_encoder_decoder_core_covers_vsn_hybrid_and_tft_paths(
 ):
     """The encoder/decoder core should handle VSN processing and TFT slicing."""
     monkeypatch.setattr(
-        base_attentive_module, "tf_shape", lambda value: value.shape
+        base_attentive_module,
+        "tf_shape",
+        lambda value: value.shape,
     )
     monkeypatch.setattr(
         base_attentive_module,
         "tf_concat",
-        lambda values, axis=-1: np.concatenate(values, axis=axis),
+        lambda values, axis=-1: np.concatenate(
+            values, axis=axis
+        ),
     )
     monkeypatch.setattr(
-        base_attentive_module, "tf_expand_dims", np.expand_dims
+        base_attentive_module,
+        "tf_expand_dims",
+        np.expand_dims,
     )
-    monkeypatch.setattr(base_attentive_module, "tf_tile", np.tile)
-    monkeypatch.setattr(base_attentive_module, "tf_zeros", np.zeros)
+    monkeypatch.setattr(
+        base_attentive_module, "tf_tile", np.tile
+    )
+    monkeypatch.setattr(
+        base_attentive_module, "tf_zeros", np.zeros
+    )
     monkeypatch.setattr(
         base_attentive_module,
         "aggregate_multiscale_on_3d",
@@ -313,7 +352,9 @@ def test_run_encoder_decoder_core_covers_vsn_hybrid_and_tft_paths(
         raising=False,
     )
 
-    dtw_layer = _CallableLayer(lambda value, training=False: value)
+    dtw_layer = _CallableLayer(
+        lambda value, training=False: value
+    )
     fake_model = types.SimpleNamespace(
         architecture_config={
             "feature_processing": "vsn",
@@ -359,7 +400,9 @@ def test_run_encoder_decoder_core_covers_vsn_hybrid_and_tft_paths(
         decoder_positional_encoding=_CallableLayer(
             lambda value: value
         ),
-        decoder_input_projection=_CallableLayer(lambda value: value),
+        decoder_input_projection=_CallableLayer(
+            lambda value: value
+        ),
         apply_attention_levels=lambda projected_decoder_input,
         encoder_sequences,
         training=False: projected_decoder_input,
@@ -370,14 +413,12 @@ def test_run_encoder_decoder_core_covers_vsn_hybrid_and_tft_paths(
         attention_units=3,
     )
 
-    result = (
-        base_attentive_module.BaseAttentive.run_encoder_decoder_core(
-            fake_model,
-            static_input=np.ones((2, 1), dtype=np.float32),
-            dynamic_input=np.ones((2, 3, 2), dtype=np.float32),
-            future_input=np.ones((2, 5, 2), dtype=np.float32),
-            training=False,
-        )
+    result = base_attentive_module.BaseAttentive.run_encoder_decoder_core(
+        fake_model,
+        static_input=np.ones((2, 1), dtype=np.float32),
+        dynamic_input=np.ones((2, 3, 2), dtype=np.float32),
+        future_input=np.ones((2, 5, 2), dtype=np.float32),
+        training=False,
     )
 
     assert result.shape == (2, 2, 3)
@@ -390,18 +431,28 @@ def test_run_encoder_decoder_core_covers_dense_transformer_and_zero_decoder_part
 ):
     """The core path should also cover dense processing and zero-filled decoders."""
     monkeypatch.setattr(
-        base_attentive_module, "tf_shape", lambda value: value.shape
+        base_attentive_module,
+        "tf_shape",
+        lambda value: value.shape,
     )
     monkeypatch.setattr(
         base_attentive_module,
         "tf_concat",
-        lambda values, axis=-1: np.concatenate(values, axis=axis),
+        lambda values, axis=-1: np.concatenate(
+            values, axis=axis
+        ),
     )
     monkeypatch.setattr(
-        base_attentive_module, "tf_expand_dims", np.expand_dims
+        base_attentive_module,
+        "tf_expand_dims",
+        np.expand_dims,
     )
-    monkeypatch.setattr(base_attentive_module, "tf_tile", np.tile)
-    monkeypatch.setattr(base_attentive_module, "tf_zeros", np.zeros)
+    monkeypatch.setattr(
+        base_attentive_module, "tf_tile", np.tile
+    )
+    monkeypatch.setattr(
+        base_attentive_module, "tf_zeros", np.zeros
+    )
     monkeypatch.setattr(
         base_attentive_module,
         "aggregate_multiscale_on_3d",
@@ -449,7 +500,9 @@ def test_run_encoder_decoder_core_covers_dense_transformer_and_zero_decoder_part
         decoder_positional_encoding=_CallableLayer(
             lambda value: value
         ),
-        decoder_input_projection=_CallableLayer(lambda value: value),
+        decoder_input_projection=_CallableLayer(
+            lambda value: value
+        ),
         apply_attention_levels=lambda projected_decoder_input,
         encoder_sequences,
         training=False: projected_decoder_input,
@@ -460,14 +513,12 @@ def test_run_encoder_decoder_core_covers_dense_transformer_and_zero_decoder_part
         attention_units=4,
     )
 
-    result = (
-        base_attentive_module.BaseAttentive.run_encoder_decoder_core(
-            fake_model,
-            static_input=np.ones((2, 0), dtype=np.float32),
-            dynamic_input=np.ones((2, 3, 2), dtype=np.float32),
-            future_input=np.ones((2, 2, 0), dtype=np.float32),
-            training=False,
-        )
+    result = base_attentive_module.BaseAttentive.run_encoder_decoder_core(
+        fake_model,
+        static_input=np.ones((2, 0), dtype=np.float32),
+        dynamic_input=np.ones((2, 3, 2), dtype=np.float32),
+        future_input=np.ones((2, 2, 0), dtype=np.float32),
+        training=False,
     )
 
     assert result == ("aggregated", (2, 2, 4), "flatten")
@@ -496,7 +547,9 @@ def test_apply_attention_levels_covers_residual_and_passthrough_paths(
         ),
         use_residuals=True,
         decoder_add_norm=[
-            _CallableLayer(lambda values: values[0] + values[1]),
+            _CallableLayer(
+                lambda values: values[0] + values[1]
+            ),
             _CallableLayer(lambda value: value + 3),
         ],
         hierarchical_attention=_CallableLayer(
@@ -508,20 +561,22 @@ def test_apply_attention_levels_covers_residual_and_passthrough_paths(
         multi_resolution_attention_fusion=_CallableLayer(
             lambda value, training=False: value + 5
         ),
-        residual_dense=_CallableLayer(lambda value: value + 6),
+        residual_dense=_CallableLayer(
+            lambda value: value + 6
+        ),
         final_add_norm=[
-            _CallableLayer(lambda values: values[0] + values[1]),
+            _CallableLayer(
+                lambda values: values[0] + values[1]
+            ),
             _CallableLayer(lambda value: value + 7),
         ],
     )
 
-    result = (
-        base_attentive_module.BaseAttentive.apply_attention_levels(
-            model_with_all,
-            projected,
-            encoder,
-            training=False,
-        )
+    result = base_attentive_module.BaseAttentive.apply_attention_levels(
+        model_with_all,
+        projected,
+        encoder,
+        training=False,
     )
     assert result.shape == projected.shape
     assert np.all(result > projected)
@@ -541,13 +596,11 @@ def test_apply_attention_levels_covers_residual_and_passthrough_paths(
         final_add_norm=None,
     )
 
-    passthrough = (
-        base_attentive_module.BaseAttentive.apply_attention_levels(
-            passthrough_model,
-            projected,
-            encoder,
-            training=False,
-        )
+    passthrough = base_attentive_module.BaseAttentive.apply_attention_levels(
+        passthrough_model,
+        projected,
+        encoder,
+        training=False,
     )
     assert np.array_equal(passthrough, projected)
 
@@ -566,7 +619,10 @@ def test_call_covers_dynamic_future_span_validation(
     monkeypatch.setattr(
         base_attentive_module,
         "tf_shape",
-        lambda tensor: [None, _FakeScalar(tensor.actual_span)],
+        lambda tensor: [
+            None,
+            _FakeScalar(tensor.actual_span),
+        ],
     )
     monkeypatch.setattr(
         base_attentive_module,
@@ -591,8 +647,10 @@ def test_call_covers_dynamic_future_span_validation(
     model.run_encoder_decoder_core = lambda **kwargs: np.ones(
         (2, 4, 3), dtype=np.float32
     )
-    model.multi_decoder = lambda features, training=False: np.ones(
-        (2, 4, 1), dtype=np.float32
+    model.multi_decoder = (
+        lambda features, training=False: np.ones(
+            (2, 4, 1), dtype=np.float32
+        )
     )
 
     future = _DynamicShapeTensor(actual_span=4)

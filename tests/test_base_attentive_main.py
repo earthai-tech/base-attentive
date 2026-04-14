@@ -119,14 +119,18 @@ def base_attentive_module(monkeypatch):
         import base_attentive
 
     monkeypatch.setattr(base_attentive, "KERAS_BACKEND", "")
-    monkeypatch.setattr(base_attentive, "KERAS_DEPS", FakeKerasDeps())
+    monkeypatch.setattr(
+        base_attentive, "KERAS_DEPS", FakeKerasDeps()
+    )
     monkeypatch.setattr(
         base_attentive,
         "dependency_message",
         lambda name: f"{name} dependencies",
     )
 
-    sys.modules.pop("base_attentive.core.base_attentive", None)
+    sys.modules.pop(
+        "base_attentive.core.base_attentive", None
+    )
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
@@ -233,7 +237,9 @@ def test_get_config_and_from_config_round_trip_without_mutating_input(
 
     config = model.get_config()
     original_config = copy.deepcopy(config)
-    rebuilt = base_attentive_module.BaseAttentive.from_config(config)
+    rebuilt = base_attentive_module.BaseAttentive.from_config(
+        config
+    )
 
     assert config == original_config
     assert (
@@ -251,11 +257,16 @@ def test_reconfigure_returns_new_model_without_mutating_original(
     model = make_base_attentive(
         architecture_config={
             "encoder_type": "hybrid",
-            "decoder_attention_stack": ["cross", "hierarchical"],
+            "decoder_attention_stack": [
+                "cross",
+                "hierarchical",
+            ],
             "feature_processing": "vsn",
         }
     )
-    original_architecture = copy.deepcopy(model.architecture_config)
+    original_architecture = copy.deepcopy(
+        model.architecture_config
+    )
 
     reconfigured = model.reconfigure(
         {
@@ -295,8 +306,8 @@ def test_call_validates_tft_future_span_and_returns_decoder_output(
     )
     decoded = FakeTensor((2, 4, 1), name="decoded")
 
-    model.run_encoder_decoder_core = lambda **kwargs: FakeTensor(
-        (2, 4, 8), name="encoded"
+    model.run_encoder_decoder_core = (
+        lambda **kwargs: FakeTensor((2, 4, 8), name="encoded")
     )
     model.multi_decoder = (
         lambda final_features, training=False: decoded
@@ -333,8 +344,8 @@ def test_call_uses_quantile_distribution_when_quantiles_are_enabled(
     decoded = FakeTensor((2, 3, 1), name="decoded")
     quantiles = FakeTensor((2, 3, 3, 1), name="quantiles")
 
-    model.run_encoder_decoder_core = lambda **kwargs: FakeTensor(
-        (2, 3, 8), name="encoded"
+    model.run_encoder_decoder_core = (
+        lambda **kwargs: FakeTensor((2, 3, 8), name="encoded")
     )
     model.multi_decoder = (
         lambda final_features, training=False: decoded
@@ -371,8 +382,10 @@ def test_call_raises_when_future_span_does_not_match_mode(
         forecast_horizon=4,
         max_window_size=6,
     )
-    model.run_encoder_decoder_core = lambda **kwargs: pytest.fail(
-        "run_encoder_decoder_core should not run for invalid future spans"
+    model.run_encoder_decoder_core = (
+        lambda **kwargs: pytest.fail(
+            "run_encoder_decoder_core should not run for invalid future spans"
+        )
     )
 
     with pytest.raises(

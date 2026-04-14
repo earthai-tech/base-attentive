@@ -38,7 +38,9 @@ def parse_version(version_string: str) -> Tuple[int, ...]:
     version_string = version_string.split("b")[0]
 
     try:
-        return tuple(int(x) for x in version_string.split(".")[:3])
+        return tuple(
+            int(x) for x in version_string.split(".")[:3]
+        )
     except (ValueError, IndexError):
         _logger.warning(
             f"Could not parse version string: {version_string}"
@@ -108,7 +110,9 @@ def get_backend_version(backend_name: str) -> Optional[str]:
         loaded_spec = getattr(loaded_module, "__spec__", None)
         if loaded_spec is None:
             try:
-                return getattr(loaded_module, "__version__", None)
+                return getattr(
+                    loaded_module, "__version__", None
+                )
             except Exception:
                 return None
 

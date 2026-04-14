@@ -99,7 +99,7 @@ where = ["src"]
 include = ["base_attentive*"]
 
 [tool.ruff]
-line-length = 70
+line-length = 62
 target-version = "py310"
 src = ["src", "tests"]
 

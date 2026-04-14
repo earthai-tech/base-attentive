@@ -24,31 +24,31 @@ from ._config import (
     Reduction,
     Tensor,
     register_keras_serializable,
-    tf_abs,
-    tf_autograph,
-    tf_cast,
-    tf_constant,
-    tf_cumsum,
-    tf_equal,
-    tf_erf,
-    tf_exp,
-    tf_expand_dims,
-    tf_float32,
-    tf_gather,
-    tf_int32,
-    tf_maximum,
-    tf_newaxis,
-    tf_random,
-    tf_range,
-    tf_reduce_mean,
-    tf_reduce_sum,
-    tf_reshape,
-    tf_shape,
-    tf_sigmoid,
-    tf_sqrt,
-    tf_square,
-    tf_subtract,
-    tf_unstack,
+    abs_op,
+    do_not_convert,
+    cast,
+    constant,
+    cumsum,
+    equal,
+    erf,
+    exp,
+    expand_dims,
+    float32,
+    gather,
+    int32,
+    maximum,
+    newaxis,
+    random,
+    range,
+    reduce_mean,
+    reduce_sum,
+    reshape,
+    shape,
+    sigmoid,
+    sqrt,
+    square,
+    subtract,
+    unstack,
 )
 
 __all__ = [
@@ -60,13 +60,17 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
-def _normalize_loss_reduction(reduction: str | None) -> str | None:
+def _normalize_loss_reduction(
+    reduction: str | None,
+) -> str | None:
     if reduction == Reduction.AUTO or reduction == "auto":
         return "sum_over_batch_size"
     return reduction
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="CRPSLoss")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="CRPSLoss"
+)
 class CRPSLoss(Loss, NNLearner):
     r"""
     Continuous Ranked Probability Score (CRPS).
@@ -134,18 +138,23 @@ class CRPSLoss(Loss, NNLearner):
         name: str = "CRPSLoss",
     ):
         super().__init__(
-            reduction=_normalize_loss_reduction(reduction), name=name
+            reduction=_normalize_loss_reduction(reduction),
+            name=name,
         )
         self.mode = mode.lower()
-        self.quantiles = list(quantiles) if quantiles else None
+        self.quantiles = (
+            list(quantiles) if quantiles else None
+        )
         self.mc_samples = int(mc_samples)
 
         # cache qs tensor
         if self.quantiles is not None:
-            qs = tf_constant(self.quantiles, dtype=tf_float32)
-            self._qs = tf_reshape(qs, [1, 1, len(self.quantiles), 1])
+            qs = constant(self.quantiles, dtype=float32)
+            self._qs = reshape(
+                qs, [1, 1, len(self.quantiles), 1]
+            )
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, y_true: Tensor, y_pred: Any) -> Tensor:
         mode = (
             self._infer_mode(y_pred)
@@ -171,14 +180,16 @@ class CRPSLoss(Loss, NNLearner):
                 return "gaussian"
         # tensor fallback: look at last dim==2 => gaussian
         if isinstance(y_pred, Tensor):
-            if tf_shape(y_pred)[-1] == 2:
+            if shape(y_pred)[-1] == 2:
                 return "gaussian"
         if self.quantiles is not None:
             return "quantile"
         # Default fallback
         return "gaussian"
 
-    def _crps_quantile(self, y_true: Tensor, y_pred: Any) -> Tensor:
+    def _crps_quantile(
+        self, y_true: Tensor, y_pred: Any
+    ) -> Tensor:
         # Accept dict or bare tensor
         if isinstance(y_pred, dict):
             yq = y_pred["quantiles"]  # (B,H,Q,O)
@@ -191,26 +202,28 @@ class CRPSLoss(Loss, NNLearner):
                 "Quantile values needed for quantile CRPS."
             )
 
-        qs = tf_constant(qs, tf_float32)
-        qs = tf_reshape(qs, [1, 1, tf_shape(qs)[0], 1])
+        qs = constant(qs, float32)
+        qs = reshape(qs, [1, 1, shape(qs)[0], 1])
 
-        y_true_exp = tf_expand_dims(
-            tf_constant(y_true, dtype=tf_float32), axis=2
+        y_true_exp = expand_dims(
+            constant(y_true, dtype=float32), axis=2
         )  # (B,H,1,O)
-        err = tf_subtract(y_true_exp, yq)  # (B,H,Q,O)
-        pinball = tf_maximum(qs * err, (qs - 1.0) * err)
+        err = subtract(y_true_exp, yq)  # (B,H,Q,O)
+        pinball = maximum(qs * err, (qs - 1.0) * err)
         crps = (
-            2.0 / tf_cast(tf_shape(qs)[2], tf_float32)
-        ) * tf_reduce_mean(pinball, axis=2)
-        return tf_reduce_mean(crps)
+            2.0 / cast(shape(qs)[2], float32)
+        ) * reduce_mean(pinball, axis=2)
+        return reduce_mean(crps)
 
-    def _crps_gaussian(self, y_true: Tensor, y_pred: Any) -> Tensor:
+    def _crps_gaussian(
+        self, y_true: Tensor, y_pred: Any
+    ) -> Tensor:
         if isinstance(y_pred, dict):
             mu = y_pred["loc"]
-            sigma = tf_abs(y_pred["scale"]) + 1e-6
+            sigma = abs_op(y_pred["scale"]) + 1e-6
         else:
-            mu, sigma = tf_unstack(y_pred, axis=-1)
-            sigma = tf_abs(sigma) + 1e-6
+            mu, sigma = unstack(y_pred, axis=-1)
+            sigma = abs_op(sigma) + 1e-6
 
         z = (y_true - mu) / sigma
         phi = _std_normal_pdf(z)
@@ -218,10 +231,10 @@ class CRPSLoss(Loss, NNLearner):
         term = (
             z * (2.0 * Phi - 1.0)
             + 2.0 * phi
-            - 1.0 / tf_sqrt(tf_constant(np.pi, tf_float32))
+            - 1.0 / sqrt(constant(np.pi, float32))
         )
         crps = sigma * term
-        return tf_reduce_mean(crps)
+        return reduce_mean(crps)
 
     def _crps_mixture_mc(
         self, y_true: Tensor, y_pred: dict[str, Tensor]
@@ -237,20 +250,23 @@ class CRPSLoss(Loss, NNLearner):
             weights:(B,H,K,1) (sum=1 over K)
         """
         if not isinstance(y_pred, dict):
-            raise ValueError("Mixture mode expects dict y_pred.")
+            raise ValueError(
+                "Mixture mode expects dict y_pred."
+            )
 
         mu = y_pred["loc"]  # (B,H,K,O)
-        sig = tf_abs(y_pred["scale"]) + 1e-6
+        sig = abs_op(y_pred["scale"]) + 1e-6
         w = y_pred["weights"]  # (B,H,K,1)
 
         # Apple MPS: keras.ops (mean, abs, sum, random.normal, …)
         # internally call numpy, which fails for mps:0 tensors.
         # Strategy: move all inputs to CPU once, then also move every
-        # tf_random.normal result to CPU — tf_random.normal defaults to
+        # random.normal result to CPU — random.normal defaults to
         # the Keras backend device (MPS on Apple Silicon) regardless of
         # the shape argument's device.
         try:
             import torch as _torch
+
             _on_mps = (
                 isinstance(mu, _torch.Tensor)
                 and mu.device.type == "mps"
@@ -277,11 +293,13 @@ class CRPSLoss(Loss, NNLearner):
         # Normalize weights so they sum to 1 over K (axis 2).
         # Use native torch.sum to avoid keras.ops.sum keepdims shape
         # inconsistencies seen on some CI runners ((B,H,1) vs (B,H,1,1)).
-        if _torch is not None and isinstance(w, _torch.Tensor):
+        if _torch is not None and isinstance(
+            w, _torch.Tensor
+        ):
             w = w / (w.sum(dim=2, keepdim=True) + 1e-8)
         else:
             # Non-torch backend: expand_dims is explicit about the shape.
-            w_sum = tf_expand_dims(tf_reduce_sum(w, axis=2), axis=2)
+            w_sum = expand_dims(reduce_sum(w, axis=2), axis=2)
             w = w / (w_sum + 1e-8)
 
         # --- MPS fast path: pure native PyTorch (no keras.ops) -------------------
@@ -291,107 +309,131 @@ class CRPSLoss(Loss, NNLearner):
         if _on_mps:
             # mu, sig, w, y_true are already on CPU (moved above).
             _t = _torch
-            B, H, K, O = mu.shape   # concrete Python ints from CPU tensor
+            B, H, K, O = (
+                mu.shape
+            )  # concrete Python ints from CPU tensor
             S = self.mc_samples
-            cdf = _t.cumsum(w, dim=2)                       # (B,H,K,1) CPU
-            u   = _t.sigmoid(_t.randn(B, H, S, 1))         # (B,H,S,1) CPU
-            cdf_exp = cdf.unsqueeze(2)                      # (B,H,1,K,1)
-            u_exp   = u.unsqueeze(3)                        # (B,H,S,1,1)
-            mask  = (u_exp <= cdf_exp).float()              # (B,H,S,K,1)
-            cum   = _t.cumsum(mask, dim=3)
-            first = (cum == 1.0).float()                    # (B,H,S,K,1)
-            k_idx = _t.arange(K, dtype=_t.float32)         # (K,) CPU
-            idxs  = (
-                k_idx[None, None, None, :, None] * first
-            ).sum(dim=3).long()                             # (B,H,S,1)
-            BH     = B * H
-            mu_r   = mu.reshape(BH, K, O)
-            sig_r  = sig.reshape(BH, K, O)
-            idxs_g = idxs.reshape(BH, S, 1).expand(-1, -1, O)  # (BH,S,O)
-            mu_s   = _t.gather(mu_r,  1, idxs_g).reshape(B, H, S, O)
-            sig_s  = _t.gather(sig_r, 1, idxs_g).reshape(B, H, S, O)
-            eps    = _t.randn_like(mu_s)                    # CPU
-            X      = mu_s + sig_s * eps
-            y_exp  = y_true.unsqueeze(2)                    # (B,H,1,O)
-            term1  = (X - y_exp).abs().mean(dim=2)         # (B,H,O)
-            eps2   = _t.randn_like(mu_s)
-            Xp     = mu_s + sig_s * eps2
-            term2  = 0.5 * (X - Xp).abs().mean(dim=2)     # (B,H,O)
+            cdf = _t.cumsum(w, dim=2)  # (B,H,K,1) CPU
+            u = _t.sigmoid(
+                _t.randn(B, H, S, 1)
+            )  # (B,H,S,1) CPU
+            cdf_exp = cdf.unsqueeze(2)  # (B,H,1,K,1)
+            u_exp = u.unsqueeze(3)  # (B,H,S,1,1)
+            mask = (u_exp <= cdf_exp).float()  # (B,H,S,K,1)
+            cum = _t.cumsum(mask, dim=3)
+            first = (cum == 1.0).float()  # (B,H,S,K,1)
+            k_idx = _t.arange(K, dtype=_t.float32)  # (K,) CPU
+            idxs = (
+                (k_idx[None, None, None, :, None] * first)
+                .sum(dim=3)
+                .long()
+            )  # (B,H,S,1)
+            BH = B * H
+            mu_r = mu.reshape(BH, K, O)
+            sig_r = sig.reshape(BH, K, O)
+            idxs_g = idxs.reshape(BH, S, 1).expand(
+                -1, -1, O
+            )  # (BH,S,O)
+            mu_s = _t.gather(mu_r, 1, idxs_g).reshape(
+                B, H, S, O
+            )
+            sig_s = _t.gather(sig_r, 1, idxs_g).reshape(
+                B, H, S, O
+            )
+            eps = _t.randn_like(mu_s)  # CPU
+            X = mu_s + sig_s * eps
+            y_exp = y_true.unsqueeze(2)  # (B,H,1,O)
+            term1 = (X - y_exp).abs().mean(dim=2)  # (B,H,O)
+            eps2 = _t.randn_like(mu_s)
+            Xp = mu_s + sig_s * eps2
+            term2 = 0.5 * (X - Xp).abs().mean(
+                dim=2
+            )  # (B,H,O)
             return (term1 - term2).mean()
 
-        B, H, K, output_dim = [tf_shape(mu)[i] for i in range(4)]
+        B, H, K, output_dim = [shape(mu)[i] for i in range(4)]
 
         # --- Sample indices from categorical weights
         # We sample 'mc_samples' draws per (B,H).
         # Use cumulative weights to sample indices.
         # NOTE: TF doesn't have native categorical for batched, so
         # we do inverse-CDF sampling manually.
-        cdf = tf_cumsum(w, axis=2)  # (B,H,K,1)
-        u = tf_random.normal(
+        cdf = cumsum(w, axis=2)  # (B,H,K,1)
+        u = random.normal(
             [B, H, self.mc_samples, 1], mean=0.0, stddev=1.0
         )
-        u = tf_sigmoid(
+        u = sigmoid(
             u
         )  # uniform-ish [0,1], quick hack (or use stateless_random_uniform)
 
         # broadcast cdf to compare: (B,H,K,1) vs (B,H,S,1)
         # We'll pick first index where u <= cdf
-        cdf_exp = tf_expand_dims(cdf, axis=2)  # (B,H,1,K,1)
-        u_exp = tf_expand_dims(u, axis=3)  # (B,H,S,1,1)
-        mask = tf_cast(
-            u_exp <= cdf_exp, tf_float32
+        cdf_exp = expand_dims(cdf, axis=2)  # (B,H,1,K,1)
+        u_exp = expand_dims(u, axis=3)  # (B,H,S,1,1)
+        mask = cast(
+            u_exp <= cdf_exp, float32
         )  # True where cdf >= u
-        cum = tf_cumsum(mask, axis=3)
-        first = tf_cast(tf_equal(cum, 1.0), tf_float32)
-        idxs = tf_reduce_mean(
-            tf_range(K, dtype=tf_float32)[
-                tf_newaxis,
-                tf_newaxis,
-                tf_newaxis,
+        cum = cumsum(mask, axis=3)
+        first = cast(equal(cum, 1.0), float32)
+        idxs = reduce_mean(
+            range(K, dtype=float32)[
+                newaxis,
+                newaxis,
+                newaxis,
                 :,
-                tf_newaxis,
+                newaxis,
             ]
             * first,
             axis=3,
         )
-        idxs = tf_cast(
-            tf_reshape(idxs, [B, H, self.mc_samples, 1]),
-            tf_int32,
+        idxs = cast(
+            reshape(idxs, [B, H, self.mc_samples, 1]),
+            int32,
         )  # (B,H,S,1)
 
         # Gather μ,σ — flatten (B*H) then gather.
         BH = B * H
-        mu_r = tf_reshape(mu, [BH, K, output_dim])
-        sig_r = tf_reshape(sig, [BH, K, output_dim])
+        mu_r = reshape(mu, [BH, K, output_dim])
+        sig_r = reshape(sig, [BH, K, output_dim])
 
-        idxs_r = tf_reshape(idxs, [BH, self.mc_samples, 1])
-        mu_s = tf_gather(mu_r, idxs_r, batch_dims=1)  # (BH,S,1,O)
-        sig_s = tf_gather(sig_r, idxs_r, batch_dims=1)  # (BH,S,1,O)
+        idxs_r = reshape(idxs, [BH, self.mc_samples, 1])
+        mu_s = gather(
+            mu_r, idxs_r, batch_dims=1
+        )  # (BH,S,1,O)
+        sig_s = gather(
+            sig_r, idxs_r, batch_dims=1
+        )  # (BH,S,1,O)
 
-        mu_s = tf_reshape(mu_s, [B, H, self.mc_samples, output_dim])
-        sig_s = tf_reshape(sig_s, [B, H, self.mc_samples, output_dim])
+        mu_s = reshape(
+            mu_s, [B, H, self.mc_samples, output_dim]
+        )
+        sig_s = reshape(
+            sig_s, [B, H, self.mc_samples, output_dim]
+        )
 
         # Sample from Gaussian N(mu_s, sig_s)
-        eps = tf_random.normal(
-            tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32
+        eps = random.normal(
+            shape(mu_s), 0.0, 1.0, dtype=float32
         )
         X = mu_s + sig_s * eps  # (B,H,S,O)
 
         # term1 = E|X - y|
-        y_exp = tf_expand_dims(y_true, axis=2)  # (B,H,1,O)
-        term1 = tf_reduce_mean(tf_abs(X - y_exp), axis=2)  # (B,H,O)
+        y_exp = expand_dims(y_true, axis=2)  # (B,H,1,O)
+        term1 = reduce_mean(
+            abs_op(X - y_exp), axis=2
+        )  # (B,H,O)
 
         # term2 = 0.5 E|X - X'|
-        eps2 = tf_random.normal(
-            tf_shape(mu_s), 0.0, 1.0, dtype=tf_float32
+        eps2 = random.normal(
+            shape(mu_s), 0.0, 1.0, dtype=float32
         )
         Xp = mu_s + sig_s * eps2  # (B,H,S,O)
-        term2 = 0.5 * tf_reduce_mean(
-            tf_abs(X - Xp), axis=2
+        term2 = 0.5 * reduce_mean(
+            abs_op(X - Xp), axis=2
         )  # (B,H,O)
 
         crps = term1 - term2
-        return tf_reduce_mean(crps)
+        return reduce_mean(crps)
 
     def get_config(self) -> dict:
         cfg = super().get_config()
@@ -458,7 +500,9 @@ class AdaptiveQuantileLoss(Loss, NNLearner):
 
     Examples
     --------
-    >>> from geoprior.nn.components import AdaptiveQuantileLoss
+    >>> from geoprior.nn.components import (
+    ...     AdaptiveQuantileLoss,
+    ... )
     >>> import tensorflow as tf
     >>> # Suppose y_true is (B, H, O)
     ... # y_pred is (B, H, Q, O)
@@ -497,7 +541,7 @@ class AdaptiveQuantileLoss(Loss, NNLearner):
             quantiles = [0.1, 0.5, 0.9]
         self.quantiles = quantiles
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, y_true, y_pred):
         r"""
         Compute quantile loss.
@@ -521,21 +565,25 @@ class AdaptiveQuantileLoss(Loss, NNLearner):
         """
         if self.quantiles is None:
             return 0.0
-        quantiles = tf_constant(self.quantiles, dtype=tf_float32)
+        quantiles = constant(self.quantiles, dtype=float32)
         if len(getattr(y_pred, "shape", ())) <= 2:
-            error = tf_subtract(y_true, y_pred)
-            quantiles = tf_reshape(quantiles, [1, len(self.quantiles)])
+            error = subtract(y_true, y_pred)
+            quantiles = reshape(
+                quantiles, [1, len(self.quantiles)]
+            )
         else:
-            y_true_expanded = tf_expand_dims(
-                tf_constant(y_true, dtype=tf_float32), axis=2
+            y_true_expanded = expand_dims(
+                constant(y_true, dtype=float32), axis=2
             )  # => (B, H, 1, O)
-            error = tf_subtract(y_true_expanded, y_pred)
-            quantiles = tf_reshape(quantiles, [1, 1, len(self.quantiles), 1])
+            error = subtract(y_true_expanded, y_pred)
+            quantiles = reshape(
+                quantiles, [1, 1, len(self.quantiles), 1]
+            )
         # quantile loss
-        quantile_loss = tf_maximum(
+        quantile_loss = maximum(
             quantiles * error, (quantiles - 1) * error
         )
-        return tf_reduce_mean(quantile_loss)
+        return reduce_mean(quantile_loss)
 
     def get_config(self):
         r"""
@@ -639,11 +687,13 @@ class AnomalyLoss(Loss, NNLearner):
     """
 
     @ensure_pkg(KERAS_BACKEND or "keras", extra=DEP_MSG)
-    def __init__(self, weight: float = 1.0, name="AnomalyLoss"):
+    def __init__(
+        self, weight: float = 1.0, name="AnomalyLoss"
+    ):
         super().__init__(name=name)
         self.weight = weight
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, anomaly_scores: Tensor, y_pred=None):
         r"""
         Forward pass that computes the mean squared
@@ -663,7 +713,9 @@ class AnomalyLoss(Loss, NNLearner):
             A scalar loss value representing the
             weighted mean squared anomaly.
         """
-        return self.weight * tf_reduce_mean(tf_square(anomaly_scores))
+        return self.weight * reduce_mean(
+            square(anomaly_scores)
+        )
 
     def get_config(self):
         r"""
@@ -796,7 +848,9 @@ class MultiObjectiveLoss(Loss, NNLearner):
         super().__init__(name=name)
 
         if quantile_loss_fn is None:
-            quantile_loss_fn = AdaptiveQuantileLoss([0.1, 0.5, 0.9])
+            quantile_loss_fn = AdaptiveQuantileLoss(
+                [0.1, 0.5, 0.9]
+            )
         if anomaly_loss_fn is None:
             anomaly_loss_fn = AnomalyLoss()
 
@@ -804,7 +858,7 @@ class MultiObjectiveLoss(Loss, NNLearner):
         self.anomaly_loss_fn = anomaly_loss_fn
         self.anomaly_scores = anomaly_scores
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, y_true, y_pred):
         r"""
         Compute combined quantile and anomaly loss.
@@ -835,7 +889,9 @@ class MultiObjectiveLoss(Loss, NNLearner):
         if self.anomaly_scores is not None:
             # Call .call() directly to avoid Keras Loss.__call__ trying to
             # convert y_pred=None to a tensor.
-            anomaly_loss = self.anomaly_loss_fn.call(self.anomaly_scores)
+            anomaly_loss = self.anomaly_loss_fn.call(
+                self.anomaly_scores
+            )
             return quantile_loss + anomaly_loss
         return quantile_loss
 
@@ -954,11 +1010,14 @@ class CRPSLossWrapper(Loss, NNLearner):
         name: str = "CRPSLossWrapper",
     ):
         super().__init__(
-            reduction=_normalize_loss_reduction(reduction), name=name
+            reduction=_normalize_loss_reduction(reduction),
+            name=name,
         )
         mode = mode.lower()
         if mode not in {"quantile", "gaussian"}:
-            raise ValueError("mode must be 'quantile' or 'gaussian'.")
+            raise ValueError(
+                "mode must be 'quantile' or 'gaussian'."
+            )
         if mode == "quantile" and not quantiles:
             raise ValueError(
                 "quantiles required when mode='quantile'."
@@ -968,12 +1027,12 @@ class CRPSLossWrapper(Loss, NNLearner):
 
         # Pre-cache tensors for quantiles if given
         if self.mode == "quantile":
-            qs = tf_constant(quantiles, dtype=tf_float32)
-            self._qs = tf_reshape(
+            qs = constant(quantiles, dtype=float32)
+            self._qs = reshape(
                 qs, [1, 1, len(quantiles), 1]
             )  # (1,1,Q,1)
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, y_true: Tensor, y_pred: Any) -> Tensor:
         if self.mode == "quantile":
             return self._crps_quantile(y_true, y_pred)
@@ -989,25 +1048,29 @@ class CRPSLossWrapper(Loss, NNLearner):
         y_pred: (B, H, Q, O)
         """
         # Expand true to match quantile dim
-        y_true_exp = tf_expand_dims(
-            tf_constant(y_true, dtype=tf_float32), axis=2
+        y_true_exp = expand_dims(
+            constant(y_true, dtype=float32), axis=2
         )  # (B,H,1,O)
-        err = tf_subtract(y_true_exp, y_pred)  # (B,H,Q,O)
+        err = subtract(y_true_exp, y_pred)  # (B,H,Q,O)
 
         # Pinball / quantile loss
         # max(q*e, (q-1)*e)
-        pinball = tf_maximum(self._qs * err, (self._qs - 1.0) * err)
+        pinball = maximum(
+            self._qs * err, (self._qs - 1.0) * err
+        )
 
         # Approximate CRPS: 2/Q * mean(pinball across quantiles)
-        crps = (2.0 / float(len(self.quantiles))) * tf_reduce_mean(
-            pinball, axis=2
-        )  # (B,H,O)
+        crps = (
+            2.0 / float(len(self.quantiles))
+        ) * reduce_mean(pinball, axis=2)  # (B,H,O)
 
         # Mean across remaining dims -> scalar
-        return tf_reduce_mean(crps)
+        return reduce_mean(crps)
 
     # ------------------------- Gaussian CRPS -----------------------
-    def _crps_gaussian(self, y_true: Tensor, y_pred: Any) -> Tensor:
+    def _crps_gaussian(
+        self, y_true: Tensor, y_pred: Any
+    ) -> Tensor:
         """
         Expect either:
           y_pred: dict {'loc': Tensor, 'scale': Tensor}
@@ -1016,33 +1079,37 @@ class CRPSLossWrapper(Loss, NNLearner):
         """
         if isinstance(y_pred, dict):
             mu = y_pred["loc"]
-            sigma = tf_abs(y_pred["scale"]) + 1e-6
+            sigma = abs_op(y_pred["scale"]) + 1e-6
         else:
             # last dim = 2
-            mu, sigma = tf_unstack(y_pred, axis=-1)
-            sigma = tf_abs(sigma) + 1e-6
+            mu, sigma = unstack(y_pred, axis=-1)
+            sigma = abs_op(sigma) + 1e-6
 
         z = (y_true - mu) / sigma
 
         # Standard normal pdf φ and cdf Φ
-        sqrt_2pi = tf_constant(np.sqrt(2.0 * np.pi), dtype=tf_float32)
-        phi = tf_exp(-0.5 * tf_square(z)) / sqrt_2pi
+        sqrt_2pi = constant(
+            np.sqrt(2.0 * np.pi), dtype=float32
+        )
+        phi = exp(-0.5 * square(z)) / sqrt_2pi
         Phi = 0.5 * (
-            1.0 + tf_erf(z / tf_sqrt(tf_constant(2.0, tf_float32)))
+            1.0 + erf(z / sqrt(constant(2.0, float32)))
         )
 
         term = (
             z * (2.0 * Phi - 1.0)
             + 2.0 * phi
-            - 1.0 / tf_sqrt(tf_constant(np.pi, tf_float32))
+            - 1.0 / sqrt(constant(np.pi, float32))
         )
         crps = sigma * term
 
-        return tf_reduce_mean(crps)
+        return reduce_mean(crps)
 
     def get_config(self) -> dict:
         cfg = super().get_config()
-        cfg.update({"mode": self.mode, "quantiles": self.quantiles})
+        cfg.update(
+            {"mode": self.mode, "quantiles": self.quantiles}
+        )
         return cfg
 
     @classmethod
@@ -1051,12 +1118,10 @@ class CRPSLossWrapper(Loss, NNLearner):
 
 
 def _std_normal_pdf(z: Tensor) -> Tensor:
-    sqrt_2pi = tf_constant(np.sqrt(2.0 * np.pi), tf_float32)
-    return tf_exp(-0.5 * tf_square(z)) / sqrt_2pi
+    sqrt_2pi = constant(np.sqrt(2.0 * np.pi), float32)
+    return exp(-0.5 * square(z)) / sqrt_2pi
 
 
 def _std_normal_cdf(z: Tensor) -> Tensor:
     # Φ(z) = 0.5 * (1 + erf(z / sqrt(2)))
-    return 0.5 * (
-        1.0 + tf_erf(z / tf_sqrt(tf_constant(2.0, tf_float32)))
-    )
+    return 0.5 * (1.0 + erf(z / sqrt(constant(2.0, float32))))

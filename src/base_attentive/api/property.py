@@ -52,7 +52,8 @@ class NNLearner:
             ):
                 deep_items = value.get_params().items()
                 out.update(
-                    (key + "__" + k, val) for k, val in deep_items
+                    (key + "__" + k, val)
+                    for k, val in deep_items
                 )
             out[key] = value
         return out

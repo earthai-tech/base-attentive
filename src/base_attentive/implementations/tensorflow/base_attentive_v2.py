@@ -11,6 +11,8 @@ components with optimizations including:
 
 from __future__ import annotations
 
+from ...resolver.builder_contract import resolve_head_units
+
 from typing import Any
 
 try:
@@ -78,12 +80,16 @@ class _TFTemporalSelfAttentionEncoder(
         self.ffn_hidden = layers.Dense(
             hidden_units,
             activation=activation,
-            name=f"{name}_ffn_hidden" if name else "ffn_hidden",
+            name=f"{name}_ffn_hidden"
+            if name
+            else "ffn_hidden",
         )
 
         self.ffn_output = layers.Dense(
             units,
-            name=f"{name}_ffn_output" if name else "ffn_output",
+            name=f"{name}_ffn_output"
+            if name
+            else "ffn_output",
         )
 
         self.dropout = None
@@ -95,18 +101,25 @@ class _TFTemporalSelfAttentionEncoder(
             name=f"{name}_ln2" if name else "ln2",
         )
 
-    def call(self, inputs: Any, training: bool = False) -> Any:  # noqa: FBT002
+    def call(
+        self, inputs: Any, training: bool = False
+    ) -> Any:  # noqa: FBT002
         """Forward pass with residual connections and layer normalization."""
         # Self-attention with residual
         attn_output = self.attention(
-            inputs, inputs, attention_mask=None, training=training
+            inputs,
+            inputs,
+            attention_mask=None,
+            training=training,
         )
         x = self.norm1(inputs + attn_output)
 
         # FFN with residual
         ffn_output = self.ffn_hidden(x)
         if self.dropout is not None:
-            ffn_output = self.dropout(ffn_output, training=training)
+            ffn_output = self.dropout(
+                ffn_output, training=training
+            )
         ffn_output = self.ffn_output(ffn_output)
 
         return self.norm2(x + ffn_output)
@@ -133,6 +146,8 @@ class _TFTemporalSelfAttentionEncoder(
 
 def _build_tf_dense_projection(
     *,
+    context=None,
+    spec=None,
     units: int,
     activation: str | None = None,
     name: str | None = None,
@@ -149,6 +164,7 @@ def _build_tf_dense_projection(
     Returns:
         layers.Dense with optional activation
     """
+    del context, spec, kwargs
     _ensure_tensorflow()
     return layers.Dense(
         units, activation=activation, name=name, **kwargs
@@ -157,6 +173,8 @@ def _build_tf_dense_projection(
 
 def _build_tf_temporal_self_attention_encoder(
     *,
+    context=None,
+    spec=None,
     units: int,
     hidden_units: int,
     num_heads: int,
@@ -186,6 +204,7 @@ def _build_tf_temporal_self_attention_encoder(
     Returns:
         _TFTemporalSelfAttentionEncoder instance
     """
+    del context, spec, kwargs
     _ensure_tensorflow()
     return _TFTemporalSelfAttentionEncoder(
         units=units,
@@ -201,6 +220,8 @@ def _build_tf_temporal_self_attention_encoder(
 
 def _build_tf_mean_pool(
     *,
+    context=None,
+    spec=None,
     axis: int | None = None,
     keepdims: bool = False,
     name: str | None = None,
@@ -220,16 +241,22 @@ def _build_tf_mean_pool(
     Returns:
         layers.Lambda that computes mean along axis
     """
+    del context, spec, kwargs
     _ensure_tensorflow()
 
     def mean_pool_fn(x):
         return tf.reduce_mean(x, axis=axis, keepdims=keepdims)
 
-    return layers.Lambda(mean_pool_fn, name=name or "mean_pool")
+    return layers.Lambda(
+        mean_pool_fn, name=name or "mean_pool"
+    )
 
 
 def _build_tf_last_pool(
     *,
+    context=None,
+    spec=None,
+    axis: int = 1,
     name: str | None = None,
     **kwargs,
 ):
@@ -244,16 +271,25 @@ def _build_tf_last_pool(
     Returns:
         layers.Lambda that extracts the last timestep
     """
+    del context, spec, kwargs
     _ensure_tensorflow()
+    if axis != 1:
+        raise ValueError(
+            "tensorflow last-pool currently supports axis=1 only."
+        )
 
     def last_pool_fn(x):
-        return tf.gather(x, [-1], axis=-2)
+        return x[:, -1, :]
 
-    return layers.Lambda(last_pool_fn, name=name or "last_pool")
+    return layers.Lambda(
+        last_pool_fn, name=name or "last_pool"
+    )
 
 
 def _build_tf_concat_fusion(
     *,
+    context=None,
+    spec=None,
     axis: int = -1,
     name: str | None = None,
     **kwargs,
@@ -270,36 +306,38 @@ def _build_tf_concat_fusion(
     Returns:
         layers.Lambda that concatenates inputs along axis
     """
+    del context, spec, kwargs
     _ensure_tensorflow()
 
     def concat_fn(inputs):
         return tf.concat(inputs, axis=axis)
 
-    return layers.Lambda(concat_fn, name=name or "concat_fusion")
+    return layers.Lambda(
+        concat_fn, name=name or "concat_fusion"
+    )
 
 
 def _build_tf_point_forecast_head(
     *,
+    context=None,
+    spec=None,
+    units: int | None = None,
     output_dim: int = 1,
     forecast_horizon: int = 1,
+    quantiles: tuple[float, ...] | None = None,
     activation: str | None = None,
     name: str | None = None,
     **kwargs,
 ) -> layers.Dense:
-    """Build a TensorFlow-optimized point forecast output head.
-
-    Arguments:
-        output_dim: Output dimension (e.g., 1 for univariate)
-        forecast_horizon: Number of forecasting steps
-        activation: Output activation
-        name: Layer name
-        **kwargs: Additional kwargs
-
-    Returns:
-        layers.Dense for point forecasting
-    """
+    """Build a TensorFlow-optimized point forecast output head."""
+    del context, spec, quantiles
     _ensure_tensorflow()
-    total_output = output_dim * forecast_horizon
+    total_output = resolve_head_units(
+        units=units,
+        output_dim=output_dim,
+        forecast_horizon=forecast_horizon,
+        is_quantile=False,
+    )
     return layers.Dense(
         total_output,
         activation=activation,
@@ -310,29 +348,26 @@ def _build_tf_point_forecast_head(
 
 def _build_tf_quantile_head(
     *,
+    context=None,
+    spec=None,
+    units: int | None = None,
     output_dim: int = 1,
     forecast_horizon: int = 1,
     quantiles: tuple[float, ...] | None = None,
+    activation: str | None = None,
     name: str | None = None,
     **kwargs,
 ) -> layers.Dense:
-    """Build a TensorFlow-optimized quantile forecast output head.
-
-    Arguments:
-        output_dim: Output dimension
-        forecast_horizon: Number of forecasting steps
-        quantiles: Tuple of quantile levels
-        name: Layer name
-        **kwargs: Additional kwargs
-
-    Returns:
-        layers.Dense for quantile forecasting
-    """
+    """Build a TensorFlow-optimized quantile forecast output head."""
+    del context, spec, activation
     _ensure_tensorflow()
-    if not quantiles:
-        quantiles = (0.1, 0.5, 0.9)
-    num_quantiles = len(quantiles)
-    total_output = output_dim * forecast_horizon * num_quantiles
+    total_output = resolve_head_units(
+        units=units,
+        output_dim=output_dim,
+        forecast_horizon=forecast_horizon,
+        quantiles=quantiles,
+        is_quantile=True,
+    )
     return layers.Dense(
         total_output,
         activation=None,
@@ -419,7 +454,7 @@ def ensure_tensorflow_v2_registered(
         backend="tensorflow",
     )
     registry.register(
-        "head.quantile",
+        "head.quantile_forecast",
         _build_tf_quantile_head,
         backend="tensorflow",
     )

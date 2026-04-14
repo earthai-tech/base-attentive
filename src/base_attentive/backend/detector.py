@@ -76,7 +76,9 @@ def normalize_backend_name(name: Optional[str]) -> str:
 def _has_module(module_name: str) -> bool:
     """Check if a module can be imported."""
     try:
-        return importlib.util.find_spec(module_name) is not None
+        return (
+            importlib.util.find_spec(module_name) is not None
+        )
     except (ImportError, ValueError):
         return False
 
@@ -230,17 +232,29 @@ def ensure_default_backend(
 
     # Auto-install default backend
     install_package = (
-        "tensorflow[and-cuda]" if install_tensorflow else "jax"
+        "tensorflow[and-cuda]"
+        if install_tensorflow
+        else "jax"
     )
-    _logger.info(f"No backend found. Installing {install_package}...")
+    _logger.info(
+        f"No backend found. Installing {install_package}..."
+    )
 
     try:
         subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", install_package],
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                install_package,
+            ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        _logger.info(f"Successfully installed {install_package}")
+        _logger.info(
+            f"Successfully installed {install_package}"
+        )
         return "tensorflow" if install_tensorflow else "jax"
     except subprocess.CalledProcessError as e:
         raise RuntimeError(

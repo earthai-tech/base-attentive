@@ -22,19 +22,19 @@ from ._config import (
     Layer,
     Tensor,
     register_keras_serializable,
-    tf_add,
-    tf_autograph,
-    tf_bool,
-    tf_cast,
-    tf_expand_dims,
-    tf_float32,
-    tf_multiply,
-    tf_rank,
-    tf_reduce_mean,
-    tf_shape,
-    tf_stack,
-    tf_tile,
-    tf_where,
+    add,
+    do_not_convert,
+    bool_dtype,
+    cast,
+    expand_dims,
+    float32,
+    multiply,
+    rank as tensor_rank,
+    reduce_mean,
+    shape,
+    stack,
+    tile,
+    where,
 )
 
 K = KERAS_DEPS
@@ -64,10 +64,12 @@ class ResidualAdd(Layer, NNLearner):
         self, inputs: tuple[Tensor, Tensor], training=False
     ) -> Tensor:
         x, f = inputs
-        return tf_add(x, f)
+        return add(x, f)
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="LayerScale")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="LayerScale"
+)
 class LayerScale(Layer, NNLearner):
     """
     Per-channel trainable scale vector (like ConvNeXt).
@@ -86,14 +88,13 @@ class LayerScale(Layer, NNLearner):
     def build(self, input_shape):
         gamma_shape = input_shape[-1:]
         dtype_factory = getattr(
-            tf_float32, "as_numpy_dtype", tf_float32
+            float32, "as_numpy_dtype", float32
         )
         self.gamma = self.add_weight(
             name="gamma",
             shape=gamma_shape,
-            initializer=lambda shape, dtype=None: dtype_factory(
-                self.init_value
-            ),
+            initializer=lambda shape,
+            dtype=None: dtype_factory(self.init_value),
             trainable=True,
         )
         super().build(input_shape)
@@ -163,20 +164,24 @@ class SqueezeExcite1D(Layer, NNLearner):
     def build(self, input_shape):
         c = input_shape[-1]
         mid = max(c // self.ratio, 1)
-        self.fc1 = Dense(mid, activation="relu", name="se_fc1")
-        self.fc2 = Dense(c, activation="sigmoid", name="se_fc2")
+        self.fc1 = Dense(
+            mid, activation="relu", name="se_fc1"
+        )
+        self.fc2 = Dense(
+            c, activation="sigmoid", name="se_fc2"
+        )
         super().build(input_shape)
 
     def call(self, x: Tensor, training=False) -> Tensor:
         # Global squeeze
-        if tf_rank(x) == 3:  # (B,T,C) -> (B,C)
-            z = tf_reduce_mean(x, axis=1)
+        if tensor_rank(x) == 3:  # (B,T,C) -> (B,C)
+            z = reduce_mean(x, axis=1)
         else:  # (B,C)
             z = x
 
         s = self.fc2(self.fc1(z))  # (B,C)
-        if tf_rank(x) == 3:
-            s = tf_expand_dims(s, 1)  # (B,1,C)
+        if tensor_rank(x) == 3:
+            s = expand_dims(s, 1)  # (B,1,C)
         # Ensure s is on the same device as x (handles torch tensor and
         # numpy-array cases; numpy has no .to() so the duck-type guard fails).
         try:
@@ -201,7 +206,9 @@ class SqueezeExcite1D(Layer, NNLearner):
         return cfg
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="Gate")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="Gate"
+)
 class Gate(Layer, NNLearner):
     """
     Generic gating layer: y = x * σ(Wx + b).
@@ -225,7 +232,11 @@ class Gate(Layer, NNLearner):
         self.use_bias = use_bias
 
     def build(self, input_shape):
-        feat = input_shape[-1] if self.units is None else self.units
+        feat = (
+            input_shape[-1]
+            if self.units is None
+            else self.units
+        )
         self.proj = Dense(
             feat,
             activation="sigmoid",
@@ -236,11 +247,13 @@ class Gate(Layer, NNLearner):
 
     def call(self, x: Tensor, training=False) -> Tensor:
         g = self.proj(x)
-        return tf_multiply(x, g)
+        return multiply(x, g)
 
     def get_config(self):
         cfg = super().get_config()
-        cfg.update({"units": self.units, "use_bias": self.use_bias})
+        cfg.update(
+            {"units": self.units, "use_bias": self.use_bias}
+        )
         return cfg
 
 
@@ -267,14 +280,14 @@ def maybe_expand_time(
         (B,T,F) if expanded, else original `x`.
     """
     if ref is None:
-        if tf_rank(x) == 2:
-            return tf_expand_dims(x, axis=axis)
+        if tensor_rank(x) == 2:
+            return expand_dims(x, axis=axis)
         return x
 
-    xr = tf_rank(x)
-    rr = tf_rank(ref)
+    xr = tensor_rank(x)
+    rr = tensor_rank(ref)
     if rr >= 3 and xr == rr - 1:
-        return tf_expand_dims(x, axis=axis)
+        return expand_dims(x, axis=axis)
     return x
 
 
@@ -317,10 +330,10 @@ def broadcast_like(
         return int(value)
 
     def _shape_as_list(value):
-        shape = getattr(value, "shape", None)
-        if shape is not None:
+        value_shape = getattr(value, "shape", None)
+        if value_shape is not None:
             dims = []
-            for dim in shape:
+            for dim in value_shape:
                 if dim is None:
                     dims = []
                     break
@@ -332,19 +345,22 @@ def broadcast_like(
             if dims:
                 return dims
 
-        return [_to_python_scalar(dim) for dim in tf_shape(value)]
+        return [
+            _to_python_scalar(dim) for dim in shape(value)
+        ]
 
     x_shape = _shape_as_list(x)
     t_shape = _shape_as_list(target)
 
     while len(x_shape) < len(t_shape):
-        x = tf_expand_dims(x, 1)
+        x = expand_dims(x, 1)
         x_shape = _shape_as_list(x)
 
     reps = tuple(
-        1 if tgt == cur else tgt for cur, tgt in zip(x_shape, t_shape)
+        1 if tgt == cur else tgt
+        for cur, tgt in zip(x_shape, t_shape)
     )
-    return tf_tile(x, reps)
+    return tile(x, reps)
 
 
 def _broadcast_like(x: Tensor, target: Tensor) -> Tensor:
@@ -360,21 +376,21 @@ def _broadcast_like(x: Tensor, target: Tensor) -> Tensor:
     -------
     Tensor
     """
-    x_shape = tf_shape(x)
-    t_shape = tf_shape(target)
+    x_shape = shape(x)
+    t_shape = shape(target)
 
     # Pad ranks by inserting singleton dims until ranks match
-    while tf_rank(x) < tf_rank(target):
-        x = tf_expand_dims(x, 1)
-        x_shape = tf_shape(x)
+    while tensor_rank(x) < tensor_rank(target):
+        x = expand_dims(x, 1)
+        x_shape = shape(x)
 
-    # Build repetition vector for tf_tile
+    # Build repetition vector for tile
     reps = []
-    tgt_rank = tf_rank(target)
+    tgt_rank = tensor_rank(target)
     for i in range(tgt_rank):
-        same = tf_cast(t_shape[i] == x_shape[i], tf_bool)
+        same = cast(t_shape[i] == x_shape[i], bool_dtype)
         # if same -> 1 else -> t_shape[i]
-        reps_i = tf_where(same, 1, t_shape[i])
+        reps_i = where(same, 1, t_shape[i])
         reps.append(reps_i)
 
     # Convert each scalar rep to a Python int so that keras.ops.tile
@@ -392,9 +408,9 @@ def _broadcast_like(x: Tensor, target: Tensor) -> Tensor:
     try:
         reps = tuple(_scalar_to_int(v) for v in reps)
     except Exception:
-        reps = tf_stack(reps)
+        reps = stack(reps)
 
-    return tf_tile(x, reps)
+    return tile(x, reps)
 
 
 def ensure_rank_at_least(
@@ -421,11 +437,13 @@ def ensure_rank_at_least(
     if min_rank is None:
         min_rank = rank
     if min_rank is None:
-        raise ValueError("`min_rank` or `rank` must be provided.")
+        raise ValueError(
+            "`min_rank` or `rank` must be provided."
+        )
 
-    r = tf_rank(x)
+    r = tensor_rank(x)
     while r < min_rank:
-        x = tf_expand_dims(x, axis=axis_to_expand)
+        x = expand_dims(x, axis=axis_to_expand)
         r += 1
     return x
 
@@ -434,11 +452,13 @@ def apply_residual(x: Tensor, y: Tensor) -> Tensor:
     """
     Add & return residual. Shape check is user's job.
     """
-    return tf_add(x, y)
+    return add(x, y)
 
 
-@tf_autograph.experimental.do_not_convert
-def drop_path(x: Tensor, drop_prob: float, training: bool) -> Tensor:
+@do_not_convert
+def drop_path(
+    x: Tensor, drop_prob: float, training: bool
+) -> Tensor:
     """
     Stochastic depth on residual branches. If training, randomly
     zero the entire sample (per-batch item) path with prob p.
@@ -456,19 +476,19 @@ def drop_path(x: Tensor, drop_prob: float, training: bool) -> Tensor:
     if (not training) or drop_prob <= 0.0:
         return x
 
-    b = tf_shape(x)[0]
+    b = shape(x)[0]
     keep_prob = 1.0 - drop_prob
     # mask shape: (B,1,1,...)
-    shape = [b] + [1] * (tf_rank(x) - 1)
+    mask_shape = [b] + [1] * (tensor_rank(x) - 1)
     # uniform in [0,1)
     if hasattr(K, "random"):
-        rnd = K.random.uniform(shape)
+        rnd = K.random.uniform(mask_shape)
     else:
         raise RuntimeError(
             "drop_path requires a backend random.uniform implementation."
         )
 
-    mask = tf_cast(rnd < keep_prob, tf_float32)
+    mask = cast(rnd < keep_prob, float32)
     # Ensure mask is on the same device as x (handles both torch tensor
     # and numpy-array cases; the numpy fallback has no .to() method).
     try:
