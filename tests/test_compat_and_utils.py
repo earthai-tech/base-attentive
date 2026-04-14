@@ -10,7 +10,9 @@ class TestCompatModule:
         """Test Interval validator."""
         from base_attentive.compat import Interval
 
-        interval = Interval(int, left=0, right=100, closed="left")
+        interval = Interval(
+            int, left=0, right=100, closed="left"
+        )
         assert interval is not None
         assert hasattr(interval, "left")
         assert hasattr(interval, "right")
@@ -56,7 +58,9 @@ class TestLoggingModule:
         """Test OncePerMessageFilter."""
         import logging
 
-        from base_attentive.logging import OncePerMessageFilter
+        from base_attentive.logging import (
+            OncePerMessageFilter,
+        )
 
         filter_obj = OncePerMessageFilter()
         assert filter_obj is not None
@@ -153,7 +157,9 @@ class TestModelUtils:
 
     def test_set_default_params(self):
         """Test set_default_params function."""
-        from base_attentive.models.utils import set_default_params
+        from base_attentive.models.utils import (
+            set_default_params,
+        )
 
         defaults = {"a": 1, "b": 2}
         user_params = {"a": 10}
@@ -167,7 +173,9 @@ class TestGenericeUtils:
 
     def test_select_mode_auto(self):
         """Test select_mode in auto mode."""
-        from base_attentive.utils.generic_utils import select_mode
+        from base_attentive.utils.generic_utils import (
+            select_mode,
+        )
 
         data = {"test": "value"}
         result = select_mode(data, mode="auto")

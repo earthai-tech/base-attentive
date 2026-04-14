@@ -18,3 +18,12 @@ except Exception as exc:
     )
 else:
     __all__.append("BaseAttentive")
+
+try:
+    from base_attentive.core.base_attentive_legacy import (
+        BaseAttentive as BaseAttentiveLegacy,
+    )
+except Exception:
+    BaseAttentiveLegacy = None
+else:
+    __all__.append("BaseAttentiveLegacy")

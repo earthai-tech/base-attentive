@@ -57,7 +57,9 @@ class TestSklearnMissing:
         original = compat_mod.sklearn_validate_params
         try:
             compat_mod.sklearn_validate_params = None
-            decorator = compat_mod.validate_params({"x": [int]})
+            decorator = compat_mod.validate_params(
+                {"x": [int]}
+            )
 
             # Should be an identity decorator
             def my_func(x):
@@ -277,7 +279,9 @@ class TestTfDebuggingAssertEqual:
 
         class FakeDebugging:
             @staticmethod
-            def assert_equal(x, y, message="", name="assert_equal"):
+            def assert_equal(
+                x, y, message="", name="assert_equal"
+            ):
                 call_record["called"] = True
                 call_record["args"] = (x, y)
 
@@ -323,9 +327,13 @@ class TestComponentRegistry:
         self.reg.register(
             "my.comp", self._dummy_builder, backend="generic"
         )
-        with pytest.raises(KeyError, match="already registered"):
+        with pytest.raises(
+            KeyError, match="already registered"
+        ):
             self.reg.register(
-                "my.comp", self._dummy_builder, backend="generic"
+                "my.comp",
+                self._dummy_builder,
+                backend="generic",
             )
 
     def test_register_replace_works(self):
@@ -334,7 +342,10 @@ class TestComponentRegistry:
             "my.comp", self._dummy_builder, backend="generic"
         )
         reg2 = self.reg.register(
-            "my.comp", lambda: 42, backend="generic", replace=True
+            "my.comp",
+            lambda: 42,
+            backend="generic",
+            replace=True,
         )
         assert reg2 is not None
 
@@ -352,7 +363,9 @@ class TestComponentRegistry:
         self.reg.register(
             "my.comp", self._dummy_builder, backend="torch"
         )
-        assert self.reg.has("my.comp", backend="torch") is True
+        assert (
+            self.reg.has("my.comp", backend="torch") is True
+        )
         assert self.reg.has("my.comp", backend="jax") is False
 
     def test_resolve_existing(self):
@@ -371,8 +384,12 @@ class TestComponentRegistry:
 
     def test_resolve_empty_by_backend_raises(self):
         """resolve() raises KeyError when key is not registered at all."""
-        with pytest.raises(KeyError, match="Unknown component key"):
-            self.reg.resolve("nonexistent.key", backend="torch")
+        with pytest.raises(
+            KeyError, match="Unknown component key"
+        ):
+            self.reg.resolve(
+                "nonexistent.key", backend="torch"
+            )
 
     def test_resolve_no_generic_no_allow_generic_raises(self):
         """resolve() with allow_generic=False and no matching backend raises KeyError."""
@@ -420,7 +437,9 @@ class TestComponentRegistry:
         assert cloned.has("my.comp") is True
         # Modifying clone doesn't affect original
         cloned.register(
-            "clone.only", self._dummy_builder, backend="generic"
+            "clone.only",
+            self._dummy_builder,
+            backend="generic",
         )
         assert self.reg.has("clone.only") is False
 
@@ -450,7 +469,9 @@ class TestComponentRegistry:
         def builder_fn():
             return "built!"
 
-        self.reg.register("my.comp", builder_fn, backend="generic")
+        self.reg.register(
+            "my.comp", builder_fn, backend="generic"
+        )
         reg = self.reg.resolve("my.comp", backend="generic")
         assert reg.builder() == "built!"
 
@@ -484,9 +505,13 @@ class TestModelRegistry:
         self.reg.register(
             "my.model", self._dummy_builder, backend="generic"
         )
-        with pytest.raises(KeyError, match="already registered"):
+        with pytest.raises(
+            KeyError, match="already registered"
+        ):
             self.reg.register(
-                "my.model", self._dummy_builder, backend="generic"
+                "my.model",
+                self._dummy_builder,
+                backend="generic",
             )
 
     def test_register_replace_works(self):
@@ -494,7 +519,10 @@ class TestModelRegistry:
             "my.model", self._dummy_builder, backend="generic"
         )
         reg2 = self.reg.register(
-            "my.model", lambda: 42, backend="generic", replace=True
+            "my.model",
+            lambda: 42,
+            backend="generic",
+            replace=True,
         )
         assert reg2 is not None
 
@@ -507,12 +535,18 @@ class TestModelRegistry:
         self.reg.register(
             "my.model", self._dummy_builder, backend="torch"
         )
-        assert self.reg.has("my.model", backend="jax") is False
+        assert (
+            self.reg.has("my.model", backend="jax") is False
+        )
 
     def test_resolve_empty_raises(self):
         """Lines 82: KeyError when key not in registrations."""
-        with pytest.raises(KeyError, match="Unknown model key"):
-            self.reg.resolve("nonexistent.model", backend="torch")
+        with pytest.raises(
+            KeyError, match="Unknown model key"
+        ):
+            self.reg.resolve(
+                "nonexistent.model", backend="torch"
+            )
 
     def test_resolve_no_matching_backend_raises(self):
         """Lines 93-94: no generic fallback, allow_generic=False → KeyError."""

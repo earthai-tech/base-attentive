@@ -25,16 +25,16 @@ from ._config import (
     MultiHeadAttention,
     _logger,
     register_keras_serializable,
-    tf_add,
-    tf_autograph,
-    tf_bool,
-    tf_cast,
-    tf_expand_dims,
-    tf_logical_and,
-    tf_ones,
-    tf_ones_like,
-    tf_shape,
-    tf_tile,
+    add,
+    do_not_convert,
+    bool_dtype,
+    cast,
+    expand_dims,
+    logical_and,
+    ones,
+    ones_like,
+    shape,
+    tile,
 )
 from .gating_norm import GatedResidualNetwork
 from .misc import Activation
@@ -58,9 +58,15 @@ class TemporalAttentionLayer(Layer):
 
     @validate_params(
         {
-            "units": [Interval(Integral, 0, None, closed="left")],
-            "num_heads": [Interval(Integral, 0, None, closed="left")],
-            "dropout_rate": [Interval(Real, 0, 1, closed="both")],
+            "units": [
+                Interval(Integral, 0, None, closed="left")
+            ],
+            "num_heads": [
+                Interval(Integral, 0, None, closed="left")
+            ],
+            "dropout_rate": [
+                Interval(Real, 0, 1, closed="both")
+            ],
             "use_batch_norm": [bool],
         }
     )
@@ -80,7 +86,9 @@ class TemporalAttentionLayer(Layer):
         self.num_heads = num_heads
         self.dropout_rate = dropout_rate
         self.use_batch_norm = use_batch_norm
-        self.activation_str = Activation(activation).activation_str
+        self.activation_str = Activation(
+            activation
+        ).activation_str
 
         # --- Define Internal Layers ---
         self.multi_head_attention = MultiHeadAttention(
@@ -89,8 +97,12 @@ class TemporalAttentionLayer(Layer):
             dropout=dropout_rate,
             name="mha",
         )
-        self.dropout = Dropout(dropout_rate, name="attn_dropout")
-        self.layer_norm1 = LayerNormalization(name="layer_norm_1")
+        self.dropout = Dropout(
+            dropout_rate, name="attn_dropout"
+        )
+        self.layer_norm1 = LayerNormalization(
+            name="layer_norm_1"
+        )
 
         # GRN to process the input context_vector
         # Ensure this is a single instance, passing the activation string
@@ -150,11 +162,16 @@ class TemporalAttentionLayer(Layer):
         super().build(input_shape)
         # Developer comment: Layer built status should now be True.
 
-    def call(self, inputs, context_vector=None, training=False):
+    def call(
+        self, inputs, context_vector=None, training=False
+    ):
         """Forward pass of the temporal attention layer."""
         # Input shapes: inputs=(B, T, U), context_vector=(B, U_ctx)
         attention_source = inputs
-        if isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+        if (
+            isinstance(inputs, (list, tuple))
+            and len(inputs) == 2
+        ):
             inputs, secondary = inputs
             if (
                 context_vector is None
@@ -179,11 +196,11 @@ class TemporalAttentionLayer(Layer):
             # Output shape: (B, units)
 
             # Expand context across time: (B, units) -> (B, 1, units)
-            context_expanded = tf_expand_dims(
+            context_expanded = expand_dims(
                 processed_context, axis=1
             )
             # Add to inputs (broadcasting handles time dimension)
-            query = tf_add(inputs, context_expanded)
+            query = add(inputs, context_expanded)
             # Comment: Query now incorporates static context.
 
         # --- Multi-Head Self-Attention ---
@@ -199,14 +216,18 @@ class TemporalAttentionLayer(Layer):
             attn_output, training=training
         )
         # Residual connection uses original 'inputs'
-        x_attn = self.layer_norm1(tf_add(inputs, attn_output_dropout))
+        x_attn = self.layer_norm1(
+            add(inputs, attn_output_dropout)
+        )
         # Shape: (B, T, units)
 
         # --- Position-wise Feedforward (Final GRN) ---
         # This GRN takes the output of the attention block as input 'x'
         # It does not receive the external 'context_vector' here.
         # --- DEBUG lines ---
-        _logger.debug("\nDEBUG>> About to call self.output_grn")
+        _logger.debug(
+            "\nDEBUG>> About to call self.output_grn"
+        )
         _logger.debug(
             f"DEBUG>> Type of self.output_grn: {type(self.output_grn)}"
         )
@@ -226,7 +247,7 @@ class TemporalAttentionLayer(Layer):
                 f"DEBUG>> Failed to access attributes of self.output_grn: {ae}"
             )
         _logger.debug(
-            f"DEBUG>> Input x_attn shape: {tf_shape(x_attn)}\n"
+            f"DEBUG>> Input x_attn shape: {shape(x_attn)}\n"
         )
 
         # --- End DEBUG lines ---
@@ -367,7 +388,7 @@ class CrossAttention_(Layer, NNLearner):
             num_heads=num_heads, key_dim=units
         )
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, training=False):
         r"""
         Forward pass of CrossAttention.
@@ -462,7 +483,7 @@ class CrossAttention(Layer, NNLearner):
             num_heads=num_heads, key_dim=units
         )
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(
         self,
         inputs,
@@ -504,7 +525,9 @@ class CrossAttention(Layer, NNLearner):
             units) representing cross-attended features.
         """
 
-        source1, source2 = inputs  # shapes: (B, Tq, Fq), (B, Tv, Fv)
+        source1, source2 = (
+            inputs  # shapes: (B, Tq, Fq), (B, Tv, Fv)
+        )
 
         # Project to common dim
         q = self.source1_dense(source1)
@@ -516,18 +539,22 @@ class CrossAttention(Layer, NNLearner):
         ):
             # default to all True if one side is None
             if query_mask is None:
-                query_mask = tf_ones_like(
-                    source1[..., 0], dtype=tf_bool
+                query_mask = ones_like(
+                    source1[..., 0], dtype=bool_dtype
                 )
             if value_mask is None:
-                value_mask = tf_ones_like(
-                    source2[..., 0], dtype=tf_bool
+                value_mask = ones_like(
+                    source2[..., 0], dtype=bool_dtype
                 )
 
-            qm = tf_expand_dims(tf_cast(query_mask, tf_bool), axis=-1)
-            vm = tf_expand_dims(tf_cast(value_mask, tf_bool), axis=1)
+            qm = expand_dims(
+                cast(query_mask, bool_dtype), axis=-1
+            )
+            vm = expand_dims(
+                cast(value_mask, bool_dtype), axis=1
+            )
             # (B, Tq, 1) & (B, 1, Tv) -> (B, Tq, Tv)
-            attention_mask = tf_logical_and(qm, vm)
+            attention_mask = logical_and(qm, vm)
 
         return self.cross_attention(
             query=q,
@@ -577,7 +604,7 @@ class MemoryAugmentedAttention(Layer, NNLearner):
         )
         super().build(input_shape)
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(
         self,
         inputs,
@@ -590,31 +617,31 @@ class MemoryAugmentedAttention(Layer, NNLearner):
         **kwargs,
     ):
         # inputs: (B, T, U)
-        batch_size = tf_shape(inputs)[0]
+        batch_size = shape(inputs)[0]
 
-        mem = tf_expand_dims(self.memory, 0)  # (1, M, U)
-        mem = tf_tile(mem, [batch_size, 1, 1])  # (B, M, U)
+        mem = expand_dims(self.memory, 0)  # (1, M, U)
+        mem = tile(mem, [batch_size, 1, 1])  # (B, M, U)
 
         # Build attention_mask if only per-sequence masks given
         if attention_mask is None and (
             query_mask is not None or value_mask is not None
         ):
             if query_mask is None:
-                query_mask = tf_ones_like(
-                    inputs[..., 0], dtype=tf_bool
+                query_mask = ones_like(
+                    inputs[..., 0], dtype=bool_dtype
                 )
             if value_mask is None:
-                value_mask = tf_ones(
+                value_mask = ones(
                     (batch_size, self.memory_size),
-                    dtype=tf_bool,
+                    dtype=bool_dtype,
                 )
-            qm = tf_expand_dims(
-                tf_cast(query_mask, tf_bool), -1
+            qm = expand_dims(
+                cast(query_mask, bool_dtype), -1
             )  # (B,T,1)
-            vm = tf_expand_dims(
-                tf_cast(value_mask, tf_bool), 1
+            vm = expand_dims(
+                cast(value_mask, bool_dtype), 1
             )  # (B,1,M)
-            attention_mask = tf_logical_and(qm, vm)  # (B,T,M)
+            attention_mask = logical_and(qm, vm)  # (B,T,M)
 
         mem_att = self.attention(
             query=inputs,
@@ -697,7 +724,9 @@ class HierarchicalAttention_(Layer, NNLearner):
 
     Examples
     --------
-    >>> from geoprior.nn.components import HierarchicalAttention
+    >>> from geoprior.nn.components import (
+    ...     HierarchicalAttention,
+    ... )
     >>> import tensorflow as tf
     >>> # Suppose short_term and long_term have
     ... # shape (batch_size, time_steps, features).
@@ -744,7 +773,7 @@ class HierarchicalAttention_(Layer, NNLearner):
             num_heads=num_heads, key_dim=units
         )
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, training=False):
         r"""
         Forward pass of the HierarchicalAttention.
@@ -848,7 +877,7 @@ class HierarchicalAttention(Layer, NNLearner):
             num_heads=num_heads, key_dim=units
         )
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(
         self,
         inputs,
@@ -860,7 +889,10 @@ class HierarchicalAttention(Layer, NNLearner):
         **kwargs,
     ):
         # inputs: [short_term, long_term]
-        if isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+        if (
+            isinstance(inputs, (list, tuple))
+            and len(inputs) == 2
+        ):
             short_term, long_term = inputs
         else:
             short_term = long_term = inputs
@@ -872,10 +904,10 @@ class HierarchicalAttention(Layer, NNLearner):
         def _expand_mask(m):
             if m is None:
                 return None
-            m = tf_cast(m, tf_bool)
-            qm = tf_expand_dims(m, 1)  # (B,1,T)
-            vm = tf_expand_dims(m, 2)  # (B,T,1)
-            return tf_logical_and(vm, qm)  # (B,T,T)
+            m = cast(m, bool_dtype)
+            qm = expand_dims(m, 1)  # (B,1,T)
+            vm = expand_dims(m, 2)  # (B,T,1)
+            return logical_and(vm, qm)  # (B,T,T)
 
         s_mask = _expand_mask(short_mask)
         l_mask = _expand_mask(long_mask)
@@ -960,7 +992,9 @@ class ExplainableAttention(Layer, NNLearner):
 
     Examples
     --------
-    >>> from geoprior.nn.components import ExplainableAttention
+    >>> from geoprior.nn.components import (
+    ...     ExplainableAttention,
+    ... )
     >>> import tensorflow as tf
     >>> # Suppose we have input of shape (batch_size, time_steps, features)
     >>> x = tf.random.normal((32, 10, 64))
@@ -1008,7 +1042,9 @@ class ExplainableAttention(Layer, NNLearner):
         """
         super().__init__()
         self.num_heads = num_heads
-        self.key_dim = key_dim if key_dim is not None else units
+        self.key_dim = (
+            key_dim if key_dim is not None else units
+        )
         if self.key_dim is None:
             raise ValueError(
                 "Provide `key_dim` or `units` for ExplainableAttention."
@@ -1019,7 +1055,7 @@ class ExplainableAttention(Layer, NNLearner):
             num_heads=num_heads, key_dim=self.key_dim
         )
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, training=False):
         r"""
         Forward pass that returns only the
@@ -1039,7 +1075,10 @@ class ExplainableAttention(Layer, NNLearner):
             Attention scores of shape
             (B, num_heads, T, T).
         """
-        if isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+        if (
+            isinstance(inputs, (list, tuple))
+            and len(inputs) == 2
+        ):
             query, value = inputs
         else:
             query = value = inputs
@@ -1136,7 +1175,9 @@ class MultiResolutionAttentionFusion(Layer, NNLearner):
     >>> import tensorflow as tf
     >>> x = tf.random.normal((32, 10, 64))
     >>> # Instantiate multi-resolution attention
-    >>> mraf = MultiResolutionAttentionFusion(units=64, num_heads=4)
+    >>> mraf = MultiResolutionAttentionFusion(
+    ...     units=64, num_heads=4
+    ... )
     >>> # Forward pass => (32, 10, 64)
     >>> y = mraf(x)
 
@@ -1182,7 +1223,7 @@ class MultiResolutionAttentionFusion(Layer, NNLearner):
             num_heads=num_heads, key_dim=units
         )
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, training=False):
         r"""
         Forward pass applying multi-head attention
@@ -1202,7 +1243,10 @@ class MultiResolutionAttentionFusion(Layer, NNLearner):
             Tensor of shape (B, T, D),
             representing fused features.
         """
-        if isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+        if (
+            isinstance(inputs, (list, tuple))
+            and len(inputs) == 2
+        ):
             query, value = inputs
             return self.attention(query, value)
         return self.attention(inputs, inputs)

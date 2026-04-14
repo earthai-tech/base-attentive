@@ -35,13 +35,18 @@ class TestGetBackend:
         assert backend is not None
 
     def test_get_backend_unknown_raises(self):
-        with pytest.raises(ValueError, match="Unknown backend"):
+        with pytest.raises(
+            ValueError, match="Unknown backend"
+        ):
             get_backend("nonexistent_backend_xyz")
 
     def test_set_backend_torch(self):
         backend = set_backend("torch")
         assert backend is not None
-        assert os.environ.get("BASE_ATTENTIVE_BACKEND") == "torch"
+        assert (
+            os.environ.get("BASE_ATTENTIVE_BACKEND")
+            == "torch"
+        )
 
     def test_get_backend_auto_from_env(self):
         """When env var is set, get_backend() uses it."""
@@ -92,9 +97,13 @@ class TestGetBackendCapabilities:
 
     def test_capabilities_unknown_backend_raises(self):
         with pytest.raises(ValueError):
-            get_backend_capabilities("totally_unknown_backend")
+            get_backend_capabilities(
+                "totally_unknown_backend"
+            )
 
-    def test_capabilities_get_backend_raises_uses_fallback(self):
+    def test_capabilities_get_backend_raises_uses_fallback(
+        self,
+    ):
         """When get_backend() fails, falls back to tensorflow name."""
         orig_gb = _backend_mod.get_backend
         try:
@@ -119,7 +128,9 @@ class TestGetBackendCapabilities:
 class TestAutoInitialize:
     """Tests for _auto_initialize function - the env var handling paths."""
 
-    def test_auto_initialize_with_base_attentive_backend_set(self):
+    def test_auto_initialize_with_base_attentive_backend_set(
+        self,
+    ):
         """_auto_initialize normalizes BASE_ATTENTIVE_BACKEND env var."""
         orig = os.environ.get("BASE_ATTENTIVE_BACKEND")
         orig_keras = os.environ.get("KERAS_BACKEND")
@@ -127,7 +138,10 @@ class TestAutoInitialize:
             os.environ["BASE_ATTENTIVE_BACKEND"] = "pytorch"
             _backend_mod._auto_initialize()
             # Should have normalized 'pytorch' → 'torch'
-            assert os.environ.get("BASE_ATTENTIVE_BACKEND") == "torch"
+            assert (
+                os.environ.get("BASE_ATTENTIVE_BACKEND")
+                == "torch"
+            )
         finally:
             if orig is not None:
                 os.environ["BASE_ATTENTIVE_BACKEND"] = orig
@@ -136,12 +150,17 @@ class TestAutoInitialize:
 
     def test_auto_initialize_with_keras_backend_set(self):
         """_auto_initialize handles KERAS_BACKEND when BASE_ATTENTIVE not set."""
-        orig_ba = os.environ.pop("BASE_ATTENTIVE_BACKEND", None)
+        orig_ba = os.environ.pop(
+            "BASE_ATTENTIVE_BACKEND", None
+        )
         orig_keras = os.environ.get("KERAS_BACKEND")
         try:
             os.environ["KERAS_BACKEND"] = "torch"
             _backend_mod._auto_initialize()
-            assert os.environ.get("BASE_ATTENTIVE_BACKEND") == "torch"
+            assert (
+                os.environ.get("BASE_ATTENTIVE_BACKEND")
+                == "torch"
+            )
         finally:
             if orig_ba is not None:
                 os.environ["BASE_ATTENTIVE_BACKEND"] = orig_ba
@@ -150,7 +169,9 @@ class TestAutoInitialize:
 
     def test_auto_initialize_no_env_vars(self):
         """_auto_initialize with no env vars auto-selects backend."""
-        orig_ba = os.environ.pop("BASE_ATTENTIVE_BACKEND", None)
+        orig_ba = os.environ.pop(
+            "BASE_ATTENTIVE_BACKEND", None
+        )
         orig_keras = os.environ.pop("KERAS_BACKEND", None)
         try:
             _backend_mod._auto_initialize()
@@ -194,7 +215,9 @@ class TestGetBackendHelper:
         """_get_backend_helper returns the helper when it exists in the module."""
         import base_attentive.backend as backend_module
 
-        original = getattr(backend_module, "_test_override_fn", None)
+        original = getattr(
+            backend_module, "_test_override_fn", None
+        )
         try:
 
             def test_helper():
@@ -205,8 +228,12 @@ class TestGetBackendHelper:
             # May or may not return the helper depending on globals check
         finally:
             if original is None:
-                if hasattr(backend_module, "_test_override_fn"):
-                    delattr(backend_module, "_test_override_fn")
+                if hasattr(
+                    backend_module, "_test_override_fn"
+                ):
+                    delattr(
+                        backend_module, "_test_override_fn"
+                    )
             else:
                 backend_module._test_override_fn = original
 
@@ -216,7 +243,9 @@ class TestHasModule:
         assert _has_module("os") is True
 
     def test_nonexistent_module(self):
-        assert _has_module("nonexistent_xyz_module_123") is False
+        assert (
+            _has_module("nonexistent_xyz_module_123") is False
+        )
 
     def test_torch_is_available(self):
         assert _has_module("torch") is True
@@ -274,11 +303,15 @@ class TestReadLoadedKerasBackend:
                 del sys.modules["keras"]
                 # Restore the actual keras module from original
                 if "keras" in orig_sys_modules:
-                    sys.modules["keras"] = orig_sys_modules["keras"]
+                    sys.modules["keras"] = orig_sys_modules[
+                        "keras"
+                    ]
 
 
 class TestBackendClass:
-    def test_get_capabilities_includes_loaded_keras_backend(self):
+    def test_get_capabilities_includes_loaded_keras_backend(
+        self,
+    ):
         """get_capabilities() includes loaded_keras_backend key."""
         backend = TorchBackend()
         caps = backend.get_capabilities()
@@ -338,7 +371,9 @@ class TestGetTorchVersion:
         """Line 41: Returns None when torch not available."""
         orig = _torch_utils_mod.torch_is_available
         try:
-            _torch_utils_mod.torch_is_available = lambda: False
+            _torch_utils_mod.torch_is_available = (
+                lambda: False
+            )
             result = _torch_utils_mod.get_torch_version()
             assert result is None
         finally:
@@ -387,7 +422,9 @@ class TestCheckTorchCompatibility:
 
     def test_unparseable_version(self):
         """Line 73: Returns False when version can't be parsed."""
-        is_compat, msg = check_torch_compatibility("bad_version")
+        is_compat, msg = check_torch_compatibility(
+            "bad_version"
+        )
         assert is_compat is False
         assert "Could not parse" in msg
 
@@ -419,8 +456,12 @@ class TestGetTorchDevice:
         """Lines 120: when torch unavailable, returns 'cpu'."""
         orig = _torch_utils_mod.torch_is_available
         try:
-            _torch_utils_mod.torch_is_available = lambda: False
-            device = _torch_utils_mod.get_torch_device(verbose=False)
+            _torch_utils_mod.torch_is_available = (
+                lambda: False
+            )
+            device = _torch_utils_mod.get_torch_device(
+                verbose=False
+            )
             assert device == "cpu"
         finally:
             _torch_utils_mod.torch_is_available = orig
@@ -431,7 +472,9 @@ class TestGetTorchDevice:
 
         if torch.cuda.is_available():
             pytest.skip("CUDA is available on this machine")
-        device = get_torch_device(prefer="cuda", verbose=False)
+        device = get_torch_device(
+            prefer="cuda", verbose=False
+        )
         assert device == "cpu"
 
     def test_prefer_mps_falls_back_to_cpu(self):
@@ -461,14 +504,18 @@ class TestTorchDeviceManager:
     def test_set_device_invalid(self):
         """Line 188: set_device with invalid device raises ValueError."""
         mgr = TorchDeviceManager()
-        with pytest.raises(ValueError, match="Invalid device"):
+        with pytest.raises(
+            ValueError, match="Invalid device"
+        ):
             mgr.set_device("invalid_device_xyz:999")
 
     def test_set_device_when_torch_not_available(self):
         """Line 180: set_device raises RuntimeError when torch unavailable."""
         orig = _torch_utils_mod.torch_is_available
         try:
-            _torch_utils_mod.torch_is_available = lambda: False
+            _torch_utils_mod.torch_is_available = (
+                lambda: False
+            )
             mgr = TorchDeviceManager()
             with pytest.raises(
                 RuntimeError, match="PyTorch not available"
@@ -488,7 +535,9 @@ class TestTorchDeviceManager:
         """Line 226: Returns cpu-only dict when torch unavailable."""
         orig = _torch_utils_mod.torch_is_available
         try:
-            _torch_utils_mod.torch_is_available = lambda: False
+            _torch_utils_mod.torch_is_available = (
+                lambda: False
+            )
             mgr = TorchDeviceManager()
             devices = mgr.get_available_devices()
             assert devices["cuda"] is False
@@ -507,7 +556,9 @@ class TestTorchDeviceManager:
         """Line 226: get_device_info returns minimal dict when torch unavailable."""
         orig = _torch_utils_mod.torch_is_available
         try:
-            _torch_utils_mod.torch_is_available = lambda: False
+            _torch_utils_mod.torch_is_available = (
+                lambda: False
+            )
             mgr = TorchDeviceManager()
             info = mgr.get_device_info()
             assert info["cuda_available"] is False
@@ -519,7 +570,9 @@ class TestTorchDeviceManager:
         """Lines 246-250: reset_cache() logs warning when torch unavailable."""
         orig = _torch_utils_mod.torch_is_available
         try:
-            _torch_utils_mod.torch_is_available = lambda: False
+            _torch_utils_mod.torch_is_available = (
+                lambda: False
+            )
             mgr = TorchDeviceManager()
             mgr.reset_cache()  # Should not raise
         finally:

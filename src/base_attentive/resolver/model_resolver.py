@@ -1,11 +1,10 @@
-"""Model assembly helpers for V2."""
+"""Model assembly helpers for resolver-driven models."""
 
 from __future__ import annotations
 
 from typing import Any
 
 from ..config import BaseAttentiveSpec
-from ..implementations.generic import ensure_generic_v2_registered
 from ..registry import (
     DEFAULT_COMPONENT_REGISTRY,
     DEFAULT_MODEL_REGISTRY,
@@ -13,6 +12,7 @@ from ..registry import (
     ModelRegistry,
 )
 from .backend_context import BackendContext
+from .registrars import ensure_backend_registrations
 
 
 def assemble_model(
@@ -24,12 +24,15 @@ def assemble_model(
     model_registry: ModelRegistry | None = None,
     **kwargs: Any,
 ) -> Any:
-    """Resolve and assemble a V2 model."""
-    ensure_generic_v2_registered(
-        component_registry=component_registry,
-        model_registry=model_registry,
+    """Resolve and assemble a model for the requested backend."""
+    active_component_registry, active_model_registry = (
+        ensure_backend_registrations(
+            backend_context=backend_context,
+            component_registry=component_registry,
+            model_registry=model_registry,
+        )
     )
-    active_model_registry = model_registry or DEFAULT_MODEL_REGISTRY
+
     registration = active_model_registry.resolve(
         key,
         backend=backend_context.name,
@@ -38,8 +41,7 @@ def assemble_model(
     return registration.builder(
         spec=spec,
         backend_context=backend_context,
-        component_registry=component_registry
-        or DEFAULT_COMPONENT_REGISTRY,
+        component_registry=active_component_registry,
         **kwargs,
     )
 

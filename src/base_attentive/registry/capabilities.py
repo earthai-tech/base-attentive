@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..backend import get_backend_capabilities, normalize_backend_name
+from ..backend import (
+    get_backend_capabilities,
+    normalize_backend_name,
+)
 
 
 @dataclass(frozen=True)

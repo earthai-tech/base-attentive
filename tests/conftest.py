@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -29,7 +30,9 @@ def sample_inputs():
     forecast_horizon = 24
 
     static = tf.random.normal([batch_size, static_dim])
-    dynamic = tf.random.normal([batch_size, time_steps, dynamic_dim])
+    dynamic = tf.random.normal(
+        [batch_size, time_steps, dynamic_dim]
+    )
     future = tf.random.normal(
         [batch_size, forecast_horizon, future_dim]
     )
@@ -113,3 +116,62 @@ def api_module():
     from base_attentive.api import NNLearner
 
     return {"NNLearner": NNLearner}
+
+
+def _candidate_roots() -> list[Path]:
+    here = Path(__file__).resolve()
+    return [
+        here.parents[2] / "src",
+        here.parents[2],
+        Path.cwd() / "src",
+        Path.cwd(),
+    ]
+
+
+for root in _candidate_roots():
+    if root.exists() and str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+
+
+@pytest.fixture(scope="session")
+def sample_dims() -> dict[str, int]:
+    return {
+        "static_input_dim": 4,
+        "dynamic_input_dim": 6,
+        "future_input_dim": 3,
+        "output_dim": 2,
+        "forecast_horizon": 5,
+    }
+
+
+@pytest.fixture(scope="session")
+def point_kwargs(
+    sample_dims: dict[str, int],
+) -> dict[str, object]:
+    return {
+        **sample_dims,
+        "embed_dim": 16,
+        "hidden_units": 32,
+        "num_heads": 2,
+        "dropout_rate": 0.0,
+        "use_batch_norm": False,
+        "apply_dtw": False,
+        "use_residuals": False,
+    }
+
+
+@pytest.fixture(scope="session")
+def quantile_kwargs(
+    point_kwargs: dict[str, object],
+) -> dict[str, object]:
+    return {
+        **point_kwargs,
+        "quantiles": [0.1, 0.5, 0.9],
+    }
+
+
+@pytest.fixture(scope="session")
+def backend_env() -> dict[str, str]:
+    env = dict(os.environ)
+    env.setdefault("PYTHONPATH", os.getcwd())
+    return env

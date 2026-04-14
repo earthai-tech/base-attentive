@@ -102,7 +102,9 @@ def resolve_attn_levels(
         elif att_levels == "3":
             return ["memory"]
         else:
-            raise ValueError(f"Invalid attention type: {att_levels}")
+            raise ValueError(
+                f"Invalid attention type: {att_levels}"
+            )
 
     # If att_levels is a list of strings, process each one
     elif isinstance(att_levels, list):
@@ -118,7 +120,9 @@ def resolve_attn_levels(
             elif level == "3":
                 valid_attentions.append("memory")
             else:
-                raise ValueError(f"Invalid attention type: {level}")
+                raise ValueError(
+                    f"Invalid attention type: {level}"
+                )
         return valid_attentions
 
     # If att_levels is an integer (1, 2, 3), map it to the corresponding
@@ -193,8 +197,8 @@ def configure_architecture(
         final_config["feature_processing"] = "dense"
 
     # 2.3: Resolve and apply the `attention_levels` argument to `decoder_attention_stack`
-    final_config["decoder_attention_stack"] = resolve_attn_levels(
-        attention_levels
+    final_config["decoder_attention_stack"] = (
+        resolve_attn_levels(attention_levels)
     )
 
     # Step 3: Merge and override with the user-provided `architecture_config`
@@ -209,7 +213,9 @@ def configure_architecture(
                 FutureWarning,
                 stacklevel=2,
             )
-            user_config["encoder_type"] = user_config.pop("objective")
+            user_config["encoder_type"] = user_config.pop(
+                "objective"
+            )
 
         # Update the final config with the user-provided configuration
         final_config.update(user_config)

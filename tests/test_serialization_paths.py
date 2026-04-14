@@ -5,7 +5,9 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-SRC_ROOT = Path(__file__).parent.parent / "src" / "base_attentive"
+SRC_ROOT = (
+    Path(__file__).parent.parent / "src" / "base_attentive"
+)
 SERIALIZABLE_MODULES = [
     SRC_ROOT / "core" / "base_attentive.py",
     SRC_ROOT / "components" / "attention.py",
@@ -26,7 +28,9 @@ def _parse_module(path: Path) -> ast.Module:
     return ast.parse(source, filename=str(path))
 
 
-def _has_serialization_package_alias(tree: ast.Module) -> bool:
+def _has_serialization_package_alias(
+    tree: ast.Module,
+) -> bool:
     for node in tree.body:
         if not isinstance(node, ast.Assign):
             continue
@@ -48,7 +52,11 @@ def _register_decorators(tree: ast.Module):
     for node in ast.walk(tree):
         if not isinstance(
             node,
-            (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef),
+            (
+                ast.ClassDef,
+                ast.FunctionDef,
+                ast.AsyncFunctionDef,
+            ),
         ):
             continue
         for decorator in node.decorator_list:

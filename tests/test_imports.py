@@ -90,7 +90,9 @@ class TestCoreImports:
         from base_attentive.models.comp_utils import (
             resolve_attention_levels,
         )
-        from base_attentive.models.utils import set_default_params
+        from base_attentive.models.utils import (
+            set_default_params,
+        )
 
         assert callable(resolve_attention_levels)
         assert callable(set_default_params)
@@ -98,7 +100,9 @@ class TestCoreImports:
     def test_import_utils(self):
         """Test utils module imports."""
         from base_attentive.utils.deps_utils import ensure_pkg
-        from base_attentive.utils.generic_utils import select_mode
+        from base_attentive.utils.generic_utils import (
+            select_mode,
+        )
 
         assert callable(ensure_pkg)
         assert callable(select_mode)

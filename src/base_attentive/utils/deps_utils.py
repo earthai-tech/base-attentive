@@ -48,15 +48,18 @@ def ensure_pkg(
             if not available:
                 try:
                     available = (
-                        importlib.util.find_spec(name) is not None
+                        importlib.util.find_spec(name)
+                        is not None
                     )
-                except (ImportError, AttributeError, ValueError):
+                except (
+                    ImportError,
+                    AttributeError,
+                    ValueError,
+                ):
                     available = False
 
             if not available:
-                msg = (
-                    f"Package '{name}' is required but not installed."
-                )
+                msg = f"Package '{name}' is required but not installed."
                 if extra:
                     msg += f" {extra}"
 
@@ -65,7 +68,9 @@ def ensure_pkg(
                 elif error == "warn":
                     import warnings
 
-                    warnings.warn(msg, UserWarning, stacklevel=2)
+                    warnings.warn(
+                        msg, UserWarning, stacklevel=2
+                    )
                 # else: ignore
 
             # Call the original function

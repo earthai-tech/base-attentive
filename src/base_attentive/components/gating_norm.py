@@ -32,17 +32,17 @@ from ._config import (
     _logger,
     activations,
     register_keras_serializable,
-    tf_add,
-    tf_autograph,
-    tf_concat,
-    tf_expand_dims,
-    tf_multiply,
-    tf_ones_like,
-    tf_reduce_sum,
-    tf_shape,
-    tf_stack,
-    tf_TensorShape,
-    tf_tile,
+    add,
+    do_not_convert,
+    concat,
+    expand_dims,
+    multiply,
+    ones_like,
+    reduce_sum,
+    shape,
+    stack,
+    TensorShape,
+    tile,
 )
 from .misc import Activation
 
@@ -62,7 +62,8 @@ SERIALIZATION_PACKAGE = __name__
     conditions_params_mappings=[
         {
             "param": "use_time_distributed",
-            "condition": lambda v: v is not None and v is not False,
+            "condition": lambda v: v is not None
+            and v is not False,
             "message": (
                 "The 'use_time_distributed' parameter in GatedResidualNetwork "
                 "is deprecated and has no effect.\n"
@@ -90,8 +91,12 @@ class GatedResidualNetwork(Layer):
 
     @validate_params(
         {
-            "units": [Interval(Integral, 0, None, closed="left")],
-            "dropout_rate": [Interval(Real, 0, 1, closed="both")],
+            "units": [
+                Interval(Integral, 0, None, closed="left")
+            ],
+            "dropout_rate": [
+                Interval(Real, 0, 1, closed="both")
+            ],
             "use_batch_norm": [bool],
             "activation": [
                 StrOptions(_COMMON_ACTIVATIONS),
@@ -163,7 +168,9 @@ class GatedResidualNetwork(Layer):
         )
 
         # Dropout Layer (applied after activation/norm)
-        self.dropout = Dropout(self.dropout_rate, name="grn_dropout")
+        self.dropout = Dropout(
+            self.dropout_rate, name="grn_dropout"
+        )
 
         # Dense layer for main transformation path (after dropout)
         self.output_dense = Dense(
@@ -178,7 +185,9 @@ class GatedResidualNetwork(Layer):
         )
 
         # Final Layer Normalization (standard in GRN)
-        self.layer_norm = LayerNormalization(name="output_layer_norm")
+        self.layer_norm = LayerNormalization(
+            name="output_layer_norm"
+        )
 
         # Projection layer for residual
         # connection (created in build)
@@ -187,10 +196,10 @@ class GatedResidualNetwork(Layer):
     def build(self, input_shape):
         """Builds the residual projection layer if needed."""
         # Use TensorShape object directly if available
-        if not isinstance(input_shape, tf_TensorShape):
+        if not isinstance(input_shape, TensorShape):
             # Attempt conversion, handles tuples, lists, TensorShape
             try:
-                input_shape = tf_TensorShape(input_shape)
+                input_shape = TensorShape(input_shape)
             except TypeError:
                 raise ValueError(
                     f"Could not convert input_shape to TensorShape: {input_shape}"
@@ -214,7 +223,10 @@ class GatedResidualNetwork(Layer):
         if input_rank is not None:
             input_dim = input_shape[-1]
             # Further check if last dimension itself is known (is an integer)
-            if not isinstance(input_dim, int) or input_dim <= 0:
+            if (
+                not isinstance(input_dim, int)
+                or input_dim <= 0
+            ):
                 # Last dimension is unknown or invalid
                 warnings.warn(
                     f"Input shape {input_shape} has unknown or invalid "
@@ -223,10 +235,14 @@ class GatedResidualNetwork(Layer):
                     RuntimeWarning,
                     stacklevel=2,
                 )
-                input_dim = None  # Treat as unknown if not valid int
+                input_dim = (
+                    None  # Treat as unknown if not valid int
+                )
 
         # Create projection layer only if dimensions are known and differ
-        if (input_dim is not None) and (input_dim != self.units):
+        if (input_dim is not None) and (
+            input_dim != self.units
+        ):
             if self.projection is None:  # Avoid recreating
                 self.projection = Dense(
                     self.units, name="residual_projection"
@@ -254,13 +270,15 @@ class GatedResidualNetwork(Layer):
         # Context shape (if provided) (B, ..., Units) after projection
         """Forward pass implementing GRN with optional context."""
         _logger.debug(
-            f"DEBUG_GRN: Entering call. x shape: {tf_shape(x)},"
+            f"DEBUG_GRN: Entering call. x shape: {shape(x)},"
             f" context provided: {context is not None}"
         )  # DEBUG
         # --- 1. Residual Connection Setup ---
         shortcut = x
         if self.projection is not None:
-            _logger.debug("DEBUG_GRN: Applying projection.")  # DEBUG
+            _logger.debug(
+                "DEBUG_GRN: Applying projection."
+            )  # DEBUG
             shortcut = self.projection(
                 shortcut
             )  # Shape (B, ..., Units)
@@ -268,9 +286,11 @@ class GatedResidualNetwork(Layer):
         # --- 2. Process Input and Context ---
         # Project input features to 'units' dimension
         _logger.debug(
-            f"DEBUG_GRN: Applying input_dense to x shape: {tf_shape(x)}"
+            f"DEBUG_GRN: Applying input_dense to x shape: {shape(x)}"
         )  # DEBUG
-        projected_input = self.input_dense(x)  # Shape (B, ..., Units)
+        projected_input = self.input_dense(
+            x
+        )  # Shape (B, ..., Units)
         input_plus_context = (
             projected_input  # No context added; Default
         )
@@ -279,14 +299,14 @@ class GatedResidualNetwork(Layer):
         if context is not None:
             _logger.debug(
                 "DEBUG_GRN: Applying context_dense"
-                f" to context shape: {tf_shape(context)}"
+                f" to context shape: {shape(context)}"
             )  # DEBUG
             context_proj = self.context_dense(
                 context
             )  # Shape (B, ..., Units)
 
             # Ensure context can be added (handle broadcasting)
-            # x_rank = tf_rank(projected_input)
+            # x_rank = rank(projected_input)
 
             # Use standard Python len() on shapes now,
             # Use standard Python len() on shapes now,
@@ -294,7 +314,7 @@ class GatedResidualNetwork(Layer):
             ctx_rank = len(context_proj.shape)
 
             # x_rank = projected_input.shape.rank
-            # #ctx_rank = tf_rank(context_proj)
+            # #ctx_rank = rank(context_proj)
             # ctx_rank = context_proj.shape.rank
             _logger.debug(
                 f"DEBUG_GRN: x_rank={x_rank}, ctx_rank={ctx_rank}"
@@ -303,12 +323,14 @@ class GatedResidualNetwork(Layer):
                 x_rank == 3 and ctx_rank == 2
             ):  # e.g., x=(B,T,U), ctx=(B,U)
                 # Add time dimension for broadcasting: (B,U) -> (B,1,U)
-                context_proj_expanded = tf_expand_dims(
+                context_proj_expanded = expand_dims(
                     context_proj, axis=1
                 )
                 # Now shapes should be broadcast-compatible
-                _logger.debug("DEBUG_GRN: Adding context.")  # DEBUG
-                input_plus_context = tf_add(
+                _logger.debug(
+                    "DEBUG_GRN: Adding context."
+                )  # DEBUG
+                input_plus_context = add(
                     projected_input, context_proj_expanded
                 )
             elif x_rank == ctx_rank:
@@ -316,7 +338,7 @@ class GatedResidualNetwork(Layer):
                 _logger.debug(
                     "DEBUG_GRN: Ranks match,  Adding context directly."
                 )  # DEBUG
-                input_plus_context = tf_add(
+                input_plus_context = add(
                     projected_input, context_proj
                 )
 
@@ -329,7 +351,9 @@ class GatedResidualNetwork(Layer):
 
         # --- 3. Apply Activation and Regularization ---
         _logger.debug("Applying activation_fn.")  # DEBUG
-        activated_features = self.activation_fn(input_plus_context)
+        activated_features = self.activation_fn(
+            input_plus_context
+        )
         if self.batch_norm is not None:
             # Apply BN after activation
             activated_features = self.batch_norm(
@@ -342,7 +366,9 @@ class GatedResidualNetwork(Layer):
 
         # --- 4. Main Transformation Path ---
         _logger.debug("Applying output_dense.")  # DEBUG
-        transformed_output = self.output_dense(regularized_features)
+        transformed_output = self.output_dense(
+            regularized_features
+        )
 
         # --- 5. Gating Path ---
         _logger.debug("Applying gate_dense.")  # DEBUG
@@ -350,19 +376,25 @@ class GatedResidualNetwork(Layer):
         gate_values = self.gate_dense(input_plus_context)
 
         # --- 6. Apply Gate ---
-        _logger.debug("Applying gate multiplication.")  # DEBUG
-        gated_output = tf_multiply(transformed_output, gate_values)
+        _logger.debug(
+            "Applying gate multiplication."
+        )  # DEBUG
+        gated_output = multiply(
+            transformed_output, gate_values
+        )
 
         # --- 7. Add Residual ---
         _logger.debug("Adding residual connection.")  # DEBUG
-        residual_output = tf_add(shortcut, gated_output)
+        residual_output = add(shortcut, gated_output)
 
         # --- 8. Final Normalization & Optional Activation ---
         _logger.debug("Applying layer_norm.")  # DEBUG
         normalized_output = self.layer_norm(residual_output)
         final_output = normalized_output
         if self.output_activation_fn is not None:
-            _logger.debug("Applying output_activation_fn.")  # DEBUG
+            _logger.debug(
+                "Applying output_activation_fn."
+            )  # DEBUG
             final_output = self.output_activation_fn(
                 normalized_output
             )
@@ -402,8 +434,12 @@ class VariableSelectionNetwork(Layer, NNLearner):
             "num_inputs": [
                 Interval(Integral, 0, None, closed="left")
             ],
-            "units": [Interval(Integral, 1, None, closed="left")],
-            "dropout_rate": [Interval(Real, 0, 1, closed="both")],
+            "units": [
+                Interval(Integral, 1, None, closed="left")
+            ],
+            "dropout_rate": [
+                Interval(Real, 0, 1, closed="both")
+            ],
             "use_time_distributed": [bool],
             "use_batch_norm": [bool],
             "activation": [
@@ -477,7 +513,7 @@ class VariableSelectionNetwork(Layer, NNLearner):
         # Attribute to store weights
         self.variable_importances_ = None
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def build(self, input_shape):
         """Builds internal GRNs and projection layers
         with explicit shapes."""
@@ -485,13 +521,13 @@ class VariableSelectionNetwork(Layer, NNLearner):
             isinstance(input_shape, (list, tuple))
             and input_shape
             and isinstance(
-                input_shape[0], (list, tuple, tf_TensorShape)
+                input_shape[0], (list, tuple, TensorShape)
             )
         ):
-            first_shape = tf_TensorShape(input_shape[0])
+            first_shape = TensorShape(input_shape[0])
             num_vars = len(input_shape)
             if first_shape.rank >= 3:
-                input_shape = tf_TensorShape(
+                input_shape = TensorShape(
                     [
                         first_shape[0],
                         first_shape[1],
@@ -500,23 +536,32 @@ class VariableSelectionNetwork(Layer, NNLearner):
                     ]
                 )
             else:
-                input_shape = tf_TensorShape(
-                    [first_shape[0], num_vars, first_shape[-1]]
+                input_shape = TensorShape(
+                    [
+                        first_shape[0],
+                        num_vars,
+                        first_shape[-1],
+                    ]
                 )
 
         # Use TensorShape object for robust handling
-        if not isinstance(input_shape, tf_TensorShape):
-            input_shape = tf_TensorShape(input_shape)
+        if not isinstance(input_shape, TensorShape):
+            input_shape = TensorShape(input_shape)
 
         input_rank = input_shape.rank
         effective_use_time_distributed = (
             self.use_time_distributed
             or (input_rank is not None and input_rank >= 4)
         )
-        expected_min_rank = 3 if effective_use_time_distributed else 2
+        expected_min_rank = (
+            3 if effective_use_time_distributed else 2
+        )
 
         # Check if rank is known and sufficient
-        if input_rank is None or input_rank < expected_min_rank:
+        if (
+            input_rank is None
+            or input_rank < expected_min_rank
+        ):
             # If rank unknown or too low at build time,
             # we cannot proceed reliably.
             # This indicates an issue upstream or
@@ -531,7 +576,7 @@ class VariableSelectionNetwork(Layer, NNLearner):
         # Add feature dimension if missing
         # XXX TO ENABLE
         # inferred_input_shape = tf_cond(
-        #       tf_equal(input_rank, expected_min_rank),
+        #       equal(input_rank, expected_min_rank),
         #       lambda: input_shape.as_list() + [1],
         #       lambda: input_shape.as_list()
         #   )
@@ -579,18 +624,24 @@ class VariableSelectionNetwork(Layer, NNLearner):
         # Calculate the expected shape for a single variable slice
         if effective_use_time_distributed:
             # Input (B, T, N, F) -> Slice is (B, T, F)
-            single_var_input_shape = tf_TensorShape(
+            single_var_input_shape = TensorShape(
                 [
-                    inferred_input_shape[0],  # Batch (can be None)
-                    inferred_input_shape[1],  # Time (should be known)
+                    inferred_input_shape[
+                        0
+                    ],  # Batch (can be None)
+                    inferred_input_shape[
+                        1
+                    ],  # Time (should be known)
                     inferred_input_shape[3],
                 ]  # Features (should be known)
             )
         else:
             # Input (B, N, F) -> Slice is (B, F)
-            single_var_input_shape = tf_TensorShape(
+            single_var_input_shape = TensorShape(
                 [
-                    inferred_input_shape[0],  # Batch (can be None)
+                    inferred_input_shape[
+                        0
+                    ],  # Batch (can be None)
                     inferred_input_shape[2],
                 ]  # Features (should be known)
             )
@@ -625,10 +676,12 @@ class VariableSelectionNetwork(Layer, NNLearner):
             input_shape=input_shape
         )  # Call parent build last
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, context=None, training=False):
         """Execute the forward pass with optional context."""
-        effective_use_time_distributed = self.use_time_distributed
+        effective_use_time_distributed = (
+            self.use_time_distributed
+        )
         if isinstance(inputs, (list, tuple)):
             if (
                 context is None
@@ -638,18 +691,27 @@ class VariableSelectionNetwork(Layer, NNLearner):
                 first = inputs[0]
                 first_rank = len(getattr(first, "shape", ()))
                 effective_use_time_distributed = (
-                    self.use_time_distributed or first_rank >= 3
+                    self.use_time_distributed
+                    or first_rank >= 3
                 )
-                axis = -2 if effective_use_time_distributed else 1
-                inputs = tf_stack(list(inputs), axis=axis)
+                axis = (
+                    -2
+                    if effective_use_time_distributed
+                    else 1
+                )
+                inputs = stack(list(inputs), axis=axis)
             else:
-                inputs = tf_stack(list(inputs), axis=1)
+                inputs = stack(list(inputs), axis=1)
 
-        _logger.debug(f"VSN '{self.name}': Entering call method.")
+        _logger.debug(
+            f"VSN '{self.name}': Entering call method."
+        )
         _logger.debug(
             f"  Initial input shape: {getattr(inputs, 'shape', 'N/A')}"
         )
-        _logger.debug(f"  Context provided: {context is not None}")
+        _logger.debug(
+            f"  Context provided: {context is not None}"
+        )
         _logger.debug(f"  Training mode: {training}")
 
         # --- Input Validation and Reshaping ---
@@ -668,7 +730,9 @@ class VariableSelectionNetwork(Layer, NNLearner):
 
         if actual_rank >= 4:
             effective_use_time_distributed = True
-        expected_min_rank = 3 if effective_use_time_distributed else 2
+        expected_min_rank = (
+            3 if effective_use_time_distributed else 2
+        )
         _logger.debug(
             f"  Input rank: actual={actual_rank}, expected_min={expected_min_rank}"
         )
@@ -687,7 +751,7 @@ class VariableSelectionNetwork(Layer, NNLearner):
                 f"  Input rank matches minimum expected ({actual_rank})."
                 " Expanding feature dimension."
             )
-            inputs = tf_expand_dims(inputs, axis=-1)
+            inputs = expand_dims(inputs, axis=-1)
             _logger.debug(
                 f"  Input shape after expansion: {inputs.shape}"
             )
@@ -710,7 +774,9 @@ class VariableSelectionNetwork(Layer, NNLearner):
                     name="context_projection",
                     activation=self.activation_str,  # Use string
                 )
-            processed_context = self.context_projection(context)
+            processed_context = self.context_projection(
+                context
+            )
             _logger.debug(
                 f"  Processed context shape: {processed_context.shape}"
             )
@@ -725,7 +791,9 @@ class VariableSelectionNetwork(Layer, NNLearner):
         )
         # Python loop - should execute as Python code due to decorator
         for i in range(self.num_inputs):
-            _logger.debug(f"    Processing variable index {i}")
+            _logger.debug(
+                f"    Processing variable index {i}"
+            )
             # Slice input for the i-th variable
             if effective_use_time_distributed:
                 # Slice variable i: (B, T, N, F) -> (B, T, F)
@@ -742,7 +810,9 @@ class VariableSelectionNetwork(Layer, NNLearner):
 
             # Apply the i-th GRN, passing the (potentially None) context
             # GRN's call method should also have @do_not_convert if needed
-            grn_output = self.single_variable_grns[i](
+            grn_output = self.single_variable_grns[
+                i
+            ](
                 var_input,
                 context=processed_context,  # Pass processed context
                 training=training,
@@ -755,7 +825,7 @@ class VariableSelectionNetwork(Layer, NNLearner):
 
         # --- Stack GRN outputs along variable dimension (N) ---
         # axis=-2 places N before the 'units' dimension
-        stacked_outputs = tf_stack(var_outputs, axis=-2)
+        stacked_outputs = stack(var_outputs, axis=-2)
         _logger.debug(
             f"  Stacked GRN outputs shape: {stacked_outputs.shape}"
         )
@@ -774,23 +844,27 @@ class VariableSelectionNetwork(Layer, NNLearner):
         # Shape: (B, [T,] N, 1)
 
         # 2. Apply Softmax across the variable dimension (N, axis=-2)
-        _logger.debug("  Calculating importance weights (softmax)...")
+        _logger.debug(
+            "  Calculating importance weights (softmax)..."
+        )
         # If N == 1, softmax is always 1 anyway.
         # weights = self.softmax(importance_logits)
         if self.num_inputs == 1:
-            weights = tf_ones_like(importance_logits)
+            weights = ones_like(importance_logits)
         else:
             weights = self.softmax(importance_logits)
 
-        _logger.debug(f"  Importance weights shape: {weights.shape}")
+        _logger.debug(
+            f"  Importance weights shape: {weights.shape}"
+        )
         # Shape: (B, [T,] N, 1)
         self.variable_importances_ = weights  # Store weights
 
         # --- Weighted Combination ---
         # Multiply stacked GRN outputs by weights and sum across N
         _logger.debug("  Performing weighted sum...")
-        weighted_sum = tf_reduce_sum(
-            tf_multiply(stacked_outputs, weights),
+        weighted_sum = reduce_sum(
+            multiply(stacked_outputs, weights),
             axis=-2,  # Sum across the variable dimension (N)
         )
         _logger.debug(
@@ -798,7 +872,9 @@ class VariableSelectionNetwork(Layer, NNLearner):
         )
         # Final output shape: (B, T, units) or (B, units)
 
-        _logger.debug(f"VSN '{self.name}': Exiting call method.")
+        _logger.debug(
+            f"VSN '{self.name}': Exiting call method."
+        )
 
         return weighted_sum
 
@@ -866,7 +942,9 @@ class LearnedNormalization(Layer, NNLearner):
 
     Examples
     --------
-    >>> from geoprior.nn.components import LearnedNormalization
+    >>> from geoprior.nn.components import (
+    ...     LearnedNormalization,
+    ... )
     >>> import tensorflow as tf
     >>> # Create input of shape (batch_size, features)
     >>> x = tf.random.normal((32, 10))
@@ -915,7 +993,7 @@ class LearnedNormalization(Layer, NNLearner):
         )
         super().build(input_shape)
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, training=False):
         r"""
         Forward pass of the LearnedNormalization layer.
@@ -1040,7 +1118,9 @@ class StaticEnrichmentLayer(Layer, NNLearner):
 
     Examples
     --------
-    >>> from geoprior.nn.components import StaticEnrichmentLayer
+    >>> from geoprior.nn.components import (
+    ...     StaticEnrichmentLayer,
+    ... )
     >>> import tensorflow as tf
     >>> # Define static context of shape (batch_size, units)
     ... # and temporal features of shape
@@ -1053,7 +1133,9 @@ class StaticEnrichmentLayer(Layer, NNLearner):
     ... )
     >>> # Forward pass
     >>> outputs = sel(
-    ...     static_context_vector, temporal_features, training=True
+    ...     static_context_vector,
+    ...     temporal_features,
+    ...     training=True,
     ... )
 
     See Also
@@ -1074,7 +1156,9 @@ class StaticEnrichmentLayer(Layer, NNLearner):
 
     @validate_params(
         {
-            "units": [Interval(Integral, 1, None, closed="left")],
+            "units": [
+                Interval(Integral, 1, None, closed="left")
+            ],
             "use_batch_norm": [bool],
         }
     )
@@ -1118,7 +1202,7 @@ class StaticEnrichmentLayer(Layer, NNLearner):
             use_batch_norm=use_batch_norm,
         )
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(
         self,
         temporal_features,
@@ -1158,23 +1242,25 @@ class StaticEnrichmentLayer(Layer, NNLearner):
         if context_vector is None and isinstance(
             temporal_features, (list, tuple)
         ):
-            temporal_features, context_vector = temporal_features
+            temporal_features, context_vector = (
+                temporal_features
+            )
 
         # Expand the static context to align
         # with temporal features along T
-        static_context_expanded = tf_expand_dims(
+        static_context_expanded = expand_dims(
             context_vector, axis=1
         )
 
         # Tile across the time dimension
-        static_context_expanded = tf_tile(
+        static_context_expanded = tile(
             static_context_expanded,
-            [1, tf_shape(temporal_features)[1], 1],
+            [1, shape(temporal_features)[1], 1],
         )
 
         # Concatenate static context
         # with temporal features
-        combined = tf_concat(
+        combined = concat(
             [static_context_expanded, temporal_features],
             axis=-1,
         )

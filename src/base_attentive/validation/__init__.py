@@ -91,7 +91,8 @@ def validate_model_inputs(
         _logger.info("Validating input tensors...")
         if static is not None:
             _logger.info(
-                "  Static shape: %s", getattr(static, "shape", None)
+                "  Static shape: %s",
+                getattr(static, "shape", None),
             )
         if dynamic is not None:
             _logger.info(
@@ -100,7 +101,8 @@ def validate_model_inputs(
             )
         if future is not None:
             _logger.info(
-                "  Future shape: %s", getattr(future, "shape", None)
+                "  Future shape: %s",
+                getattr(future, "shape", None),
             )
 
     return static, dynamic, future

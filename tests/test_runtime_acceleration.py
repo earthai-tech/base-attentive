@@ -44,7 +44,9 @@ def test_make_fast_predict_fn_wraps_model_with_tf_function(
     fake_tf = _FakeTensorFlow()
     fake_model = _FakeModel()
 
-    monkeypatch.setattr(runtime, "KERAS_BACKEND", "tensorflow")
+    monkeypatch.setattr(
+        runtime, "KERAS_BACKEND", "tensorflow"
+    )
     monkeypatch.setitem(sys.modules, "tensorflow", fake_tf)
 
     fast_predict = runtime.make_fast_predict_fn(
@@ -85,8 +87,12 @@ def test_make_fast_predict_fn_raises_helpful_error_when_tf_missing(
     """Missing TensorFlow should produce a clear import error."""
     from base_attentive import runtime
 
-    monkeypatch.setattr(runtime, "KERAS_BACKEND", "tensorflow")
-    monkeypatch.delitem(sys.modules, "tensorflow", raising=False)
+    monkeypatch.setattr(
+        runtime, "KERAS_BACKEND", "tensorflow"
+    )
+    monkeypatch.delitem(
+        sys.modules, "tensorflow", raising=False
+    )
 
     def _missing_tensorflow(name):
         if name == "tensorflow":
@@ -94,8 +100,12 @@ def test_make_fast_predict_fn_raises_helpful_error_when_tf_missing(
         raise AssertionError(f"Unexpected import: {name}")
 
     monkeypatch.setattr(
-        runtime.importlib, "import_module", _missing_tensorflow
+        runtime.importlib,
+        "import_module",
+        _missing_tensorflow,
     )
 
-    with pytest.raises(ImportError, match="TensorFlow is required"):
+    with pytest.raises(
+        ImportError, match="TensorFlow is required"
+    ):
         runtime.make_fast_predict_fn(_FakeModel())

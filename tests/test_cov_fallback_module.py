@@ -19,6 +19,7 @@ import base_attentive._keras_fallback as fb
 # DTypeProxy
 # ---------------------------------------------------------------------------
 
+
 class TestDTypeProxy:
     def test_float32_callable(self):
         val = fb.float32(3.14)
@@ -43,6 +44,7 @@ class TestDTypeProxy:
 # ---------------------------------------------------------------------------
 # TensorShape
 # ---------------------------------------------------------------------------
+
 
 class TestTensorShape:
     def test_create_from_list(self):
@@ -74,6 +76,7 @@ class TestTensorShape:
 # Variable
 # ---------------------------------------------------------------------------
 
+
 class TestVariable:
     def test_assign_updates_value(self):
         v = fb.Variable(np.array([1.0, 2.0]))
@@ -98,6 +101,7 @@ class TestVariable:
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
+
 
 class TestHelperFunctions:
     def test_normalize_shape_list(self):
@@ -132,6 +136,7 @@ class TestHelperFunctions:
     def test_to_numpy_dtype_has_as_numpy_dtype_attr(self):
         class FakeDtype:
             as_numpy_dtype = np.int16
+
         assert fb._to_numpy_dtype(FakeDtype()) == np.int16
 
     def test_infer_input_shape_array(self):
@@ -139,7 +144,9 @@ class TestHelperFunctions:
         assert list(shape) == [2, 3]
 
     def test_infer_input_shape_list(self):
-        shapes = fb._infer_input_shape([np.ones((2, 3)), np.ones((4, 5))])
+        shapes = fb._infer_input_shape(
+            [np.ones((2, 3)), np.ones((4, 5))]
+        )
         assert isinstance(shapes, list)
         assert len(shapes) == 2
 
@@ -147,6 +154,7 @@ class TestHelperFunctions:
 # ---------------------------------------------------------------------------
 # Constant initializer
 # ---------------------------------------------------------------------------
+
 
 class TestConstant:
     def test_call_with_shape(self):
@@ -165,6 +173,7 @@ class TestConstant:
 # _initialize_value
 # ---------------------------------------------------------------------------
 
+
 class TestInitializeValue:
     def test_zeros_string(self):
         v = fb._initialize_value("zeros", (3,), fb.float32)
@@ -175,7 +184,9 @@ class TestInitializeValue:
         assert np.all(v.value == 1)
 
     def test_unknown_string_falls_back_to_zeros(self):
-        v = fb._initialize_value("glorot_uniform", (3,), fb.float32)
+        v = fb._initialize_value(
+            "glorot_uniform", (3,), fb.float32
+        )
         assert v.value.shape == (3,)
 
     def test_constant_initializer(self):
@@ -188,25 +199,38 @@ class TestInitializeValue:
         assert np.all(v.value == 0)
 
     def test_callable_with_dtype(self):
-        v = fb._initialize_value(lambda shape, dtype=None: np.ones(shape), (3,), fb.float32)
+        v = fb._initialize_value(
+            lambda shape, dtype=None: np.ones(shape),
+            (3,),
+            fb.float32,
+        )
         assert np.all(v.value == 1)
 
     def test_callable_without_dtype_arg(self):
-        v = fb._initialize_value(lambda shape: np.ones(shape), (3,), fb.float32)
+        v = fb._initialize_value(
+            lambda shape: np.ones(shape), (3,), fb.float32
+        )
         assert np.all(v.value == 1)
 
     def test_scalar_broadcast(self):
-        v = fb._initialize_value(np.float32(2.0), (4,), fb.float32)
+        v = fb._initialize_value(
+            np.float32(2.0), (4,), fb.float32
+        )
         assert np.all(v.value == pytest.approx(2.0))
 
     def test_callable_scalar_broadcast(self):
-        v = fb._initialize_value(lambda s, d=None: np.float32(3.0), (3,), fb.float32)
+        v = fb._initialize_value(
+            lambda s, d=None: np.float32(3.0),
+            (3,),
+            fb.float32,
+        )
         assert v.value.shape == (3,)
 
 
 # ---------------------------------------------------------------------------
 # Layer base class
 # ---------------------------------------------------------------------------
+
 
 class TestLayerBase:
     def test_build_sets_built(self):
@@ -227,7 +251,9 @@ class TestLayerBase:
 
     def test_add_weight(self):
         layer = fb.Layer()
-        w = layer.add_weight(name="w", shape=(3,), initializer="zeros")
+        w = layer.add_weight(
+            name="w", shape=(3,), initializer="zeros"
+        )
         assert np.all(w.value == 0)
 
     def test_first_call_triggers_build(self):
@@ -240,6 +266,7 @@ class TestLayerBase:
         class BadBuild(fb.Layer):
             def build(self, shape):
                 raise RuntimeError("oops")
+
         layer = BadBuild()
         layer(np.ones((2, 3)))  # should not raise
         assert layer.built
@@ -248,6 +275,7 @@ class TestLayerBase:
 # ---------------------------------------------------------------------------
 # Loss base class
 # ---------------------------------------------------------------------------
+
 
 class TestLossBase:
     def test_get_config_has_reduction(self):
@@ -259,6 +287,7 @@ class TestLossBase:
 # ---------------------------------------------------------------------------
 # Dense
 # ---------------------------------------------------------------------------
+
 
 class TestDense:
     def test_output_shape(self):
@@ -296,6 +325,7 @@ class TestDense:
 # Dropout
 # ---------------------------------------------------------------------------
 
+
 class TestDropout:
     def test_passthrough(self):
         d = fb.Dropout(rate=0.5)
@@ -312,6 +342,7 @@ class TestDropout:
 # LayerNormalization / BatchNormalization
 # ---------------------------------------------------------------------------
 
+
 class TestLayerNorm:
     def test_output_shape_preserved(self):
         ln = fb.LayerNormalization()
@@ -319,7 +350,9 @@ class TestLayerNorm:
         assert ln(x).shape == x.shape
 
     def test_get_config_epsilon(self):
-        assert fb.LayerNormalization(epsilon=1e-5).get_config()["epsilon"] == pytest.approx(1e-5)
+        assert fb.LayerNormalization(
+            epsilon=1e-5
+        ).get_config()["epsilon"] == pytest.approx(1e-5)
 
     def test_batch_norm_is_subclass(self):
         bn = fb.BatchNormalization()
@@ -332,11 +365,14 @@ class TestLayerNorm:
 # Softmax
 # ---------------------------------------------------------------------------
 
+
 class TestSoftmax:
     def test_sums_to_one(self):
         sm = fb.Softmax()
         out = sm(np.array([[1.0, 2.0, 3.0]]))
-        np.testing.assert_allclose(out.sum(axis=-1), 1.0, atol=1e-6)
+        np.testing.assert_allclose(
+            out.sum(axis=-1), 1.0, atol=1e-6
+        )
 
     def test_get_config(self):
         assert fb.Softmax(axis=-1).get_config()["axis"] == -1
@@ -345,6 +381,7 @@ class TestSoftmax:
 # ---------------------------------------------------------------------------
 # Embedding
 # ---------------------------------------------------------------------------
+
 
 class TestEmbedding:
     def test_output_shape(self):
@@ -356,6 +393,7 @@ class TestEmbedding:
 # ---------------------------------------------------------------------------
 # Flatten
 # ---------------------------------------------------------------------------
+
 
 class TestFlatten:
     def test_3d_flattened(self):
@@ -371,6 +409,7 @@ class TestFlatten:
 # Concatenate
 # ---------------------------------------------------------------------------
 
+
 class TestConcatenate:
     def test_concat_last_axis(self):
         cat = fb.Concatenate(axis=-1)
@@ -381,6 +420,7 @@ class TestConcatenate:
 # ---------------------------------------------------------------------------
 # TimeDistributed
 # ---------------------------------------------------------------------------
+
 
 class TestTimeDistributed:
     def test_3d_input(self):
@@ -398,6 +438,7 @@ class TestTimeDistributed:
 # Sequential
 # ---------------------------------------------------------------------------
 
+
 class TestSequential:
     def test_chain_of_layers(self):
         seq = fb.Sequential([fb.Dense(8), fb.Dense(4)])
@@ -408,6 +449,7 @@ class TestSequential:
         class NoTraining:
             def __call__(self, x):
                 return x
+
         seq = fb.Sequential([NoTraining()])
         out = seq(np.ones((3, 4)))
         assert out.shape == (3, 4)
@@ -417,15 +459,20 @@ class TestSequential:
 # LSTM
 # ---------------------------------------------------------------------------
 
+
 class TestLSTM:
     def test_no_sequences_shape(self):
         lstm = fb.LSTM(16)
-        out = lstm(np.random.randn(4, 10, 8).astype(np.float32))
+        out = lstm(
+            np.random.randn(4, 10, 8).astype(np.float32)
+        )
         assert out.shape == (4, 16)
 
     def test_return_sequences_shape(self):
         lstm = fb.LSTM(16, return_sequences=True)
-        out = lstm(np.random.randn(4, 10, 8).astype(np.float32))
+        out = lstm(
+            np.random.randn(4, 10, 8).astype(np.float32)
+        )
         assert out.shape == (4, 10, 16)
 
     def test_2d_input(self):
@@ -437,6 +484,7 @@ class TestLSTM:
 # ---------------------------------------------------------------------------
 # MultiHeadAttention
 # ---------------------------------------------------------------------------
+
 
 class TestMHA:
     def test_basic_call(self):
@@ -484,6 +532,7 @@ class TestMHA:
 # Input helper
 # ---------------------------------------------------------------------------
 
+
 class TestInput:
     def test_zeros_shape(self):
         x = fb.Input(shape=(3, 4))
@@ -498,11 +547,13 @@ class TestInput:
 # register_keras_serializable
 # ---------------------------------------------------------------------------
 
+
 class TestRegisterSerializable:
     def test_returns_class_unchanged(self):
         @fb.register_keras_serializable("pkg")
         class MyClass:
             pass
+
         assert MyClass is not None
 
 
@@ -510,16 +561,33 @@ class TestRegisterSerializable:
 # _Activations
 # ---------------------------------------------------------------------------
 
+
 class TestActivations:
-    @pytest.mark.parametrize("name,x,check", [
-        ("relu", [-1.0, 0.0, 1.0], lambda r: np.all(r >= 0)),
-        ("sigmoid", [0.0], lambda r: 0 < r[0] < 1),
-        ("tanh", [0.0], lambda r: abs(r[0]) < 1e-6),
-        ("elu", [-1.0, 1.0], lambda r: r[0] < 0 and r[1] == pytest.approx(1.0)),
-        ("selu", [1.0], lambda r: r[0] > 0),
-        ("gelu", [0.0], lambda r: abs(r[0]) < 1e-6),
-        ("linear", [1.0, 2.0], lambda r: r[0] == pytest.approx(1.0)),
-    ])
+    @pytest.mark.parametrize(
+        "name,x,check",
+        [
+            (
+                "relu",
+                [-1.0, 0.0, 1.0],
+                lambda r: np.all(r >= 0),
+            ),
+            ("sigmoid", [0.0], lambda r: 0 < r[0] < 1),
+            ("tanh", [0.0], lambda r: abs(r[0]) < 1e-6),
+            (
+                "elu",
+                [-1.0, 1.0],
+                lambda r: r[0] < 0
+                and r[1] == pytest.approx(1.0),
+            ),
+            ("selu", [1.0], lambda r: r[0] > 0),
+            ("gelu", [0.0], lambda r: abs(r[0]) < 1e-6),
+            (
+                "linear",
+                [1.0, 2.0],
+                lambda r: r[0] == pytest.approx(1.0),
+            ),
+        ],
+    )
     def test_named_activations(self, name, x, check):
         f = fb.activations.get(name)
         result = f(np.array(x, dtype=np.float32))
@@ -530,14 +598,18 @@ class TestActivations:
         assert f(np.array([1.0]))[0] == pytest.approx(2.0)
 
     def test_unknown_raises(self):
-        with pytest.raises(ValueError, match="Unknown activation"):
+        with pytest.raises(
+            ValueError, match="Unknown activation"
+        ):
             fb.activations.get("not_a_real_activation")
 
     def test_serialize_string(self):
         assert fb.activations.serialize("relu") == "relu"
 
     def test_serialize_callable(self):
-        def my_act(x): return x
+        def my_act(x):
+            return x
+
         assert fb.activations.serialize(my_act) == "my_act"
 
     def test_serialize_class_instance(self):
@@ -548,6 +620,7 @@ class TestActivations:
 # ---------------------------------------------------------------------------
 # _RandomNamespace
 # ---------------------------------------------------------------------------
+
 
 class TestRandom:
     def test_uniform_shape(self):
@@ -565,16 +638,21 @@ class TestRandom:
 # _LinalgNamespace
 # ---------------------------------------------------------------------------
 
+
 class TestLinalg:
     def test_band_part_diagonal(self):
         x = np.ones((4, 4))
         result = fb.linalg.band_part(x, 0, 0)
-        np.testing.assert_array_equal(np.diag(result), np.ones(4))
+        np.testing.assert_array_equal(
+            np.diag(result), np.ones(4)
+        )
         assert result[0, 1] == 0.0
 
     def test_band_part_lower(self):
         x = np.ones((3, 3))
-        result = fb.linalg.band_part(x, -1, 0)  # lower triangle
+        result = fb.linalg.band_part(
+            x, -1, 0
+        )  # lower triangle
         assert result[2, 0] == 1.0
         assert result[0, 2] == 0.0
 
@@ -582,6 +660,7 @@ class TestLinalg:
 # ---------------------------------------------------------------------------
 # Module-level functional ops
 # ---------------------------------------------------------------------------
+
 
 class TestFunctionalOps:
     def test_constant(self):
@@ -605,27 +684,39 @@ class TestFunctionalOps:
         assert len(arr) == 6
 
     def test_add(self):
-        np.testing.assert_array_equal(fb.add([1, 2], [3, 4]), [4, 6])
+        np.testing.assert_array_equal(
+            fb.add([1, 2], [3, 4]), [4, 6]
+        )
 
     def test_maximum(self):
-        np.testing.assert_array_equal(fb.maximum([1, 3], [2, 2]), [2, 3])
+        np.testing.assert_array_equal(
+            fb.maximum([1, 3], [2, 2]), [2, 3]
+        )
 
     def test_mean(self):
         assert fb.mean([1.0, 3.0]) == pytest.approx(2.0)
 
     def test_mean_keepdims(self):
-        result = fb.mean(np.ones((3, 4)), axis=1, keepdims=True)
+        result = fb.mean(
+            np.ones((3, 4)), axis=1, keepdims=True
+        )
         assert result.shape == (3, 1)
 
     def test_reduce_mean(self):
-        assert fb.reduce_mean([2.0, 4.0]) == pytest.approx(3.0)
+        assert fb.reduce_mean([2.0, 4.0]) == pytest.approx(
+            3.0
+        )
 
     def test_add_n(self):
-        result = fb.add_n([np.array([1.0, 2.0]), np.array([3.0, 4.0])])
+        result = fb.add_n(
+            [np.array([1.0, 2.0]), np.array([3.0, 4.0])]
+        )
         np.testing.assert_allclose(result, [4.0, 6.0])
 
     def test_square(self):
-        np.testing.assert_array_equal(fb.square([2.0, 3.0]), [4.0, 9.0])
+        np.testing.assert_array_equal(
+            fb.square([2.0, 3.0]), [4.0, 9.0]
+        )
 
     def test_transpose(self):
         arr = np.arange(6).reshape(2, 3)
@@ -633,35 +724,49 @@ class TestFunctionalOps:
 
     def test_transpose_with_perm(self):
         arr = np.ones((2, 3, 4))
-        assert fb.transpose(arr, perm=[2, 0, 1]).shape == (4, 2, 3)
+        assert fb.transpose(arr, perm=[2, 0, 1]).shape == (
+            4,
+            2,
+            3,
+        )
 
     def test_logical_and(self):
         np.testing.assert_array_equal(
-            fb.logical_and([True, False], [True, True]), [True, False]
+            fb.logical_and([True, False], [True, True]),
+            [True, False],
         )
 
     def test_logical_not(self):
-        np.testing.assert_array_equal(fb.logical_not([True, False]), [False, True])
+        np.testing.assert_array_equal(
+            fb.logical_not([True, False]), [False, True]
+        )
 
     def test_logical_or(self):
         np.testing.assert_array_equal(
-            fb.logical_or([True, False], [False, False]), [True, False]
+            fb.logical_or([True, False], [False, False]),
+            [True, False],
         )
 
     def test_get_static_value_scalar(self):
         assert fb.get_static_value(42) == 42
 
     def test_get_static_value_numpy_scalar(self):
-        assert fb.get_static_value(np.float32(3.14)) == pytest.approx(3.14, rel=1e-4)
+        assert fb.get_static_value(
+            np.float32(3.14)
+        ) == pytest.approx(3.14, rel=1e-4)
 
     def test_get_static_value_array(self):
         assert fb.get_static_value(np.array([1, 2])) is None
 
     def test_reduce_sum(self):
-        assert fb.reduce_sum([1.0, 2.0, 3.0]) == pytest.approx(6.0)
+        assert fb.reduce_sum(
+            [1.0, 2.0, 3.0]
+        ) == pytest.approx(6.0)
 
     def test_stack(self):
-        result = fb.stack([np.array([1, 2]), np.array([3, 4])])
+        result = fb.stack(
+            [np.array([1, 2]), np.array([3, 4])]
+        )
         assert result.shape == (2, 2)
 
     def test_unstack(self):
@@ -702,21 +807,35 @@ class TestFunctionalOps:
         np.testing.assert_array_equal(parts[1], [1, 2])
 
     def test_multiply(self):
-        np.testing.assert_array_equal(fb.multiply([1, 2], [3, 4]), [3, 8])
+        np.testing.assert_array_equal(
+            fb.multiply([1, 2], [3, 4]), [3, 8]
+        )
 
     def test_cond_true_and_false(self):
-        assert fb.cond(True, lambda: "yes", lambda: "no") == "yes"
-        assert fb.cond(False, lambda: "yes", lambda: "no") == "no"
+        assert (
+            fb.cond(True, lambda: "yes", lambda: "no")
+            == "yes"
+        )
+        assert (
+            fb.cond(False, lambda: "yes", lambda: "no")
+            == "no"
+        )
 
     def test_equal(self):
-        np.testing.assert_array_equal(fb.equal([1, 2], [1, 3]), [True, False])
+        np.testing.assert_array_equal(
+            fb.equal([1, 2], [1, 3]), [True, False]
+        )
 
     def test_pad(self):
-        result = fb.pad(np.array([1, 2]), [(1, 1)], constant_values=0)
+        result = fb.pad(
+            np.array([1, 2]), [(1, 1)], constant_values=0
+        )
         np.testing.assert_array_equal(result, [0, 1, 2, 0])
 
     def test_ones_like(self):
-        result = fb.ones_like(np.array([1, 2]), dtype=fb.float32)
+        result = fb.ones_like(
+            np.array([1, 2]), dtype=fb.float32
+        )
         assert result.dtype == np.float32
         np.testing.assert_array_equal(result, [1.0, 1.0])
 
@@ -724,19 +843,33 @@ class TestFunctionalOps:
         np.testing.assert_array_equal(fb.abs([-1, 2]), [1, 2])
 
     def test_pow(self):
-        np.testing.assert_array_equal(fb.pow([2, 3], 2), [4, 9])
+        np.testing.assert_array_equal(
+            fb.pow([2, 3], 2), [4, 9]
+        )
 
     def test_sin_cos_exp_log_sigmoid(self):
         values = np.array([0.0, 1.0], dtype=np.float32)
-        np.testing.assert_allclose(fb.sin(values), np.sin(values))
-        np.testing.assert_allclose(fb.cos(values), np.cos(values))
-        np.testing.assert_allclose(fb.exp(values), np.exp(values))
-        np.testing.assert_allclose(fb.log(np.array([1.0, np.e], dtype=np.float32)), [0.0, 1.0], atol=1e-6)
+        np.testing.assert_allclose(
+            fb.sin(values), np.sin(values)
+        )
+        np.testing.assert_allclose(
+            fb.cos(values), np.cos(values)
+        )
+        np.testing.assert_allclose(
+            fb.exp(values), np.exp(values)
+        )
+        np.testing.assert_allclose(
+            fb.log(np.array([1.0, np.e], dtype=np.float32)),
+            [0.0, 1.0],
+            atol=1e-6,
+        )
         sigmoid = fb.sigmoid(values)
         assert np.all((sigmoid > 0.0) & (sigmoid < 1.0))
 
     def test_cumsum(self):
-        np.testing.assert_array_equal(fb.cumsum([1, 2, 3]), [1, 3, 6])
+        np.testing.assert_array_equal(
+            fb.cumsum([1, 2, 3]), [1, 3, 6]
+        )
 
     def test_gather_axis_zero(self):
         params = np.arange(12).reshape(3, 4)
@@ -745,25 +878,41 @@ class TestFunctionalOps:
 
     def test_gather_with_batch_dims(self):
         params = np.arange(24).reshape(2, 3, 4)
-        indices = np.array([[[0], [2]], [[1], [0]]], dtype=np.int32)
-        result = fb.gather(params, indices, axis=1, batch_dims=1)
+        indices = np.array(
+            [[[0], [2]], [[1], [0]]], dtype=np.int32
+        )
+        result = fb.gather(
+            params, indices, axis=1, batch_dims=1
+        )
         assert result.shape == (2, 2, 1, 4)
-        np.testing.assert_array_equal(result[0, 0, 0], params[0, 0])
-        np.testing.assert_array_equal(result[1, 0, 0], params[1, 1])
+        np.testing.assert_array_equal(
+            result[0, 0, 0], params[0, 0]
+        )
+        np.testing.assert_array_equal(
+            result[1, 0, 0], params[1, 1]
+        )
 
     def test_softplus(self):
-        result = fb.softplus(np.array([-1.0, 0.0, 1.0], dtype=np.float32))
+        result = fb.softplus(
+            np.array([-1.0, 0.0, 1.0], dtype=np.float32)
+        )
         assert np.all(result > 0.0)
 
     def test_reduce_logsumexp(self):
-        values = np.array([[0.0, 1.0], [2.0, 3.0]], dtype=np.float32)
+        values = np.array(
+            [[0.0, 1.0], [2.0, 3.0]], dtype=np.float32
+        )
         reduced = fb.reduce_logsumexp(values, axis=1)
         assert reduced.shape == (2,)
-        kept = fb.reduce_logsumexp(values, axis=1, keepdims=True)
+        kept = fb.reduce_logsumexp(
+            values, axis=1, keepdims=True
+        )
         assert kept.shape == (2, 1)
 
     def test_sqrt(self):
-        np.testing.assert_allclose(fb.sqrt([1.0, 4.0]), [1.0, 2.0])
+        np.testing.assert_allclose(
+            fb.sqrt([1.0, 4.0]), [1.0, 2.0]
+        )
 
     def test_ones(self):
         result = fb.ones((2, 3), dtype=fb.float32)
@@ -771,33 +920,48 @@ class TestFunctionalOps:
         assert result.dtype == np.float32
 
     def test_floordiv(self):
-        np.testing.assert_array_equal(fb.floordiv([5, 9], 2), [2, 4])
+        np.testing.assert_array_equal(
+            fb.floordiv([5, 9], 2), [2, 4]
+        )
 
     def test_greater(self):
-        np.testing.assert_array_equal(fb.greater([1, 3], [2, 2]), [False, True])
+        np.testing.assert_array_equal(
+            fb.greater([1, 3], [2, 2]), [False, True]
+        )
 
 
 class TestFallbackLayerWeightInit:
     def test_add_weight_broadcasts_scalar_initializer(self):
         layer = fb.Layer()
-        weight = layer.add_weight(shape=(2, 2), initializer=3.0, dtype=fb.float32)
-        np.testing.assert_array_equal(np.asarray(weight), np.full((2, 2), 3.0, dtype=np.float32))
+        weight = layer.add_weight(
+            shape=(2, 2), initializer=3.0, dtype=fb.float32
+        )
+        np.testing.assert_array_equal(
+            np.asarray(weight),
+            np.full((2, 2), 3.0, dtype=np.float32),
+        )
 
 
 # ---------------------------------------------------------------------------
 # _AutographExperimental
 # ---------------------------------------------------------------------------
 
+
 class TestAutograph:
     def test_do_not_convert_direct(self):
         @fb.autograph.experimental.do_not_convert
         def my_fn(x):
             return x + 1
+
         assert my_fn(2) == 3
 
     def test_do_not_convert_with_kwargs(self):
-        decorator = fb.autograph.experimental.do_not_convert(some_kwarg=True)
+        decorator = fb.autograph.experimental.do_not_convert(
+            some_kwarg=True
+        )
+
         def my_fn(x):
             return x * 2
+
         wrapped = decorator(my_fn)
         assert wrapped(3) == 6

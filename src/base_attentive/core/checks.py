@@ -44,7 +44,9 @@ def validate_nested_param(
         if args:
             expected_element_type = args[0]
             for i, item in enumerate(value):
-                if not isinstance(item, expected_element_type):
+                if not isinstance(
+                    item, expected_element_type
+                ):
                     raise TypeError(
                         f"{param_name}[{i}] must be {expected_element_type.__name__}, "
                         f"got {type(item).__name__}"

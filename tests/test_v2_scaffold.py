@@ -8,7 +8,9 @@ import types
 
 import numpy as np
 
-from base_attentive.config import normalize_base_attentive_spec
+from base_attentive.config import (
+    normalize_base_attentive_spec,
+)
 from base_attentive.registry import (
     ComponentRegistry,
     get_backend_capability_report,
@@ -95,7 +97,9 @@ def test_component_registry_prefers_backend_specific_registration():
         backend="generic",
     )
     registry.register(
-        "head.point_forecast", lambda **_: "torch", backend="torch"
+        "head.point_forecast",
+        lambda **_: "torch",
+        backend="torch",
     )
 
     assert (
@@ -175,7 +179,9 @@ def test_import_and_run_base_attentive_v2_with_fake_keras_runtime(
         return decorator
 
     fake_keras = types.ModuleType("keras")
-    fake_keras.backend = types.SimpleNamespace(backend=lambda: "jax")
+    fake_keras.backend = types.SimpleNamespace(
+        backend=lambda: "jax"
+    )
     fake_keras.layers = types.SimpleNamespace(
         Dense=FakeDense,
         Dropout=FakeDropout,
@@ -201,9 +207,13 @@ def test_import_and_run_base_attentive_v2_with_fake_keras_runtime(
     fake_keras.Sequential = object
 
     monkeypatch.setenv("KERAS_BACKEND", "jax")
-    monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+    monkeypatch.delenv(
+        "BASE_ATTENTIVE_BACKEND", raising=False
+    )
     monkeypatch.setitem(sys.modules, "keras", fake_keras)
-    monkeypatch.delitem(sys.modules, "tensorflow", raising=False)
+    monkeypatch.delitem(
+        sys.modules, "tensorflow", raising=False
+    )
     original_modules = {
         module_name: module
         for module_name, module in list(sys.modules.items())
@@ -218,7 +228,9 @@ def test_import_and_run_base_attentive_v2_with_fake_keras_runtime(
 
         importlib.reload(base_attentive)
 
-        from base_attentive.experimental import BaseAttentiveV2
+        from base_attentive.experimental import (
+            BaseAttentiveV2,
+        )
 
         model = BaseAttentiveV2(
             static_input_dim=2,

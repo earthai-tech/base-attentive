@@ -59,7 +59,9 @@ class ModelRegistry:
         by_backend[normalized_backend] = registration
         return registration
 
-    def has(self, key: str, *, backend: str | None = None) -> bool:
+    def has(
+        self, key: str, *, backend: str | None = None
+    ) -> bool:
         if key not in self._registrations:
             return False
         if backend is None:
