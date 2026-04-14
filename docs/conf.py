@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import re
+import shutil
 import sys
 from datetime import date
 from pathlib import Path
@@ -13,6 +14,17 @@ SRC = ROOT / "src"
 PACKAGE_INIT = SRC / "base_attentive" / "__init__.py"
 
 sys.path.insert(0, str(SRC))
+
+# ---------------------------------------------------------------------------
+# Auto-copy notebooks from examples/ into docs/notebooks/ before Sphinx runs.
+# This keeps examples/ as the single source of truth while making the
+# notebooks reachable by nbsphinx (which requires files inside the source dir).
+# ---------------------------------------------------------------------------
+_EXAMPLES_DIR  = ROOT / "examples"
+_NOTEBOOKS_DIR = Path(__file__).parent / "notebooks"
+_NOTEBOOKS_DIR.mkdir(exist_ok=True)
+for _nb in _EXAMPLES_DIR.glob("*.ipynb"):
+    shutil.copy(_nb, _NOTEBOOKS_DIR / _nb.name)
 
 
 def _read_version() -> str:
@@ -40,7 +52,17 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
     "sphinx.ext.coverage",
+    "sphinx_copybutton",
+    "nbsphinx",
 ]
+
+# nbsphinx — never re-execute notebooks during the doc build.
+# Cells are rendered as-is (with any saved outputs).
+# On ReadTheDocs there is no ML runtime available, so execution must be off.
+nbsphinx_execute = "never"
+
+# Allow nbsphinx to process notebooks even when they have no outputs.
+nbsphinx_allow_errors = False
 
 root_doc = "index"
 templates_path: list[str] = ["_templates"]
@@ -107,27 +129,21 @@ html_sidebars = {
 rst_prolog = """
 .. |Feature| image:: https://img.shields.io/badge/type-feature-brightgreen.svg
    :alt: Feature
-   :target: #features
 
 .. |Fix| image:: https://img.shields.io/badge/type-fix-blue.svg
    :alt: Bug Fix
-   :target: #bug-fixes
 
 .. |Bug| image:: https://img.shields.io/badge/type-bug_fix-blue.svg
    :alt: Bug Fix
-   :target: #bug-fixes
 
 .. |Bugfix| image:: https://img.shields.io/badge/type-bugfix-blue.svg
    :alt: Bug Fix
-   :target: #bug-fixes
 
 .. |Dependencies| image:: https://img.shields.io/badge/type-dependencies-orange.svg
    :alt: Dependencies
-   :target: #dependencies
 
 .. |Internal| image:: https://img.shields.io/badge/type-internal-gray.svg
    :alt: Internal
-   :target: #internal
 
 .. |MAJOR| image:: https://img.shields.io/badge/version-MAJOR-red.svg
    :alt: MAJOR Version Change

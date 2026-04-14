@@ -9,11 +9,11 @@ BaseAttentive Documentation
    :target: https://pypi.org/project/base-attentive/
    :alt: PyPI version
 
-.. image:: https://img.shields.io/badge/version-2.0.0rc1-brightgreen.svg
+.. image:: https://img.shields.io/badge/version-2.0.1-brightgreen.svg
    :target: release_notes/index.html
-   :alt: Version 2.0.0rc1
+   :alt: Version 2.0.1
 
-.. image:: https://img.shields.io/badge/semver-2.0.0-blueviolet.svg
+.. image:: https://img.shields.io/badge/semver-2.0.1-blueviolet.svg
    :target: https://semver.org/
    :alt: Semantic Versioning
 
@@ -53,7 +53,7 @@ BaseAttentive Documentation
    :alt: Platform: Linux, macOS, Windows
 
 A modular encoder-decoder architecture for sequence-to-sequence time series
-forecasting with layered attention mechanisms — **version 2.0.0rc1**.
+forecasting with layered attention mechanisms — **version 2.0.1**.
 
 **BaseAttentive** is a modular encoder-decoder architecture designed to process
 three distinct types of inputs:
@@ -86,7 +86,7 @@ Main Elements
    - ``BaseAttentiveSpec`` / ``BaseAttentiveComponentSpec`` for backend-neutral config
    - ``ComponentRegistry`` and ``ModelRegistry`` for pluggable components
    - ``BaseAttentiveV2Assembly`` resolver/assembler pattern
-   - Multi-backend: TensorFlow (stable), JAX, PyTorch (experimental)
+   - Multi-backend: TensorFlow, Torch, and JAX (all supported in v2)
 
 **Runtime support**
    - Keras 3 based implementation
@@ -136,8 +136,7 @@ Quick Example
    :maxdepth: 2
    :caption: User Guide
 
-   backends
-   torch_backend_guide
+   backends/index
    usage
    architecture_guide
    configuration_guide
@@ -149,6 +148,12 @@ Quick Example
 
    api_reference
    components_reference
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Examples
+
+   notebooks/index
 
 .. toctree::
    :maxdepth: 2

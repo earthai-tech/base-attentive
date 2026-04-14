@@ -1,869 +1,1000 @@
 Applications and Use Cases
 ===========================
 
-BaseAttentive can be used as a standalone forecasting model or as a kernel
-within larger deep learning architectures. This page outlines example
-applications, integration patterns, and deployment considerations.
+This page walks through real-world applications of BaseAttentive with
+complete v2 configuration examples.  Each section covers the input
+structure, recommended v2 configuration, backend choice, and common
+extension patterns.
 
-.. contents::
+.. contents:: On this page
    :local:
    :depth: 2
+
+----
+
+V2 Configuration Patterns
+--------------------------
+
+Before diving into domain examples, here is a summary of the v2 patterns
+used throughout this page.
+
+Keyword-argument style (quick)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For most applications you can configure everything through keyword arguments:
+
+.. code-block:: python
+
+   from base_attentive import BaseAttentive
+
+   model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=1,
+       forecast_horizon=24,
+       mode="tft",
+       embed_dim=64,
+       num_heads=8,
+       quantiles=[0.1, 0.5, 0.9],
+   )
+
+Spec-based style (reproducible)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When you need reproducibility, hyperparameter search, or config-file driven
+workflows, use ``BaseAttentiveSpec``:
+
+.. code-block:: python
+
+   from base_attentive.config import BaseAttentiveSpec, BaseAttentiveComponentSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
+
+   spec = BaseAttentiveSpec(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=6,
+       output_dim=1,
+       forecast_horizon=24,
+       embed_dim=64,
+       hidden_units=128,
+       attention_heads=8,
+       dropout_rate=0.1,
+       backend_name="torch",
+       head_type="quantile",
+       quantiles=(0.1, 0.5, 0.9),
+       components=BaseAttentiveComponentSpec(
+           sequence_pooling="pool.last",
+       ),
+   )
+   model = BaseAttentiveV2Assembly().build(spec)
+
+Choosing a backend per application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Backend
+     - Typical use
+   * - TensorFlow
+     - Deployment (TF Serving, TFLite, SavedModel), CI/CD pipelines
+   * - Torch
+     - Research iteration, CUDA/MPS GPU acceleration, custom autograd
+   * - JAX
+     - Batch parallelism, TPU training, functional/stateless workflows
+
+----
 
 Standalone Forecasting Applications
 ====================================
 
-BaseAttentive can be applied to multi-step time series forecasting across
-domains. It combines static context features with dynamic historical patterns
-and known future information to produce multi-step forecasts.
-
-Architecture Pattern
---------------------
-
-All standalone applications follow this unified architecture:
-
-.. code-block:: text
-
-    Static Features (location, properties, type)
-           ↓
-    Dynamic Past (historical measurements)
-           ↓  ← BaseAttentive hybrid/transformer attention
-    Known Future (forecasted external conditions)
-           ↓
-    Multi-Step Predictions (uncertainty quantiles)
-
-.. list-table:: Standalone Application Categories
-   :widths: 30 40 30
-   :header-rows: 1
-
-   * - Application Domain
-     - Input Features
-     - Prediction Targets
-   * - Air Quality
-     - Location, altitude, urban/rural + Historical pollution + Weather forecast
-     - PM2.5, NO₂, O₃ levels (24h)
-   * - Energy Demand
-     - Building type, area, units + Historical load + Weather, calendar
-     - Electricity demand (48h), peak times
-   * - Weather
-     - Geography, elevation, terrain + Historical weather + Seasonal data
-     - Temperature, pressure, precipitation (30+ steps)
-   * - Traffic Flow
-     - Road properties, lanes + Historical volume, speed + Time, events
-     - Vehicle volume, congestion level (48 steps)
-
 Air Quality Forecasting
 -----------------------
 
-**Challenge:** Air pollution varies with meteorology, human activity, and geography. Cities need real-time forecasts for health alerts.
+**Challenge:** Air pollution varies with meteorology, human activity, and
+geography.  Cities need real-time forecasts for health alerts across
+multiple monitoring stations.
 
-**Example setup:**
+**Input structure:**
 
-- **Static Features:** Geographic coordinates, elevation, urban index, pollution source density
-- **Dynamic Past:** 7 days of hourly PM2.5, NO₂, O₃, temperature, humidity
-- **Known Future:** Weather forecast (wind speed, temperature, precipitation)
-- **Output:** 24-hour PM2.5 forecast with uncertainty quantiles
+.. list-table::
+   :header-rows: 1
+   :widths: 20 30 50
 
-**What this setup can capture:**
+   * - Stream
+     - Features
+     - Example values
+   * - Static (4)
+     - Latitude, longitude, elevation, urban index
+     - ``[48.85, 2.35, 35.0, 0.82]``
+   * - Dynamic (5, T=168)
+     - PM2.5, NO₂, O₃, temperature, relative humidity
+     - 7 days × hourly
+   * - Future (2, H=24)
+     - Wind speed forecast, temperature forecast
+     - Next 24 hours from NWP model
 
-- Can represent recurring pollution patterns such as rush-hour peaks or seasonal changes
-- Can incorporate weather forecasts and scenario-based inputs
-- Allows joint prediction of several pollutants
-- Quantile outputs can support threshold-based alerting strategies
-
-**Use Cases:**
-
-- Public health alerts (air quality index warnings)
-- School/outdoor event planning
-- Industrial emission controls
-- Vulnerable population notifications
-
-**Example Workflow:**
+**V2 configuration:**
 
 .. code-block:: python
 
-    import numpy as np
-    from base_attentive import BaseAttentive
+   import numpy as np
+   from base_attentive import BaseAttentive
+   from base_attentive.components import CRPSLoss
 
-    air_quality_model = BaseAttentive(
-        static_input_dim=4,     # lat, lon, alt, urban_index
-        dynamic_input_dim=5,    # PM2.5, NO2, O3, Temp, Humidity
-        future_input_dim=2,     # wind_speed, temp_forecast
-        output_dim=1,
-        forecast_horizon=24,
-        quantiles=[0.1, 0.5, 0.9],  # 10th, 50th, 90th percentiles
-        mode="tft_like",
-    )
+   air_model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=5,
+       future_input_dim=2,
+       output_dim=1,           # PM2.5
+       forecast_horizon=24,
+       # ── architecture ────────────────────────────────
+       mode="tft",             # VSN + gated residuals + cross attention
+       embed_dim=64,
+       num_heads=8,
+       scales=[1, 2, 4],       # capture hourly / 2h / 4h patterns
+       multi_scale_agg="average",
+       # ── output ──────────────────────────────────────
+       quantiles=[0.1, 0.5, 0.9],
+   )
 
-    air_quality_model.compile(optimizer="adam", loss="mse")
-    air_quality_model.fit(
-        [static_features, historical_data, weather_forecast],
-        targets,
-        epochs=50,
-    )
+   air_model.compile(
+       optimizer="adam",
+       loss=CRPSLoss(mode="quantile", quantiles=[0.1, 0.5, 0.9]),
+   )
+   air_model.fit(
+       [static_features, historical_obs, weather_forecast],
+       targets,
+       epochs=50,
+       batch_size=64,
+   )
 
-    predictions = air_quality_model.predict([test_static, test_history, test_future])
-    # predictions shape: (batch, 24, 3) → 24-hour forecast with 3 quantiles
+   predictions = air_model.predict([test_static, test_dynamic, test_future])
+   # shape: (batch, 24, 3, 1) — horizon × quantiles × output_dim
 
+**Spec-based version (for experiment tracking):**
+
+.. code-block:: python
+
+   import json
+   from base_attentive.config import BaseAttentiveSpec, BaseAttentiveComponentSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
+
+   air_spec = BaseAttentiveSpec(
+       static_input_dim=4,
+       dynamic_input_dim=5,
+       future_input_dim=2,
+       output_dim=1,
+       forecast_horizon=24,
+       embed_dim=64,
+       hidden_units=128,
+       attention_heads=8,
+       dropout_rate=0.1,
+       backend_name="tensorflow",
+       head_type="quantile",
+       quantiles=(0.1, 0.5, 0.9),
+   )
+
+   # Save spec to JSON for reproducibility
+   with open("air_quality_spec.json", "w") as f:
+       json.dump(air_spec.__dict__, f, indent=2)
+
+   air_model = BaseAttentiveV2Assembly().build(air_spec)
+
+**Use cases:** Health index alerts, school/event planning, industrial
+emission monitoring, vulnerable population notifications.
+
+----
 
 Energy Demand Forecasting
 --------------------------
 
-**Challenge:** Electric grids must balance supply and demand in real-time. Peak demand prediction enables optimal resource allocation.
+**Challenge:** Electric grids must balance supply and demand in real-time.
+Peak demand prediction enables optimal resource allocation and demand-response
+activation.
 
-**Example setup:**
+**Input structure:**
 
-- **Static Features:** Building type, floor area, insulation level, HVAC capacity, solar installation
-- **Dynamic Past:** 2 weeks of hourly loads, temperature, solar irradiance, time-of-use signals
-- **Known Future:** Weather forecast, calendar data (weekday/weekend/holiday), planned maintenance
-- **Output:** 48-hour demand forecast with peak identification
+.. list-table::
+   :header-rows: 1
+   :widths: 20 30 50
 
-**What this setup can capture:**
+   * - Stream
+     - Features
+     - Example values
+   * - Static (5)
+     - Building type, floor area, insulation, HVAC capacity, solar flag
+     - One-hot encoded + continuous
+   * - Dynamic (6, T=336)
+     - Hourly load, temperature, solar irradiance, hour_sin, hour_cos, dow_sin
+     - 2 weeks × hourly
+   * - Future (3, H=48)
+     - Temperature forecast, day type, planned events
+     - Deterministic calendar + NWP
 
-- Can represent building-specific consumption patterns
-- Can account for daily and weekly seasonality
-- Can relate demand to heating and cooling conditions
-- Can be coupled with demand-response rules
-- Produces multi-step forecasts for planning and dispatch
-
-**Use Cases:**
-
-- Real-time grid balancing and frequency regulation
-- Renewable energy integration (solar/wind variability)
-- Peak shaving and demand response
-- Cost minimization with time-of-use pricing
-- Microgrids and smart buildings
-
-**Integration Example:**
+**V2 configuration:**
 
 .. code-block:: python
 
-    import numpy as np
-    from base_attentive import BaseAttentive
+   import numpy as np
+   from base_attentive import BaseAttentive
 
-    # Train on building portfolio
-    energy_models = {}
-    for building_id, data in buildings.items():
-        model = BaseAttentive(
-            static_input_dim=5,     # Property features
-            dynamic_input_dim=5,    # Load, temp, solar, hour_sin, hour_cos
-            future_input_dim=2,     # Weather, day_type
-            output_dim=1,
-            forecast_horizon=48,    # 2-day forecast
-            mode="tft_like",
-            attention_levels=["cross", "hierarchical"],
-        )
-        model.compile(optimizer="adam", loss="mse")
-        model.fit(data["train_x"], data["train_y"])
-        energy_models[building_id] = model
+   energy_model = BaseAttentive(
+       static_input_dim=5,
+       dynamic_input_dim=6,
+       future_input_dim=3,
+       output_dim=1,
+       forecast_horizon=48,      # 2-day forecast
+       # ── architecture ────────────────────────────────
+       objective="hybrid",
+       scales=[1, 2, 4, 8],      # 1h / 2h / 4h / 8h patterns
+       multi_scale_agg="average",
+       attention_levels=["cross", "hierarchical"],
+       embed_dim=64,
+       num_heads=8,
+       # ── regularisation ──────────────────────────────
+       dropout_rate=0.1,
+       use_vsn=True,
+       # ── output ──────────────────────────────────────
+       quantiles=[0.1, 0.5, 0.9],
+   )
+   energy_model.compile(optimizer="adam", loss="mse")
 
-    # Real-time forecasting
-    for building_id, model in energy_models.items():
-        demand_forecast = model.predict(current_features)
-        activate_demand_response_if(demand_forecast > threshold)
+**Multi-building portfolio pattern:**
 
+When deploying across many buildings, keep one spec and swap only the
+data — this ensures identical architecture across instances:
+
+.. code-block:: python
+
+   from base_attentive.config import BaseAttentiveSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
+
+   base_spec = BaseAttentiveSpec(
+       static_input_dim=5,
+       dynamic_input_dim=6,
+       future_input_dim=3,
+       output_dim=1,
+       forecast_horizon=48,
+       embed_dim=64,
+       attention_heads=8,
+       backend_name="tensorflow",
+       head_type="point",
+   )
+
+   building_models = {}
+   for building_id, data in buildings.items():
+       model = BaseAttentiveV2Assembly().build(base_spec)
+       model.compile(optimizer="adam", loss="mse")
+       model.fit(data["x_train"], data["y_train"], epochs=30, verbose=0)
+       building_models[building_id] = model
+
+**Use cases:** Grid balancing, demand response, renewable integration,
+peak shaving, smart buildings.
+
+----
 
 Weather Prediction
 ------------------
 
-**Challenge:** Weather systems are chaotic. Even small prediction windows require capturing multi-scale atmospheric interactions.
+**Challenge:** Weather systems exhibit multi-scale dynamics — synoptic
+patterns (days), mesoscale events (hours), and local effects (minutes).
+A model must capture all simultaneously.
 
-**Example setup:**
+**Input structure:**
 
-- **Static Features:** Geographic coordinates, elevation, terrain type, urban heat island index
-- **Dynamic Past:** 5 days of 2-hourly weather (temperature, pressure, humidity, wind components)
-- **Known Future:** Seasonal encoding, jet stream position indicators
-- **Output:** 30-step deterministic forecast (2-hourly step)
+.. list-table::
+   :header-rows: 1
+   :widths: 20 30 50
 
-**What this setup can capture:**
+   * - Stream
+     - Features
+     - Example values
+   * - Static (4)
+     - Latitude, longitude, elevation, terrain type
+     - Continuous + categorical
+   * - Dynamic (7, T=120)
+     - Temperature, pressure, RH, wind_u, wind_v, cloud cover, precip
+     - 10 days × 2-hourly
+   * - Future (4, H=30)
+     - Seasonal sin/cos, jet stream index, El Niño index, forecast hour
+     - Deterministic
 
-- Can combine geographic context with recent atmospheric history
-- Memory attention can retain longer structures in the sequence
-- Can include seasonal or climatological covariates
-- Can be used within ensemble workflows for uncertainty analysis
-- Neural surrogates may reduce inference cost relative to physics-based NWP, although forecast quality depends on data coverage and evaluation design
-
-**Use Cases:**
-
-- Weather service operations
-- Agricultural planning (frost warnings, irrigation)
-- Renewable energy forecasting (solar, wind)
-- Disaster management (extreme weather detection)
-- Traffic and transportation
-
-**Implementation:**
+**V2 configuration:**
 
 .. code-block:: python
 
-    import numpy as np
-    from base_attentive import BaseAttentive
+   from base_attentive import BaseAttentive
+   from base_attentive.components import CRPSLoss
 
-    weather_model = BaseAttentive(
-        static_input_dim=4,         # lat, lon, elevation, terrain
-        dynamic_input_dim=5,        # T, P, RH, wind_u, wind_v
-        future_input_dim=2,         # seasonal_enc_sin, seasonal_enc_cos
-        output_dim=2,               # T, P forecast
-        forecast_horizon=30,        # 60 hours of 2-hourly data
-        mode="pihal_like",          # Multi-scale + memory attention
-        attention_levels=["cross", "hierarchical", "memory"],
-        scales=[1, 2, 4],
-        memory_size=64,
-        num_heads=8,
-        embed_dim=64,
-    )
+   weather_model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=7,
+       future_input_dim=4,
+       output_dim=3,              # temperature, pressure, precipitation
+       forecast_horizon=30,
+       # ── architecture ────────────────────────────────
+       mode="pihal",              # multi-scale LSTM + memory + hierarchical
+       scales=[1, 2, 4],
+       multi_scale_agg="average",
+       attention_levels=["cross", "hierarchical", "memory"],
+       memory_size=64,
+       embed_dim=64,
+       num_heads=8,
+       num_encoder_layers=4,
+       # ── output ──────────────────────────────────────
+       quantiles=[0.1, 0.5, 0.9],
+   )
 
+   weather_model.compile(
+       optimizer="adam",
+       loss=CRPSLoss(mode="quantile", quantiles=[0.1, 0.5, 0.9]),
+   )
+
+**Using JAX backend for TPU training:**
+
+.. code-block:: python
+
+   import os
+   os.environ["KERAS_BACKEND"] = "jax"
+
+   from base_attentive.config import BaseAttentiveSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
+
+   weather_spec = BaseAttentiveSpec(
+       static_input_dim=4,
+       dynamic_input_dim=7,
+       future_input_dim=4,
+       output_dim=3,
+       forecast_horizon=30,
+       embed_dim=128,
+       attention_heads=16,
+       dropout_rate=0.1,
+       backend_name="jax",          # JAX for TPU
+       head_type="quantile",
+       quantiles=(0.1, 0.5, 0.9),
+   )
+   weather_model = BaseAttentiveV2Assembly().build(weather_spec)
+
+**Use cases:** NWP post-processing, agricultural planning, renewable
+energy siting, disaster early warning.
+
+----
 
 Traffic Flow Prediction
 -----------------------
 
-**Challenge:** Traffic patterns have complex dependencies on time-of-day, incidents, events, and weather.
+**Challenge:** Traffic patterns have strong periodic structure (rush hours,
+weekdays vs weekends) but also exhibit abrupt changes (incidents, events,
+weather).
 
-**Example setup:**
+**Input structure:**
 
-- **Static Features:** Road segment properties (type, lanes, speed limit, urban/highway)
-- **Dynamic Past:** 24 hours of 5-minute traffic (volume, speed, occupancy, incident flags)
-- **Known Future:** Time-of-day, day-of-week, known events, weather forecast
-- **Output:** 4-hour traffic predictions (5-minute resolution)
+.. list-table::
+   :header-rows: 1
+   :widths: 20 30 50
 
-**What this setup can capture:**
+   * - Stream
+     - Features
+     - Example values
+   * - Static (4)
+     - Road type, lanes, speed limit, urban flag
+     - One-hot + continuous
+   * - Dynamic (5, T=288)
+     - Volume, speed, occupancy, incident flag, weather effect
+     - 24 h × 5-minute
+   * - Future (5, H=48)
+     - Hour_sin, hour_cos, day_of_week, known events, weather score
+     - Deterministic calendar + forecast
 
-- Can represent road-specific patterns and rush-hour dynamics
-- Can incorporate incident indicators and propagation effects
-- Can include scheduled events such as concerts or road work
-- Can account for weather-related changes in traffic flow
-- Can support downstream routing or congestion-management systems
-
-**Use Cases:**
-
-- Real-time navigation and route optimization
-- Congestion pricing and demand management
-- Traffic signal control optimization
-- Public transit prioritization
-- Emergency vehicle routing
-
-**Implementation:**
+**V2 configuration:**
 
 .. code-block:: python
 
-    import numpy as np
-    from base_attentive import BaseAttentive
+   from base_attentive import BaseAttentive
 
-    traffic_model = BaseAttentive(
-        static_input_dim=4,         # road_type, lanes, speed_limit, urban_flag
-        dynamic_input_dim=4,        # volume, speed, occupancy, incident_flag
-        future_input_dim=4,         # hour_sin, hour_cos, day_of_week, event_flag
-        output_dim=2,               # volume, speed
-        forecast_horizon=48,        # 4h at 5-minute resolution
-        mode="tft",
-        attention_levels=["cross", "hierarchical"],
-        scales="auto",
-        embed_dim=64,
-        num_heads=8,
-    )
+   traffic_model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=5,
+       future_input_dim=5,
+       output_dim=2,              # volume, speed
+       forecast_horizon=48,       # 4 h at 5-minute resolution
+       # ── architecture ────────────────────────────────
+       mode="tft",
+       attention_levels=["cross", "hierarchical"],
+       scales=[1, 3, 6, 12],      # 5 / 15 / 30 / 60-min patterns
+       multi_scale_agg="average",
+       embed_dim=64,
+       num_heads=8,
+       # ── output ──────────────────────────────────────
+       quantiles=[0.1, 0.5, 0.9],
+   )
+   traffic_model.compile(optimizer="adam", loss="mse")
 
+**Using Torch backend with CUDA:**
+
+.. code-block:: python
+
+   import os
+   os.environ["KERAS_BACKEND"] = "torch"
+
+   from base_attentive.backend import TorchDeviceManager
+   dm = TorchDeviceManager(prefer="cuda")
+   print(dm.device)   # "cuda:0" or "cpu"
+
+   from base_attentive import BaseAttentive
+   traffic_model = BaseAttentive(
+       static_input_dim=4,
+       dynamic_input_dim=5,
+       future_input_dim=5,
+       output_dim=2,
+       forecast_horizon=48,
+       mode="tft",
+       embed_dim=64,
+   )
+
+**Use cases:** Navigation systems, congestion pricing, signal control,
+public-transit prioritisation, emergency routing.
+
+----
 
 BaseAttentive as a Kernel in Larger Models
 ==========================================
 
-Beyond standalone forecasting, BaseAttentive can also be used as a kernel
-component within larger neural networks and decision pipelines.
+V2 makes ``BaseAttentive`` particularly well suited as a reusable kernel.
+Because every component is registered and resolved at build time, you can
+share a single spec across multiple wrapper models while swapping the outer
+logic for each application.
 
-Robust Kernel-Centric Systems
------------------------------
-
-One of the strongest deployment patterns is to treat ``BaseAttentive`` as the
-reliable temporal kernel and place domain-specific logic around it. In that
-setup, the kernel handles sequence modeling and multi-horizon forecasting,
-while the outer model adds robustness features such as:
-
-- residual correction heads
-- risk or anomaly scoring
-- rule-based safety adjustments
-- physics or conservation penalties
-- task-specific outputs for downstream decisions
-
-This separation is useful because it keeps the forecasting core stable while
-letting you iterate on application logic more safely.
+Wrapper pattern — shared spec, different heads
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
-    import keras
-    import numpy as np
-    from base_attentive import BaseAttentive
+   import keras
+   from base_attentive.config import BaseAttentiveSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
 
-    class RobustGridForecaster(keras.Model):
-        def __init__(self, forecast_horizon=48):
-            super().__init__()
-            self.kernel = BaseAttentive(
-                static_input_dim=5,
-                dynamic_input_dim=6,
-                future_input_dim=4,
-                output_dim=1,
-                forecast_horizon=forecast_horizon,
-            )
-            self.bias_head = keras.layers.Dense(1)
-            self.risk_gate = keras.layers.Dense(1, activation="sigmoid")
+   # One spec, two applications
+   shared_spec = BaseAttentiveSpec(
+       static_input_dim=5,
+       dynamic_input_dim=8,
+       future_input_dim=4,
+       output_dim=1,
+       forecast_horizon=24,
+       embed_dim=64,
+       attention_heads=8,
+       backend_name="tensorflow",
+       head_type="point",
+   )
 
-        def call(self, inputs, training=False):
-            _, dynamic_x, _ = inputs
+   class DemandForecaster(keras.Model):
+       def __init__(self):
+           super().__init__()
+           self.kernel    = BaseAttentiveV2Assembly().build(shared_spec)
+           self.bias_head = keras.layers.Dense(1)
 
-            base_forecast = self.kernel(inputs, training=training)
-            context = keras.ops.mean(dynamic_x, axis=1)
+       def call(self, inputs, training=False):
+           base = self.kernel(inputs, training=training)
+           ctx  = keras.ops.mean(inputs[1], axis=1)   # dynamic mean
+           bias = keras.ops.expand_dims(self.bias_head(ctx), axis=1)
+           return base + bias
 
-            bias = self.bias_head(context)
-            bias = keras.ops.expand_dims(bias, axis=1)
+   class AnomalyForecaster(keras.Model):
+       def __init__(self):
+           super().__init__()
+           self.kernel      = BaseAttentiveV2Assembly().build(shared_spec)
+           self.anomaly_out = keras.layers.Dense(1, activation="sigmoid")
 
-            gate = self.risk_gate(context)
-            gate = keras.ops.expand_dims(gate, axis=1)
+       def call(self, inputs, training=False):
+           base = self.kernel(inputs, training=training)
+           ctx  = keras.ops.mean(base, axis=1)
+           return {
+               "forecast": base,
+               "anomaly_score": self.anomaly_out(ctx),
+           }
 
-            return base_forecast + gate * bias
+   demand_model  = DemandForecaster()
+   anomaly_model = AnomalyForecaster()
 
-In practice, this kind of wrapper gives you a reusable forecasting kernel that
-can be shared across projects while the outer layers stay tied to the business
-problem. When the custom behavior must live inside one model class, you can
-also derive a custom subclass from ``BaseAttentive`` directly.
+Kernel with custom registered encoder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Choosing the Extension Path
----------------------------
+Register a domain-specific encoder once, then use it across any number of
+specs:
 
-- Wrap ``BaseAttentive`` when you want extra heads, safety logic, or fusion
-  with other models.
-- Derive a custom subclass when the new behavior should remain part of the
-  same serialized model API.
-- Keep the kernel focused on forecasting and keep application rules outside it
-  whenever possible.
-- Check output shapes carefully if you enable quantile forecasts.
+.. code-block:: python
 
-See :doc:`usage` for a step-by-step wrapper example and a direct inheritance
-pattern that extends ``call`` and ``get_config``.
+   from base_attentive.registry import DEFAULT_COMPONENT_REGISTRY
+
+   def seismic_encoder(*, context, units, hidden_units, **kw):
+       """Short-window STA/LTA-inspired encoder for seismic signals."""
+       import keras
+       inp = keras.Input(shape=(None, units))
+       # Short-term average
+       sta = keras.layers.Conv1D(hidden_units, kernel_size=10,
+                                  padding="causal", activation="relu")(inp)
+       # Long-term average
+       lta = keras.layers.Conv1D(hidden_units, kernel_size=50,
+                                  padding="causal", activation="relu")(inp)
+       x   = keras.layers.Concatenate()([sta, lta])
+       x   = keras.layers.Dense(hidden_units, activation="relu")(x)
+       return keras.Model(inp, x, name="seismic_encoder")
+
+   DEFAULT_COMPONENT_REGISTRY.register(
+       "encoder.seismic_stalta",
+       seismic_encoder,
+       backend="generic",
+       description="STA/LTA-inspired encoder for seismic time series.",
+   )
+
+   from base_attentive.config import BaseAttentiveSpec, BaseAttentiveComponentSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
+
+   seismic_spec = BaseAttentiveSpec(
+       static_input_dim=3,       # lat, lon, depth
+       dynamic_input_dim=3,      # Z, N, E components
+       future_input_dim=0,
+       output_dim=1,
+       forecast_horizon=12,
+       embed_dim=64,
+       hidden_units=128,
+       components=BaseAttentiveComponentSpec(
+           temporal_encoder="encoder.seismic_stalta",
+       ),
+   )
+   seismic_model = BaseAttentiveV2Assembly().build(seismic_spec)
+
+----
 
 Ensemble Methods
 ----------------
 
-**Pattern:** Combine multiple BaseAttentive configurations with different modes
-and attention mechanisms.
-
-.. code-block:: text
-
-    Ensemble Architecture:
-
-    Inputs
-      ↓
-    BaseAttentive Kernel 1 (mode='tft_like':  cross + hierarchical)
-    BaseAttentive Kernel 2 (mode='pihal_like': multi-scale + memory)
-    BaseAttentive Kernel 3 (mode='tft':        full TFT path)
-      ↓
-    Meta-learner (learnable weights or weighted average)
-      ↓
-    Aggregated Predictions
-
-**Typical effects:**
-
-- Can reduce prediction variance across model instances
-- May improve calibration of predictive intervals
-- Helps compare behavior under distribution shift
-- Combines different modeling assumptions on difficult cases
-- Adds redundancy if one member degrades
-
-**Example Application:**
+Combine multiple ``BaseAttentiveSpec`` configs that differ in architecture
+while sharing the same outer training loop:
 
 .. code-block:: python
 
-    import numpy as np
-    from base_attentive import BaseAttentive
+   import numpy as np
+   from base_attentive.config import BaseAttentiveSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
 
-    common = dict(
-        static_input_dim=4,
-        dynamic_input_dim=8,
-        future_input_dim=4,
-        output_dim=1,
-        forecast_horizon=24,
-        embed_dim=32,
-        num_heads=4,
-    )
+   base_dims = dict(
+       static_input_dim=4,
+       dynamic_input_dim=8,
+       future_input_dim=4,
+       output_dim=1,
+       forecast_horizon=24,
+       backend_name="tensorflow",
+       head_type="point",
+   )
 
-    kernels = [
-        BaseAttentive(**common, mode="tft_like"),
-        BaseAttentive(**common, mode="pihal_like", scales=[1, 2, 4]),
-        BaseAttentive(
-            **common,
-            attention_levels=["memory"],
-            memory_size=128,
-        ),
-    ]
+   specs = [
+       BaseAttentiveSpec(**base_dims, embed_dim=32,  attention_heads=4,
+                         dropout_rate=0.1),   # lightweight
+       BaseAttentiveSpec(**base_dims, embed_dim=64,  attention_heads=8,
+                         dropout_rate=0.1),   # medium
+       BaseAttentiveSpec(**base_dims, embed_dim=128, attention_heads=16,
+                         dropout_rate=0.2),   # large + more regularisation
+   ]
 
-    for k in kernels:
-        k.compile(optimizer="adam", loss="mse")
-        k.fit(train_inputs, train_targets, epochs=20, verbose=0)
+   members = []
+   for spec in specs:
+       m = BaseAttentiveV2Assembly().build(spec)
+       m.compile(optimizer="adam", loss="mse")
+       m.fit(train_x, train_y, epochs=30, verbose=0)
+       members.append(m)
 
-    predictions = [k.predict(test_inputs) for k in kernels]
-    ensemble_pred = np.mean(predictions, axis=0)
-    ensemble_uncertainty = np.std(predictions, axis=0)
+   preds   = np.array([m.predict(test_x) for m in members])  # (3, B, H, O)
+   mean_pred = preds.mean(axis=0)
+   std_pred  = preds.std(axis=0)    # epistemic uncertainty estimate
 
+----
 
 Physics-Guided Networks
 ------------------------
 
-**Pattern:** Embed domain knowledge and conservation laws into the neural network training process.
-
-**Approach:**
-
-1. BaseAttentive learns data-driven patterns from observations
-2. Physics layer enforces conservation laws (e.g., energy balance)
-3. Hybrid loss combines data fit and physics constraints
-
-.. code-block:: text
-
-    Physics Loss = λ₁ × Data Loss + λ₂ × Constraint Loss
-
-    Example (Energy Conservation):
-      Energy_t+1 ≈ Energy_t × decay + Solar_Production
-      Constraint Loss = MSE(prediction, physics_prediction)
-
-**Application Examples:**
-
-- **Energy Systems:** Enforce Kirchhoff's laws, energy balance
-- **Fluid Dynamics:** Incorporate momentum, continuity equations
-- **Climate:** Include mass, heat conservation
-- **Geophysics:** Respect seismic wave physics
-
-**Typical effects:**
-
-- Encourages physically plausible outputs
-- Can improve extrapolation when the constraints are informative
-- May reduce data requirements through regularization
-- Constraint violations can help identify modeling gaps
-- Often useful for longer forecast horizons
-
-**Implementation:**
+Use the Keras ``GradientTape`` custom training loop to combine a data loss
+with a physics constraint.  The spec-based build gives you an easily
+serialisable configuration:
 
 .. code-block:: python
 
-    import keras
-    import numpy as np
-    from base_attentive import BaseAttentive
+   import keras
+   import numpy as np
+   from base_attentive.config import BaseAttentiveSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
 
-    class PhysicsGuidedForecaster(keras.Model):
-        def __init__(self, forecast_horizon=48, physics_weight=0.1):
-            super().__init__()
-            self.kernel = BaseAttentive(
-                static_input_dim=5,
-                dynamic_input_dim=6,
-                future_input_dim=4,
-                output_dim=1,
-                forecast_horizon=forecast_horizon,
-                mode="tft_like",
-            )
-            self.physics_weight = physics_weight
+   spec = BaseAttentiveSpec(
+       static_input_dim=5,
+       dynamic_input_dim=6,
+       future_input_dim=4,
+       output_dim=1,
+       forecast_horizon=48,
+       embed_dim=64,
+       attention_heads=8,
+       backend_name="tensorflow",
+       head_type="point",
+   )
 
-        def call(self, inputs, training=False):
-            return self.kernel(inputs, training=training)
+   class PhysicsGuidedForecaster(keras.Model):
+       def __init__(self, spec, physics_weight=0.1):
+           super().__init__()
+           self.kernel         = BaseAttentiveV2Assembly().build(spec)
+           self.physics_weight = physics_weight
 
-        def compute_physics_loss(self, x, pred):
-            # Example: energy balance constraint
-            _, dynamic_x, _ = x
-            last_obs = dynamic_x[:, -1:, :1]   # last observed energy
-            delta = keras.ops.mean(keras.ops.abs(pred - last_obs))
-            return delta
+       def call(self, inputs, training=False):
+           return self.kernel(inputs, training=training)
 
-        def train_step(self, data):
-            x, y = data
-            with keras.GradientTape() as tape:
-                pred = self(x, training=True)
-                data_loss = keras.losses.mean_squared_error(y, pred)
-                physics_loss = self.compute_physics_loss(x, pred)
-                total_loss = (
-                    keras.ops.mean(data_loss)
-                    + self.physics_weight * physics_loss
-                )
-            grads = tape.gradient(total_loss, self.trainable_variables)
-            self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
-            return {"loss": total_loss, "physics_loss": physics_loss}
+       def _physics_residual(self, inputs, preds):
+           """Energy-balance penalty: prediction should not deviate from
+           last-observed value by more than a physically plausible amount."""
+           _, dynamic_x, _ = inputs
+           last_obs = dynamic_x[:, -1:, :1]   # (B, 1, 1)
+           return keras.ops.mean(keras.ops.abs(preds - last_obs))
 
+       def train_step(self, data):
+           x, y = data
+           with keras.GradientTape() as tape:
+               preds       = self(x, training=True)
+               data_loss   = keras.losses.mean_squared_error(y, preds)
+               phys_loss   = self._physics_residual(x, preds)
+               total_loss  = (
+                   keras.ops.mean(data_loss)
+                   + self.physics_weight * phys_loss
+               )
+           grads = tape.gradient(total_loss, self.trainable_variables)
+           self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
+           return {"loss": total_loss, "physics_loss": phys_loss}
 
-Transfer Learning for Data-Limited Domains
--------------------------------------------
+   model = PhysicsGuidedForecaster(spec, physics_weight=0.05)
+   model.compile(optimizer=keras.optimizers.Adam(1e-3))
+   model.fit([x_static, x_dynamic, x_future], y, epochs=50)
 
-**Pattern:** Pre-train on large multi-site dataset, fine-tune on specific location.
+----
 
-**Workflow:**
+Transfer Learning
+-----------------
 
-1. **Pre-training phase:** Train BaseAttentive on 50+ locations
-   - Learns general time series patterns
-   - Captures domain-specific behaviors (diurnal cycles, seasonality)
-   - Produces reusable feature representations
-
-2. **Fine-tuning phase:** Adapt to target location with limited data
-   - Freeze early attention layers (general patterns)
-   - Train later layers and decoder (location-specific)
-   - Can reduce the amount of target-site data needed when source and target domains are related
-
-**Typical effects:**
-
-- Can help when target-site history is limited
-- Reuses information learned during pre-training
-- May reduce overfitting on small target datasets
-- Fine-tuning remains important when domains differ substantially
-
-**Application Examples:**
-
-- **New building:** No historical energy data, but buildings of similar type available
-- **New weather station:** Transfer from nearby locations
-- **Emerging pollutant:** Transfer from similar chemical compounds
-- **New city:** Transfer from cities with similar geography and climate
-
-**Implementation:**
+Pre-train on a large multi-site dataset, then fine-tune on a target site
+with limited history.  The spec makes it straightforward to reproduce the
+pre-training architecture exactly:
 
 .. code-block:: python
 
-    import numpy as np
-    import keras
-    from base_attentive import BaseAttentive
+   import keras
+   from base_attentive.config import BaseAttentiveSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
 
-    # Pre-train on large dataset
-    pretrained = BaseAttentive(
-        static_input_dim=5,
-        dynamic_input_dim=6,
-        future_input_dim=4,
-        output_dim=1,
-        forecast_horizon=24,
-        mode="tft_like",
-    )
-    pretrained.compile(optimizer="adam", loss="mse")
-    pretrained.fit(large_dataset_x, large_dataset_y, epochs=50)
+   pretrain_spec = BaseAttentiveSpec(
+       static_input_dim=5,
+       dynamic_input_dim=6,
+       future_input_dim=4,
+       output_dim=1,
+       forecast_horizon=24,
+       embed_dim=64,
+       attention_heads=8,
+       dropout_rate=0.1,
+       backend_name="tensorflow",
+       head_type="point",
+   )
 
-    # Clone and freeze most layers
-    transfer_model = keras.models.clone_model(pretrained)
-    transfer_model.set_weights(pretrained.get_weights())
-    for layer in transfer_model.layers[:-8]:
-        layer.trainable = False
+   # Step 1 — pre-train on large dataset
+   pretrained = BaseAttentiveV2Assembly().build(pretrain_spec)
+   pretrained.compile(optimizer="adam", loss="mse")
+   pretrained.fit(large_x, large_y, epochs=50, verbose=0)
 
-    # Fine-tune on target domain
-    transfer_model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=1e-5),
-        loss="mse",
-    )
-    transfer_model.fit(target_x, target_y, epochs=20)
+   # Step 2 — clone weights into a fresh model instance
+   transfer = BaseAttentiveV2Assembly().build(pretrain_spec)
+   transfer.set_weights(pretrained.get_weights())
 
-    # Optional: progressive unfreezing
-    for layer in transfer_model.layers[-8:-4]:
-        layer.trainable = True
-    transfer_model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=1e-5),
-        loss="mse",
-    )
-    transfer_model.fit(target_x, target_y, epochs=10)
+   # Step 3 — freeze early layers; only decoder and head stay trainable
+   for layer in transfer.layers[:-8]:
+       layer.trainable = False
 
+   transfer.compile(
+       optimizer=keras.optimizers.Adam(learning_rate=1e-5),
+       loss="mse",
+   )
+   transfer.fit(target_x, target_y, epochs=20)
+
+   # Step 4 (optional) — progressive unfreezing
+   for layer in transfer.layers[-8:-4]:
+       layer.trainable = True
+   transfer.compile(
+       optimizer=keras.optimizers.Adam(learning_rate=5e-6),
+       loss="mse",
+   )
+   transfer.fit(target_x, target_y, epochs=10)
+
+**When transfer learning helps:** new monitoring station with sparse
+history, new building type without historical load, new language or region
+where only a small labelled set is available.
+
+----
 
 Multi-Task Learning
 --------------------
 
-**Pattern:** Predict multiple correlated quantities jointly using shared BaseAttentive representations.
-
-**Example:** Energy System Prediction
-
-.. code-block:: text
-
-    Shared BaseAttentive Kernel
-      ↓
-    Task 1: Energy Demand ← Dense Decoder
-    Task 2: Peak Hour ← Dense Decoder + Softmax
-    Task 3: Anomaly Detection ← Dense Decoder + Sigmoid
-    Task 4: Grid Frequency ← Dense Decoder
-
-**Typical effects:**
-
-- Shared representations can reduce overfitting
-- Related tasks can regularize one another
-- A single forward pass can produce multiple outputs
-- Joint training may help when tasks share structure
-- Inference can remain compact in deployment
-
-**Loss Combination:**
+Share a single BaseAttentive kernel and attach multiple task heads.  The
+spec-based kernel is built once; tasks add their own decoders on top:
 
 .. code-block:: python
 
-    import keras
-    import numpy as np
-    from base_attentive import BaseAttentive
-    from base_attentive.components import MultiObjectiveLoss
+   import keras
+   from base_attentive.config import BaseAttentiveSpec
+   from base_attentive.assembly import BaseAttentiveV2Assembly
 
-    # Build multi-task model around a shared kernel
-    class MultiTaskEnergyModel(keras.Model):
-        def __init__(self, forecast_horizon=24):
-            super().__init__()
-            self.kernel = BaseAttentive(
-                static_input_dim=5,
-                dynamic_input_dim=8,
-                future_input_dim=4,
-                output_dim=1,
-                forecast_horizon=forecast_horizon,
-            )
-            self.demand_head  = keras.layers.Dense(1)
-            self.anomaly_head = keras.layers.Dense(1, activation="sigmoid")
+   kernel_spec = BaseAttentiveSpec(
+       static_input_dim=5,
+       dynamic_input_dim=8,
+       future_input_dim=4,
+       output_dim=1,
+       forecast_horizon=24,
+       embed_dim=64,
+       attention_heads=8,
+       backend_name="tensorflow",
+       head_type="point",
+   )
 
-        def call(self, inputs, training=False):
-            shared = self.kernel(inputs, training=training)
-            context = keras.ops.mean(shared, axis=1)
-            return {
-                "demand":  shared,
-                "anomaly": self.anomaly_head(context),
-            }
+   class MultiTaskEnergyModel(keras.Model):
+       def __init__(self):
+           super().__init__()
+           self.kernel       = BaseAttentiveV2Assembly().build(kernel_spec)
+           self.demand_head  = keras.layers.Dense(1, name="demand")
+           self.anomaly_head = keras.layers.Dense(
+               1, activation="sigmoid", name="anomaly"
+           )
 
-**Typical Weights:**
+       def call(self, inputs, training=False):
+           shared   = self.kernel(inputs, training=training)
+           # shared: (B, H, output_dim) — the per-step forecast
+           context  = keras.ops.mean(shared, axis=1)   # (B, output_dim)
+           return {
+               "demand":  self.demand_head(shared),     # (B, H, 1)
+               "anomaly": self.anomaly_head(context),   # (B, 1)
+           }
 
-- Primary prediction task: 2.0-3.0 weight
-- Supporting tasks: 0.5-1.0 weight
-- Adjust based on task importance and data availability
+   mt_model = MultiTaskEnergyModel()
+   mt_model.compile(
+       optimizer="adam",
+       loss={"demand": "mse", "anomaly": "binary_crossentropy"},
+       loss_weights={"demand": 2.0, "anomaly": 0.5},
+   )
+   mt_model.fit(
+       [x_static, x_dynamic, x_future],
+       {"demand": y_demand, "anomaly": y_anomaly},
+       epochs=50,
+   )
+
+----
 
 Domain-Specific Applications
-=============================
+==============================
 
-Geophysical Hazard Forecasting (GeoPhysics & GeoPrior Inspired)
----------------------------------------------------------------
+Geophysical Hazard Forecasting
+-------------------------------
 
-Applying BaseAttentive to physics-guided geohazard prediction:
+BaseAttentive serves as the temporal forecasting kernel in
+physics-informed geohazard systems.  The custom-encoder pattern from the
+registry system makes it easy to embed domain knowledge:
 
-**Applications:**
+**Earthquake hazard:**
 
-1. **Earthquake Hazard Assessment**
-   - Static: Location, fault type, geological properties
-   - Dynamic: Historical seismicity, stress indicators
-   - Future: Forecasted stress changes
-   - Output: Seismic hazard probability
+.. code-block:: python
 
-2. **Landslide Risk Prediction**
-   - Static: Slope angle, soil properties, vegetation
-   - Dynamic: Historical rainfall, groundwater level
-   - Future: Weather forecast
-   - Output: Landslide probability and timing
+   from base_attentive import BaseAttentive
 
-3. **Volcanic Eruption Forecasting**
-   - Static: Volcano characteristics, past eruption patterns
-   - Dynamic: Seismic activity, gas emissions, deformation
-   - Future: Seasonal forcing
-   - Output: Eruption probability, time window
+   seismic_hazard_model = BaseAttentive(
+       static_input_dim=5,    # lat, lon, depth, fault_type, vs30
+       dynamic_input_dim=4,   # mag_history, b_value, inter_event_time, stress_idx
+       future_input_dim=2,    # coulomb_stress_change, season_forcing
+       output_dim=1,          # exceedance probability
+       forecast_horizon=12,   # 12-month hazard window
+       mode="pihal",
+       attention_levels=["cross", "memory"],
+       memory_size=128,       # recall past seismic sequences
+       embed_dim=64,
+       num_heads=8,
+   )
 
-**Physics-Guided Constraints:**
+**Landslide risk:**
 
-- Coulomb stress changes (earthquakes)
-- Infinite slope stability criterion (landslides)
-- Magma rheology and pressure buildup (volcanoes)
+.. code-block:: python
 
-**Integration with GeoPrior:**
+   landslide_model = BaseAttentive(
+       static_input_dim=6,    # slope, soil_type, vegetation, aspect, geology, lithology
+       dynamic_input_dim=4,   # rainfall, groundwater, pore_pressure, displacement
+       future_input_dim=2,    # rainfall_forecast, snowmelt
+       output_dim=1,          # landslide probability
+       forecast_horizon=7,
+       mode="tft",
+       scales=[1, 3, 7],      # daily / 3-day / weekly
+       quantiles=[0.5, 0.8, 0.95],
+   )
 
-BaseAttentive can serve as the temporal prediction kernel in GeoPrior-style systems:
+----
 
-.. code-block:: text
+Financial Time Series
+---------------------
 
-    Spatial Prior (Gaussian Process / Neural Field)
-              ↓
-    Combine with Temporal Model (BaseAttentive)
-              ↓
-    Joint Space-Time Hazard Map
-              ↓
-    Risk Assessment → Early Warning
+.. code-block:: python
 
-Financial Time Series Forecasting
----------------------------------
+   from base_attentive import BaseAttentive
+   from base_attentive.components import CRPSLoss
 
-**Application:** Stock price, volatility, and risk prediction
+   financial_model = BaseAttentive(
+       static_input_dim=4,    # sector, market_cap_log, beta, country
+       dynamic_input_dim=8,   # returns, volume, volatility, RSI, MACD, etc.
+       future_input_dim=3,    # macro_event_flag, earnings_flag, expiry_flag
+       output_dim=1,          # return forecast
+       forecast_horizon=5,    # 5-day ahead
+       objective="transformer",       # short sequences → transformer
+       num_encoder_layers=4,
+       embed_dim=64,
+       num_heads=8,
+       dropout_rate=0.2,      # higher regularisation for noisy financial data
+       quantiles=[0.05, 0.25, 0.5, 0.75, 0.95],
+   )
 
-**BaseAttentive Configuration:**
+   financial_model.compile(
+       optimizer="adam",
+       loss=CRPSLoss(mode="quantile",
+                     quantiles=[0.05, 0.25, 0.5, 0.75, 0.95]),
+   )
 
-- **Static:** Sector, company fundamentals, market cap category
-- **Dynamic:** 1-year price history, volumes, technical indicators
-- **Future:** Economic calendar events, policy releases
-- **Output:** Return distribution, volatility, value-at-risk
-
-**Key Considerations:**
-
-- Handle extreme events and regime changes
-- Incorporate market microstructure (bid-ask spreads)
-- Account for correlation breakdowns during crises
-- Ensemble methods for risk management
+----
 
 Healthcare and Epidemiology
 ----------------------------
 
-**Applications:**
+.. code-block:: python
 
-1. **Patient Vital Sign Forecasting**
-   - Predict upcoming vital sign degradation
-   - Enable preventive interventions
+   # ICU vital-sign forecasting
+   icu_model = BaseAttentive(
+       static_input_dim=6,    # age, sex, admission_type, comorbidities (×3)
+       dynamic_input_dim=8,   # HR, SpO2, BP_sys, BP_dia, RR, Temp, FiO2, GCS
+       future_input_dim=3,    # scheduled_meds, procedure_flag, shift_change
+       output_dim=4,          # HR, SpO2, BP, RR forecast
+       forecast_horizon=6,    # next 6 hours
+       mode="tft",
+       embed_dim=32,
+       num_heads=4,
+       quantiles=[0.1, 0.5, 0.9],
+   )
 
-2. **Disease Outbreak Prediction**
-   - Static: Region, demographics, healthcare capacity
-   - Dynamic: Historical case counts, testing rates
-   - Future: Mobility patterns, interventions
-   - Output: Case forecasts, hospitalization needs
+   # Disease outbreak forecasting
+   outbreak_model = BaseAttentive(
+       static_input_dim=5,    # region, pop_density, healthcare_capacity, age_structure, climate
+       dynamic_input_dim=5,   # cases, tests, positivity, mobility, interventions
+       future_input_dim=4,    # mobility_plan, intervention_plan, season_sin, season_cos
+       output_dim=2,          # cases, hospitalisations
+       forecast_horizon=28,   # 4-week window
+       mode="pihal",
+       attention_levels=["cross", "hierarchical"],
+       scales=[1, 7],
+       quantiles=[0.1, 0.5, 0.9],
+   )
 
-3. **Seasonal Disease Incidence**
-   - Respiratory infections, allergies, etc.
-   - Enable resource allocation and public health messaging
+----
 
-Integration Patterns and Deployment Notes
-=========================================
-
-Production Deployment Checklist
--------------------------------
-
-.. list-table:: BaseAttentive Production Readiness
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Component
-     - Requirement
-     - Implementation
-   * - Model Versioning
-     - Track all model changes
-     - Git LFS + model metadata (data snapshot, performance metrics)
-   * - Data Validation
-     - Catch distribution drift early
-     - Statistical tests on input features
-   * - Performance Monitoring
-     - Track prediction accuracy
-     - Automated alerts on metrics degradation
-   * - Retraining Pipeline
-     - Keep model current
-     - Monthly or quarterly retraining on recent data
-   * - Uncertainty Quantification
-     - Communicate prediction confidence
-     - Quantile outputs or ensemble variance
-   * - Latency Requirements
-     - Production serving constraints
-     - Model compression, batching, edge deployment if needed
-   * - Fallback Mechanisms
-     - Handle model failures
-     - Physics-based baseline models or persistence forecasts
-   * - Explainability
-     - Understand predictions
-     - Attention weight visualization, LIME/SHAP for individual predictions
+Integration Patterns and Deployment
+=====================================
 
 Feature Engineering Guide
 --------------------------
 
-**Static Features:**
+**Static features:**
 
-- Keep cardinality reasonable (1-10 features typical)
-- Normalize to similar scales
-- Include domain categories (e.g., building type, sector)
+- Normalise to comparable scales (standard scaler or min-max)
+- Encode categorical variables (one-hot or learned embeddings)
+- Keep cardinality manageable (4–12 features is a practical range)
 
-**Dynamic Past Features:**
+**Dynamic past features:**
 
-- A small to moderate feature set (for example 5-15 channels) is often a practical starting range
-- Include raw measurements and derived features:
-  - Lags (t-1, t-7, t-365 for daily data)
-  - Differences (rate of change)
-  - Cyclical encodings (time-of-day via sine/cosine)
-  - Aggregations (rolling means, standard deviations)
+- Include raw measurements plus derived features:
 
-**Known Future Features:**
+  - Lags: ``t-1``, ``t-7``, ``t-24`` (depending on granularity)
+  - Rate of change: ``x[t] - x[t-1]``
+  - Rolling statistics: mean and standard deviation over a window
+  - Cyclical encodings: ``sin(2π·h/24)``, ``cos(2π·h/24)`` for hour-of-day
 
-- Use deterministic features (calendar, seasonal, planned events)
-- Incorporate forecasts (weather, economic indicators)
-- Represent uncertainty via multiple scenarios
+- A practical starting range is 5–15 channels
 
-Hyperparameter Tuning Strategy
-------------------------------
+**Known future features:**
 
-**Quick Start Configuration (prototyping):**
+- Use deterministic inputs only: calendar, seasonal, planned events
+- Incorporate NWP or economic-model forecasts when available
+- Represent uncertainty via multiple scenarios fed as separate model runs
 
-.. code-block:: python
+Hyperparameter Guide
+---------------------
 
-    import numpy as np
-    from base_attentive import BaseAttentive
+.. list-table::
+   :header-rows: 1
+   :widths: 20 15 15 50
 
-    model = BaseAttentive(
-        static_input_dim=your_static_dim,
-        dynamic_input_dim=your_dynamic_dim,
-        future_input_dim=your_future_dim,
-        output_dim=1,
-        forecast_horizon=your_horizon,
-        mode="tft_like",    # Cross + hierarchical attention
-        embed_dim=64,
-        num_heads=4,
-    )
+   * - Dataset size
+     - ``embed_dim``
+     - ``num_heads``
+     - Notes
+   * - Small (< 10 K)
+     - 32
+     - 4
+     - Use dropout ≥ 0.2; consider ``pool.last`` pooling
+   * - Medium (10 K–100 K)
+     - 64
+     - 8
+     - Standard config; tune ``scales`` and ``attention_levels``
+   * - Large (> 100 K)
+     - 128
+     - 16
+     - Reduce dropout; consider transformer encoder
 
-**Production Tuning:**
+Start with ``mode="tft"`` for most applications.  Switch to
+``mode="pihal"`` when long-range memory is needed (memory_size > 50)
+or when the data has strong nested temporal structure.
 
-1. Adjust ``embed_dim`` and ``num_heads`` based on data size:
-   - Small data (< 10K samples): ``embed_dim=32``, 4 heads
-   - Medium data (10K-100K): ``embed_dim=64``, 8 heads
-   - Large data (> 100K): ``embed_dim=128``, 16 heads
+Production Deployment Checklist
+---------------------------------
 
-2. Attention depth (``attention_levels``):
-   - Start with ``["cross", "hierarchical"]`` (2 levels)
-   - Add ``"memory"`` for long-range dependencies
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
 
-3. Multi-scale aggregation (``scales`` + ``multi_scale_agg``):
-   - ``scales=[1, 2, 4]`` for typical time series
-   - ``multi_scale_agg="average"`` is a stable default
+   * - Concern
+     - Approach
+   * - Model versioning
+     - Store the ``BaseAttentiveSpec`` JSON alongside each model checkpoint
+   * - Input validation
+     - Use ``validate_model_inputs`` at every inference entry point
+   * - Distribution monitoring
+     - Track rolling statistics on input features; alert on shift
+   * - Retraining cadence
+     - Monthly on new data; triggered retraining on performance degradation
+   * - Uncertainty output
+     - Always include quantile output (or CRPS loss) in production models
+   * - Latency
+     - Use ``make_fast_predict_fn`` (TF) or torch.compile (Torch) for hot paths
+   * - Fallback
+     - Keep a physics-based or persistence baseline as fallback
+   * - Backend choice
+     - TF for Serving / TFLite; Torch for CUDA GPU / MPS; JAX for TPU
 
-4. Quantiles for uncertainty:
-   - 3 quantiles (``[0.1, 0.5, 0.9]``): Fastest, basic uncertainty
-   - 5 quantiles (``[0.05, 0.25, 0.5, 0.75, 0.95]``): Balanced
-   - 11 quantiles: Maximum flexibility, slower inference
+----
 
-Evaluation Metrics Framework
-----------------------------
+Evaluation Metrics
+-------------------
 
-**For Regression (most applications):**
+For regression (point forecast):
 
-- **MAE (Mean Absolute Error):** Business interpretability
-- **RMSE (Root Mean Squared Error):** Sensitive to outliers
-- **MAPE (Mean Absolute Percentage Error):** Relative performance
-- **Quantile Loss:** Evaluate specific percentiles
+- **MAE** — mean absolute error; easy to interpret in original units
+- **RMSE** — root mean squared error; sensitive to outliers
+- **MAPE** — mean absolute percentage error; relative view
 
-**For Probabilistic Forecasts:**
+For probabilistic forecast:
 
-- **Continuous Ranked Probability Score (CRPS):** Overall calibration
-- **Coverage:** What fraction of true values fall in [q0.1, q0.9]?
-- **Mean Width:** Are uncertainty intervals narrow (good) or wide?
-- **Dawid-Sebastiani Score:** Combined sharpness and calibration
+- **CRPS** — proper scoring rule; rewards both calibration and sharpness
+- **Coverage** — fraction of true values inside the predicted interval
+- **Interval width** — narrower is better, given adequate coverage
+- **Winkler score** — combined width + coverage penalty
 
-**For Classification (anomaly detection, peak prediction):**
+For anomaly / classification outputs:
 
-- **AUC-ROC:** Threshold-independent performance
-- **F1-score:** Balance precision and recall
-- **Coverage at Risk Threshold:** How many true events caught?
+- **AUC-ROC** — threshold-independent performance
+- **F1-score** — balance precision and recall at the operating threshold
 
-References and Further Reading
-=======================================
+----
 
-**BaseAttentive Framework:**
+See Also
+--------
 
-- See :doc:`api_reference` for complete API documentation
-- See :doc:`architecture_guide` for architectural details
-- See :doc:`torch_backend_guide` for GPU acceleration
-
-**Related Deep Learning References:**
-
-- Vaswani et al., 2017: "Attention is All You Need" (Transformers)
-- Lim et al., 2021: "Temporal Fusion Transformers for Interpretable Multi-horizon Time Series Forecasting"
-- Salinas et al., 2020: "DeepAR: Probabilistic Forecasting with Autoregressive Recurrent Networks"
-
-**Related Physics-Guided ML:**
-
-- Raissi et al., 2019: "Physics-informed neural networks"
-- Willard et al., 2022: "Integrating Physics-based Modeling with Machine Learning"
-
-**Time Series Forecasting:**
-
-- Makridakis et al., 2018: "The M4 Competition" (benchmark study)
-- Hyndman & Athanasopoulos: "Forecasting: Principles and Practice" (free online textbook)
-
-Getting Started
-===============
-
-To continue with an application-specific workflow:
-
-1. **Explore examples:** Check the examples folder for notebooks on standalone applications and kernel-based architectures
-2. **Quick start:** Follow :doc:`quick_start`
-3. **Full API:** Consult :doc:`api_reference`
-4. **Configuration**: Read :doc:`configuration_guide`
-
-Need help?
-
-- Open an issue on `GitHub <https://github.com/earthai-tech/base-attentive>`__
-- Discuss on project forums
-- Review other examples and documentation
+- :doc:`usage` — V2 configuration in depth
+- :doc:`architecture_guide` — Registry / Assembly internals
+- :doc:`configuration_guide` — Full parameter reference
+- :doc:`backends/index` — Backend selection
+- :doc:`api_reference` — Complete API docs
+- `GitHub examples <https://github.com/earthai-tech/base-attentive/tree/master/examples>`_
+  — Jupyter notebooks for each application

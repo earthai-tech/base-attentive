@@ -7,8 +7,32 @@
 
 <div align="center">
 
+  <a href="https://www.python.org/downloads/">
+    <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+" />
+  </a>
+  <a href="https://pypi.org/project/base-attentive/">
+    <img src="https://img.shields.io/pypi/v/base-attentive.svg" alt="PyPI version" />
+  </a>
+  <a href="https://github.com/earthai-tech/base-attentive/releases">
+    <img src="https://img.shields.io/badge/version-2.0.1-brightgreen.svg" alt="Version 2.0.1" />
+  </a>
+  <a href="https://semver.org/">
+    <img src="https://img.shields.io/badge/semver-2.0.1-blueviolet.svg" alt="Semantic Versioning" />
+  </a>
+  <a href="https://keras.io/">
+    <img src="https://img.shields.io/badge/keras-%E2%89%A53.0-FF6F00.svg" alt="Keras ≥ 3.0" />
+  </a>
+  <a href="https://base-attentive.readthedocs.io/en/latest/backends/index.html">
+    <img src="https://img.shields.io/badge/backends-TF%20%7C%20JAX%20%7C%20Torch-7B2D8B.svg" alt="Backends: TensorFlow, JAX, PyTorch" />
+  </a>
+  <a href="https://docs.astral.sh/ruff/">
+    <img src="https://img.shields.io/badge/code%20style-ruff-46a758.svg" alt="Code Style: ruff" />
+  </a>
   <a href="https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml?query=branch%3Amaster">
     <img src="https://github.com/earthai-tech/base-attentive/actions/workflows/tests.yml/badge.svg?branch=master" alt="Tests" />
+  </a>
+  <a href="https://codecov.io/gh/earthai-tech/base-attentive">
+    <img src="https://codecov.io/gh/earthai-tech/base-attentive/graph/badge.svg?token=YEJY7PEREM" alt="Coverage" />
   </a>
   <a href="https://base-attentive.readthedocs.io/en/latest/">
     <img src="https://readthedocs.org/projects/base-attentive/badge/?version=latest" alt="Documentation" />
@@ -16,21 +40,16 @@
   <a href="https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml?query=branch%3Amaster">
     <img src="https://github.com/earthai-tech/base-attentive/actions/workflows/pypi-release.yml/badge.svg?branch=master" alt="Publish" />
   </a>
-  <a href="https://codecov.io/gh/earthai-tech/base-attentive">
-    <img src="https://codecov.io/gh/earthai-tech/base-attentive/graph/badge.svg?token=YEJY7PEREM" alt="Coverage" />
+  <a href="https://github.com/earthai-tech/base-attentive/commits/master">
+    <img src="https://img.shields.io/github/last-commit/earthai-tech/base-attentive.svg" alt="Last Commit" />
   </a>
-  <a href="https://pypi.org/project/base-attentive/">
-    <img src="https://img.shields.io/pypi/v/base-attentive.svg" alt="PyPI version" />
+  <a href="https://github.com/earthai-tech/base-attentive/issues">
+    <img src="https://img.shields.io/github/issues/earthai-tech/base-attentive.svg" alt="Open Issues" />
   </a>
-  <a href="https://github.com/earthai-tech/base-attentive/releases">
-    <img src="https://img.shields.io/github/v/release/earthai-tech/base-attentive?display_name=tag&sort=semver&include_prereleases" alt="Version" />
+  <a href="https://github.com/earthai-tech/base-attentive/pulls">
+    <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" />
   </a>
-  <a href="https://docs.astral.sh/ruff/">
-    <img src="https://img.shields.io/badge/code%20style-ruff-46a758.svg" alt="Code Style" />
-  </a>
-  <a href="https://www.python.org/">
-    <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python" />
-  </a>
+  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-4a5568.svg" alt="Platform: Linux, macOS, Windows" />
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/License-Apache%202.0-green.svg" alt="License" />
   </a>
@@ -197,7 +216,7 @@ This project is licensed under the Apache License 2.0 — see [LICENSE](LICENSE)
   author  = {Kouadio, L.},
   title   = {BaseAttentive: Modular Multi-Backend Encoder-Decoder Architecture for Probabilistic Time Series Forecasting},
   year    = {2026},
-  version = {2.0.0rc1},
+  version = {2.0.1},
   url     = {https://github.com/earthai-tech/base-attentive}
 }
 ```
