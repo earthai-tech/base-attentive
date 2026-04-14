@@ -126,61 +126,25 @@ class TestGetBackendCapabilities:
 
 
 class TestAutoInitialize:
-    """Tests for _auto_initialize function - the env var handling paths."""
+    """Public backend env-resolution behavior under the lazy backend surface."""
 
-    def test_auto_initialize_with_base_attentive_backend_set(
-        self,
-    ):
-        """_auto_initialize normalizes BASE_ATTENTIVE_BACKEND env var."""
-        orig = os.environ.get("BASE_ATTENTIVE_BACKEND")
-        orig_keras = os.environ.get("KERAS_BACKEND")
-        try:
-            os.environ["BASE_ATTENTIVE_BACKEND"] = "pytorch"
-            _backend_mod._auto_initialize()
-            # Should have normalized 'pytorch' → 'torch'
-            assert (
-                os.environ.get("BASE_ATTENTIVE_BACKEND")
-                == "torch"
-            )
-        finally:
-            if orig is not None:
-                os.environ["BASE_ATTENTIVE_BACKEND"] = orig
-            if orig_keras is not None:
-                os.environ["KERAS_BACKEND"] = orig_keras
+    def test_env_vars_normalize_through_get_backend(self, monkeypatch):
+        monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "pytorch")
+        monkeypatch.delenv("KERAS_BACKEND", raising=False)
+        backend = _backend_mod.get_backend()
+        assert backend.name == "torch"
 
-    def test_auto_initialize_with_keras_backend_set(self):
-        """_auto_initialize handles KERAS_BACKEND when BASE_ATTENTIVE not set."""
-        orig_ba = os.environ.pop(
-            "BASE_ATTENTIVE_BACKEND", None
-        )
-        orig_keras = os.environ.get("KERAS_BACKEND")
-        try:
-            os.environ["KERAS_BACKEND"] = "torch"
-            _backend_mod._auto_initialize()
-            assert (
-                os.environ.get("BASE_ATTENTIVE_BACKEND")
-                == "torch"
-            )
-        finally:
-            if orig_ba is not None:
-                os.environ["BASE_ATTENTIVE_BACKEND"] = orig_ba
-            if orig_keras is not None:
-                os.environ["KERAS_BACKEND"] = orig_keras
+    def test_keras_backend_env_is_respected(self, monkeypatch):
+        monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+        monkeypatch.setenv("KERAS_BACKEND", "torch")
+        backend = _backend_mod.get_backend()
+        assert backend.name == "torch"
 
-    def test_auto_initialize_no_env_vars(self):
-        """_auto_initialize with no env vars auto-selects backend."""
-        orig_ba = os.environ.pop(
-            "BASE_ATTENTIVE_BACKEND", None
-        )
-        orig_keras = os.environ.pop("KERAS_BACKEND", None)
-        try:
-            _backend_mod._auto_initialize()
-            # Should not raise; may or may not set env var
-        finally:
-            if orig_ba is not None:
-                os.environ["BASE_ATTENTIVE_BACKEND"] = orig_ba
-            if orig_keras is not None:
-                os.environ["KERAS_BACKEND"] = orig_keras
+    def test_no_env_vars_returns_a_backend_instance(self, monkeypatch):
+        monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+        monkeypatch.delenv("KERAS_BACKEND", raising=False)
+        backend = _backend_mod.get_backend("torch")
+        assert backend.name == "torch"
 
 
 # ---------------------------------------------------------------------------

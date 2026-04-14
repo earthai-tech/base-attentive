@@ -1,5 +1,10 @@
 """Configuration helpers for BaseAttentive models."""
 
+from .architecture_helpers import (
+    configure_architecture,
+    resolve_attn_levels,
+    resolve_fusion_mode,
+)
 from .defaults import (
     DEFAULT_BASE_ATTENTIVE_ARCHITECTURE,
     DEFAULT_BASE_ATTENTIVE_COMPONENTS,
@@ -29,6 +34,7 @@ from .validate import validate_base_attentive_spec
 
 __all__ = [
     "BaseAttentiveArchitectureSpec",
+    "configure_architecture",
     "BaseAttentiveComponentSpec",
     "BaseAttentiveRuntimeSpec",
     "BaseAttentiveSpec",
@@ -38,6 +44,8 @@ __all__ = [
     "DEFAULT_BASE_ATTENTIVE_V2_CONFIG",
     "DEFAULT_LEGACY_ARCHITECTURE",
     "legacy_base_attentive_to_spec",
+    "resolve_attn_levels",
+    "resolve_fusion_mode",
     "normalize_architecture_spec",
     "normalize_base_attentive_spec",
     "normalize_component_spec",

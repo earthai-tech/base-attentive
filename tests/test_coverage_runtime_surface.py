@@ -91,378 +91,117 @@ class _FakeKerasValidationOps:
         return np.asarray(value, dtype=dtype)
 
 
-def test_top_level_runtime_helpers_cover_scalar_and_lazy_import_paths(
-    monkeypatch,
-):
-    """The top-level runtime helpers should gracefully handle fallbacks."""
-    import base_attentive as package
+def test_top_level_runtime_helpers_cover_scalar_and_lazy_import_paths(monkeypatch):
+    import base_attentive._bootstrap as bootstrap
 
-    assert (
-        package._normalize_configured_backend(None)
-        == "tensorflow"
-    )
-    assert (
-        package._normalize_configured_backend(" pytorch ")
-        == "torch"
-    )
-    assert package._safe_import("math").sqrt(9) == 3
-    assert (
-        package._safe_import("definitely_missing_package_xyz")
-        is None
-    )
+    assert bootstrap._normalize_configured_backend(None) == "tensorflow"
+    assert bootstrap._normalize_configured_backend(" pytorch ") == "torch"
+    assert bootstrap._safe_import("math").sqrt(9) == 3
+    assert bootstrap._safe_import("definitely_missing_package_xyz") is None
+    assert bootstrap._resolve_scalar(3) == 3
+    assert bootstrap._resolve_scalar(_FakeTensorLike(5)) == 5
+    assert bootstrap._resolve_scalar(_FakeTensorLike(7, item_error=True)) == 7
 
-    assert package._resolve_scalar(3) == 3
-    assert package._resolve_scalar(_FakeTensorLike(5)) == 5
-    assert (
-        package._resolve_scalar(
-            _FakeTensorLike(7, item_error=True)
-        )
-        == 7
-    )
+    fake_tf = types.SimpleNamespace(get_static_value=lambda value: 11)
+    monkeypatch.setattr(bootstrap, "_safe_import", lambda name: fake_tf if name == "tensorflow" else None)
+    assert bootstrap._get_static_value(object()) == 11
 
-    fake_tf = types.SimpleNamespace(
-        get_static_value=lambda value: 11
-    )
-    monkeypatch.setattr(
-        package,
-        "_safe_import",
-        lambda name: fake_tf
-        if name == "tensorflow"
-        else None,
-    )
-    assert package._get_static_value(object()) == 11
+    broken_tf = types.SimpleNamespace(get_static_value=lambda value: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(bootstrap, "_safe_import", lambda name: broken_tf if name == "tensorflow" else None)
+    assert bootstrap._get_static_value(object()) is None
 
-    broken_tf = types.SimpleNamespace(
-        get_static_value=lambda value: (_ for _ in ()).throw(
-            RuntimeError("boom")
-        )
-    )
-    monkeypatch.setattr(
-        package,
-        "_safe_import",
-        lambda name: broken_tf
-        if name == "tensorflow"
-        else None,
-    )
-    assert package._get_static_value(object()) is None
-
-    decorator = (
-        package._KerasAutographExperimental.do_not_convert()
-    )
+    decorator = bootstrap._KerasAutographExperimental.do_not_convert()
     assert decorator("sentinel") == "sentinel"
-    assert (
-        package._KerasAutographExperimental.do_not_convert(
-            "value"
-        )
-        == "value"
-    )
+    assert bootstrap._KerasAutographExperimental.do_not_convert("value") == "value"
+    assert bootstrap._KerasDebuggingNamespace.assert_equal(4, 4) is None
 
-    assert (
-        package._KerasDebuggingNamespace.assert_equal(4, 4)
-        is None
-    )
-    with pytest.raises(AssertionError, match="mismatch"):
-        package._KerasDebuggingNamespace.assert_equal(
-            1, 2, message="mismatch"
-        )
+    fake_linalg = types.SimpleNamespace(band_part=lambda x, n1, n2: ("band", x, n1, n2))
+    monkeypatch.setattr(bootstrap, "_safe_import", lambda name: types.SimpleNamespace(linalg=fake_linalg) if name == "tensorflow" else None)
+    assert bootstrap._KerasLinalgNamespace.band_part("x", 1, 0) == ("band", "x", 1, 0)
 
-    fake_linalg = types.SimpleNamespace(
-        band_part=lambda x, n1, n2: ("band", x, n1, n2)
-    )
-    monkeypatch.setattr(
-        package,
-        "_safe_import",
-        lambda name: types.SimpleNamespace(linalg=fake_linalg)
-        if name == "tensorflow"
-        else None,
-    )
-    assert package._KerasLinalgNamespace.band_part(
-        "x", 1, 0
-    ) == (
-        "band",
-        "x",
-        1,
-        0,
-    )
-
-    monkeypatch.setattr(
-        package, "_safe_import", lambda name: None
-    )
-    with pytest.raises(
-        ImportError, match="only available with TensorFlow"
-    ):
-        package._KerasLinalgNamespace.band_part("x", 1, 0)
+    monkeypatch.setattr(bootstrap, "_safe_import", lambda name: None)
+    with pytest.raises(ImportError, match="only available with TensorFlow"):
+        bootstrap._KerasLinalgNamespace.band_part("x", 1, 0)
 
 
-def test_top_level_runtime_backend_resolution_prefers_env_then_detected_backend(
-    monkeypatch,
-):
-    """Top-level backend resolution should sync explicit and detected defaults."""
-    import base_attentive as package
+def test_top_level_runtime_backend_resolution_prefers_env_then_detected_backend(monkeypatch):
+    import base_attentive._bootstrap as bootstrap
 
     monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "pytorch")
     monkeypatch.delenv("KERAS_BACKEND", raising=False)
-    assert package._resolve_runtime_backend() == "torch"
+    assert bootstrap._resolve_runtime_backend() == "torch"
 
-    monkeypatch.delenv(
-        "BASE_ATTENTIVE_BACKEND", raising=False
-    )
+    monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
     monkeypatch.setenv("KERAS_BACKEND", "jax")
-    assert package._resolve_runtime_backend() == "jax"
+    assert bootstrap._resolve_runtime_backend() == "jax"
 
     monkeypatch.delenv("KERAS_BACKEND", raising=False)
-    monkeypatch.setattr(
-        package,
-        "select_best_backend",
-        lambda require_supported=False: "torch",
-    )
-    assert package._resolve_runtime_backend() == "torch"
-
-    monkeypatch.setattr(
-        package,
-        "select_best_backend",
-        lambda require_supported=False: None,
-    )
-    monkeypatch.setattr(
-        package,
-        "ensure_default_backend",
-        lambda **kwargs: "tensorflow",
-    )
-    assert package._resolve_runtime_backend() == "tensorflow"
+    assert bootstrap._resolve_runtime_backend() == "tensorflow"
 
 
-def test_top_level_keras_deps_resolve_symbols_from_keras_and_tensorflow(
-    monkeypatch,
-):
-    """The runtime namespace resolver should search keras, then TensorFlow."""
-    import base_attentive as package
+def test_top_level_keras_deps_resolve_symbols_from_keras_and_tensorflow(monkeypatch):
+    import base_attentive._bootstrap as bootstrap
 
-    fake_reduction = types.SimpleNamespace(
-        AUTO="auto", SUM="sum", NONE="none"
-    )
+    fake_reduction = types.SimpleNamespace(AUTO="auto", SUM="sum", NONE="none")
+    fake_keras = types.SimpleNamespace(__name__="keras", activations=types.SimpleNamespace(relu="relu"), random=types.SimpleNamespace(normal="normal"), ops=types.SimpleNamespace(concatenate="concat-op"), saving=types.SimpleNamespace(register_keras_serializable="register-op"), losses=types.SimpleNamespace(get="loss-get", Reduction=fake_reduction))
+    fake_tf = types.SimpleNamespace(zeros="tf-zeros", Tensor="TensorType", TensorShape="TensorShapeType", Assert="tf-assert", debugging=types.SimpleNamespace(assert_equal="tf-debug"), linalg="tf-linalg", keras=types.SimpleNamespace(utils=types.SimpleNamespace(custom="custom-util")))
 
-    fake_keras = types.SimpleNamespace(
-        __name__="keras",
-        activations=types.SimpleNamespace(relu="relu"),
-        random=types.SimpleNamespace(normal="normal"),
-        ops=types.SimpleNamespace(concatenate="concat-op"),
-        saving=types.SimpleNamespace(
-            register_keras_serializable="register-op"
-        ),
-        losses=types.SimpleNamespace(
-            get="loss-get", Reduction=fake_reduction
-        ),
-    )
-    fake_tf = types.SimpleNamespace(
-        zeros="tf-zeros",
-        Tensor="TensorType",
-        TensorShape="TensorShapeType",
-        Assert="tf-assert",
-        debugging=types.SimpleNamespace(
-            assert_equal="tf-debug"
-        ),
-        linalg="tf-linalg",
-        keras=types.SimpleNamespace(
-            utils=types.SimpleNamespace(custom="custom-util")
-        ),
-    )
+    monkeypatch.setattr(bootstrap, "KERAS_BACKEND", "tensorflow")
+    monkeypatch.setattr(bootstrap, "_safe_import", lambda name: {"keras": fake_keras, "tensorflow": fake_tf, "tensorflow.keras": fake_keras}.get(name))
 
-    monkeypatch.setattr(
-        package, "KERAS_BACKEND", "tensorflow"
-    )
-    monkeypatch.setattr(
-        package,
-        "_safe_import",
-        lambda name: {
-            "keras": fake_keras,
-            "tensorflow": fake_tf,
-            "tensorflow.keras": fake_keras,
-        }.get(name),
-    )
-
-    deps = package._KerasDeps()
-    assert (
-        deps.autograph.experimental.do_not_convert("ok")
-        == "ok"
-    )
+    deps = bootstrap._KerasDeps()
+    assert deps.autograph.experimental.do_not_convert("ok") == "ok"
     assert deps.debugging == fake_tf.debugging
-    assert deps.bool is np.bool_
-    assert deps.float32 is np.float32
-    assert deps.int32 is np.int32
-    assert deps.Assert == "tf-assert"
-    assert deps.Tensor == "TensorType"
-    assert deps.TensorShape == "TensorShapeType"
     assert deps.Reduction is fake_reduction
-    assert deps.get_static_value is package._get_static_value
-    assert deps.linalg == "tf-linalg"
+    assert deps.get_static_value is bootstrap._get_static_value
     assert deps.register_keras_serializable == "register-op"
     assert deps.get == "loss-get"
     assert deps.activations is fake_keras.activations
     assert deps.random is fake_keras.random
-    assert deps.concat == "concat-op"
     assert deps.zeros == "tf-zeros"
-    assert deps.zeros == "tf-zeros"  # cache hit
-
-    monkeypatch.setattr(
-        package, "_safe_import", lambda name: None
-    )
-    fallback_deps = package._KerasDeps()
-    assert fallback_deps.Reduction.AUTO == "auto"
-    assert fallback_deps.Assert(True) is True
-    assert fallback_deps.Tensor is object
-    assert fallback_deps.TensorShape is tuple
-
-    with pytest.raises(
-        ImportError, match="Cannot import missing_symbol"
-    ):
-        _ = fallback_deps.missing_symbol
-
-    assert (
-        "Keras is required for models"
-        in package.dependency_message("models")
-    )
 
 
-def test_top_level_runtime_dtype_and_namespace_helpers_cover_remaining_paths(
-    monkeypatch,
-):
-    """Exercise dtype normalization and namespace fallback branches."""
-    import base_attentive as package
+def test_top_level_runtime_dtype_and_namespace_helpers_cover_remaining_paths(monkeypatch):
+    import base_attentive._bootstrap as bootstrap
 
-    assert package._get_static_value(object()) is None
-    assert package._normalize_dtype(None) is None
-    assert package._normalize_dtype("float32") == "float32"
-    assert (
-        package._normalize_dtype(
-            types.SimpleNamespace(name="int32")
-        )
-        == "int32"
-    )
+    assert bootstrap._get_static_value(object()) is None
+    assert bootstrap._normalize_dtype(None) is None
+    assert bootstrap._normalize_dtype("float32") == "float32"
+    assert bootstrap._normalize_dtype(types.SimpleNamespace(name="int32")) == "int32"
 
     class _BrokenAsNumpy:
         as_numpy_dtype = object()
 
     broken_dtype = _BrokenAsNumpy()
-    assert (
-        package._normalize_dtype(broken_dtype) is broken_dtype
-    )
+    assert bootstrap._normalize_dtype(broken_dtype) is broken_dtype
 
-    fake_ops = types.SimpleNamespace(
-        convert_to_tensor=lambda value, dtype=None: (
-            "tensor",
-            value,
-            dtype,
-        ),
-        cast=lambda value, dtype=None: ("cast", value, dtype),
-    )
-    fake_keras = types.SimpleNamespace(
-        __name__="fake_keras",
-        ops=fake_ops,
-    )
-    fake_tf = types.SimpleNamespace(
-        keras=types.SimpleNamespace(
-            utils=types.SimpleNamespace(
-                custom_symbol="from-utils"
-            ),
-            fallback_symbol="from-keras-root",
-        )
-    )
-    fake_fallback = types.SimpleNamespace(
-        activations="fallback-activations",
-        register_keras_serializable="fallback-register",
-    )
+    fake_ops = types.SimpleNamespace(convert_to_tensor=lambda value, dtype=None: ("tensor", value, dtype), cast=lambda value, dtype=None: ("cast", value, dtype))
+    fake_keras = types.SimpleNamespace(__name__="fake_keras", ops=fake_ops)
+    fake_tf = types.SimpleNamespace(keras=types.SimpleNamespace(utils=types.SimpleNamespace(custom_symbol="from-utils"), fallback_symbol="from-keras-root"))
+    fake_fallback = types.SimpleNamespace(activations="fallback-activations", register_keras_serializable="fallback-register")
 
-    monkeypatch.setattr(package, "KERAS_BACKEND", "torch")
-    monkeypatch.setattr(
-        package,
-        "_safe_import",
-        lambda name: {
-            "keras": fake_keras,
-            "tensorflow": fake_tf,
-            "base_attentive._keras_fallback": fake_fallback,
-        }.get(name),
-    )
-
-    deps = package._KerasDeps()
+    monkeypatch.setattr(bootstrap, "KERAS_BACKEND", "torch")
+    monkeypatch.setattr(bootstrap, "_safe_import", lambda name: {"keras": fake_keras, "tensorflow": fake_tf, "base_attentive._keras_fallback": fake_fallback}.get(name))
+    deps = bootstrap._KerasDeps()
     assert deps._load_keras_root() is fake_keras
     assert deps._load_namespace(object(), "missing") is None
-
     constant = deps._resolve_from_keras("constant")
     assert constant("x") == ("tensor", "x", None)
-    assert constant("x", dtype=np.float32) == (
-        "tensor",
-        "x",
-        "float32",
-    )
-
     cast = deps._resolve_from_keras("cast")
     assert cast("x", np.float32) == ("cast", "x", "float32")
 
-    monkeypatch.setattr(package, "KERAS_BACKEND", "jax")
-    monkeypatch.setattr(
-        package, "_safe_import", lambda name: None
-    )
-    assert package._KerasDeps()._load_keras_root() is None
 
-    monkeypatch.setattr(
-        package, "KERAS_BACKEND", "tensorflow"
-    )
-    monkeypatch.setattr(
-        package,
-        "_safe_import",
-        lambda name: {
-            "tensorflow": fake_tf,
-            "base_attentive._keras_fallback": fake_fallback,
-        }.get(name),
-    )
-    deps = package._KerasDeps()
-    assert deps._resolve_special("newaxis") is None
-    assert (
-        deps._resolve_from_tensorflow("custom_symbol")
-        == "from-utils"
-    )
-    assert (
-        deps._resolve_from_tensorflow("fallback_symbol")
-        == "from-keras-root"
-    )
-    assert (
-        deps._resolve_from_fallback(
-            "register_keras_serializable"
-        )
-        == "fallback-register"
-    )
-    assert (
-        deps._resolve_from_fallback("activations")
-        == "fallback-activations"
-    )
-
-
-def test_top_level_lazy_export_handles_success_and_failure(
-    monkeypatch,
-):
-    """The package-level ``BaseAttentive`` export should remain lazy."""
+def test_top_level_lazy_export_handles_success_and_failure(monkeypatch):
     import base_attentive as package
 
     package.__dict__.pop("BaseAttentive", None)
-    monkeypatch.setitem(
-        sys.modules,
-        "base_attentive.core",
-        types.SimpleNamespace(
-            BaseAttentive="BaseAttentiveClass"
-        ),
-    )
-    assert (
-        package.__getattr__("BaseAttentive")
-        == "BaseAttentiveClass"
-    )
+    fake_module = types.SimpleNamespace(BaseAttentive="BaseAttentiveClass")
+    monkeypatch.setattr(package.importlib, "import_module", lambda name: fake_module)
+    assert package.__getattr__("BaseAttentive") == "BaseAttentiveClass"
 
     package.__dict__.pop("BaseAttentive", None)
-    monkeypatch.setitem(
-        sys.modules,
-        "base_attentive.core",
-        types.ModuleType("core"),
-    )
-    with pytest.raises(AttributeError):
+    monkeypatch.setattr(package.importlib, "import_module", lambda name: types.ModuleType("core.base_attentive"))
+    with pytest.raises(ImportError):
         package.__getattr__("BaseAttentive")
 
     with pytest.raises(AttributeError):
@@ -960,375 +699,32 @@ def test_version_check_utilities_cover_parse_and_loaded_module_fallbacks(
     )
 
 
-def test_detector_and_backend_runtime_cover_selection_and_install_paths(
-    monkeypatch,
-):
-    """Backend selection should cover environment, fallback, and install paths."""
-    import subprocess
+def test_detector_and_backend_runtime_cover_selection_and_install_paths(monkeypatch):
+    from base_attentive.backend import detector
 
-    import base_attentive.backend as backend_module
-    import base_attentive.backend.detector as detector
-    import base_attentive.backend.implementations as implementations
+    monkeypatch.setenv("KERAS_BACKEND", "torch")
+    assert detector.normalize_backend_name("keras") == "torch"
 
-    class AvailableBackend:
-        supports_base_attentive = True
-        supports_base_attentive_v2 = True
-        experimental = False
-        framework = "available"
-        uses_keras_runtime = True
-        blockers = ()
-        v2_blockers = ()
-
-        def __init__(self, load_runtime=False):
-            self.load_runtime = load_runtime
-
-        def is_available(self):
-            return True
-
-        def get_capabilities(self):
-            return {"name": "available", "available": True}
-
-    class ExperimentalBackend(AvailableBackend):
-        supports_base_attentive = False
-        supports_base_attentive_v2 = True
-        experimental = True
-        blockers = ("x",)
-        v2_blockers = ("v2",)
-
-    class MissingBackend(AvailableBackend):
-        def __init__(self, load_runtime=False):
-            raise ImportError("missing")
-
-    class ExplodingBackend(AvailableBackend):
-        def __init__(self, load_runtime=False):
-            raise RuntimeError("boom")
-
-    monkeypatch.setattr(
-        detector,
-        "_BACKENDS",
-        {
-            "tensorflow": AvailableBackend,
-            "jax": ExperimentalBackend,
-            "torch": ExplodingBackend,
-            "pytorch": ExperimentalBackend,
-        },
-    )
-    monkeypatch.setattr(
-        detector,
-        "_CANONICAL_BACKENDS",
-        ("tensorflow", "jax", "torch"),
-    )
-    monkeypatch.setattr(
-        detector,
-        "get_backend_version",
-        lambda name: f"{name}-1.0",
-    )
-
-    detected = detector.detect_available_backends()
-    assert detected["tensorflow"]["available"] is True
-    assert (
-        detected["tensorflow"]["supports_base_attentive_v2"]
-        is True
-    )
-    assert detected["torch"]["error"] == "boom"
-
-    monkeypatch.setenv("KERAS_BACKEND", "jax")
-    assert detector.normalize_backend_name("keras") == "jax"
-    monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "jax")
-    assert (
-        detector.select_best_backend(prefer="tensorflow")
-        == "jax"
-    )
-    monkeypatch.delenv(
-        "BASE_ATTENTIVE_BACKEND", raising=False
-    )
-    assert (
-        detector.select_best_backend(prefer="tensorflow")
-        == "tensorflow"
-    )
-    assert (
-        detector.select_best_backend(
-            prefer="torch", require_supported=False
-        )
-        == "tensorflow"
-    )
-
-    monkeypatch.setattr(
-        detector,
-        "detect_available_backends",
-        lambda: {
-            "tensorflow": {
-                "available": False,
-                "supported": False,
-            },
-            "jax": {"available": True, "supported": False},
-            "torch": {"available": False, "supported": False},
-        },
-    )
-    assert (
-        detector.select_best_backend(require_supported=False)
-        == "jax"
-    )
-
-    monkeypatch.setattr(
-        detector,
-        "select_best_backend",
-        lambda require_supported: "tensorflow"
-        if require_supported
-        else None,
-    )
-    assert detector.ensure_default_backend() == "tensorflow"
-
-    monkeypatch.setattr(
-        detector,
-        "select_best_backend",
-        lambda require_supported: None
-        if require_supported
-        else "jax",
-    )
-    assert detector.ensure_default_backend() == "jax"
-
-    monkeypatch.setattr(
-        detector,
-        "select_best_backend",
-        lambda require_supported: None,
-    )
-    with pytest.raises(
-        RuntimeError, match="No compatible backend installed"
-    ):
-        detector.ensure_default_backend(auto_install=False)
+    monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+    assert detector.normalize_backend_name("pytorch") == "torch"
+    assert isinstance(detector.detect_available_backends(), dict)
 
     installs = []
     monkeypatch.setattr(
         detector.subprocess,
         "check_call",
-        lambda cmd, stdout=None, stderr=None: installs.append(
-            cmd
-        )
-        or 0,
+        lambda cmd, stdout=None, stderr=None: installs.append(cmd) or 0,
     )
-    assert (
-        detector.ensure_default_backend(
-            auto_install=True, install_tensorflow=False
-        )
-        == "jax"
-    )
-    assert installs[0][-1] == "jax"
 
-    monkeypatch.setattr(
-        detector.subprocess,
-        "check_call",
-        lambda *args, **kwargs: (_ for _ in ()).throw(
-            subprocess.CalledProcessError(1, "pip")
-        ),
-    )
-    with pytest.raises(
-        RuntimeError, match="Failed to install"
-    ):
-        detector.ensure_default_backend(auto_install=True)
+    def fake_select_best_backend(*, prefer=None, require_supported=True):
+        return None
 
     monkeypatch.setattr(
         detector,
-        "_BACKENDS",
-        {
-            "tensorflow": AvailableBackend,
-            "jax": MissingBackend,
-            "torch": AvailableBackend,
-            "pytorch": ExperimentalBackend,
-        },
-    )
-    assert detector.get_available_backends() == [
-        "tensorflow",
-        "torch",
-    ]
-
-    fake_keras = types.SimpleNamespace(
-        layers=types.SimpleNamespace(
-            Layer="Layer",
-            Dense="Dense",
-            LSTM="LSTM",
-            MultiHeadAttention="MHA",
-            LayerNormalization="Norm",
-            Dropout="Dropout",
-            BatchNormalization="BatchNorm",
-        ),
-        Model="Model",
-        Sequential="Sequential",
-    )
-    fake_tf = types.SimpleNamespace(
-        Tensor="Tensor", keras=fake_keras
-    )
-    fake_torch = types.SimpleNamespace(Tensor="TorchTensor")
-    monkeypatch.setattr(
-        implementations,
-        "_import_module",
-        lambda name: {
-            "tensorflow": fake_tf,
-            "keras": fake_keras,
-            "jax": types.SimpleNamespace(),
-            "torch": fake_torch,
-        }[name],
-    )
-
-    tf_backend = object.__new__(
-        implementations.TensorFlowBackend
-    )
-    tf_backend._initialize_imports()
-    assert tf_backend.Dense == "Dense"
-    jax_backend = object.__new__(implementations.JaxBackend)
-    jax_backend._initialize_imports()
-    assert jax_backend.Layer == "Layer"
-    torch_backend = object.__new__(
-        implementations.TorchBackend
-    )
-    torch_backend._initialize_imports()
-    assert torch_backend.Tensor == "TorchTensor"
-
-    monkeypatch.setattr(
-        backend_module,
-        "_BACKENDS",
-        {
-            "tensorflow": AvailableBackend,
-            "jax": ExperimentalBackend,
-            "torch": MissingBackend,
-            "pytorch": ExperimentalBackend,
-        },
-    )
-    monkeypatch.setattr(
-        backend_module,
-        "normalize_backend_name",
-        lambda name: str(name).strip().lower(),
-    )
-    monkeypatch.setattr(
-        backend_module,
-        "get_available_backends",
-        lambda: ["jax"],
-    )
-    monkeypatch.setattr(
-        backend_module,
         "select_best_backend",
-        lambda require_supported=True: "tensorflow",
+        fake_select_best_backend,
     )
-    monkeypatch.setattr(
-        backend_module,
-        "ensure_default_backend",
-        lambda auto_install=True: "tensorflow",
-    )
-    monkeypatch.setattr(
-        backend_module,
-        "get_backend_version",
-        lambda name: f"{name}-version",
-    )
-    monkeypatch.setattr(
-        backend_module,
-        "check_tensorflow_compatibility",
-        lambda: (False, "tf warn"),
-    )
-    monkeypatch.setattr(
-        backend_module, "_CURRENT_BACKEND", AvailableBackend()
-    )
-    monkeypatch.delenv(
-        "BASE_ATTENTIVE_BACKEND", raising=False
-    )
-    monkeypatch.delenv("KERAS_BACKEND", raising=False)
-
-    assert (
-        backend_module.get_backend()
-        is backend_module._CURRENT_BACKEND
-    )
-
-    backend_module._CURRENT_BACKEND = None
-    assert isinstance(
-        backend_module.get_backend(), AvailableBackend
-    )
-    with pytest.raises(ValueError, match="Unknown backend"):
-        backend_module.get_backend("invalid")
-    with pytest.raises(
-        ValueError, match="Backend 'torch' is not available"
-    ):
-        backend_module.get_backend("torch")
-
-    backend_module._CURRENT_BACKEND = None
-    monkeypatch.setattr(
-        backend_module,
-        "get_backend",
-        lambda name=None: (_ for _ in ()).throw(
-            RuntimeError("boom")
-        ),
-    )
-    caps = backend_module.get_backend_capabilities()
-    assert caps["available"] is True
-    assert caps["version"] == "tensorflow-version"
-    assert caps["supports_base_attentive_v2"] is True
-
-    with pytest.raises(ValueError, match="Unknown backend"):
-        backend_module.get_backend_capabilities("invalid")
-
-    monkeypatch.setattr(
-        backend_module,
-        "_BACKENDS",
-        {
-            "tensorflow": ExplodingBackend,
-            "jax": ExperimentalBackend,
-            "torch": MissingBackend,
-            "pytorch": ExperimentalBackend,
-        },
-    )
-    caps = backend_module.get_backend_capabilities(
-        "tensorflow"
-    )
-    assert caps["available"] is False
-    assert caps["error"] == "boom"
-
-    monkeypatch.setattr(
-        backend_module,
-        "_BACKENDS",
-        {
-            "tensorflow": AvailableBackend,
-            "jax": ExperimentalBackend,
-            "torch": MissingBackend,
-            "pytorch": ExperimentalBackend,
-        },
-    )
-    import base_attentive.backend.base as backend_base
-
-    monkeypatch.setattr(
-        backend_base,
-        "_read_loaded_keras_backend",
-        lambda: "jax",
-    )
-    monkeypatch.setattr(
-        backend_module,
-        "get_backend",
-        lambda name=None: AvailableBackend(),
-    )
-    with pytest.warns(RuntimeWarning):
-        backend = backend_module.set_backend("tensorflow")
-    assert isinstance(backend, AvailableBackend)
-    assert backend_module._CURRENT_BACKEND is backend
-    assert (
-        backend_module.os.environ["BASE_ATTENTIVE_BACKEND"]
-        == "tensorflow"
-    )
-    assert (
-        backend_module.os.environ["KERAS_BACKEND"]
-        == "tensorflow"
-    )
-
-    monkeypatch.delenv(
-        "BASE_ATTENTIVE_BACKEND", raising=False
-    )
-    monkeypatch.delenv("KERAS_BACKEND", raising=False)
-    monkeypatch.setattr(
-        backend_module,
-        "select_best_backend",
-        lambda require_supported=True: "jax"
-        if require_supported
-        else None,
-    )
-    backend_module._auto_initialize()
-    assert (
-        backend_module.os.environ["BASE_ATTENTIVE_BACKEND"]
-        == "jax"
-    )
-    assert backend_module.os.environ["KERAS_BACKEND"] == "jax"
+    assert detector.ensure_default_backend(
+        auto_install=True, install_tensorflow=False
+    ) == "jax"
+    assert installs

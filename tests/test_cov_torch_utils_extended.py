@@ -624,17 +624,19 @@ class TestTorchDeviceManager:
             cuda=types.SimpleNamespace(
                 is_available=lambda: True,
                 device_count=lambda: 2,
-                get_device_name=lambda index: "GPU-0"
-                if index == 0
-                else (_ for _ in ()).throw(
-                    RuntimeError("boom")
+                get_device_name=lambda index: (
+                    "GPU-0"
+                    if index == 0
+                    else (_ for _ in ()).throw(
+                        RuntimeError("boom")
+                    )
                 ),
-                get_device_properties=lambda index: _Props(
-                    1024 * 1024 * 512
-                )
-                if index == 0
-                else (_ for _ in ()).throw(
-                    RuntimeError("boom")
+                get_device_properties=lambda index: (
+                    _Props(1024 * 1024 * 512)
+                    if index == 0
+                    else (_ for _ in ()).throw(
+                        RuntimeError("boom")
+                    )
                 ),
             ),
             backends=types.SimpleNamespace(

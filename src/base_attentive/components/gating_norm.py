@@ -62,8 +62,9 @@ SERIALIZATION_PACKAGE = __name__
     conditions_params_mappings=[
         {
             "param": "use_time_distributed",
-            "condition": lambda v: v is not None
-            and v is not False,
+            "condition": lambda v: (
+                v is not None and v is not False
+            ),
             "message": (
                 "The 'use_time_distributed' parameter in GatedResidualNetwork "
                 "is deprecated and has no effect.\n"

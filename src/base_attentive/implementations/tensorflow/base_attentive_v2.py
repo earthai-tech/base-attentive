@@ -22,6 +22,20 @@ except ImportError:
     tf = None
     layers = None
 
+_BUILDER_META_KEYS = {
+    "component_key",
+    "in_features",
+    "forecast_horizon",
+}
+
+
+def _clean_builder_kwargs(kwargs):
+    return {
+        key: value
+        for key, value in kwargs.items()
+        if key not in _BUILDER_META_KEYS
+    }
+
 
 def _ensure_tensorflow():
     """Ensure TensorFlow is available."""
@@ -57,7 +71,7 @@ class _TFTemporalSelfAttentionEncoder(
         **kwargs,
     ):
         _ensure_tensorflow()
-        super().__init__(name=name, **kwargs)
+        super().__init__(name=name, **_clean_builder_kwargs(kwargs))
 
         key_dim = max(1, units // max(1, num_heads))
 
@@ -164,7 +178,7 @@ def _build_tf_dense_projection(
     Returns:
         layers.Dense with optional activation
     """
-    del context, spec, kwargs
+    del context, spec
     _ensure_tensorflow()
     return layers.Dense(
         units, activation=activation, name=name, **kwargs
@@ -204,7 +218,7 @@ def _build_tf_temporal_self_attention_encoder(
     Returns:
         _TFTemporalSelfAttentionEncoder instance
     """
-    del context, spec, kwargs
+    del context, spec
     _ensure_tensorflow()
     return _TFTemporalSelfAttentionEncoder(
         units=units,
@@ -214,7 +228,7 @@ def _build_tf_temporal_self_attention_encoder(
         dropout_rate=dropout_rate,
         layer_norm_epsilon=layer_norm_epsilon,
         name=name,
-        **kwargs,
+        **_clean_builder_kwargs(kwargs),
     )
 
 
@@ -399,26 +413,31 @@ def ensure_tensorflow_v2_registered(
         "projection.dense",
         _build_tf_dense_projection,
         backend="tensorflow",
+        replace=True,
     )
     registry.register(
         "projection.static",
         _build_tf_dense_projection,
         backend="tensorflow",
+        replace=True,
     )
     registry.register(
         "projection.dynamic",
         _build_tf_dense_projection,
         backend="tensorflow",
+        replace=True,
     )
     registry.register(
         "projection.future",
         _build_tf_dense_projection,
         backend="tensorflow",
+        replace=True,
     )
     registry.register(
         "projection.hidden",
         _build_tf_dense_projection,
         backend="tensorflow",
+        replace=True,
     )
 
     # Register TensorFlow-optimized encoders
@@ -426,6 +445,7 @@ def ensure_tensorflow_v2_registered(
         "encoder.temporal_self_attention",
         _build_tf_temporal_self_attention_encoder,
         backend="tensorflow",
+        replace=True,
     )
 
     # Register TensorFlow-optimized pooling
@@ -433,11 +453,13 @@ def ensure_tensorflow_v2_registered(
         "pool.mean",
         _build_tf_mean_pool,
         backend="tensorflow",
+        replace=True,
     )
     registry.register(
         "pool.last",
         _build_tf_last_pool,
         backend="tensorflow",
+        replace=True,
     )
 
     # Register TensorFlow-optimized fusion
@@ -445,6 +467,7 @@ def ensure_tensorflow_v2_registered(
         "fusion.concat",
         _build_tf_concat_fusion,
         backend="tensorflow",
+        replace=True,
     )
 
     # Register TensorFlow-optimized heads
@@ -452,11 +475,19 @@ def ensure_tensorflow_v2_registered(
         "head.point_forecast",
         _build_tf_point_forecast_head,
         backend="tensorflow",
+        replace=True,
     )
     registry.register(
         "head.quantile_forecast",
         _build_tf_quantile_head,
         backend="tensorflow",
+        replace=True,
+    )
+    registry.register(
+        "head.quantile",
+        _build_tf_quantile_head,
+        backend="tensorflow",
+        replace=True,
     )
 
 

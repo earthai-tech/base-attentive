@@ -1,8 +1,13 @@
+# SPDX-License-Identifier: BSD-3-Clause
+
+# BSD-3-Clause license applies to this file.
+# See: third_party/licenses/fusionlab-learn_BSD-3-Clause.txt
+
 """Centralized Keras symbols and backend-neutral ops for components.
 
-The module remains backward compatible with historical ``tf_*`` exports,
-but new code should prefer the neutral aliases such as ``shape`` and
-``concat``.
+This module is intentionally backend-neutral. Component code should
+import neutral aliases such as ``shape`` and ``concat`` instead of
+TensorFlow-shaped helper names.
 """
 
 from __future__ import annotations
@@ -13,10 +18,11 @@ from typing import Any
 
 import numpy as np
 
-from .._bootstrap import (
+from ..keras_runtime import (
     KERAS_BACKEND,
     KERAS_DEPS,
     dependency_message,
+    get_layer_class,
 )
 from ..compat.keras import import_keras_attr
 from ..logging import get_logger
@@ -62,14 +68,10 @@ def _assert_equal(actual, expected, message="", name=None):
     del name
     actual_value = _resolve_scalar(actual)
     expected_value = _resolve_scalar(expected)
-    if (
-        actual_value is not None
-        and expected_value is not None
-    ):
+    if actual_value is not None and expected_value is not None:
         if actual_value != expected_value:
             raise AssertionError(
-                message
-                or f"{actual_value} != {expected_value}"
+                message or f"{actual_value} != {expected_value}"
             )
     return None
 
@@ -133,6 +135,12 @@ def _softplus(value):
 
 
 def _reduce_logsumexp(value, axis=None, keepdims=False):
+    detach = getattr(value, "detach", None)
+    if callable(detach):
+        value = detach()
+    cpu = getattr(value, "cpu", None)
+    if callable(cpu):
+        value = cpu()
     arr = np.asarray(value)
     max_value = np.max(arr, axis=axis, keepdims=True)
     stable = np.log(
@@ -242,20 +250,7 @@ def Concatenate(*args, **kwargs):
 
 
 if Layer is object:
-
-    class _CompatLayer:
-        def __init__(self, *args, **kwargs):
-            del args, kwargs
-
-        def __call__(self, *args, **kwargs):
-            call = getattr(self, "call", None)
-            if callable(call):
-                return call(*args, **kwargs)
-            if args:
-                return args[0]
-            return None
-
-    Layer = _CompatLayer
+    Layer = get_layer_class()
 Loss = _dep("Loss")
 Tensor = _dep("Tensor", np.ndarray)
 Sequential = _dep("Sequential")
@@ -312,14 +307,14 @@ equal = _dep("equal", np.equal)
 int32 = _dep("int32", np.int32)
 debugging = _dep("debugging")
 autograph = _dep("autograph")
-assert_equal = getattr(
-    debugging, "assert_equal", _assert_equal
-)
+assert_equal = getattr(debugging, "assert_equal", _assert_equal)
 do_not_convert = getattr(
     getattr(autograph, "experimental", object()),
     "do_not_convert",
     lambda func=None, **kwargs: (
-        (lambda inner: inner) if func is None else func
+        (lambda inner: inner)
+        if func is None
+        else func
     ),
 )
 pad = _dep("pad", np.pad)
@@ -349,69 +344,6 @@ floordiv = _dep("floordiv", np.floor_divide)
 greater = _dep("greater", np.greater)
 reduce_max = _dep("reduce_max", np.max)
 subtract = _dep("subtract", np.subtract)
-
-# Backward-compatible TensorFlow-shaped aliases kept for existing modules.
-tf_Assert = assert_op
-tf_TensorShape = TensorShape
-tf_concat = concat
-tf_shape = shape
-tf_reshape = reshape
-tf_repeat = repeat
-tf_add = add
-tf_cast = cast
-tf_maximum = maximum
-tf_reduce_mean = reduce_mean
-tf_add_n = add_n
-tf_float32 = float32
-tf_constant = constant
-tf_convert_to_tensor = convert_to_tensor
-tf_zeros = zeros
-tf_square = square
-tf_transpose = transpose
-tf_logical_and = logical_and
-tf_logical_not = logical_not
-tf_logical_or = logical_or
-tf_get_static_value = get_static_value
-tf_reduce_sum = reduce_sum
-tf_stack = stack
-tf_unstack = unstack
-tf_expand_dims = expand_dims
-tf_tile = tile
-tf_where = where
-tf_range = range
-tf_rank = rank
-tf_split = split
-tf_multiply = multiply
-tf_cond = cond
-tf_equal = equal
-tf_int32 = int32
-tf_debugging = debugging
-tf_autograph = autograph
-tf_assert_equal = assert_equal
-tf_pad = pad
-tf_ones_like = ones_like
-tf_bool = bool_dtype
-tf_newaxis = newaxis
-tf_abs = abs_op
-tf_pow = power
-tf_sin = sin
-tf_cos = cos
-tf_exp = exp
-tf_log = log
-tf_sigmoid = sigmoid
-tf_cumsum = cumsum
-tf_gather = gather
-tf_random = random
-tf_softplus = softplus
-tf_reduce_logsumexp = reduce_logsumexp
-tf_sqrt = sqrt
-tf_erf = erf
-tf_ones = ones
-tf_linalg = linalg
-tf_floordiv = floordiv
-tf_greater = greater
-tf_reduce_max = reduce_max
-tf_subtract = subtract
 
 _logger = get_logger(__name__)
 DEP_MSG = dependency_message("nn.components")
@@ -502,67 +434,6 @@ __all__ = [
     "greater",
     "reduce_max",
     "subtract",
-    "tf_Assert",
-    "tf_TensorShape",
-    "tf_concat",
-    "tf_shape",
-    "tf_reshape",
-    "tf_repeat",
-    "tf_add",
-    "tf_cast",
-    "tf_maximum",
-    "tf_reduce_mean",
-    "tf_add_n",
-    "tf_float32",
-    "tf_constant",
-    "tf_convert_to_tensor",
-    "tf_zeros",
-    "tf_square",
-    "tf_transpose",
-    "tf_logical_and",
-    "tf_logical_not",
-    "tf_logical_or",
-    "tf_get_static_value",
-    "tf_reduce_sum",
-    "tf_stack",
-    "tf_unstack",
-    "tf_expand_dims",
-    "tf_tile",
-    "tf_where",
-    "tf_range",
-    "tf_rank",
-    "tf_split",
-    "tf_multiply",
-    "tf_cond",
-    "tf_equal",
-    "tf_int32",
-    "tf_debugging",
-    "tf_autograph",
-    "tf_assert_equal",
-    "tf_pad",
-    "tf_ones_like",
-    "tf_bool",
-    "tf_newaxis",
-    "tf_abs",
-    "tf_pow",
-    "tf_sin",
-    "tf_cos",
-    "tf_exp",
-    "tf_log",
-    "tf_sigmoid",
-    "tf_cumsum",
-    "tf_gather",
-    "tf_random",
-    "tf_softplus",
-    "tf_reduce_logsumexp",
-    "tf_sqrt",
-    "tf_erf",
-    "tf_ones",
-    "tf_linalg",
-    "tf_floordiv",
-    "tf_greater",
-    "tf_reduce_max",
-    "tf_subtract",
     "_logger",
     "DEP_MSG",
     "KERAS_DEPS",

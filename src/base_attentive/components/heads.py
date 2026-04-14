@@ -620,7 +620,7 @@ class QuantileDistributionModeling(Layer, NNLearner):
     Depending on whether `quantiles` is specified,
     this layer:
       - Returns (B, H, O) if `quantiles` is None.
-      - Returns (B, H, O, Q) otherwise, where Q
+      - Returns (B, H, Q, O) otherwise, where Q
         is the number of quantiles.
 
     .. math::
@@ -664,7 +664,7 @@ class QuantileDistributionModeling(Layer, NNLearner):
     >>> qdm = QuantileDistributionModeling(
     ...     [0.25, 0.5, 0.75], output_dim=1
     ... )
-    >>> # Forward pass => (B, H, O, Q) => (32, 10, 1, 3)
+    >>> # Forward pass => (B, H, Q, O) => (32, 10, 3, 1)
     >>> y = qdm(x)
 
     See Also
@@ -738,7 +738,7 @@ class QuantileDistributionModeling(Layer, NNLearner):
         tf.Tensor
             - If `quantiles` is None:
               (B, H, O)
-            - Else: (B, H, O, Q)
+            - Else: (B, H, Q, O)
         """
         # ensure last dim is statically known (Keras2 reload safety)
         try:
@@ -759,12 +759,12 @@ class QuantileDistributionModeling(Layer, NNLearner):
         if self.quantiles is None:
             return self.output_layer(inputs)
 
-        # Quantile predictions => (B, H, O, Q)
+        # Quantile predictions => (B, H, Q, O)
         outputs = []
         for output_layer in self.output_layers:
             quantile_output = output_layer(inputs)
             outputs.append(quantile_output)
-        return stack(outputs, axis=-1)
+        return stack(outputs, axis=2)
 
     def get_config(self):
         r"""

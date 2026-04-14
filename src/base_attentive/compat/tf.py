@@ -1,34 +1,34 @@
 """TensorFlow compatibility layer.
 
-This module now keeps only TensorFlow-specific shims. Backend-neutral
-Keras imports live in :mod:`base_attentive.compat.keras`.
+This module keeps only TensorFlow-specific shims. All helpers are lazy and
+will not import TensorFlow unless it has already been imported elsewhere.
+That keeps lightweight paths safe on platforms where TensorFlow import is
+slow or unstable.
 """
 
 from __future__ import annotations
 
-import importlib
-import importlib.util
 import os
+import sys
 import warnings
 
 from .keras import import_keras_attr
 
-HAS_TF = importlib.util.find_spec("tensorflow") is not None
-tf = None
-_tf = None
+HAS_TF = "tensorflow" in sys.modules
+tf = sys.modules.get("tensorflow")
+_tf = tf
 
 
 def _import_tensorflow():
-    """Import TensorFlow lazily to avoid heavy import side effects."""
-    global tf, _tf
-    if tf is not None:
-        return tf
-    try:
-        tf = importlib.import_module("tensorflow")
-    except Exception:
-        tf = None
-    _tf = tf
-    return tf
+    """Return an already-loaded TensorFlow module, if any."""
+    global tf, _tf, HAS_TF
+    module = sys.modules.get("tensorflow")
+    if module is not None:
+        tf = module
+        _tf = module
+        HAS_TF = True
+        return module
+    return None
 
 
 class TFConfig:
@@ -44,46 +44,42 @@ def standalone_keras(module_name: str):
 
 
 def suppress_tf_warnings():
-    """Suppress TensorFlow warnings when TensorFlow is active."""
+    """Suppress TensorFlow warnings when TensorFlow is already active."""
+    if not HAS_TF and "tensorflow" not in sys.modules:
+        return None
     tensorflow = _import_tensorflow()
-    if HAS_TF and tensorflow is not None:
+    if tensorflow is not None:
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
         tensorflow.get_logger().setLevel("ERROR")
-        warnings.filterwarnings(
-            "ignore", category=DeprecationWarning
-        )
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+    return None
 
 
 def optional_tf_function(*args, **kwargs):
     """Optional ``tf.function`` decorator that degrades gracefully."""
 
-    if (
-        args
-        and callable(args[0])
-        and len(args) == 1
-        and not kwargs
-    ):
-        func = args[0]
+    def _decorate(func):
         tensorflow = _import_tensorflow()
-        if HAS_TF and tensorflow is not None:
-            return tensorflow.function(func)
-        return func
-
-    def decorator(func):
-        tensorflow = _import_tensorflow()
-        if HAS_TF and tensorflow is not None:
+        if tensorflow is not None:
             return tensorflow.function(*args, **kwargs)(func)
         return func
 
-    return decorator
+    if args and callable(args[0]) and len(args) == 1 and not kwargs:
+        func = args[0]
+        tensorflow = _import_tensorflow()
+        if tensorflow is not None:
+            return tensorflow.function(func)
+        return func
+
+    return _decorate
 
 
-def tf_debugging_assert_equal(
-    x, y, message="", name="assert_equal"
-):
+def tf_debugging_assert_equal(x, y, message="", name="assert_equal"):
     """TensorFlow ``assert_equal`` wrapper."""
+    if not HAS_TF and "tensorflow" not in sys.modules:
+        return None
     tensorflow = _import_tensorflow()
-    if HAS_TF and tensorflow is not None:
+    if tensorflow is not None:
         return tensorflow.debugging.assert_equal(
             x, y, message=message, name=name
         )

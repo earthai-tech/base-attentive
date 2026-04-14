@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from ..._bootstrap import KERAS_DEPS
+from ... import KERAS_DEPS
+from ...keras_runtime import get_layer_class
 from ...components._temporal_utils import (
     aggregate_multiscale_on_3d,
 )
@@ -39,7 +40,7 @@ from ...resolver.component_resolver import build_component
 register_keras_serializable = (
     KERAS_DEPS.register_keras_serializable
 )
-Layer = KERAS_DEPS.Layer
+Layer = get_layer_class()
 SERIALIZATION_PACKAGE = __name__
 
 
@@ -290,6 +291,15 @@ class _GenericConcatFusion(Layer):
     ):
         super().__init__(name=name, **kwargs)
         self.axis = axis
+
+    def __call__(self, inputs, *args, **kwargs):
+        if isinstance(inputs, (list, tuple)) and not any(
+            feature is not None for feature in inputs
+        ):
+            raise ValueError(
+                "fusion received no active feature tensors."
+            )
+        return super().__call__(inputs, *args, **kwargs)
 
     def call(self, inputs, training: bool = False):  # noqa: ARG002, FBT002
         active = [

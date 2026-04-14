@@ -176,7 +176,9 @@ class TestDelegateOnError:
         )
 
         @handlers.delegate_on_error(
-            lambda error: f"handled {type(error).__name__}: {error}"
+            lambda error: (
+                f"handled {type(error).__name__}: {error}"
+            )
         )
         def explode():
             raise RuntimeError("boom")

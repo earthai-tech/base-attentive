@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from base_attentive.experimental import BaseAttentiveV2
 from base_attentive.implementations.generic.base_attentive_v2 import (
     _GenericConcatFusion,
@@ -54,6 +56,7 @@ def test_torch_registration_covers_extended_resolver_surface():
 
 
 def test_jax_registration_covers_extended_resolver_surface():
+    pytest.importorskip("jax", reason="JAX not installed")
     registry = ComponentRegistry()
     ensure_jax_v2_registered(registry=registry)
     keys = [

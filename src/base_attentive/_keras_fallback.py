@@ -817,6 +817,12 @@ def softplus(x):
 
 
 def reduce_logsumexp(x, axis=None, keepdims=False):
+    detach = getattr(x, "detach", None)
+    if callable(detach):
+        x = detach()
+    cpu = getattr(x, "cpu", None)
+    if callable(cpu):
+        x = cpu()
     array = np.asarray(x)
     max_x = np.max(array, axis=axis, keepdims=True)
     result = (
