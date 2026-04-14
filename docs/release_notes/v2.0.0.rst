@@ -1,0 +1,78 @@
+.. _release-v2.0.0:
+
+**v2.0.0** — |MAJOR| Stable Release
+=====================================
+
+*Released: April 2026*
+
+Upgrading from v2.0.0rc1
+-------------------------
+
+No user-facing API changes.  This stable release closes out the v2 release
+candidate cycle.  All CI matrices (Linux, macOS, Windows × Python 3.10/3.11/3.12)
+are green at 94 % test coverage.
+
+Bug Fixes
+---------
+
+- |Bugfix| Fixed ``TypeError: can't convert mps:0 device type tensor to numpy``
+  in ``CRPSLoss._crps_mixture_mc`` on Apple Silicon (MPS).  The entire mixture
+  MC computation now moves inputs to CPU at entry when an MPS device is
+  detected, because ``keras.ops.mean/sum/abs`` internally call NumPy in the
+  CI-runner version of Keras, which fails for MPS tensors.
+
+- |Bugfix| Fixed ``ValueError: operands could not be broadcast together with
+  shapes (2,3,2,1) (2,3,1)`` in ``CRPSLoss._crps_mixture_mc`` on Linux CI.
+  Weight normalisation now uses ``tf_expand_dims(tf_reduce_sum(w, axis=2),
+  axis=2)`` instead of ``tf_reduce_sum(w, axis=2, keepdims=True)`` for
+  non-torch backends, making the shape reconstruction explicit and independent
+  of ``keepdims`` behaviour in the installed Keras version.
+
+- |Bugfix| Fixed ``TypeError`` in ``SqueezeExcite1D.call`` and
+  ``drop_path`` when the output of ``keras.ops`` landed on a different device
+  than the input tensor (MPS vs. CPU mismatch); added ``.to(x.device)``
+  guards matching the pattern already used in ``layer_utils.py``.
+
+- |Bugfix| Fixed ``TypeError`` from ``np.asarray(mps_tensor)`` calls in
+  ``test_cov_components_keras.py``; replaced with the ``_to_numpy`` helper
+  (which first calls ``.cpu()`` on torch tensors) in all five affected
+  assertion sites.
+
+- |Bugfix| Fixed monkey-patch lambda ``np.asarray(x).shape`` in the
+  ``test_query_mask_builds_attention_mask`` test — replaced with
+  ``_to_numpy(x).shape`` to survive MPS tensors.
+
+- |Bugfix| Fixed ``_get_static_value`` in ``base_attentive/__init__.py``:
+  TensorFlow's ``get_static_value`` returns the input object unchanged for
+  non-tensor Python objects; added a ``result is not value`` guard so the
+  function correctly returns ``None`` in that case.
+
+- |Bugfix| Fixed ``_tf_build_positional_encoding`` in
+  ``components/misc.py`` to build the angle matrix entirely in NumPy and only
+  materialise a backend tensor at the end via ``tf_cast``, avoiding MPS
+  in-place slice-assignment failures (``mps_tensor[:, 0::2] = …``).
+
+- |Bugfix| Fixed ``broadcast_like`` in ``layer_utils.py``: added a
+  ``_scalar_to_int`` helper that calls ``.cpu().item()`` on each rep scalar
+  before ``tf_tile``, preventing ``keras.src.backend.torch.numpy.tile`` from
+  calling ``repeats.int().numpy()`` on an MPS tensor.
+
+Infrastructure / CI
+--------------------
+
+- |Internal| Test suite now passes the full Linux × macOS × Windows CI matrix
+  at 94 % coverage (up from ~88 % at rc0).
+
+- |Internal| ``test_cov_losses_extended.py`` — ``test_mixture_mode_dict``
+  mock refactored across three rounds to minimise monkey-patching: only
+  ``tf_gather`` is mocked (``batch_dims=1`` cross-backend compat); real Keras
+  ops are used for all other computations.
+
+Documentation
+-------------
+
+- |Internal| Version badge in ``docs/index.rst`` updated to ``2.0.0``.
+- |Internal| Citation in ``README.md`` updated to ``version = {2.0.0}``.
+- |Internal| ``pyproject.toml`` classifier promoted from
+  ``Development Status :: 4 - Beta`` to
+  ``Development Status :: 5 - Production/Stable``.

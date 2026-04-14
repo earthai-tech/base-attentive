@@ -300,26 +300,22 @@ class TestCRPSLoss:
                 dtype=np.float32,
             )),
         }
-        original_reduce_mean = losses_mod.tf_reduce_mean
+        # Only mock tf_gather: batch_dims=1 isn't universally supported.
+        # tf_reduce_mean is left as the real keras op so MPS tensors flow
+        # through the backend natively without numpy conversion.
         original_gather = losses_mod.tf_gather
         try:
-            losses_mod.tf_reduce_mean = (
-                lambda x, axis=None, keepdims=False: np.mean(
-                    np.asarray(x),
-                    axis=axis,
-                    keepdims=keepdims,
-                )
-            )
             losses_mod.tf_gather = (
-                lambda params, indices, batch_dims=1: np.repeat(
-                    np.asarray(params)[:, np.newaxis, :1, :],
-                    np.asarray(indices).shape[1],
-                    axis=1,
+                lambda params, indices, batch_dims=1: keras.ops.convert_to_tensor(
+                    np.repeat(
+                        _to_numpy(params)[:, np.newaxis, :1, :],
+                        _to_numpy(indices).shape[1],
+                        axis=1,
+                    ).astype(np.float32)
                 )
             )
             result = loss_fn(y_true, y_pred)
         finally:
-            losses_mod.tf_reduce_mean = original_reduce_mean
             losses_mod.tf_gather = original_gather
         assert np.isfinite(float(_to_numpy(result)))
 

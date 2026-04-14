@@ -871,21 +871,20 @@ class TSPositionalEncoding(Layer, NNLearner):
 
     def _tf_build_positional_encoding(self, position, d_model):
         """Builds the positional encoding matrix."""
+        # Build entirely in numpy to avoid MPS in-place slice-assignment
+        # failures (MPS tensors cannot be converted to numpy for __array__).
+        # Only materialise to a backend tensor at the very end via tf_cast.
         angle_rads = self._get_angles(
-            # Use np.arange for non-Tensor context
-            # if KERAS_DEPS.arange isn't suitable
-            tf_range(position)[:, tf_newaxis],
-            tf_range(d_model)[tf_newaxis, :],
+            np.arange(position)[:, np.newaxis],
+            np.arange(d_model)[np.newaxis, :],
             d_model,
-        )
+        ).astype(np.float32)
         # Apply sin to even indices in the array; 2i
-        angle_rads[:, 0::2] = tf_sin(angle_rads[:, 0::2])
+        angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
         # Apply cos to odd indices in the array; 2i+1
-        angle_rads[:, 1::2] = tf_cos(angle_rads[:, 1::2])
+        angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
 
-        pos_encoding_np = angle_rads[tf_newaxis, ...]
-
-        return tf_cast(pos_encoding_np, dtype=tf_float32)
+        return tf_cast(angle_rads[np.newaxis, ...], dtype=tf_float32)
 
     def _get_angles(self, pos, i, d_model):
         """Calculates the angle rates for positional encoding."""

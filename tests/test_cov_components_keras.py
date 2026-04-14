@@ -683,7 +683,7 @@ class TestLayerUtilsBranches:
             result = broadcast_like(x, target)
         finally:
             monkeypatch.undo()
-        assert np.asarray(result).shape == (2, 4, 3)
+        assert _to_numpy(result).shape == (2, 4, 3)
 
     def test_private_broadcast_like_casts_repetition_dtype(self, monkeypatch):
         monkeypatch.setattr(
@@ -853,7 +853,7 @@ class TestVariableSelectionNetworkBranches:
         single = VariableSelectionNetwork(units=4, num_inputs=1)
         result = single(np.ones((2, 1, 3), dtype=np.float32))
         assert result is not None
-        assert np.allclose(np.asarray(single.variable_importances_), 1.0)
+        assert np.allclose(_to_numpy(single.variable_importances_), 1.0)
 
         stacked = VariableSelectionNetwork(units=4, num_inputs=2)
         seq_a = np.ones((2, 5, 3), dtype=np.float32)
@@ -1003,7 +1003,7 @@ class TestCrossAttentionBranches:
         monkeypatch.setattr(
             _attention_mod,
             "tf_ones_like",
-            lambda x, dtype=None: np.ones(np.asarray(x).shape, dtype=bool),
+            lambda x, dtype=None: np.ones(_to_numpy(x).shape, dtype=bool),
         )
 
         query = np.ones((2, 3, 4), dtype=np.float32)
@@ -1457,7 +1457,7 @@ class TestPositionalEncodingBranches:
         layer.build((None, 5, 4))
         result = layer(np.ones((2, 3, 4), dtype=np.float32))
         assert layer.positional_encoding is original
-        assert np.asarray(result).shape == (2, 3, 4)
+        assert _to_numpy(result).shape == (2, 3, 4)
 
 
 class TestLegacyPositionalEncoding:
@@ -1516,7 +1516,7 @@ class TestTSPositionalEncodingBranches:
     def test_tf_build_positional_encoding(self):
         layer = TSPositionalEncoding(max_steps=8, d_model=4)
         result = layer._tf_build_positional_encoding(4, 4)
-        assert np.asarray(result).shape == (1, 4, 4)
+        assert _to_numpy(result).shape == (1, 4, 4)
 
     def test_get_angles(self):
         layer = TSPositionalEncoding(max_steps=8, d_model=4)
@@ -1562,7 +1562,7 @@ class TestActivationBranches:
     def test_none_activation_is_identity(self):
         layer = Activation(None)
         x = np.array([-1.0, 0.0, 1.0], dtype=np.float32)
-        np.testing.assert_array_equal(layer(x), x)
+        np.testing.assert_array_equal(_to_numpy(layer(x)), x)
         assert layer.get_config()["activation"] == "linear"
 
     def test_unknown_activation_raises(self, monkeypatch):

@@ -1,0 +1,90 @@
+.. _release-v2.0.1:
+
+**v2.0.1** — |PATCH| Bug Fix Release
+======================================
+
+*Released: April 2026*
+
+Upgrading from v2.0.0
+----------------------
+
+Drop-in replacement.  No API changes.  Only the MPS device-conflict bug
+described below is addressed.
+
+Bug Fixes
+---------
+
+- |Bugfix| **Definitive MPS fix for** ``CRPSLoss._crps_mixture_mc`` on
+  Apple Silicon (Torch + MPS backend).
+
+  Previous releases (including v2.0.0) attempted to work around
+  ``keras.ops`` failing on MPS tensors by moving inputs to CPU at the
+  start of the function.  This was not sufficient: ``keras.ops.*``
+  calls such as ``cumsum``, ``sigmoid``, ``cast``, ``reshape``, and
+  ``gather`` can silently re-dispatch CPU tensors back to the default
+  Keras device (MPS on Apple Silicon), causing ``mu_s`` / ``sig_s`` to
+  land on MPS while ``eps`` (explicitly moved to CPU) remained on CPU —
+  producing::
+
+      RuntimeError: Expected all tensors to be on the same device,
+      but found at least two devices, mps:0 and cpu!
+
+  The fix introduces a **pure native-PyTorch early-return path** for the
+  MPS case.  When ``_on_mps`` is ``True``, the entire sampling / gather /
+  CRPS computation runs with ``torch.cumsum``, ``torch.randn``,
+  ``torch.gather``, etc. — bypassing all ``keras.ops`` entirely and
+  keeping every tensor on CPU throughout.  The non-MPS path (TensorFlow,
+  JAX, CPU-Torch) is unchanged.
+
+Documentation
+-------------
+
+- |Internal| **Expanded Architecture Guide** (``docs/architecture_guide.rst``).
+  The v2.0.0 Registry / Resolver / Assembly system is now documented in
+  depth:
+
+  - What changed from v1.0.0 and why
+  - :ref:`Breaking changes <arch-breaking-changes>` with migration examples
+  - ``ComponentRegistry`` and ``ModelRegistry`` — how to register and
+    resolve custom components
+  - ``BaseAttentiveSpec`` / ``BaseAttentiveComponentSpec`` field reference
+  - End-to-end build-from-spec example
+  - Updated data-flow diagram reflecting the v2 assembly pipeline
+
+- |Internal| README badges synchronised with ``docs/index.rst``: added
+  version, semver, Keras ≥ 3.0, backends, last-commit, open-issues,
+  PRs-welcome, and platform badges.
+
+Examples
+--------
+
+- |Feature| **Two new Jupyter notebooks** added to ``examples/`` and
+  rendered as HTML pages within the documentation (see
+  :ref:`examples-notebooks`):
+
+  - ``06_crps_probabilistic_forecasting.ipynb`` — covers all three
+    :class:`~base_attentive.components.losses.CRPSLoss` modes
+    (``"quantile"``, ``"gaussian"``, ``"mixture"``), Monte Carlo
+    sample-count guidance, output-shape interpretation per mode, and a
+    sketch of a custom ``GradientTape``-style training loop.
+
+  - ``07_v2_spec_registry.ipynb`` — end-to-end walkthrough of the v2
+    declarative configuration system: ``BaseAttentiveSpec`` creation,
+    JSON round-trip serialisation, ``BaseAttentiveComponentSpec``,
+    registering a custom encoder via ``ComponentRegistry``,
+    ``ModelRegistry``, and ``BaseAttentiveV2Assembly``.
+
+- |Internal| **Notebook rendering via nbsphinx** integrated into the
+  Sphinx build pipeline:
+
+  - ``nbsphinx`` added to ``extensions`` in ``docs/conf.py`` with
+    ``nbsphinx_execute = "never"`` so ReadTheDocs renders notebooks
+    without requiring an ML runtime.
+  - ``docs/conf.py`` auto-copies ``examples/*.ipynb`` →
+    ``docs/notebooks/`` at build time, keeping ``examples/`` as the
+    single source of truth.
+  - New **Examples** section added to the documentation sidebar
+    (``docs/notebooks/index.rst``) with a summary table of all seven
+    notebooks and a Binder badge for interactive execution.
+  - ``nbsphinx>=0.9.0`` and ``ipython>=8.0.0`` added to the
+    ``[docs]`` optional dependency group in ``pyproject.toml``.

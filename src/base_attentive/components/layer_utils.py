@@ -377,14 +377,22 @@ def _broadcast_like(x: Tensor, target: Tensor) -> Tensor:
         reps_i = tf_where(same, 1, t_shape[i])
         reps.append(reps_i)
 
-    # Convert list of scalars to int32 tensor
-    reps = tf_stack(reps)
-    if hasattr(reps, "dtype"):
-        reps_dtype = getattr(tf_shape(x), "dtype", None)
-        if reps_dtype is not None:
-            reps = tf_cast(reps, reps_dtype)
-    else:
-        reps = tuple(int(v) for v in reps)
+    # Convert each scalar rep to a Python int so that keras.ops.tile
+    # receives a plain sequence — avoids MPS tensor .numpy() failures
+    # in the Torch backend (repeats.int().numpy() on mps:0 raises).
+    def _scalar_to_int(v):
+        if hasattr(v, "cpu"):  # torch MPS / CUDA tensor
+            v = v.cpu()
+        if hasattr(v, "item"):
+            return int(v.item())
+        if hasattr(v, "numpy"):
+            return int(v.numpy())
+        return int(v)
+
+    try:
+        reps = tuple(_scalar_to_int(v) for v in reps)
+    except Exception:
+        reps = tf_stack(reps)
 
     return tf_tile(x, reps)
 
