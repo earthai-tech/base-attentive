@@ -147,7 +147,7 @@ rst_prolog = """
    :alt: Dependencies
    :target: #dependencies
 
-.. |Internal| image:: https://img.shields.io/badge/type-internal-lightgrey.svg
+.. |Internal| image:: https://img.shields.io/badge/type-internal-gray.svg
    :alt: Internal
    :target: #internal
 
@@ -166,7 +166,6 @@ rst_prolog = """
 .. |Deprecated| image:: https://img.shields.io/badge/status-deprecated-yellow.svg
    :alt: Deprecated
 
-.. |Security| image:: https://img.shields.io/badge/type-security-red.svg
+.. |Security| image:: https://img.shields.io/badge/type-security-critical.svg
    :alt: Security
-   :target: #security
 """
