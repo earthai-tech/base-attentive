@@ -11,6 +11,7 @@ import importlib.util
 from typing import Any
 
 from ... import KERAS_DEPS
+from ...keras_runtime import get_layer_class
 from ...resolver.builder_contract import resolve_head_units
 from ..generic.base_attentive_v2 import (
     _build_dynamic_window as _build_generic_dynamic_window,
@@ -22,7 +23,7 @@ from ..generic.base_attentive_v2 import (
 
 Dense = KERAS_DEPS.Dense
 Dropout = KERAS_DEPS.Dropout
-Layer = KERAS_DEPS.Layer
+Layer = get_layer_class()
 LayerNormalization = KERAS_DEPS.LayerNormalization
 MultiHeadAttention = KERAS_DEPS.MultiHeadAttention
 concat_op = KERAS_DEPS.concat
@@ -120,6 +121,11 @@ class _TorchTemporalSelfAttentionEncoder(Layer):
             epsilon=self.layer_norm_epsilon,
             name=f"{name}_ln2" if name else "ln2",
         )
+
+    def forward(
+        self, inputs: Any, training: bool = False
+    ) -> Any:  # noqa: FBT002
+        return self.call(inputs, training=training)
 
     def call(
         self, inputs: Any, training: bool = False
@@ -587,8 +593,8 @@ class _TorchQuantileDistributionHead(Layer):
             [
                 batch_size,
                 horizon,
-                self.output_dim,
                 len(self.quantiles),
+                self.output_dim,
             ],
         )
 

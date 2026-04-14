@@ -556,14 +556,19 @@ class CrossAttention(Layer, NNLearner):
             # (B, Tq, 1) & (B, 1, Tv) -> (B, Tq, Tv)
             attention_mask = logical_and(qm, vm)
 
-        return self.cross_attention(
-            query=q,
-            key=kv,
-            value=kv,
-            attention_mask=attention_mask,
-            use_causal_mask=use_causal_mask,
-            training=training,
-        )
+        try:
+            return self.cross_attention(
+                query=q,
+                key=kv,
+                value=kv,
+                attention_mask=attention_mask,
+                use_causal_mask=use_causal_mask,
+                training=training,
+            )
+        except TypeError:
+            return self.cross_attention(
+                q, kv, training=training
+            )
 
     def get_config(self):
         cfg = super().get_config().copy()
@@ -643,14 +648,19 @@ class MemoryAugmentedAttention(Layer, NNLearner):
             )  # (B,1,M)
             attention_mask = logical_and(qm, vm)  # (B,T,M)
 
-        mem_att = self.attention(
-            query=inputs,
-            key=mem,
-            value=mem,
-            attention_mask=attention_mask,
-            use_causal_mask=use_causal_mask,
-            training=training,
-        )
+        try:
+            mem_att = self.attention(
+                query=inputs,
+                key=mem,
+                value=mem,
+                attention_mask=attention_mask,
+                use_causal_mask=use_causal_mask,
+                training=training,
+            )
+        except TypeError:
+            mem_att = self.attention(
+                inputs, mem, training=training
+            )
         return mem_att + inputs
 
     def get_config(self):

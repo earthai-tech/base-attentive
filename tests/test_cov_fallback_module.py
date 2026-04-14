@@ -576,8 +576,9 @@ class TestActivations:
             (
                 "elu",
                 [-1.0, 1.0],
-                lambda r: r[0] < 0
-                and r[1] == pytest.approx(1.0),
+                lambda r: (
+                    r[0] < 0 and r[1] == pytest.approx(1.0)
+                ),
             ),
             ("selu", [1.0], lambda r: r[0] > 0),
             ("gelu", [0.0], lambda r: abs(r[0]) < 1e-6),

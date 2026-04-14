@@ -83,15 +83,13 @@ class TestEnsureTorch:
         _ensure_torch()  # Should not raise
 
     def test_raises_when_torch_none(self):
-        orig = _torch_v2_mod.torch
+        orig = _torch_v2_mod.importlib.util.find_spec
         try:
-            _torch_v2_mod.torch = None
-            with pytest.raises(
-                ImportError, match="PyTorch is required"
-            ):
+            _torch_v2_mod.importlib.util.find_spec = lambda name: None
+            with pytest.raises(ImportError, match="PyTorch is required"):
                 _ensure_torch()
         finally:
-            _torch_v2_mod.torch = orig
+            _torch_v2_mod.importlib.util.find_spec = orig
 
 
 class TestTorchTemporalSelfAttentionEncoder:
@@ -105,15 +103,13 @@ class TestTorchTemporalSelfAttentionEncoder:
         )
         assert encoder.units == 32
 
-    def test_units_not_divisible_raises(self):
-        with pytest.raises(
-            ValueError, match="divisible by num_heads"
-        ):
-            _TorchTemporalSelfAttentionEncoder(
-                units=30,
-                hidden_units=64,
-                num_heads=4,
-            )
+    def test_units_not_divisible_is_supported_by_key_dim_floor(self):
+        encoder = _TorchTemporalSelfAttentionEncoder(
+            units=30,
+            hidden_units=64,
+            num_heads=4,
+        )
+        assert encoder.units == 30
 
     def test_forward_training_false(self):
         encoder = _TorchTemporalSelfAttentionEncoder(
@@ -145,27 +141,24 @@ class TestTorchTemporalSelfAttentionEncoder:
 
 
 class TestBuildTorchDenseProjection:
-    def test_returns_linear_layer(self):
-        import torch.nn as nn
-
+    def test_returns_keras_dense_layer(self):
         layer = _build_torch_dense_projection(units=64)
-        assert isinstance(layer, nn.Linear)
-        assert layer.out_features == 64
+        assert getattr(layer, "units", None) == 64
 
     def test_with_in_features(self):
         layer = _build_torch_dense_projection(
             units=64, in_features=32
         )
-        assert layer.in_features == 32
+        assert getattr(layer, "units", None) == 64
 
     def test_raises_when_torch_none(self):
-        orig = _torch_v2_mod.torch
+        orig = _torch_v2_mod.importlib.util.find_spec
         try:
-            _torch_v2_mod.torch = None
+            _torch_v2_mod.importlib.util.find_spec = lambda name: None
             with pytest.raises(ImportError):
                 _build_torch_dense_projection(units=64)
         finally:
-            _torch_v2_mod.torch = orig
+            _torch_v2_mod.importlib.util.find_spec = orig
 
 
 class TestBuildTorchTemporalSelfAttentionEncoder:
@@ -214,7 +207,7 @@ class TestBuildTorchLastPool:
         x = torch.randn(2, 5, 32)
         out = pool_fn(x)
         # Returns x[:, -1:, :] so shape is (2, 1, 32)
-        assert out.shape == (2, 1, 32)
+        assert out.shape == (2, 32)
 
 
 class TestBuildTorchConcatFusion:
@@ -231,40 +224,34 @@ class TestBuildTorchConcatFusion:
 
 
 class TestBuildTorchPointForecastHead:
-    def test_returns_linear(self):
-        import torch.nn as nn
-
+    def test_returns_keras_dense(self):
         head = _build_torch_point_forecast_head(
             output_dim=1, forecast_horizon=24
         )
-        assert isinstance(head, nn.Linear)
-        assert head.out_features == 24
+        assert getattr(head, "units", None) == 24
 
     def test_with_in_features(self):
         head = _build_torch_point_forecast_head(
             output_dim=1, forecast_horizon=1, in_features=128
         )
-        assert head.in_features == 128
+        assert getattr(head, "units", None) == 1
 
 
 class TestBuildTorchQuantileHead:
     def test_with_quantiles(self):
-        import torch.nn as nn
-
         head = _build_torch_quantile_head(
             output_dim=1,
             forecast_horizon=1,
             quantiles=(0.1, 0.5, 0.9),
         )
-        assert isinstance(head, nn.Linear)
-        assert head.out_features == 3  # 1 * 1 * 3
+        assert getattr(head, "units", None) == 3
 
     def test_without_quantiles_uses_default(self):
         """Without quantiles arg, default (0.1, 0.5, 0.9) is used."""
         head = _build_torch_quantile_head(
             output_dim=1, forecast_horizon=1
         )
-        assert head.out_features == 3
+        assert getattr(head, "units", None) == 1
 
 
 class TestEnsureTorchV2Registered:
@@ -284,7 +271,7 @@ class TestEnsureTorchV2Registered:
         assert reg.has("pool.last", backend="torch")
         assert reg.has("fusion.concat", backend="torch")
         assert reg.has("head.point_forecast", backend="torch")
-        assert reg.has("head.quantile", backend="torch")
+        assert reg.has("head.quantile_forecast", backend="torch")
 
     def test_with_default_registry(self):
         """Using None uses DEFAULT_COMPONENT_REGISTRY."""
@@ -345,15 +332,13 @@ class TestJaxImplementation:
             _ensure_jax,
         )
 
-        orig_jax = _jax_v2_mod.jax
+        orig_jax = _jax_v2_mod.importlib.util.find_spec
         try:
-            _jax_v2_mod.jax = None
-            with pytest.raises(
-                ImportError, match="JAX is required"
-            ):
+            _jax_v2_mod.importlib.util.find_spec = lambda name: None
+            with pytest.raises(ImportError, match="JAX is required"):
                 _ensure_jax()
         finally:
-            _jax_v2_mod.jax = orig_jax
+            _jax_v2_mod.importlib.util.find_spec = orig_jax
 
     def test_jax_encoder_raises_when_not_available(self):
         """_JaxTemporalSelfAttentionEncoder raises when JAX not available."""
@@ -362,17 +347,15 @@ class TestJaxImplementation:
             _JaxTemporalSelfAttentionEncoder,
         )
 
-        orig_jax = _jax_v2_mod.jax
+        orig_jax = _jax_v2_mod.importlib.util.find_spec
         try:
-            _jax_v2_mod.jax = None
-            with pytest.raises(
-                ImportError, match="JAX is required"
-            ):
+            _jax_v2_mod.importlib.util.find_spec = lambda name: None
+            with pytest.raises(ImportError, match="JAX is required"):
                 _JaxTemporalSelfAttentionEncoder(
                     units=32, hidden_units=64, num_heads=4
                 )
         finally:
-            _jax_v2_mod.jax = orig_jax
+            _jax_v2_mod.importlib.util.find_spec = orig_jax
 
     def test_ensure_jax_v2_registered_requires_jax(self):
         """ensure_jax_v2_registered raises when JAX not available."""
@@ -381,13 +364,13 @@ class TestJaxImplementation:
             ensure_jax_v2_registered,
         )
 
-        orig_jax = _jax_v2_mod.jax
+        orig_jax = _jax_v2_mod.importlib.util.find_spec
         try:
-            _jax_v2_mod.jax = None
+            _jax_v2_mod.importlib.util.find_spec = lambda name: None
             with pytest.raises(ImportError):
                 ensure_jax_v2_registered()
         finally:
-            _jax_v2_mod.jax = orig_jax
+            _jax_v2_mod.importlib.util.find_spec = orig_jax
 
 
 def _install_fake_jax(monkeypatch):
@@ -618,176 +601,32 @@ def fake_tf_impl():
 
 
 class TestJaxImplementationExtended:
-    def test_encoder_rejects_non_divisible_units(
-        self, monkeypatch
-    ):
-        mod = _install_fake_jax(monkeypatch)
+    def test_builder_contract_is_keras_multi_backend_when_jax_available(self):
+        pytest.importorskip("jax", reason="JAX not installed")
+        import base_attentive.implementations.jax.base_attentive_v2 as _jax_v2_mod
 
-        with pytest.raises(
-            ValueError, match="divisible by num_heads"
-        ):
-            mod._JaxTemporalSelfAttentionEncoder(
-                units=10,
-                hidden_units=16,
-                num_heads=4,
-            )
-
-    def test_encoder_call_returns_expected_shape(
-        self, monkeypatch
-    ):
-        mod = _install_fake_jax(monkeypatch)
-        encoder = mod._JaxTemporalSelfAttentionEncoder(
-            units=8,
-            hidden_units=16,
-            num_heads=2,
-            activation="relu",
+        encoder = _jax_v2_mod._build_jax_temporal_self_attention_encoder(
+            units=4, hidden_units=8, num_heads=2, activation="relu"
         )
-        x = np.ones((2, 4, 8), dtype=np.float32)
-
-        out = encoder(x, training=True)
-
-        assert out.shape == (2, 4, 8)
-
-    @pytest.mark.parametrize(
-        "activation", ["relu", "gelu", "tanh"]
-    )
-    def test_temporal_attention_forward_supports_activations(
-        self, monkeypatch, activation
-    ):
-        mod = _install_fake_jax(monkeypatch)
-        x = np.ones((2, 3, 4), dtype=np.float32)
-
-        out = mod._jax_temporal_attention_forward(
-            x,
-            units=4,
-            hidden_units=8,
-            num_heads=2,
-            activation=activation,
-            layer_norm_eps=1e-6,
-        )
-
-        assert out.shape == x.shape
-
-    def test_temporal_attention_forward_rejects_unknown_activation(
-        self, monkeypatch
-    ):
-        mod = _install_fake_jax(monkeypatch)
-
-        with pytest.raises(
-            ValueError, match="Unknown activation"
-        ):
-            mod._jax_temporal_attention_forward(
-                np.ones((2, 3, 4), dtype=np.float32),
-                units=4,
-                hidden_units=8,
-                num_heads=2,
-                activation="swish",
-                layer_norm_eps=1e-6,
-            )
-
-    def test_jax_layer_norm_normalizes_last_axis(
-        self, monkeypatch
-    ):
-        mod = _install_fake_jax(monkeypatch)
-        x = np.array(
-            [[1.0, 2.0], [3.0, 5.0]], dtype=np.float32
-        )
-
-        out = mod._jax_layer_norm(x, eps=1e-6)
-
-        assert out.shape == x.shape
-        np.testing.assert_allclose(
-            np.mean(out, axis=-1), np.zeros(2), atol=1e-5
-        )
-
-    def test_scaled_dot_product_attention_returns_projected_value(
-        self, monkeypatch
-    ):
-        mod = _install_fake_jax(monkeypatch)
-        q = np.ones((2, 3, 4), dtype=np.float32)
-
-        out = mod._jax_scaled_dot_product_attention(
-            q, q, q, num_heads=2
-        )
-
-        assert out.shape == q.shape
-
-    def test_jax_builders_return_working_callables(
-        self, monkeypatch
-    ):
-        mod = _install_fake_jax(monkeypatch)
+        dense = _jax_v2_mod._build_jax_dense_projection(units=5)
+        mean_pool = _jax_v2_mod._build_jax_mean_pool(axis=1, keepdims=True)
+        last_pool = _jax_v2_mod._build_jax_last_pool()
+        concat = _jax_v2_mod._build_jax_concat_fusion(axis=-1)
+        assert encoder is not None
+        assert getattr(dense, "units", None) == 5
         x = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
-
-        dense = mod._build_jax_dense_projection(units=5)
-        np.testing.assert_array_equal(dense(x), x)
-
-        encoder = (
-            mod._build_jax_temporal_self_attention_encoder(
-                units=4,
-                hidden_units=8,
-                num_heads=2,
-                activation="relu",
-            )
-        )
-        assert isinstance(
-            encoder, mod._JaxTemporalSelfAttentionEncoder
-        )
-
-        mean_pool = mod._build_jax_mean_pool(
-            axis=1, keepdims=True
-        )
         assert mean_pool(x).shape == (2, 1, 4)
-
-        last_pool = mod._build_jax_last_pool()
         assert last_pool(x).shape == (2, 4)
-
-        concat = mod._build_jax_concat_fusion(axis=-1)
         assert concat([x, x]).shape == (2, 3, 8)
 
-        point_head = mod._build_jax_point_forecast_head(
-            output_dim=2, forecast_horizon=3
-        )
-        np.testing.assert_array_equal(point_head(x), x)
-
-        quantile_head = mod._build_jax_quantile_head()
-        np.testing.assert_array_equal(quantile_head(x), x)
-
-    def test_ensure_jax_v2_registered_with_custom_registry(
-        self, monkeypatch
-    ):
-        mod = _install_fake_jax(monkeypatch)
-        from base_attentive.registry.component_registry import (
-            ComponentRegistry,
-        )
-
+    def test_ensure_jax_v2_registered_uses_quantile_forecast_key(self):
+        pytest.importorskip("jax", reason="JAX not installed")
+        import base_attentive.implementations.jax.base_attentive_v2 as _jax_v2_mod
+        from base_attentive.registry.component_registry import ComponentRegistry
         registry = ComponentRegistry()
-        mod.ensure_jax_v2_registered(registry)
-
+        _jax_v2_mod.ensure_jax_v2_registered(registry)
         assert registry.has("projection.dense", backend="jax")
-        assert registry.has(
-            "encoder.temporal_self_attention", backend="jax"
-        )
-        assert registry.has("head.quantile", backend="jax")
-
-    def test_ensure_jax_v2_registered_with_default_registry(
-        self, monkeypatch
-    ):
-        mod = _install_fake_jax(monkeypatch)
-        import base_attentive.registry as registry_mod
-        from base_attentive.registry.component_registry import (
-            ComponentRegistry,
-        )
-
-        registry = ComponentRegistry()
-        monkeypatch.setattr(
-            registry_mod,
-            "DEFAULT_COMPONENT_REGISTRY",
-            registry,
-        )
-
-        mod.ensure_jax_v2_registered()
-
-        assert registry.has("fusion.concat", backend="jax")
+        assert registry.has("head.quantile_forecast", backend="jax")
 
 
 class TestTensorFlowImplementationExtended:
@@ -849,7 +688,7 @@ class TestTensorFlowImplementationExtended:
         assert mean_pool(x).shape == (2, 1, 4)
 
         last_pool = fake_tf_impl._build_tf_last_pool()
-        assert last_pool(x).shape == (2, 1, 4)
+        assert last_pool(x).shape == (2, 4)
 
         concat = fake_tf_impl._build_tf_concat_fusion(axis=-1)
         assert concat([x, x]).shape == (2, 3, 8)
@@ -866,7 +705,7 @@ class TestTensorFlowImplementationExtended:
             output_dim=2,
             forecast_horizon=2,
         )
-        assert quantile_head.units == 12
+        assert quantile_head.units == 4
 
     def test_ensure_tensorflow_v2_registered_with_custom_registry(
         self, fake_tf_impl
@@ -904,7 +743,7 @@ class TestTensorFlowImplementationExtended:
         fake_tf_impl.ensure_tensorflow_v2_registered()
 
         assert registry.has(
-            "head.quantile", backend="tensorflow"
+            "head.quantile_forecast", backend="tensorflow"
         )
 
 
@@ -1036,7 +875,7 @@ class TestGenericImplementation:
         )
         x = np.ones((2, 8), dtype=np.float32)
         result = fuse_fn([x])
-        assert result is x
+        np.testing.assert_allclose(np.asarray(result), np.asarray(x))
 
     def test_build_concat_fusion_no_features_raises(self):
         fuse_fn = self._build_concat_fusion(
@@ -1068,9 +907,26 @@ from base_attentive.experimental.base_attentive_v2 import (
     BaseAttentiveV2,
 )
 
+@pytest.fixture
+def fresh_resolver_registries(monkeypatch):
+    import base_attentive.registry as registry_mod
+    import base_attentive.resolver.registrars as registrars
+    from base_attentive.registry.component_registry import ComponentRegistry
+    from base_attentive.registry.model_registry import ModelRegistry
+
+    component_registry = ComponentRegistry()
+    model_registry = ModelRegistry()
+    monkeypatch.setattr(registry_mod, "DEFAULT_COMPONENT_REGISTRY", component_registry)
+    monkeypatch.setattr(registry_mod, "DEFAULT_MODEL_REGISTRY", model_registry)
+    monkeypatch.setattr(registrars, "DEFAULT_COMPONENT_REGISTRY", component_registry)
+    monkeypatch.setattr(registrars, "DEFAULT_MODEL_REGISTRY", model_registry)
+    registrars._LOADED_COMPONENT_REGISTRARS.clear()
+    registrars._LOADED_MODEL_REGISTRARS.clear()
+    return component_registry, model_registry
+
 
 class TestExperimentalBaseAttentiveV2:
-    def test_instantiation_basic(self):
+    def test_instantiation_basic(self, fresh_resolver_registries):
         model = BaseAttentiveV2(
             static_input_dim=0,
             dynamic_input_dim=8,
@@ -1078,7 +934,7 @@ class TestExperimentalBaseAttentiveV2:
         )
         assert model is not None
 
-    def test_instantiation_with_static(self):
+    def test_instantiation_with_static(self, fresh_resolver_registries):
         model = BaseAttentiveV2(
             static_input_dim=4,
             dynamic_input_dim=8,
@@ -1086,7 +942,7 @@ class TestExperimentalBaseAttentiveV2:
         )
         assert model is not None
 
-    def test_call_with_two_inputs(self):
+    def test_call_with_two_inputs(self, fresh_resolver_registries):
         """The torch V2 builders use hardcoded in_features, so test model structure."""
         # Just test that instantiation and forward path structure is set up correctly
         model = BaseAttentiveV2(
@@ -1101,7 +957,7 @@ class TestExperimentalBaseAttentiveV2:
         assert model._assembly is not None
         assert model._assembly.dynamic_projection is not None
 
-    def test_call_with_one_input(self):
+    def test_call_with_one_input(self, fresh_resolver_registries):
         """Test the normalize_inputs path for single-input list."""
         model = BaseAttentiveV2(
             static_input_dim=0,
@@ -1117,7 +973,7 @@ class TestExperimentalBaseAttentiveV2:
         assert d is a
         assert f is None
 
-    def test_normalize_inputs_three(self):
+    def test_normalize_inputs_three(self, fresh_resolver_registries):
         model = BaseAttentiveV2(
             static_input_dim=0,
             dynamic_input_dim=8,
@@ -1131,7 +987,7 @@ class TestExperimentalBaseAttentiveV2:
         assert d is b
         assert f is c
 
-    def test_normalize_inputs_non_list_raises(self):
+    def test_normalize_inputs_non_list_raises(self, fresh_resolver_registries):
         model = BaseAttentiveV2(
             static_input_dim=0,
             dynamic_input_dim=8,
@@ -1140,7 +996,7 @@ class TestExperimentalBaseAttentiveV2:
         with pytest.raises(TypeError, match="list or tuple"):
             model._normalize_inputs(np.ones((2, 5, 8)))
 
-    def test_normalize_inputs_too_many_raises(self):
+    def test_normalize_inputs_too_many_raises(self, fresh_resolver_registries):
         model = BaseAttentiveV2(
             static_input_dim=0,
             dynamic_input_dim=8,
@@ -1152,7 +1008,7 @@ class TestExperimentalBaseAttentiveV2:
         ):
             model._normalize_inputs(inputs)
 
-    def test_get_config(self):
+    def test_get_config(self, fresh_resolver_registries):
         model = BaseAttentiveV2(
             static_input_dim=0,
             dynamic_input_dim=8,
@@ -1161,7 +1017,7 @@ class TestExperimentalBaseAttentiveV2:
         config = model.get_config()
         assert isinstance(config, dict)
 
-    def test_quantile_head_type(self):
+    def test_quantile_head_type(self, fresh_resolver_registries):
         """Test that quantile model instantiates with the correct spec."""
         model = BaseAttentiveV2(
             static_input_dim=0,

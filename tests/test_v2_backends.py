@@ -281,7 +281,10 @@ class TestBackendCapabilities:
     def test_tensorflow_backend_reports_v2_support(self):
         """TensorFlow backend should report V2 support."""
         try:
-            import tensorflow  # noqa: F401
+            import importlib.util
+
+            if importlib.util.find_spec("tensorflow") is None:
+                pytest.skip("TensorFlow not installed")
 
             report = get_backend_capability_report(
                 "tensorflow"
@@ -362,7 +365,7 @@ class TestBackendComponentsIntegration:
                 "pool.last",
                 "fusion.concat",
                 "head.point_forecast",
-                "head.quantile",
+                "head.quantile_forecast",
             ]
 
             for op in operations:

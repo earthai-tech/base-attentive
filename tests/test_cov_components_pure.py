@@ -25,23 +25,24 @@ _KerasStub = type(
 
 _FALLBACKS = {
     # Functional ops — numpy-backed so TF never loads
-    "add_n": lambda tensors, **kw: sum(tensors)
-    if isinstance(tensors, (list, tuple))
-    else tensors,
+    "add_n": lambda tensors, **kw: (
+        sum(tensors)
+        if isinstance(tensors, (list, tuple))
+        else tensors
+    ),
     "gather": lambda p, i, axis=None, **kw: p,
-    "reduce_logsumexp": lambda x,
-    axis=None,
-    keepdims=False,
-    **kw: x,
+    "reduce_logsumexp": lambda x, axis=None, keepdims=False, **kw: (
+        x
+    ),
     "pow": lambda x, y, **kw: x,
     "rank": lambda x, **kw: len(getattr(x, "shape", [])),
     "expand_dims": lambda x, axis=-1, **kw: _np.expand_dims(
         _np.asarray(x), axis=axis
     ),
     "cast": lambda x, dtype, **kw: _np.array(x, dtype=dtype),
-    "convert_to_tensor": lambda x,
-    dtype=None,
-    **kw: _np.asarray(x, dtype=dtype),
+    "convert_to_tensor": lambda x, dtype=None, **kw: (
+        _np.asarray(x, dtype=dtype)
+    ),
     "reduce_mean": lambda x, axis=None, **kw: _np.mean(
         _np.asarray(x), axis=axis
     ),
@@ -54,8 +55,9 @@ _FALLBACKS = {
     "int32": _np.int32,
     # Keras class stubs — must be real classes so they can be used as base classes.
     # Decorator factory stub — must return a callable that accepts a class.
-    "register_keras_serializable": lambda package="Custom",
-    name=None: (lambda cls: cls),
+    "register_keras_serializable": lambda package="Custom", name=None: (
+        lambda cls: cls
+    ),
 }
 
 
@@ -75,7 +77,7 @@ def _patched_ga(self, name):
 _ba._KerasDeps.__getattr__ = _patched_ga
 
 # Now safe to import components
-from base_attentive.components.utils import (
+from base_attentive.config.architecture_helpers import (
     configure_architecture,
     resolve_attn_levels,
     resolve_fusion_mode,

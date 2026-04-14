@@ -11,6 +11,7 @@ import importlib.util
 from typing import Any
 
 from ... import KERAS_DEPS
+from ...keras_runtime import get_layer_class
 from ...resolver.builder_contract import resolve_head_units
 from ..generic.base_attentive_v2 import (
     _build_dynamic_window as _build_generic_dynamic_window,
@@ -22,7 +23,7 @@ from ..generic.base_attentive_v2 import (
 
 Dense = KERAS_DEPS.Dense
 Dropout = KERAS_DEPS.Dropout
-Layer = KERAS_DEPS.Layer
+Layer = get_layer_class()
 LayerNormalization = KERAS_DEPS.LayerNormalization
 MultiHeadAttention = KERAS_DEPS.MultiHeadAttention
 concat_op = KERAS_DEPS.concat
@@ -32,7 +33,11 @@ register_keras_serializable = (
 )
 SERIALIZATION_PACKAGE = __name__
 
-_BUILDER_META_KEYS = {"component_key", "in_features", "forecast_horizon"}
+_BUILDER_META_KEYS = {
+    "component_key",
+    "in_features",
+    "forecast_horizon",
+}
 
 
 def _clean_builder_kwargs(kwargs):
@@ -225,7 +230,6 @@ class _ConcatFusion(Layer):
         return config
 
 
-
 expand_dims_op = KERAS_DEPS.expand_dims
 tile_op = KERAS_DEPS.tile
 shape_op = KERAS_DEPS.shape
@@ -280,7 +284,9 @@ class _JaxCrossAttention(Layer):
         query, context = inputs
         query = self.query_dense(query)
         context = self.context_dense(context)
-        context_summary = mean_op(context, axis=1, keepdims=True)
+        context_summary = mean_op(
+            context, axis=1, keepdims=True
+        )
         gate = self.gate_dense(query)
         fused = query + gate * context_summary
         return self.output_dense(fused)
@@ -336,13 +342,18 @@ class _JaxHierarchicalAttention(Layer):
         )
 
     def call(self, inputs, training: bool = False):  # noqa: ARG002, FBT002
-        if isinstance(inputs, (list, tuple)) and len(inputs) == 2:
+        if (
+            isinstance(inputs, (list, tuple))
+            and len(inputs) == 2
+        ):
             short_term, long_term = inputs
         else:
             short_term = long_term = inputs
         short_term = self.short_dense(short_term)
         long_term = self.long_dense(long_term)
-        long_summary = mean_op(long_term, axis=1, keepdims=True)
+        long_summary = mean_op(
+            long_term, axis=1, keepdims=True
+        )
         gate = self.gate_dense(short_term)
         fused = short_term + gate * long_summary
         return self.output_dense(fused)
@@ -416,7 +427,9 @@ class _JaxMemoryAttention(Layer):
     def call(self, inputs, training: bool = False):  # noqa: ARG002, FBT002
         encoded = self.input_dense(inputs)
         memory_summary = mean_op(self.memory, axis=0)
-        memory_summary = reshape_op(memory_summary, (1, 1, self.units))
+        memory_summary = reshape_op(
+            memory_summary, (1, 1, self.units)
+        )
         gate = self.gate_dense(encoded)
         fused = encoded + gate * memory_summary
         return self.output_dense(fused)
@@ -507,9 +520,7 @@ class _JaxMultiHorizonHead(Layer):
         self.output_dim = int(output_dim)
         self.forecast_horizon = int(forecast_horizon)
         self.activation = activation
-        total_units = (
-            self.output_dim * self.forecast_horizon
-        )
+        total_units = self.output_dim * self.forecast_horizon
         self.projection = Dense(
             total_units,
             activation=self.activation,
@@ -555,23 +566,25 @@ class _JaxQuantileDistributionHead(Layer):
         self.quantiles = tuple(float(q) for q in quantiles)
         self.output_dim = int(output_dim)
         self.forecast_horizon = (
-            None if forecast_horizon is None else int(forecast_horizon)
+            None
+            if forecast_horizon is None
+            else int(forecast_horizon)
         )
 
     def build(self, input_shape):
         self.quantile_offsets = self.add_weight(
             name="quantile_offsets",
-            shape=(self.output_dim, len(self.quantiles)),
+            shape=(len(self.quantiles), self.output_dim),
             initializer="zeros",
             trainable=True,
         )
         super().build(input_shape)
 
     def call(self, inputs, training: bool = False):  # noqa: ARG002, FBT002
-        base = expand_dims_op(inputs, axis=-1)
+        base = expand_dims_op(inputs, axis=2)
         offsets = reshape_op(
             self.quantile_offsets,
-            (1, 1, self.output_dim, len(self.quantiles)),
+            (1, 1, len(self.quantiles), self.output_dim),
         )
         return base + offsets
 
@@ -585,6 +598,7 @@ class _JaxQuantileDistributionHead(Layer):
             }
         )
         return config
+
 
 def _delegate_generic(builder, **kwargs):
     return builder(**kwargs)
@@ -787,8 +801,12 @@ def _build_jax_cross_attention(
 ):
     del context
     _ensure_jax()
-    active_units = int(units or getattr(spec, "attention_units", 32))
-    active_heads = int(num_heads or getattr(spec, "num_heads", 1))
+    active_units = int(
+        units or getattr(spec, "attention_units", 32)
+    )
+    active_heads = int(
+        num_heads or getattr(spec, "num_heads", 1)
+    )
     return _JaxCrossAttention(
         units=active_units,
         num_heads=active_heads,
@@ -810,8 +828,12 @@ def _build_jax_hierarchical_attention(
 ):
     del context
     _ensure_jax()
-    active_units = int(units or getattr(spec, "attention_units", 32))
-    active_heads = int(num_heads or getattr(spec, "num_heads", 1))
+    active_units = int(
+        units or getattr(spec, "attention_units", 32)
+    )
+    active_heads = int(
+        num_heads or getattr(spec, "num_heads", 1)
+    )
     return _JaxHierarchicalAttention(
         units=active_units,
         num_heads=active_heads,
@@ -834,9 +856,15 @@ def _build_jax_memory_attention(
 ):
     del context
     _ensure_jax()
-    active_units = int(units or getattr(spec, "attention_units", 32))
-    active_memory = int(memory_size or getattr(spec, "memory_size", 1))
-    active_heads = int(num_heads or getattr(spec, "num_heads", 1))
+    active_units = int(
+        units or getattr(spec, "attention_units", 32)
+    )
+    active_memory = int(
+        memory_size or getattr(spec, "memory_size", 1)
+    )
+    active_heads = int(
+        num_heads or getattr(spec, "num_heads", 1)
+    )
     return _JaxMemoryAttention(
         units=active_units,
         memory_size=active_memory,
@@ -859,8 +887,12 @@ def _build_jax_multi_resolution_attention_fusion(
 ):
     del context
     _ensure_jax()
-    active_units = int(units or getattr(spec, "attention_units", 32))
-    active_heads = int(num_heads or getattr(spec, "num_heads", 1))
+    active_units = int(
+        units or getattr(spec, "attention_units", 32)
+    )
+    active_heads = int(
+        num_heads or getattr(spec, "num_heads", 1)
+    )
     return _JaxMultiResolutionAttentionFusion(
         units=active_units,
         num_heads=active_heads,
@@ -890,7 +922,9 @@ def _build_jax_multi_horizon_head(
     del context
     _ensure_jax()
     active_output_dim = int(
-        output_dim if output_dim is not None else spec.output_dim
+        output_dim
+        if output_dim is not None
+        else spec.output_dim
     )
     active_horizon = int(
         forecast_horizon
@@ -918,7 +952,9 @@ def _build_jax_quantile_distribution_head(
     del context
     _ensure_jax()
     active_output_dim = int(
-        output_dim if output_dim is not None else spec.output_dim
+        output_dim
+        if output_dim is not None
+        else spec.output_dim
     )
     active_quantiles = tuple(
         quantiles if quantiles is not None else spec.quantiles

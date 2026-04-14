@@ -1,7 +1,7 @@
 """
 Internal runtime bootstrap for base_attentive.
 
-This module centralizes import-time runtime setup, backend resolution,
+This module centralizes runtime setup, backend resolution,
 and lightweight compatibility helpers used across the package.
 
 It is intentionally private and should not be treated as part of the
@@ -17,15 +17,6 @@ from typing import Any
 
 import numpy as np
 
-from .backend import (
-    get_available_backends,
-    get_backend,
-    get_backend_capabilities,
-    normalize_backend_name,
-    select_best_backend,
-    set_backend,
-)
-
 __all__ = [
     "KERAS_BACKEND",
     "KERAS_DEPS",
@@ -38,26 +29,30 @@ __all__ = [
 ]
 
 
+_BACKEND_ALIASES = {
+    "tf": "tensorflow",
+    "tensorflow": "tensorflow",
+    "jax": "jax",
+    "torch": "torch",
+    "pytorch": "torch",
+}
+
+
 def _normalize_configured_backend(name: str | None) -> str:
-    normalized = normalize_backend_name(name)
-    return normalized or "tensorflow"
+    if name is None:
+        return "tensorflow"
+    normalized = str(name).strip().lower()
+    if not normalized:
+        return "tensorflow"
+    if normalized == "keras":
+        configured = os.environ.get(
+            "KERAS_BACKEND", "tensorflow"
+        )
+        return _normalize_configured_backend(configured)
+    return _BACKEND_ALIASES.get(normalized, normalized)
 
 
 def _resolve_runtime_backend() -> str:
-    """Resolve the runtime backend without side effects.
-
-    Import-time backend selection must stay lightweight.
-    In particular, importing :mod:`base_attentive` should
-    never trigger package installation or aggressive runtime
-    initialization. The resolver therefore uses only:
-
-    1. explicit environment variables
-    2. inexpensive availability detection
-    3. a plain ``"tensorflow"`` default string
-
-    The actual runtime import still happens later when
-    Keras symbols are requested.
-    """
     configured = os.environ.get("BASE_ATTENTIVE_BACKEND")
     if configured:
         return _normalize_configured_backend(configured)
@@ -66,16 +61,40 @@ def _resolve_runtime_backend() -> str:
     if configured:
         return _normalize_configured_backend(configured)
 
-    detected = select_best_backend(require_supported=False)
-    if detected:
-        return _normalize_configured_backend(detected)
-
     return "tensorflow"
 
 
 KERAS_BACKEND = _resolve_runtime_backend()
-os.environ["BASE_ATTENTIVE_BACKEND"] = KERAS_BACKEND
-os.environ["KERAS_BACKEND"] = KERAS_BACKEND
+os.environ.setdefault("BASE_ATTENTIVE_BACKEND", KERAS_BACKEND)
+os.environ.setdefault("KERAS_BACKEND", KERAS_BACKEND)
+
+
+def get_backend(name: str | None = None):
+    backend = importlib.import_module(
+        "base_attentive.backend"
+    )
+    return backend.get_backend(name)
+
+
+def set_backend(name: str):
+    backend = importlib.import_module(
+        "base_attentive.backend"
+    )
+    return backend.set_backend(name)
+
+
+def get_available_backends():
+    backend = importlib.import_module(
+        "base_attentive.backend"
+    )
+    return backend.get_available_backends()
+
+
+def get_backend_capabilities(name: str | None = None):
+    backend = importlib.import_module(
+        "base_attentive.backend"
+    )
+    return backend.get_backend_capabilities(name)
 
 
 def _safe_import(module_name: str):
@@ -223,12 +242,15 @@ class _KerasDeps:
         return self._fallback_runtime
 
     def _load_keras_root(self):
-        keras = _safe_import("keras")
-        if keras is not None:
-            return keras
-        if KERAS_BACKEND == "tensorflow":
-            return _safe_import("tensorflow.keras")
-        return None
+        """Prefer standalone Keras and avoid importing ``tf.keras`` directly.
+
+        On TensorFlow-backed Keras 3 installations, traversing ``tf.keras`` can
+        recurse through TensorFlow's lazy-loader bridge on some Windows setups.
+        The standalone ``keras`` package is the primary API surface for this
+        project, so we deliberately avoid using ``tensorflow.keras`` as a
+        secondary namespace here.
+        """
+        return _safe_import("keras")
 
     def _load_namespace(self, root: Any, name: str | None):
         if root is None:
@@ -274,10 +296,9 @@ class _KerasDeps:
             return getattr(
                 fallback,
                 "Assert",
-                lambda condition,
-                data=None,
-                summarize=None,
-                name=None: condition,
+                lambda condition, data=None, summarize=None, name=None: (
+                    condition
+                ),
             )
         if name == "Tensor":
             tf = self._load_tensorflow()
@@ -399,24 +420,11 @@ class _KerasDeps:
         if hasattr(tf, target_name):
             return getattr(tf, target_name)
 
-        keras = getattr(tf, "keras", None)
-        if keras is not None:
-            for namespace_name in (
-                "layers",
-                "losses",
-                "initializers",
-                "utils",
-            ):
-                namespace = getattr(
-                    keras, namespace_name, None
-                )
-                if namespace is None:
-                    continue
-                value = getattr(namespace, target_name, None)
-                if value is not None:
-                    return value
-            if hasattr(keras, target_name):
-                return getattr(keras, target_name)
+        # Avoid walking through ``tf.keras`` here. When TensorFlow exposes Keras
+        # via its internal lazy loader, attribute access can recurse while it is
+        # deciding whether to bridge to Keras 3. For model/layer namespaces we
+        # rely on standalone ``keras`` above; TensorFlow is only used here for
+        # root-level TF ops and dtypes.
         return None
 
     def _resolve_from_fallback(self, name: str) -> Any:
