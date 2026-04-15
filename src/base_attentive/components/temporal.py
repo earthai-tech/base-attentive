@@ -21,9 +21,9 @@ from ._config import (
     KERAS_BACKEND,
     LSTM,
     Layer,
+    concat,
+    do_not_convert,
     register_keras_serializable,
-    tf_autograph,
-    tf_concat,
 )
 
 __all__ = [
@@ -89,7 +89,9 @@ class MultiScaleLSTM(Layer, NNLearner):
     >>> x = tf.random.normal((32, 20, 16))  # (B, T, D)
     >>> # Instantiating a multi-scale LSTM
     >>> mslstm = MultiScaleLSTM(
-    ...     lstm_units=32, scales=[1, 2], return_sequences=False
+    ...     lstm_units=32,
+    ...     scales=[1, 2],
+    ...     return_sequences=False,
     ... )
     >>> y = mslstm(x)  # shape => (32, 64)
     >>> # because scale=1 and scale=2 each produce 32 units,
@@ -127,11 +129,15 @@ class MultiScaleLSTM(Layer, NNLearner):
         if lstm_units is None:
             lstm_units = units
         if lstm_units is None:
-            raise ValueError("Provide `lstm_units` or `units`.")
+            raise ValueError(
+                "Provide `lstm_units` or `units`."
+            )
         if scales is None or scales == "auto":
             scales = [1]
         # Validate that scales is a list of int
-        scales = validate_nested_param(scales, list[int], "scales")
+        scales = validate_nested_param(
+            scales, list[int], "scales"
+        )
 
         self.lstm_units = lstm_units
         self.scales = scales
@@ -139,11 +145,13 @@ class MultiScaleLSTM(Layer, NNLearner):
 
         # Create an LSTM for each scale
         self.lstm_layers = [
-            LSTM(lstm_units, return_sequences=return_sequences)
+            LSTM(
+                lstm_units, return_sequences=return_sequences
+            )
             for _ in scales
         ]
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, training=False):
         r"""
         Forward pass that processes the input
@@ -173,19 +181,23 @@ class MultiScaleLSTM(Layer, NNLearner):
         if _dev is not None and str(_dev).startswith("mps"):
             import os
 
-            os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+            os.environ.setdefault(
+                "PYTORCH_ENABLE_MPS_FALLBACK", "1"
+            )
 
         outputs = []
         for scale, lstm in zip(self.scales, self.lstm_layers):
             scaled_input = inputs[:, ::scale, :]
-            lstm_output = lstm(scaled_input, training=training)
+            lstm_output = lstm(
+                scaled_input, training=training
+            )
             outputs.append(lstm_output)
 
         # If return_sequences=False:
         #   => (B, units) from each sub-lstm
         #      -> concat => (B, units*len(scales))
         if not self.return_sequences:
-            return tf_concat(outputs, axis=-1)
+            return concat(outputs, axis=-1)
         else:
             # return a list of sequences
             return outputs
@@ -314,7 +326,9 @@ class DynamicTimeWindow(Layer, NNLearner):
         """
         super().__init__()
         if max_window_size is None:
-            max_window_size = units if units is not None else 1
+            max_window_size = (
+                units if units is not None else 1
+            )
         self.max_window_size = max_window_size
 
     def call(self, inputs, training=False):
@@ -348,7 +362,9 @@ class DynamicTimeWindow(Layer, NNLearner):
             Contains 'max_window_size'.
         """
         config = super().get_config().copy()
-        config.update({"max_window_size": self.max_window_size})
+        config.update(
+            {"max_window_size": self.max_window_size}
+        )
         return config
 
     @classmethod

@@ -9,13 +9,17 @@ from unittest import mock
 import pytest
 
 # Check if torch is available (don't mock it, just detect)
-torch_available = importlib.util.find_spec("torch") is not None
+torch_available = (
+    importlib.util.find_spec("torch") is not None
+)
 
 
 @pytest.fixture
 def mock_torch():
     """Fixture providing a mock torch module."""
-    with mock.patch.dict(sys.modules, {"torch": mock.MagicMock()}):
+    with mock.patch.dict(
+        sys.modules, {"torch": mock.MagicMock()}
+    ):
         yield sys.modules["torch"]
 
 
@@ -119,11 +123,15 @@ class TestCheckTorchCompatibility:
         )
 
         # Test with version >= 2.0.0
-        is_compatible, msg = check_torch_compatibility("2.0.0")
+        is_compatible, msg = check_torch_compatibility(
+            "2.0.0"
+        )
         assert is_compatible is True
         assert isinstance(msg, str)
 
-        is_compatible, msg = check_torch_compatibility("2.1.0")
+        is_compatible, msg = check_torch_compatibility(
+            "2.1.0"
+        )
         assert is_compatible is True
 
     def test_incompatible_version(self):
@@ -133,7 +141,9 @@ class TestCheckTorchCompatibility:
         )
 
         # Test with version < 2.0.0
-        is_compatible, msg = check_torch_compatibility("1.13.0")
+        is_compatible, msg = check_torch_compatibility(
+            "1.13.0"
+        )
         assert is_compatible is False
         assert isinstance(msg, str)
         assert "2.0.0" in msg
@@ -145,7 +155,9 @@ class TestCheckTorchCompatibility:
         )
 
         # Test with CUDA suffix - should still work
-        is_compatible, msg = check_torch_compatibility("2.0.0+cu118")
+        is_compatible, msg = check_torch_compatibility(
+            "2.0.0+cu118"
+        )
         assert isinstance(is_compatible, bool)
         assert isinstance(msg, str)
 
@@ -156,7 +168,9 @@ class TestCheckTorchCompatibility:
         )
 
         # Test with invalid format
-        is_compatible, msg = check_torch_compatibility("invalid")
+        is_compatible, msg = check_torch_compatibility(
+            "invalid"
+        )
         # Should handle gracefully
         assert isinstance(is_compatible, bool)
         assert isinstance(msg, str)
@@ -181,7 +195,9 @@ class TestGetTorchDevice:
             get_torch_device,
         )
 
-        device = get_torch_device(prefer="cuda", verbose=False)
+        device = get_torch_device(
+            prefer="cuda", verbose=False
+        )
         assert isinstance(device, str)
 
     def test_cpu_fallback(self):
@@ -190,7 +206,9 @@ class TestGetTorchDevice:
             get_torch_device,
         )
 
-        device = get_torch_device(prefer="cuda", verbose=False)
+        device = get_torch_device(
+            prefer="cuda", verbose=False
+        )
         assert isinstance(device, str)
 
     def test_mps_support(self):
@@ -275,7 +293,10 @@ class TestTorchDeviceManager:
 
         assert isinstance(info, dict)
         # Should contain standard keys (available for CPU at minimum)
-        assert "current_device" in info or "available_devices" in info
+        assert (
+            "current_device" in info
+            or "available_devices" in info
+        )
 
     def test_get_device_info_content(self):
         """Test TorchDeviceManager.get_device_info contains relevant info."""
@@ -291,7 +312,10 @@ class TestTorchDeviceManager:
 
         assert isinstance(info, dict)
         # Check for expected keys
-        assert "current_device" in info or "available_devices" in info
+        assert (
+            "current_device" in info
+            or "available_devices" in info
+        )
 
     def test_get_devices_available(self):
         """Test TorchDeviceManager.get_available_devices returns dict."""
@@ -336,7 +360,9 @@ class TestTorchDeviceManager:
         try:
             device = manager.set_device("cpu")
             assert device == "cpu"
-            assert manager.prefer == "cuda"  # Preference unchanged
+            assert (
+                manager.prefer == "cuda"
+            )  # Preference unchanged
             assert (
                 manager._device == "cpu"
             )  # But internal device is set
@@ -396,7 +422,9 @@ class TestTorchBackendIntegration:
             assert backend is not None
         except Exception as e:
             # Torch might not be installed
-            pytest.skip(f"Torch backend not available: {str(e)}")
+            pytest.skip(
+                f"Torch backend not available: {str(e)}"
+            )
 
 
 class TestTorchVersionUtils:
@@ -404,14 +432,18 @@ class TestTorchVersionUtils:
 
     def test_version_parsing_simple(self):
         """Test version parsing with simple version string."""
-        from base_attentive.backend.version_check import parse_version
+        from base_attentive.backend.version_check import (
+            parse_version,
+        )
 
         version = parse_version("2.0.0")
         assert version == (2, 0, 0)
 
     def test_version_parsing_four_parts(self):
         """Test version parsing with four-part version."""
-        from base_attentive.backend.version_check import parse_version
+        from base_attentive.backend.version_check import (
+            parse_version,
+        )
 
         version = parse_version("2.1.0.1")
         # Should handle gracefully
@@ -459,7 +491,9 @@ class TestErrorHandling:
         )
 
         # Should not raise on invalid preference
-        device = get_torch_device(prefer="invalid", verbose=False)
+        device = get_torch_device(
+            prefer="invalid", verbose=False
+        )
         assert isinstance(device, str)
 
     def test_device_manager_info_with_error(self):

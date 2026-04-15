@@ -22,20 +22,20 @@ from ._config import (
     MultiHeadAttention,
     Sequential,
     Tensor,
+    do_not_convert,
     register_keras_serializable,
-    tf_autograph,
-    # tf_shape,
-    # tf_unstack,
-    # tf_abs,
-    # tf_constant,
-    # tf_float32,
-    # tf_reshape,
-    # tf_maximum,
-    # tf_reduce_mean,
-    # tf_square,
-    # tf_sqrt,
-    # tf_erf
-    tf_stack,
+    # shape,
+    # unstack,
+    # abs_op,
+    # constant,
+    # float32,
+    # reshape,
+    # maximum,
+    # reduce_mean,
+    # square,
+    # sqrt,
+    # erf
+    stack,
 )
 
 __all__ = [
@@ -86,7 +86,9 @@ class TransformerEncoderBlock(Layer):
         if embed_dim is None:
             embed_dim = units
         if embed_dim is None:
-            raise ValueError("Provide `embed_dim` or `units`.")
+            raise ValueError(
+                "Provide `embed_dim` or `units`."
+            )
         if ffn_dim is None:
             ffn_dim = embed_dim * 4
         self.embed_dim = embed_dim
@@ -116,7 +118,7 @@ class TransformerEncoderBlock(Layer):
         self.dropout1 = Dropout(dropout_rate)
         self.dropout2 = Dropout(dropout_rate)
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(
         self,
         inputs: Tensor,
@@ -142,7 +144,9 @@ class TransformerEncoderBlock(Layer):
             attention_mask=mask,
             training=training,
         )
-        attn_output = self.dropout1(attn_output, training=training)
+        attn_output = self.dropout1(
+            attn_output, training=training
+        )
 
         # Add & Norm
         out1 = self.layernorm1(
@@ -151,7 +155,9 @@ class TransformerEncoderBlock(Layer):
 
         # Feed-Forward Network
         ffn_output = self.ffn(out1)
-        ffn_output = self.dropout2(ffn_output, training=training)
+        ffn_output = self.dropout2(
+            ffn_output, training=training
+        )
 
         # Add & Norm
         output = self.layernorm2(
@@ -236,7 +242,9 @@ class TransformerDecoderBlock(Layer):
         if embed_dim is None:
             embed_dim = units
         if embed_dim is None:
-            raise ValueError("Provide `embed_dim` or `units`.")
+            raise ValueError(
+                "Provide `embed_dim` or `units`."
+            )
         if ffn_dim is None:
             ffn_dim = embed_dim * 4
         self.embed_dim = embed_dim
@@ -275,7 +283,7 @@ class TransformerDecoderBlock(Layer):
         self.dropout2 = Dropout(dropout_rate)
         self.dropout3 = Dropout(dropout_rate)
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(
         self,
         inputs: Tensor,
@@ -312,7 +320,9 @@ class TransformerDecoderBlock(Layer):
             attention_mask=look_ahead_mask,
             training=training,
         )
-        attn1_output = self.dropout1(attn1_output, training=training)
+        attn1_output = self.dropout1(
+            attn1_output, training=training
+        )
 
         # Add & Norm
         out1 = self.layernorm1(
@@ -327,7 +337,9 @@ class TransformerDecoderBlock(Layer):
             attention_mask=padding_mask,
             training=training,
         )
-        attn2_output = self.dropout2(attn2_output, training=training)
+        attn2_output = self.dropout2(
+            attn2_output, training=training
+        )
 
         # Add & Norm
         out2 = self.layernorm2(
@@ -336,7 +348,9 @@ class TransformerDecoderBlock(Layer):
 
         # Feed-Forward Network
         ffn_output = self.ffn(out2)
-        ffn_output = self.dropout3(ffn_output, training=training)
+        ffn_output = self.dropout3(
+            ffn_output, training=training
+        )
 
         # Add & Norm
         output = self.layernorm3(
@@ -419,7 +433,9 @@ class TransformerEncoderLayer(Layer, NNLearner):
         if embed_dim is None:
             embed_dim = units
         if embed_dim is None:
-            raise ValueError("Provide `embed_dim` or `units`.")
+            raise ValueError(
+                "Provide `embed_dim` or `units`."
+            )
         if ffn_dim is None:
             ffn_dim = embed_dim * 4
         super().__init__(**kwargs)
@@ -453,7 +469,7 @@ class TransformerEncoderLayer(Layer, NNLearner):
         )  # MHA output dropout is in MHA layer
         self.dropout_ffn = Dropout(dropout_rate)
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(
         self,
         x: Tensor,
@@ -472,7 +488,9 @@ class TransformerEncoderLayer(Layer, NNLearner):
         out1 = self.layernorm1(x + attn_output)  # Post-norm
 
         ffn_output = self.ffn(out1, training=training)
-        ffn_output = self.dropout_ffn(ffn_output, training=training)
+        ffn_output = self.dropout_ffn(
+            ffn_output, training=training
+        )
         out2 = self.layernorm2(out1 + ffn_output)  # Post-norm
         return out2
 
@@ -516,7 +534,9 @@ class TransformerDecoderLayer(Layer, NNLearner):
         if embed_dim is None:
             embed_dim = units
         if embed_dim is None:
-            raise ValueError("Provide `embed_dim` or `units`.")
+            raise ValueError(
+                "Provide `embed_dim` or `units`."
+            )
         if ffn_dim is None:
             ffn_dim = embed_dim * 4
         super().__init__(**kwargs)
@@ -558,7 +578,7 @@ class TransformerDecoderLayer(Layer, NNLearner):
         # Dropout layers if needed beyond MHA's internal dropout
         self.dropout_ffn = Dropout(dropout_rate)
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(
         self,
         x: Tensor,
@@ -597,7 +617,9 @@ class TransformerDecoderLayer(Layer, NNLearner):
 
         # Feed-Forward Network
         ffn_output = self.ffn(out2, training=training)
-        ffn_output = self.dropout_ffn(ffn_output, training=training)
+        ffn_output = self.dropout_ffn(
+            ffn_output, training=training
+        )
         out3 = self.layernorm3(out2 + ffn_output)
         return out3
 
@@ -710,7 +732,9 @@ class MultiDecoder(Layer, NNLearner):
         if output_dim is None:
             output_dim = units if units is not None else 1
         if num_horizons is None:
-            num_horizons = num_heads if num_heads is not None else 1
+            num_horizons = (
+                num_heads if num_heads is not None else 1
+            )
         self.output_dim = output_dim
         self.num_horizons = num_horizons
         # Create a Dense decoder for each horizon
@@ -718,7 +742,7 @@ class MultiDecoder(Layer, NNLearner):
             Dense(output_dim) for _ in range(num_horizons)
         ]
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, x, training=False):
         r"""
         Forward pass: each horizon has a separate
@@ -738,7 +762,7 @@ class MultiDecoder(Layer, NNLearner):
             A 3D tensor of shape (B, H, O).
         """
         outputs = [decoder(x) for decoder in self.decoders]
-        return tf_stack(outputs, axis=1)
+        return stack(outputs, axis=1)
 
     def get_config(self):
         r"""

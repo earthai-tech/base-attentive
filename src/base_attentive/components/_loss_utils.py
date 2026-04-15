@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Author: LKouadio <etanoyau@gmail.com>
 # Adapted from: earthai-tech/fusionlab-learn https://github.com/earthai-tech/gofast
-# Modified for GeoPrior-v3 API.
 
 """
 Loss utilities for different use-cases, including quantile loss,
@@ -14,16 +13,16 @@ from __future__ import annotations
 from ._config import (
     Loss,
     Tensor,
+    abs_op,
+    cast,
+    constant,
+    float32,
+    maximum,
+    reduce_mean,
+    reduce_sum,
     register_keras_serializable,
-    tf_abs,
-    tf_cast,
-    tf_constant,
-    tf_float32,
-    tf_maximum,
-    tf_reduce_mean,
-    tf_reduce_sum,
-    tf_square,
-    tf_where,
+    square,
+    where,
 )
 
 __all__ = [
@@ -37,7 +36,9 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
-def _normalize_loss_reduction(reduction: str | None) -> str | None:
+def _normalize_loss_reduction(
+    reduction: str | None,
+) -> str | None:
     if reduction == "auto":
         return "sum_over_batch_size"
     return reduction
@@ -59,7 +60,8 @@ class MeanSquaredErrorLoss(Loss):
         self, reduction: str = "auto", name: str = "MSELoss"
     ):
         super().__init__(
-            reduction=_normalize_loss_reduction(reduction), name=name
+            reduction=_normalize_loss_reduction(reduction),
+            name=name,
         )
 
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
@@ -73,7 +75,7 @@ class MeanSquaredErrorLoss(Loss):
         Returns:
         - Tensor: Computed loss value
         """
-        return tf_reduce_mean(tf_square(y_true - y_pred))
+        return reduce_mean(square(y_true - y_pred))
 
 
 @register_keras_serializable(
@@ -95,11 +97,12 @@ class QuantileLoss(Loss):
         name: str = "AdaptiveQuantileLoss",
     ):
         super().__init__(
-            reduction=_normalize_loss_reduction(reduction), name=name
+            reduction=_normalize_loss_reduction(reduction),
+            name=name,
         )
         self.quantiles = quantiles
         self.q = len(quantiles)
-        self._qs = tf_constant(quantiles, dtype=tf_float32)
+        self._qs = constant(quantiles, dtype=float32)
 
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
         """Compute quantile loss across common rank-2 and rank-4 layouts."""
@@ -108,7 +111,9 @@ class QuantileLoss(Loss):
         )
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="HuberLoss")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="HuberLoss"
+)
 class HuberLoss(Loss):
     """
     Huber loss function which is less sensitive to outliers in data.
@@ -124,7 +129,8 @@ class HuberLoss(Loss):
         name: str = "HuberLoss",
     ):
         super().__init__(
-            reduction=_normalize_loss_reduction(reduction), name=name
+            reduction=_normalize_loss_reduction(reduction),
+            name=name,
         )
         self.delta = delta
 
@@ -140,15 +146,17 @@ class HuberLoss(Loss):
         - Tensor: Computed loss value
         """
         error = y_true - y_pred
-        abs_error = tf_abs(error)
+        abs_error = abs_op(error)
 
         # Huber loss formula
         condition = abs_error <= self.delta
-        squared_loss = tf_square(error) / 2
-        linear_loss = self.delta * (abs_error - (self.delta / 2))
+        squared_loss = square(error) / 2
+        linear_loss = self.delta * (
+            abs_error - (self.delta / 2)
+        )
 
-        return tf_reduce_mean(
-            tf_where(condition, squared_loss, linear_loss)
+        return reduce_mean(
+            where(condition, squared_loss, linear_loss)
         )
 
 
@@ -171,7 +179,8 @@ class WeightedLoss(Loss):
         name: str = "WeightedLoss",
     ):
         super().__init__(
-            reduction=_normalize_loss_reduction(reduction), name=name
+            reduction=_normalize_loss_reduction(reduction),
+            name=name,
         )
         self.base_loss = base_loss
         self.weight = weight
@@ -188,9 +197,11 @@ class WeightedLoss(Loss):
         - Tensor: Computed weighted loss value
         """
         if self.base_loss is not None:
-            return self.weight * self.base_loss(y_true, y_pred)
-        return self.weight * tf_reduce_mean(
-            tf_square(y_true - y_pred)
+            return self.weight * self.base_loss(
+                y_true, y_pred
+            )
+        return self.weight * reduce_mean(
+            square(y_true - y_pred)
         )
 
 
@@ -221,13 +232,15 @@ def compute_loss_with_reduction(
         loss_value = loss_or_values
 
     if reduction == "mean":
-        return tf_reduce_mean(loss_value)
+        return reduce_mean(loss_value)
     elif reduction == "sum":
-        return tf_reduce_sum(loss_value)
+        return reduce_sum(loss_value)
     elif reduction == "none":
         return loss_value
     else:
-        raise ValueError(f"Invalid reduction type: {reduction}")
+        raise ValueError(
+            f"Invalid reduction type: {reduction}"
+        )
 
 
 def compute_quantile_loss(
@@ -251,12 +264,14 @@ def compute_quantile_loss(
     """
     if quantiles is None:
         if quantile is None:
-            raise ValueError("Provide `quantiles` or `quantile`.")
+            raise ValueError(
+                "Provide `quantiles` or `quantile`."
+            )
         quantiles = [quantile]
 
-    y_true = tf_cast(y_true, tf_float32)
-    y_pred = tf_cast(y_pred, tf_float32)
-    qs = tf_constant(quantiles, dtype=tf_float32)
+    y_true = cast(y_true, float32)
+    y_pred = cast(y_pred, float32)
+    qs = constant(quantiles, dtype=float32)
     # Align qs to the same device as y_pred (MPS/CUDA compatibility)
     _dev = getattr(y_pred, "device", None)
     _to = getattr(qs, "to", None)
@@ -277,10 +292,10 @@ def compute_quantile_loss(
                 b = b.to(a.device)
             pinball_loss = _torch.maximum(a, b)
         else:
-            pinball_loss = tf_maximum(a, b)
+            pinball_loss = maximum(a, b)
     except ImportError:
-        pinball_loss = tf_maximum(a, b)
+        pinball_loss = maximum(a, b)
     try:
-        return tf_reduce_mean(pinball_loss, axis=2)
+        return reduce_mean(pinball_loss, axis=2)
     except Exception:
-        return tf_reduce_mean(pinball_loss)
+        return reduce_mean(pinball_loss)

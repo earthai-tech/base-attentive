@@ -16,7 +16,9 @@ class DocstringComponents:
     regexp = re.compile(r"\n((\n|.)+)\n\s*", re.MULTILINE)
 
     def __init__(
-        self, comp_dict: dict[str, str], strip_whitespace: bool = True
+        self,
+        comp_dict: dict[str, str],
+        strip_whitespace: bool = True,
     ):
         if strip_whitespace:
             entries = {}

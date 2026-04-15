@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from . import Interval, StrOptions, check_is_fitted, validate_params
+from . import (
+    Interval,
+    StrOptions,
+    check_is_fitted,
+    validate_params,
+)
 
 __all__ = [
     "Interval",

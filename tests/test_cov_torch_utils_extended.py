@@ -25,17 +25,21 @@ from base_attentive.backend.torch_utils import (
     torch_is_available,
 )
 
-
 # ---------------------------------------------------------------------------
 # _is_valid_device_string
 # ---------------------------------------------------------------------------
 
+
 class TestIsValidDeviceString:
-    @pytest.mark.parametrize("device", ["cpu", "mps", "cuda", "cuda:0", "cuda:1"])
+    @pytest.mark.parametrize(
+        "device", ["cpu", "mps", "cuda", "cuda:0", "cuda:1"]
+    )
     def test_valid_strings(self, device):
         assert _is_valid_device_string(device) is True
 
-    @pytest.mark.parametrize("device", ["gpu", "tpu", "npu", "cuda:abc", ""])
+    @pytest.mark.parametrize(
+        "device", ["gpu", "tpu", "npu", "cuda:abc", ""]
+    )
     def test_invalid_strings(self, device):
         assert _is_valid_device_string(device) is False
 
@@ -43,6 +47,7 @@ class TestIsValidDeviceString:
 # ---------------------------------------------------------------------------
 # torch_is_available / _get_torch_module
 # ---------------------------------------------------------------------------
+
 
 class TestTorchIsAvailable:
     def test_returns_bool(self):
@@ -56,7 +61,9 @@ class TestTorchIsAvailable:
         else:
             assert _get_torch_module() is None
 
-    def test_get_torch_module_prefers_loaded_module(self, monkeypatch):
+    def test_get_torch_module_prefers_loaded_module(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         sentinel = object()
@@ -64,27 +71,43 @@ class TestTorchIsAvailable:
 
         assert tu._get_torch_module() is sentinel
 
-    def test_get_torch_module_returns_none_when_spec_missing(self, monkeypatch):
+    def test_get_torch_module_returns_none_when_spec_missing(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
-        monkeypatch.delitem(sys.modules, "torch", raising=False)
-        monkeypatch.setattr(tu.importlib.util, "find_spec", lambda name: None)
+        monkeypatch.delitem(
+            sys.modules, "torch", raising=False
+        )
+        monkeypatch.setattr(
+            tu.importlib.util, "find_spec", lambda name: None
+        )
 
         assert tu._get_torch_module() is None
 
-    @pytest.mark.parametrize("exc_type", [ImportError, ValueError, AttributeError])
-    def test_get_torch_module_handles_find_spec_errors(self, monkeypatch, exc_type):
+    @pytest.mark.parametrize(
+        "exc_type", [ImportError, ValueError, AttributeError]
+    )
+    def test_get_torch_module_handles_find_spec_errors(
+        self, monkeypatch, exc_type
+    ):
         import base_attentive.backend.torch_utils as tu
 
         def _raise(_name):
             raise exc_type("broken")
 
-        monkeypatch.delitem(sys.modules, "torch", raising=False)
-        monkeypatch.setattr(tu.importlib.util, "find_spec", _raise)
+        monkeypatch.delitem(
+            sys.modules, "torch", raising=False
+        )
+        monkeypatch.setattr(
+            tu.importlib.util, "find_spec", _raise
+        )
 
         assert tu._get_torch_module() is None
 
-    def test_get_torch_module_returns_none_when_import_fails(self, monkeypatch):
+    def test_get_torch_module_returns_none_when_import_fails(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         real_import = builtins.__import__
@@ -94,9 +117,17 @@ class TestTorchIsAvailable:
                 raise ImportError("boom")
             return real_import(name, *args, **kwargs)
 
-        monkeypatch.delitem(sys.modules, "torch", raising=False)
-        monkeypatch.setattr(tu.importlib.util, "find_spec", lambda name: object())
-        monkeypatch.setattr(builtins, "__import__", _fake_import)
+        monkeypatch.delitem(
+            sys.modules, "torch", raising=False
+        )
+        monkeypatch.setattr(
+            tu.importlib.util,
+            "find_spec",
+            lambda name: object(),
+        )
+        monkeypatch.setattr(
+            builtins, "__import__", _fake_import
+        )
 
         assert tu._get_torch_module() is None
 
@@ -104,6 +135,7 @@ class TestTorchIsAvailable:
 # ---------------------------------------------------------------------------
 # get_torch_version
 # ---------------------------------------------------------------------------
+
 
 class TestGetTorchVersion:
     def test_returns_string_or_none(self):
@@ -117,24 +149,38 @@ class TestGetTorchVersion:
             assert len(parts) >= 2
             assert parts[0].isdigit()
 
-    def test_returns_none_when_runtime_unavailable(self, monkeypatch):
+    def test_returns_none_when_runtime_unavailable(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: None)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: None
+        )
 
         assert tu.get_torch_version() is None
 
     def test_strips_cuda_suffix(self, monkeypatch):
         import base_attentive.backend.torch_utils as tu
 
-        fake_torch = types.SimpleNamespace(__version__="2.4.1+cu121")
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: fake_torch)
+        fake_torch = types.SimpleNamespace(
+            __version__="2.4.1+cu121"
+        )
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: fake_torch
+        )
 
         assert tu.get_torch_version() == "2.4.1"
 
-    def test_returns_none_when_version_lookup_breaks(self, monkeypatch):
+    def test_returns_none_when_version_lookup_breaks(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         class BrokenTorch:
@@ -142,8 +188,12 @@ class TestGetTorchVersion:
             def __version__(self):
                 raise RuntimeError("broken")
 
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: BrokenTorch())
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: BrokenTorch()
+        )
 
         assert tu.get_torch_version() is None
 
@@ -151,6 +201,7 @@ class TestGetTorchVersion:
 # ---------------------------------------------------------------------------
 # check_torch_compatibility
 # ---------------------------------------------------------------------------
+
 
 class TestCheckTorchCompatibility:
     def test_returns_tuple(self):
@@ -180,7 +231,10 @@ class TestCheckTorchCompatibility:
 
     def test_none_when_torch_not_installed(self, monkeypatch):
         import base_attentive.backend.torch_utils as tu
-        monkeypatch.setattr(tu, "get_torch_version", lambda: None)
+
+        monkeypatch.setattr(
+            tu, "get_torch_version", lambda: None
+        )
         ok, msg = tu.check_torch_compatibility()
         assert ok is False
         assert "not installed" in msg.lower()
@@ -190,15 +244,18 @@ class TestCheckTorchCompatibility:
 # _cuda_is_available / _mps_is_available
 # ---------------------------------------------------------------------------
 
+
 class TestDeviceAvailability:
     def test_cuda_check_no_torch(self):
         class FakeTorch:
             cuda = None
+
         assert _cuda_is_available(FakeTorch()) is False
 
     def test_mps_check_no_torch(self):
         class FakeTorch:
             backends = None
+
         assert _mps_is_available(FakeTorch()) is False
 
     def test_cuda_check_raises(self):
@@ -206,8 +263,10 @@ class TestDeviceAvailability:
             @staticmethod
             def is_available():
                 raise RuntimeError("no CUDA")
+
         class FakeTorch:
             cuda = FakeCuda
+
         assert _cuda_is_available(FakeTorch()) is False
 
     def test_mps_check_raises(self):
@@ -215,10 +274,13 @@ class TestDeviceAvailability:
             @staticmethod
             def is_available():
                 raise RuntimeError("no MPS")
+
         class FakeBackends:
             mps = FakeMPS
+
         class FakeTorch:
             backends = FakeBackends
+
         assert _mps_is_available(FakeTorch()) is False
 
     def test_real_module(self):
@@ -234,6 +296,7 @@ class TestDeviceAvailability:
 # get_torch_device
 # ---------------------------------------------------------------------------
 
+
 class TestGetTorchDevice:
     def test_returns_string(self):
         device = get_torch_device(verbose=False)
@@ -244,7 +307,9 @@ class TestGetTorchDevice:
         assert device == "cpu"
 
     def test_prefer_cuda_falls_back(self):
-        device = get_torch_device(prefer="cuda", verbose=False)
+        device = get_torch_device(
+            prefer="cuda", verbose=False
+        )
         assert isinstance(device, str)
 
     def test_prefer_mps_returns_string(self):
@@ -258,18 +323,29 @@ class TestGetTorchDevice:
 
     def test_no_torch_returns_cpu(self, monkeypatch):
         import base_attentive.backend.torch_utils as tu
-        monkeypatch.setattr(tu, "torch_is_available", lambda: False)
+
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: False
+        )
         assert tu.get_torch_device(verbose=False) == "cpu"
 
-    def test_runtime_unavailable_returns_cpu(self, monkeypatch):
+    def test_runtime_unavailable_returns_cpu(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: None)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: None
+        )
 
         assert tu.get_torch_device(verbose=False) == "cpu"
 
-    def test_prefer_cuda_uses_device_factory(self, monkeypatch):
+    def test_prefer_cuda_uses_device_factory(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         fake_torch = types.SimpleNamespace(
@@ -278,46 +354,88 @@ class TestGetTorchDevice:
                 is_available=lambda: True,
                 get_device_name=lambda index: "Fake GPU",
             ),
-            backends=types.SimpleNamespace(mps=types.SimpleNamespace(is_available=lambda: False)),
+            backends=types.SimpleNamespace(
+                mps=types.SimpleNamespace(
+                    is_available=lambda: False
+                )
+            ),
         )
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: fake_torch)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: fake_torch
+        )
 
-        assert tu.get_torch_device(prefer="cuda", verbose=False) == "wrapped:cuda:0"
+        assert (
+            tu.get_torch_device(prefer="cuda", verbose=False)
+            == "wrapped:cuda:0"
+        )
 
-    def test_prefer_cuda_handles_device_name_lookup_failure(self, monkeypatch):
+    def test_prefer_cuda_handles_device_name_lookup_failure(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         fake_torch = types.SimpleNamespace(
             device=lambda name: name,
             cuda=types.SimpleNamespace(
                 is_available=lambda: True,
-                get_device_name=lambda index: (_ for _ in ()).throw(RuntimeError("boom")),
+                get_device_name=lambda index: (
+                    _ for _ in ()
+                ).throw(RuntimeError("boom")),
             ),
-            backends=types.SimpleNamespace(mps=types.SimpleNamespace(is_available=lambda: False)),
+            backends=types.SimpleNamespace(
+                mps=types.SimpleNamespace(
+                    is_available=lambda: False
+                )
+            ),
         )
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: fake_torch)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: fake_torch
+        )
 
-        assert tu.get_torch_device(prefer="cuda", verbose=True) == "cuda:0"
+        assert (
+            tu.get_torch_device(prefer="cuda", verbose=True)
+            == "cuda:0"
+        )
 
-    def test_prefer_mps_uses_device_factory(self, monkeypatch):
+    def test_prefer_mps_uses_device_factory(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         fake_torch = types.SimpleNamespace(
             device=lambda name: f"wrapped:{name}",
-            cuda=types.SimpleNamespace(is_available=lambda: False),
-            backends=types.SimpleNamespace(mps=types.SimpleNamespace(is_available=lambda: True)),
+            cuda=types.SimpleNamespace(
+                is_available=lambda: False
+            ),
+            backends=types.SimpleNamespace(
+                mps=types.SimpleNamespace(
+                    is_available=lambda: True
+                )
+            ),
         )
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: fake_torch)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: fake_torch
+        )
 
-        assert tu.get_torch_device(prefer="mps", verbose=False) == "wrapped:mps"
+        assert (
+            tu.get_torch_device(prefer="mps", verbose=False)
+            == "wrapped:mps"
+        )
 
 
 # ---------------------------------------------------------------------------
 # TorchDeviceManager
 # ---------------------------------------------------------------------------
+
 
 class TestTorchDeviceManager:
     def test_device_property_returns_string(self):
@@ -338,9 +456,14 @@ class TestTorchDeviceManager:
         assert "mps" in avail
         assert avail["cpu"] is True
 
-    def test_get_available_devices_no_torch(self, monkeypatch):
+    def test_get_available_devices_no_torch(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
-        monkeypatch.setattr(tu, "torch_is_available", lambda: False)
+
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: False
+        )
         mgr = TorchDeviceManager()
         avail = mgr.get_available_devices()
         assert avail["cpu"] is True
@@ -354,54 +477,95 @@ class TestTorchDeviceManager:
 
     def test_set_device_no_torch_raises(self, monkeypatch):
         import base_attentive.backend.torch_utils as tu
-        monkeypatch.setattr(tu, "torch_is_available", lambda: False)
+
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: False
+        )
         mgr = TorchDeviceManager()
-        with pytest.raises(RuntimeError, match="not available"):
+        with pytest.raises(
+            RuntimeError, match="not available"
+        ):
             mgr.set_device("cpu")
 
-    def test_set_device_runtime_unavailable_raises(self, monkeypatch):
+    def test_set_device_runtime_unavailable_raises(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: None)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: None
+        )
 
         mgr = TorchDeviceManager()
-        with pytest.raises(RuntimeError, match="runtime unavailable"):
+        with pytest.raises(
+            RuntimeError, match="runtime unavailable"
+        ):
             mgr.set_device("cpu")
 
-    def test_set_device_invalid_when_factory_raises(self, monkeypatch):
+    def test_set_device_invalid_when_factory_raises(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         def _device_factory(device):
             raise RuntimeError(f"bad device: {device}")
 
-        fake_torch = types.SimpleNamespace(device=_device_factory)
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: fake_torch)
+        fake_torch = types.SimpleNamespace(
+            device=_device_factory
+        )
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: fake_torch
+        )
 
         mgr = TorchDeviceManager()
-        with pytest.raises(ValueError, match="Invalid device 'gpu'"):
+        with pytest.raises(
+            ValueError, match="Invalid device 'gpu'"
+        ):
             mgr.set_device("gpu")
 
-    def test_set_device_invalid_without_factory_uses_string_validation(self, monkeypatch):
+    def test_set_device_invalid_without_factory_uses_string_validation(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         fake_torch = types.SimpleNamespace()
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: fake_torch)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: fake_torch
+        )
 
         mgr = TorchDeviceManager()
-        with pytest.raises(ValueError, match="Invalid device 'gpu'"):
+        with pytest.raises(
+            ValueError, match="Invalid device 'gpu'"
+        ):
             mgr.set_device("gpu")
 
-    def test_get_available_devices_runtime_unavailable(self, monkeypatch):
+    def test_get_available_devices_runtime_unavailable(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: None)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: None
+        )
 
         mgr = TorchDeviceManager()
-        assert mgr.get_available_devices() == {"cuda": False, "cpu": True, "mps": False}
+        assert mgr.get_available_devices() == {
+            "cuda": False,
+            "cpu": True,
+            "mps": False,
+        }
 
     def test_get_device_info_returns_dict(self):
         mgr = TorchDeviceManager()
@@ -413,28 +577,40 @@ class TestTorchDeviceManager:
         mgr = TorchDeviceManager(prefer="mps")
         assert mgr.prefer == "mps"
 
-    def test_get_device_info_when_torch_unavailable(self, monkeypatch):
+    def test_get_device_info_when_torch_unavailable(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
-        monkeypatch.setattr(tu, "torch_is_available", lambda: False)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: False
+        )
 
         mgr = TorchDeviceManager()
         info = mgr.get_device_info()
         assert info["current_device"] == "cpu"
         assert info["cuda_available"] is False
 
-    def test_get_device_info_when_runtime_unavailable(self, monkeypatch):
+    def test_get_device_info_when_runtime_unavailable(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: None)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: None
+        )
 
         mgr = TorchDeviceManager()
         info = mgr.get_device_info()
         assert info["current_device"] == "cpu"
         assert info["available_devices"] == {"cpu": True}
 
-    def test_get_device_info_collects_cuda_and_mps_details(self, monkeypatch):
+    def test_get_device_info_collects_cuda_and_mps_details(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         class _Props:
@@ -447,19 +623,39 @@ class TestTorchDeviceManager:
             cuda=types.SimpleNamespace(
                 is_available=lambda: True,
                 device_count=lambda: 2,
-                get_device_name=lambda index: "GPU-0" if index == 0 else (_ for _ in ()).throw(RuntimeError("boom")),
-                get_device_properties=lambda index: _Props(1024 * 1024 * 512)
-                if index == 0
-                else (_ for _ in ()).throw(RuntimeError("boom")),
+                get_device_name=lambda index: (
+                    "GPU-0"
+                    if index == 0
+                    else (_ for _ in ()).throw(
+                        RuntimeError("boom")
+                    )
+                ),
+                get_device_properties=lambda index: (
+                    _Props(1024 * 1024 * 512)
+                    if index == 0
+                    else (_ for _ in ()).throw(
+                        RuntimeError("boom")
+                    )
+                ),
             ),
             backends=types.SimpleNamespace(
-                cudnn=types.SimpleNamespace(version=lambda: 9100),
-                mps=types.SimpleNamespace(is_available=lambda: True),
+                cudnn=types.SimpleNamespace(
+                    version=lambda: 9100
+                ),
+                mps=types.SimpleNamespace(
+                    is_available=lambda: True
+                ),
             ),
-            mps=types.SimpleNamespace(empty_cache=lambda: None),
+            mps=types.SimpleNamespace(
+                empty_cache=lambda: None
+            ),
         )
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: fake_torch)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: fake_torch
+        )
 
         mgr = TorchDeviceManager(prefer="cpu")
         info = mgr.get_device_info()
@@ -472,7 +668,9 @@ class TestTorchDeviceManager:
         assert info["cudnn_version"] == 9100
         assert info["mps_available"] is True
 
-    def test_get_device_info_handles_count_and_cudnn_failures(self, monkeypatch):
+    def test_get_device_info_handles_count_and_cudnn_failures(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         fake_torch = types.SimpleNamespace(
@@ -480,17 +678,29 @@ class TestTorchDeviceManager:
             device=lambda name: name,
             cuda=types.SimpleNamespace(
                 is_available=lambda: True,
-                device_count=lambda: (_ for _ in ()).throw(RuntimeError("boom")),
+                device_count=lambda: (_ for _ in ()).throw(
+                    RuntimeError("boom")
+                ),
                 get_device_name=lambda index: "GPU",
                 get_device_properties=lambda index: None,
             ),
             backends=types.SimpleNamespace(
-                cudnn=types.SimpleNamespace(version=lambda: (_ for _ in ()).throw(RuntimeError("boom"))),
-                mps=types.SimpleNamespace(is_available=lambda: False),
+                cudnn=types.SimpleNamespace(
+                    version=lambda: (_ for _ in ()).throw(
+                        RuntimeError("boom")
+                    )
+                ),
+                mps=types.SimpleNamespace(
+                    is_available=lambda: False
+                ),
             ),
         )
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: fake_torch)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: fake_torch
+        )
 
         mgr = TorchDeviceManager(prefer="cpu")
         info = mgr.get_device_info()
@@ -500,22 +710,34 @@ class TestTorchDeviceManager:
         assert info["cuda_device_memory_mb"] == []
         assert info["cudnn_version"] is None
 
-    def test_reset_cache_warns_when_torch_unavailable(self, monkeypatch):
+    def test_reset_cache_warns_when_torch_unavailable(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
-        monkeypatch.setattr(tu, "torch_is_available", lambda: False)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: False
+        )
 
         TorchDeviceManager().reset_cache()
 
-    def test_reset_cache_warns_when_runtime_unavailable(self, monkeypatch):
+    def test_reset_cache_warns_when_runtime_unavailable(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: None)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: None
+        )
 
         TorchDeviceManager().reset_cache()
 
-    def test_reset_cache_clears_cuda_and_mps(self, monkeypatch):
+    def test_reset_cache_clears_cuda_and_mps(
+        self, monkeypatch
+    ):
         import base_attentive.backend.torch_utils as tu
 
         calls = []
@@ -524,11 +746,21 @@ class TestTorchDeviceManager:
                 is_available=lambda: True,
                 empty_cache=lambda: calls.append("cuda"),
             ),
-            backends=types.SimpleNamespace(mps=types.SimpleNamespace(is_available=lambda: True)),
-            mps=types.SimpleNamespace(empty_cache=lambda: calls.append("mps")),
+            backends=types.SimpleNamespace(
+                mps=types.SimpleNamespace(
+                    is_available=lambda: True
+                )
+            ),
+            mps=types.SimpleNamespace(
+                empty_cache=lambda: calls.append("mps")
+            ),
         )
-        monkeypatch.setattr(tu, "torch_is_available", lambda: True)
-        monkeypatch.setattr(tu, "_get_torch_module", lambda: fake_torch)
+        monkeypatch.setattr(
+            tu, "torch_is_available", lambda: True
+        )
+        monkeypatch.setattr(
+            tu, "_get_torch_module", lambda: fake_torch
+        )
 
         TorchDeviceManager().reset_cache()
 

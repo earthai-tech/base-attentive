@@ -32,7 +32,9 @@ class TestTensorFlowBackendImplementations:
         except ImportError:
             pytest.skip("TensorFlow not installed")
 
-    def test_tensorflow_denseprojection_builder_is_callable(self):
+    def test_tensorflow_denseprojection_builder_is_callable(
+        self,
+    ):
         """TensorFlow dense projection builder should return a layer."""
         try:
             from base_attentive.implementations.tensorflow import (
@@ -51,10 +53,12 @@ class TestTensorFlowBackendImplementations:
                 _build_tf_temporal_self_attention_encoder,
             )
 
-            encoder = _build_tf_temporal_self_attention_encoder(
-                units=32,
-                hidden_units=64,
-                num_heads=4,
+            encoder = (
+                _build_tf_temporal_self_attention_encoder(
+                    units=32,
+                    hidden_units=64,
+                    num_heads=4,
+                )
             )
             assert encoder is not None
         except ImportError:
@@ -119,16 +123,20 @@ class TestPyTorchBackendImplementations:
                 _build_torch_temporal_self_attention_encoder,
             )
 
-            encoder = _build_torch_temporal_self_attention_encoder(
-                units=32,
-                hidden_units=64,
-                num_heads=4,
+            encoder = (
+                _build_torch_temporal_self_attention_encoder(
+                    units=32,
+                    hidden_units=64,
+                    num_heads=4,
+                )
             )
             assert encoder is not None
         except ImportError:
             pytest.skip("PyTorch not installed")
 
-    def test_torch_components_registered_with_torch_backend(self):
+    def test_torch_components_registered_with_torch_backend(
+        self,
+    ):
         """PyTorch components should be registered with 'torch' backend."""
         try:
             from base_attentive.implementations.torch import (
@@ -156,7 +164,9 @@ class TestJAXBackendImplementations:
         try:
             import jax  # noqa: F401
 
-            from base_attentive.implementations import jax as jax_impl
+            from base_attentive.implementations import (
+                jax as jax_impl,
+            )
 
             assert jax_impl is not None
         except ImportError:
@@ -181,10 +191,12 @@ class TestJAXBackendImplementations:
                 _build_jax_temporal_self_attention_encoder,
             )
 
-            encoder = _build_jax_temporal_self_attention_encoder(
-                units=32,
-                hidden_units=64,
-                num_heads=4,
+            encoder = (
+                _build_jax_temporal_self_attention_encoder(
+                    units=32,
+                    hidden_units=64,
+                    num_heads=4,
+                )
             )
             assert encoder is not None
         except ImportError:
@@ -213,7 +225,9 @@ class TestJAXBackendImplementations:
 class TestBackendPreference:
     """Test that backend-specific implementations are preferred over generic."""
 
-    def test_tensorflow_preferred_over_generic_when_registered(self):
+    def test_tensorflow_preferred_over_generic_when_registered(
+        self,
+    ):
         """Registry should prefer TensorFlow implementations."""
         try:
             from base_attentive.implementations.generic import (
@@ -226,7 +240,9 @@ class TestBackendPreference:
             registry = ComponentRegistry()
 
             # Register generic first
-            ensure_generic_v2_registered(component_registry=registry)
+            ensure_generic_v2_registered(
+                component_registry=registry
+            )
 
             # Then register tensorflow
             ensure_tensorflow_v2_registered(registry=registry)
@@ -239,14 +255,18 @@ class TestBackendPreference:
         except ImportError:
             pytest.skip("TensorFlow not installed")
 
-    def test_fallback_to_generic_when_backend_not_available(self):
+    def test_fallback_to_generic_when_backend_not_available(
+        self,
+    ):
         """Registry should fall back to generic when backend not registered."""
         from base_attentive.implementations.generic import (
             ensure_generic_v2_registered,
         )
 
         registry = ComponentRegistry()
-        ensure_generic_v2_registered(component_registry=registry)
+        ensure_generic_v2_registered(
+            component_registry=registry
+        )
 
         # Request a backend that isn't registered - should fall back to generic
         result = registry.resolve(
@@ -261,9 +281,14 @@ class TestBackendCapabilities:
     def test_tensorflow_backend_reports_v2_support(self):
         """TensorFlow backend should report V2 support."""
         try:
-            import tensorflow  # noqa: F401
+            import importlib.util
 
-            report = get_backend_capability_report("tensorflow")
+            if importlib.util.find_spec("tensorflow") is None:
+                pytest.skip("TensorFlow not installed")
+
+            report = get_backend_capability_report(
+                "tensorflow"
+            )
             assert report.name == "tensorflow"
             assert report.supports_base_attentive_v2 is True
         except ImportError:
@@ -340,12 +365,16 @@ class TestBackendComponentsIntegration:
                 "pool.last",
                 "fusion.concat",
                 "head.point_forecast",
-                "head.quantile",
+                "head.quantile_forecast",
             ]
 
             for op in operations:
-                result = registry.resolve(op, backend="tensorflow")
-                assert result is not None, f"{op} not registered"
+                result = registry.resolve(
+                    op, backend="tensorflow"
+                )
+                assert result is not None, (
+                    f"{op} not registered"
+                )
                 assert result.backend == "tensorflow"
         except ImportError:
             pytest.skip("TensorFlow not installed")

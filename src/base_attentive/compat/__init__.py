@@ -53,7 +53,13 @@ class Interval:
     """
 
     def __new__(
-        cls, type_, left, right, *, closed="right", inclusive=None
+        cls,
+        type_,
+        left,
+        right,
+        *,
+        closed="right",
+        inclusive=None,
     ):
         """
         Create a compatible Interval object based on the scikit-learn version.
@@ -84,15 +90,23 @@ class Interval:
             type_ = numbers.Real
 
         # Check if 'inclusive' is a parameter in sklearn_Interval
-        signature = inspect.signature(sklearn_Interval.__init__)
+        signature = inspect.signature(
+            sklearn_Interval.__init__
+        )
         if "inclusive" in signature.parameters:
             # Newer version - use inclusive parameter
             return sklearn_Interval(
-                type_, left, right, closed=closed, inclusive=inclusive
+                type_,
+                left,
+                right,
+                closed=closed,
+                inclusive=inclusive,
             )
         else:
             # Older version - don't use inclusive parameter
-            return sklearn_Interval(type_, left, right, closed=closed)
+            return sklearn_Interval(
+                type_, left, right, closed=closed
+            )
 
 
 def validate_params(
@@ -133,9 +147,32 @@ def validate_params(
     return sklearn_validate_params(params, *args, **kwargs)
 
 
+from .versioning import (
+    BASE_ATTENTIVE_PARAMETER_RULES,
+    BaseAttentiveCompatibilityWarning,
+    DeprecatedParameterWarning,
+    ParameterRule,
+    RemovedParameterWarning,
+    UnsupportedCompatibilityWarning,
+    apply_parameter_compatibility,
+    n_quantiles_to_quantiles,
+    resolve_deprecated_config,
+    resolve_deprecated_kwargs,
+)
+
 __all__ = [
     "Interval",
     "StrOptions",
     "validate_params",
     "check_is_fitted",
+    "BaseAttentiveCompatibilityWarning",
+    "DeprecatedParameterWarning",
+    "RemovedParameterWarning",
+    "UnsupportedCompatibilityWarning",
+    "ParameterRule",
+    "BASE_ATTENTIVE_PARAMETER_RULES",
+    "apply_parameter_compatibility",
+    "n_quantiles_to_quantiles",
+    "resolve_deprecated_config",
+    "resolve_deprecated_kwargs",
 ]

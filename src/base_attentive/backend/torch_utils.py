@@ -136,7 +136,9 @@ def check_torch_compatibility(
 
     # Minimum supported version
     try:
-        major, minor, patch = map(int, torch_version.split(".")[:3])
+        major, minor, patch = map(
+            int, torch_version.split(".")[:3]
+        )
     except (ValueError, IndexError):
         return (
             False,
@@ -183,13 +185,17 @@ def get_torch_device(
     """
     if not torch_is_available():
         if verbose:
-            _logger.warning("PyTorch not available, using CPU")
+            _logger.warning(
+                "PyTorch not available, using CPU"
+            )
         return "cpu"
 
     torch = _get_torch_module()
     if torch is None:
         if verbose:
-            _logger.warning("PyTorch runtime unavailable, using CPU")
+            _logger.warning(
+                "PyTorch runtime unavailable, using CPU"
+            )
         return "cpu"
 
     # Try preferred device first
@@ -202,7 +208,9 @@ def get_torch_device(
         )
         if verbose:
             get_name = getattr(
-                getattr(torch, "cuda", None), "get_device_name", None
+                getattr(torch, "cuda", None),
+                "get_device_name",
+                None,
             )
             device_name = "cuda:0"
             if callable(get_name):
@@ -283,14 +291,18 @@ class TorchDeviceManager:
             if callable(device_factory):
                 device_factory(device)  # Validate
             elif not _is_valid_device_string(device):
-                raise ValueError(f"Unsupported device '{device}'")
+                raise ValueError(
+                    f"Unsupported device '{device}'"
+                )
         except (
             AttributeError,
             RuntimeError,
             TypeError,
             ValueError,
         ) as e:
-            raise ValueError(f"Invalid device '{device}': {e}") from e
+            raise ValueError(
+                f"Invalid device '{device}': {e}"
+            ) from e
 
         self._device = device
         _logger.info(f"Device set to: {device}")
@@ -351,7 +363,9 @@ class TorchDeviceManager:
         cuda_available = _cuda_is_available(torch)
 
         info = {
-            "torch_version": getattr(torch, "__version__", None),
+            "torch_version": getattr(
+                torch, "__version__", None
+            ),
             "cuda_available": cuda_available,
             "cudnn_version": None,
             "current_device": self.device,
@@ -372,7 +386,9 @@ class TorchDeviceManager:
             cuda = getattr(torch, "cuda", None)
             device_count = getattr(cuda, "device_count", None)
             get_name = getattr(cuda, "get_device_name", None)
-            get_props = getattr(cuda, "get_device_properties", None)
+            get_props = getattr(
+                cuda, "get_device_properties", None
+            )
 
             try:
                 count = (
@@ -390,20 +406,28 @@ class TorchDeviceManager:
             for i in range(count):
                 if callable(get_name):
                     try:
-                        info["cuda_devices"].append(get_name(i))
+                        info["cuda_devices"].append(
+                            get_name(i)
+                        )
                     except Exception:
-                        info["cuda_devices"].append(f"cuda:{i}")
+                        info["cuda_devices"].append(
+                            f"cuda:{i}"
+                        )
                 else:
                     info["cuda_devices"].append(f"cuda:{i}")
 
                 if callable(get_props):
                     try:
-                        total_memory = get_props(i).total_memory
+                        total_memory = get_props(
+                            i
+                        ).total_memory
                         info["cuda_device_memory_mb"].append(
                             total_memory / 1024 / 1024
                         )
                     except Exception:
-                        info["cuda_device_memory_mb"].append(None)
+                        info["cuda_device_memory_mb"].append(
+                            None
+                        )
                 else:
                     info["cuda_device_memory_mb"].append(None)
 
@@ -426,14 +450,18 @@ class TorchDeviceManager:
 
         if _cuda_is_available(torch):
             empty_cache = getattr(
-                getattr(torch, "cuda", None), "empty_cache", None
+                getattr(torch, "cuda", None),
+                "empty_cache",
+                None,
             )
             if callable(empty_cache):
                 empty_cache()
             _logger.info("CUDA cache cleared")
 
         if hasattr(torch, "mps") and _mps_is_available(torch):
-            empty_cache = getattr(torch.mps, "empty_cache", None)
+            empty_cache = getattr(
+                torch.mps, "empty_cache", None
+            )
             if callable(empty_cache):
                 empty_cache()
             _logger.info("MPS cache cleared")
