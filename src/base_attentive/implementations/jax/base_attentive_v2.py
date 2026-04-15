@@ -10,14 +10,22 @@ from __future__ import annotations
 import importlib.util
 from typing import Any
 
-from ... import KERAS_DEPS
+from ..._bootstrap import KERAS_DEPS
 from ...keras_runtime import get_layer_class
 from ...resolver.builder_contract import resolve_head_units
 from ..generic.base_attentive_v2 import (
     _build_dynamic_window as _build_generic_dynamic_window,
+)
+from ..generic.base_attentive_v2 import (
     _build_feature_processor as _build_generic_feature_processor,
+)
+from ..generic.base_attentive_v2 import (
     _build_flatten_pool as _build_generic_flatten_pool,
+)
+from ..generic.base_attentive_v2 import (
     _build_hybrid_multiscale_encoder as _build_generic_hybrid_multiscale_encoder,
+)
+from ..generic.base_attentive_v2 import (
     _build_positional_encoding as _build_generic_positional_encoding,
 )
 

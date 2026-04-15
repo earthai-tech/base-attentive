@@ -43,7 +43,10 @@ def _allow_tf_fallback() -> bool:
     # process is explicitly on the TensorFlow backend and TensorFlow has
     # already been imported by the caller. This keeps helper lookups from
     # causing surprise TensorFlow imports.
-    if "tensorflow" in sys.modules or "tensorflow.keras" in sys.modules:
+    if (
+        "tensorflow" in sys.modules
+        or "tensorflow.keras" in sys.modules
+    ):
         return True
     return False
 
@@ -71,8 +74,14 @@ def import_keras_attr(module_name: str) -> Any:
         tf_keras = sys.modules.get("tensorflow.keras")
         if tf_keras is None:
             try:
-                tf_keras = importlib.import_module("tensorflow.keras")
-            except (ImportError, ModuleNotFoundError, AttributeError) as exc:
+                tf_keras = importlib.import_module(
+                    "tensorflow.keras"
+                )
+            except (
+                ImportError,
+                ModuleNotFoundError,
+                AttributeError,
+            ) as exc:
                 errors.append(exc)
                 tf_keras = None
         if tf_keras is not None:

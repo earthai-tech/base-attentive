@@ -128,20 +128,32 @@ class TestGetBackendCapabilities:
 class TestAutoInitialize:
     """Public backend env-resolution behavior under the lazy backend surface."""
 
-    def test_env_vars_normalize_through_get_backend(self, monkeypatch):
-        monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "pytorch")
+    def test_env_vars_normalize_through_get_backend(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv(
+            "BASE_ATTENTIVE_BACKEND", "pytorch"
+        )
         monkeypatch.delenv("KERAS_BACKEND", raising=False)
         backend = _backend_mod.get_backend()
         assert backend.name == "torch"
 
-    def test_keras_backend_env_is_respected(self, monkeypatch):
-        monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+    def test_keras_backend_env_is_respected(
+        self, monkeypatch
+    ):
+        monkeypatch.delenv(
+            "BASE_ATTENTIVE_BACKEND", raising=False
+        )
         monkeypatch.setenv("KERAS_BACKEND", "torch")
         backend = _backend_mod.get_backend()
         assert backend.name == "torch"
 
-    def test_no_env_vars_returns_a_backend_instance(self, monkeypatch):
-        monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+    def test_no_env_vars_returns_a_backend_instance(
+        self, monkeypatch
+    ):
+        monkeypatch.delenv(
+            "BASE_ATTENTIVE_BACKEND", raising=False
+        )
         monkeypatch.delenv("KERAS_BACKEND", raising=False)
         backend = _backend_mod.get_backend("torch")
         assert backend.name == "torch"

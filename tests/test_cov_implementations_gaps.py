@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import importlib
 import os
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -76,6 +76,21 @@ from base_attentive.implementations.torch.base_attentive_v2 import (
 )
 
 _ba._KerasDeps.__getattr__ = _orig_ga
+_ba.KERAS_DEPS._cache.clear()
+
+# Reload runtime-dependent component modules after the temporary
+# import-time patch above. During pytest collection, some of these
+# modules can be imported while `_KerasDeps.__getattr__` is patched,
+# which would leave fake fallback ops permanently bound in module
+# globals for the rest of the suite. Restoring the descriptor alone is
+# not enough once those modules have already been imported.
+for _name in (
+    "base_attentive.components._config",
+    "base_attentive.components.heads",
+    "base_attentive.components._temporal_utils",
+):
+    if _name in sys.modules:
+        importlib.reload(sys.modules[_name])
 
 
 class TestEnsureTorch:
@@ -85,8 +100,12 @@ class TestEnsureTorch:
     def test_raises_when_torch_none(self):
         orig = _torch_v2_mod.importlib.util.find_spec
         try:
-            _torch_v2_mod.importlib.util.find_spec = lambda name: None
-            with pytest.raises(ImportError, match="PyTorch is required"):
+            _torch_v2_mod.importlib.util.find_spec = (
+                lambda name: None
+            )
+            with pytest.raises(
+                ImportError, match="PyTorch is required"
+            ):
                 _ensure_torch()
         finally:
             _torch_v2_mod.importlib.util.find_spec = orig
@@ -103,7 +122,9 @@ class TestTorchTemporalSelfAttentionEncoder:
         )
         assert encoder.units == 32
 
-    def test_units_not_divisible_is_supported_by_key_dim_floor(self):
+    def test_units_not_divisible_is_supported_by_key_dim_floor(
+        self,
+    ):
         encoder = _TorchTemporalSelfAttentionEncoder(
             units=30,
             hidden_units=64,
@@ -154,7 +175,9 @@ class TestBuildTorchDenseProjection:
     def test_raises_when_torch_none(self):
         orig = _torch_v2_mod.importlib.util.find_spec
         try:
-            _torch_v2_mod.importlib.util.find_spec = lambda name: None
+            _torch_v2_mod.importlib.util.find_spec = (
+                lambda name: None
+            )
             with pytest.raises(ImportError):
                 _build_torch_dense_projection(units=64)
         finally:
@@ -271,7 +294,9 @@ class TestEnsureTorchV2Registered:
         assert reg.has("pool.last", backend="torch")
         assert reg.has("fusion.concat", backend="torch")
         assert reg.has("head.point_forecast", backend="torch")
-        assert reg.has("head.quantile_forecast", backend="torch")
+        assert reg.has(
+            "head.quantile_forecast", backend="torch"
+        )
 
     def test_with_default_registry(self):
         """Using None uses DEFAULT_COMPONENT_REGISTRY."""
@@ -334,8 +359,12 @@ class TestJaxImplementation:
 
         orig_jax = _jax_v2_mod.importlib.util.find_spec
         try:
-            _jax_v2_mod.importlib.util.find_spec = lambda name: None
-            with pytest.raises(ImportError, match="JAX is required"):
+            _jax_v2_mod.importlib.util.find_spec = (
+                lambda name: None
+            )
+            with pytest.raises(
+                ImportError, match="JAX is required"
+            ):
                 _ensure_jax()
         finally:
             _jax_v2_mod.importlib.util.find_spec = orig_jax
@@ -349,8 +378,12 @@ class TestJaxImplementation:
 
         orig_jax = _jax_v2_mod.importlib.util.find_spec
         try:
-            _jax_v2_mod.importlib.util.find_spec = lambda name: None
-            with pytest.raises(ImportError, match="JAX is required"):
+            _jax_v2_mod.importlib.util.find_spec = (
+                lambda name: None
+            )
+            with pytest.raises(
+                ImportError, match="JAX is required"
+            ):
                 _JaxTemporalSelfAttentionEncoder(
                     units=32, hidden_units=64, num_heads=4
                 )
@@ -366,7 +399,9 @@ class TestJaxImplementation:
 
         orig_jax = _jax_v2_mod.importlib.util.find_spec
         try:
-            _jax_v2_mod.importlib.util.find_spec = lambda name: None
+            _jax_v2_mod.importlib.util.find_spec = (
+                lambda name: None
+            )
             with pytest.raises(ImportError):
                 ensure_jax_v2_registered()
         finally:
@@ -601,15 +636,24 @@ def fake_tf_impl():
 
 
 class TestJaxImplementationExtended:
-    def test_builder_contract_is_keras_multi_backend_when_jax_available(self):
+    def test_builder_contract_is_keras_multi_backend_when_jax_available(
+        self,
+    ):
         pytest.importorskip("jax", reason="JAX not installed")
         import base_attentive.implementations.jax.base_attentive_v2 as _jax_v2_mod
 
         encoder = _jax_v2_mod._build_jax_temporal_self_attention_encoder(
-            units=4, hidden_units=8, num_heads=2, activation="relu"
+            units=4,
+            hidden_units=8,
+            num_heads=2,
+            activation="relu",
         )
-        dense = _jax_v2_mod._build_jax_dense_projection(units=5)
-        mean_pool = _jax_v2_mod._build_jax_mean_pool(axis=1, keepdims=True)
+        dense = _jax_v2_mod._build_jax_dense_projection(
+            units=5
+        )
+        mean_pool = _jax_v2_mod._build_jax_mean_pool(
+            axis=1, keepdims=True
+        )
         last_pool = _jax_v2_mod._build_jax_last_pool()
         concat = _jax_v2_mod._build_jax_concat_fusion(axis=-1)
         assert encoder is not None
@@ -619,14 +663,21 @@ class TestJaxImplementationExtended:
         assert last_pool(x).shape == (2, 4)
         assert concat([x, x]).shape == (2, 3, 8)
 
-    def test_ensure_jax_v2_registered_uses_quantile_forecast_key(self):
+    def test_ensure_jax_v2_registered_uses_quantile_forecast_key(
+        self,
+    ):
         pytest.importorskip("jax", reason="JAX not installed")
         import base_attentive.implementations.jax.base_attentive_v2 as _jax_v2_mod
-        from base_attentive.registry.component_registry import ComponentRegistry
+        from base_attentive.registry.component_registry import (
+            ComponentRegistry,
+        )
+
         registry = ComponentRegistry()
         _jax_v2_mod.ensure_jax_v2_registered(registry)
         assert registry.has("projection.dense", backend="jax")
-        assert registry.has("head.quantile_forecast", backend="jax")
+        assert registry.has(
+            "head.quantile_forecast", backend="jax"
+        )
 
 
 class TestTensorFlowImplementationExtended:
@@ -875,7 +926,9 @@ class TestGenericImplementation:
         )
         x = np.ones((2, 8), dtype=np.float32)
         result = fuse_fn([x])
-        np.testing.assert_allclose(np.asarray(result), np.asarray(x))
+        np.testing.assert_allclose(
+            np.asarray(result), np.asarray(x)
+        )
 
     def test_build_concat_fusion_no_features_raises(self):
         fuse_fn = self._build_concat_fusion(
@@ -907,26 +960,45 @@ from base_attentive.experimental.base_attentive_v2 import (
     BaseAttentiveV2,
 )
 
+
 @pytest.fixture
 def fresh_resolver_registries(monkeypatch):
     import base_attentive.registry as registry_mod
     import base_attentive.resolver.registrars as registrars
-    from base_attentive.registry.component_registry import ComponentRegistry
-    from base_attentive.registry.model_registry import ModelRegistry
+    from base_attentive.registry.component_registry import (
+        ComponentRegistry,
+    )
+    from base_attentive.registry.model_registry import (
+        ModelRegistry,
+    )
 
     component_registry = ComponentRegistry()
     model_registry = ModelRegistry()
-    monkeypatch.setattr(registry_mod, "DEFAULT_COMPONENT_REGISTRY", component_registry)
-    monkeypatch.setattr(registry_mod, "DEFAULT_MODEL_REGISTRY", model_registry)
-    monkeypatch.setattr(registrars, "DEFAULT_COMPONENT_REGISTRY", component_registry)
-    monkeypatch.setattr(registrars, "DEFAULT_MODEL_REGISTRY", model_registry)
+    monkeypatch.setattr(
+        registry_mod,
+        "DEFAULT_COMPONENT_REGISTRY",
+        component_registry,
+    )
+    monkeypatch.setattr(
+        registry_mod, "DEFAULT_MODEL_REGISTRY", model_registry
+    )
+    monkeypatch.setattr(
+        registrars,
+        "DEFAULT_COMPONENT_REGISTRY",
+        component_registry,
+    )
+    monkeypatch.setattr(
+        registrars, "DEFAULT_MODEL_REGISTRY", model_registry
+    )
     registrars._LOADED_COMPONENT_REGISTRARS.clear()
     registrars._LOADED_MODEL_REGISTRARS.clear()
     return component_registry, model_registry
 
 
 class TestExperimentalBaseAttentiveV2:
-    def test_instantiation_basic(self, fresh_resolver_registries):
+    def test_instantiation_basic(
+        self, fresh_resolver_registries
+    ):
         model = BaseAttentiveV2(
             static_input_dim=0,
             dynamic_input_dim=8,
@@ -934,7 +1006,9 @@ class TestExperimentalBaseAttentiveV2:
         )
         assert model is not None
 
-    def test_instantiation_with_static(self, fresh_resolver_registries):
+    def test_instantiation_with_static(
+        self, fresh_resolver_registries
+    ):
         model = BaseAttentiveV2(
             static_input_dim=4,
             dynamic_input_dim=8,
@@ -942,7 +1016,9 @@ class TestExperimentalBaseAttentiveV2:
         )
         assert model is not None
 
-    def test_call_with_two_inputs(self, fresh_resolver_registries):
+    def test_call_with_two_inputs(
+        self, fresh_resolver_registries
+    ):
         """The torch V2 builders use hardcoded in_features, so test model structure."""
         # Just test that instantiation and forward path structure is set up correctly
         model = BaseAttentiveV2(
@@ -957,7 +1033,9 @@ class TestExperimentalBaseAttentiveV2:
         assert model._assembly is not None
         assert model._assembly.dynamic_projection is not None
 
-    def test_call_with_one_input(self, fresh_resolver_registries):
+    def test_call_with_one_input(
+        self, fresh_resolver_registries
+    ):
         """Test the normalize_inputs path for single-input list."""
         model = BaseAttentiveV2(
             static_input_dim=0,
@@ -973,7 +1051,9 @@ class TestExperimentalBaseAttentiveV2:
         assert d is a
         assert f is None
 
-    def test_normalize_inputs_three(self, fresh_resolver_registries):
+    def test_normalize_inputs_three(
+        self, fresh_resolver_registries
+    ):
         model = BaseAttentiveV2(
             static_input_dim=0,
             dynamic_input_dim=8,
@@ -987,7 +1067,9 @@ class TestExperimentalBaseAttentiveV2:
         assert d is b
         assert f is c
 
-    def test_normalize_inputs_non_list_raises(self, fresh_resolver_registries):
+    def test_normalize_inputs_non_list_raises(
+        self, fresh_resolver_registries
+    ):
         model = BaseAttentiveV2(
             static_input_dim=0,
             dynamic_input_dim=8,
@@ -996,7 +1078,9 @@ class TestExperimentalBaseAttentiveV2:
         with pytest.raises(TypeError, match="list or tuple"):
             model._normalize_inputs(np.ones((2, 5, 8)))
 
-    def test_normalize_inputs_too_many_raises(self, fresh_resolver_registries):
+    def test_normalize_inputs_too_many_raises(
+        self, fresh_resolver_registries
+    ):
         model = BaseAttentiveV2(
             static_input_dim=0,
             dynamic_input_dim=8,
@@ -1017,7 +1101,9 @@ class TestExperimentalBaseAttentiveV2:
         config = model.get_config()
         assert isinstance(config, dict)
 
-    def test_quantile_head_type(self, fresh_resolver_registries):
+    def test_quantile_head_type(
+        self, fresh_resolver_registries
+    ):
         """Test that quantile model instantiates with the correct spec."""
         model = BaseAttentiveV2(
             static_input_dim=0,

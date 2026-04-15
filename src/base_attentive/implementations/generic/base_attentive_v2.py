@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from ... import KERAS_DEPS
-from ...keras_runtime import get_layer_class
+from ..._bootstrap import KERAS_DEPS
 from ...components._temporal_utils import (
     aggregate_multiscale_on_3d,
 )
@@ -24,6 +23,7 @@ from ...components.temporal import (
     DynamicTimeWindow,
     MultiScaleLSTM,
 )
+from ...keras_runtime import get_layer_class
 from ...registry import (
     DEFAULT_COMPONENT_REGISTRY,
     DEFAULT_MODEL_REGISTRY,
@@ -32,7 +32,6 @@ from ...registry import (
 )
 from ...resolver.assembly import BaseAttentiveV2Assembly
 from ...resolver.builder_contract import (
-    build_head_kwargs,
     resolve_head_units,
 )
 from ...resolver.component_resolver import build_component

@@ -6,8 +6,6 @@ from typing import Any
 
 from ..config import BaseAttentiveSpec
 from ..registry import (
-    DEFAULT_COMPONENT_REGISTRY,
-    DEFAULT_MODEL_REGISTRY,
     ComponentRegistry,
     ModelRegistry,
 )

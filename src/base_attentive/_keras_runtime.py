@@ -7,7 +7,6 @@ modules can avoid eagerly freezing backend symbols at import time.
 from __future__ import annotations
 
 import importlib
-import sys
 from typing import Any
 
 import numpy as np
@@ -20,7 +19,9 @@ _MISSING = object()
 
 
 def _bootstrap_module():
-    return importlib.import_module("base_attentive._bootstrap")
+    return importlib.import_module(
+        "base_attentive._bootstrap"
+    )
 
 
 def _keras_deps():
@@ -80,7 +81,6 @@ class _CompatLayer:
         return None
 
 
-
 def resolve_keras_dep(
     name: str,
     fallback: Any = _MISSING,
@@ -94,7 +94,6 @@ def resolve_keras_dep(
         raise
 
 
-
 def get_layer_class():
     """Return the active Keras ``Layer`` base class."""
     layer = resolve_keras_dep("Layer", fallback=_CompatLayer)
@@ -103,11 +102,9 @@ def get_layer_class():
     return layer
 
 
-
 def get_model_class():
     """Return the active Keras ``Model`` base class."""
     return resolve_keras_dep("Model")
-
 
 
 def register_keras_serializable(

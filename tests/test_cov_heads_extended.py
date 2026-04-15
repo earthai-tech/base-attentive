@@ -42,6 +42,7 @@ def _t(arr):
 def _load_heads():
     pytest.importorskip("keras", reason="Keras not installed")
     import keras
+
     from base_attentive.components.heads import (
         CombinedHeadLoss,
         GaussianHead,
@@ -156,7 +157,9 @@ class TestGaussianHead:
 
     def test_from_config(self):
         orig = _GaussianHead(output_dim=2, forecast_horizon=5)
-        clone = _load_heads()["GaussianHead"].from_config(orig.get_config())
+        clone = _load_heads()["GaussianHead"].from_config(
+            orig.get_config()
+        )
         assert clone.output_dim == 2
         assert clone.forecast_horizon == 5
 
@@ -234,9 +237,9 @@ class TestMixtureDensityHead:
         orig = _MixtureDensityHead(
             output_dim=2, num_components=3
         )
-        clone = _load_heads()["MixtureDensityHead"].from_config(
-            orig.get_config()
-        )
+        clone = _load_heads()[
+            "MixtureDensityHead"
+        ].from_config(orig.get_config())
         assert clone.num_components == 3
 
 
@@ -269,9 +272,9 @@ class TestPointForecastHead:
 
     def test_from_config(self):
         orig = _PointForecastHead(output_dim=4)
-        clone = _load_heads()["PointForecastHead"].from_config(
-            orig.get_config()
-        )
+        clone = _load_heads()[
+            "PointForecastHead"
+        ].from_config(orig.get_config())
         assert clone.output_dim == 4
 
 
@@ -315,7 +318,9 @@ class TestQuantileHead:
         orig = _QuantileHead(
             quantiles=[0.25, 0.75], output_dim=2
         )
-        clone = _load_heads()["QuantileHead"].from_config(orig.get_config())
+        clone = _load_heads()["QuantileHead"].from_config(
+            orig.get_config()
+        )
         assert clone.quantiles == [0.25, 0.75]
 
 
@@ -460,7 +465,7 @@ class TestQuantileDistributionModeling:
         orig = _QuantileDistributionModeling(
             quantiles=[0.5], output_dim=3
         )
-        clone = _load_heads()["QuantileDistributionModeling"].from_config(
-            orig.get_config()
-        )
+        clone = _load_heads()[
+            "QuantileDistributionModeling"
+        ].from_config(orig.get_config())
         assert clone.output_dim == 3

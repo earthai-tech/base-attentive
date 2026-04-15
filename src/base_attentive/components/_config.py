@@ -18,13 +18,13 @@ from typing import Any
 
 import numpy as np
 
+from ..compat.keras import import_keras_attr
 from ..keras_runtime import (
     KERAS_BACKEND,
     KERAS_DEPS,
     dependency_message,
     get_layer_class,
 )
-from ..compat.keras import import_keras_attr
 from ..logging import get_logger
 
 
@@ -68,10 +68,14 @@ def _assert_equal(actual, expected, message="", name=None):
     del name
     actual_value = _resolve_scalar(actual)
     expected_value = _resolve_scalar(expected)
-    if actual_value is not None and expected_value is not None:
+    if (
+        actual_value is not None
+        and expected_value is not None
+    ):
         if actual_value != expected_value:
             raise AssertionError(
-                message or f"{actual_value} != {expected_value}"
+                message
+                or f"{actual_value} != {expected_value}"
             )
     return None
 
@@ -307,14 +311,14 @@ equal = _dep("equal", np.equal)
 int32 = _dep("int32", np.int32)
 debugging = _dep("debugging")
 autograph = _dep("autograph")
-assert_equal = getattr(debugging, "assert_equal", _assert_equal)
+assert_equal = getattr(
+    debugging, "assert_equal", _assert_equal
+)
 do_not_convert = getattr(
     getattr(autograph, "experimental", object()),
     "do_not_convert",
     lambda func=None, **kwargs: (
-        (lambda inner: inner)
-        if func is None
-        else func
+        (lambda inner: inner) if func is None else func
     ),
 )
 pad = _dep("pad", np.pad)

@@ -147,9 +147,32 @@ def validate_params(
     return sklearn_validate_params(params, *args, **kwargs)
 
 
+from .versioning import (
+    BASE_ATTENTIVE_PARAMETER_RULES,
+    BaseAttentiveCompatibilityWarning,
+    DeprecatedParameterWarning,
+    ParameterRule,
+    RemovedParameterWarning,
+    UnsupportedCompatibilityWarning,
+    apply_parameter_compatibility,
+    n_quantiles_to_quantiles,
+    resolve_deprecated_config,
+    resolve_deprecated_kwargs,
+)
+
 __all__ = [
     "Interval",
     "StrOptions",
     "validate_params",
     "check_is_fitted",
+    "BaseAttentiveCompatibilityWarning",
+    "DeprecatedParameterWarning",
+    "RemovedParameterWarning",
+    "UnsupportedCompatibilityWarning",
+    "ParameterRule",
+    "BASE_ATTENTIVE_PARAMETER_RULES",
+    "apply_parameter_compatibility",
+    "n_quantiles_to_quantiles",
+    "resolve_deprecated_config",
+    "resolve_deprecated_kwargs",
 ]

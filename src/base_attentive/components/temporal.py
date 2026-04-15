@@ -21,9 +21,9 @@ from ._config import (
     KERAS_BACKEND,
     LSTM,
     Layer,
-    register_keras_serializable,
-    do_not_convert,
     concat,
+    do_not_convert,
+    register_keras_serializable,
 )
 
 __all__ = [

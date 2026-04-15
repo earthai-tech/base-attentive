@@ -1,0 +1,181 @@
+.. _release-v2.1.0:
+
+**v2.1.0** — |MINOR| Multi-Backend Stabilization and Compatibility Release
+=============================================================================
+
+*Released: April 2026*
+
+Upgrading from v2.0.1
+---------------------
+
+This is a backward-compatible feature release focused on **Keras 3
+multi-backend stabilization**, **runtime/import hardening**, and a new
+**parameter-compatibility migration layer** for the evolving
+``BaseAttentive`` API.
+
+Most projects can upgrade directly from v2.0.1.  Existing code using the
+older GeoPrior-v3 kernel-style parameter names remains supported through
+explicit compatibility rules and deprecation warnings.
+
+Highlights
+----------
+
+- |MINOR| **BaseAttentive is now stabilized as a Keras 3 multi-backend
+  package** across TensorFlow, Torch, and JAX.
+
+- |Feature| **New compatibility migration layer** under
+  ``base_attentive.compat.versioning`` centralizes renamed parameters,
+  deprecated aliases, precedence rules, and transitional warnings.
+
+- |Internal| **Runtime bootstrap and imports are significantly lighter**.
+  Import-time backend probing and eager TensorFlow/Keras loading were
+  reduced so collection, documentation, and lightweight runtime paths are
+  safer on mixed environments, especially Windows.
+
+- |Feature| **Examples and documentation notebooks were refreshed** for the
+  current v2 API and versioned as **v2.1.0**.
+
+Compatibility and Migration
+---------------------------
+
+- |Feature| **Centralized parameter migration rules** added in
+  ``base_attentive.compat.versioning``.
+
+  The new compatibility layer provides:
+
+  - declarative ``ParameterRule`` definitions,
+  - dedicated warning classes,
+  - ``resolve_deprecated_kwargs(...)`` and
+    ``resolve_deprecated_config(...)`` helpers,
+  - optional decorator-based application for constructors.
+
+- |Deprecated| **Legacy GeoPrior-v3 kernel-style names remain accepted** and
+  are transparently mapped to the newer public API with warnings.  The
+  current rules include:
+
+  - ``static_input_dim`` → ``static_dim``
+  - ``dynamic_input_dim`` → ``dynamic_dim``
+  - ``future_input_dim`` → ``future_dim``
+  - ``max_window_size`` → ``lookback_window``
+  - ``attention_levels`` → ``attention_stack``
+
+- |Deprecated| **Quantile-count compatibility added**:
+  ``n_quantiles`` is accepted and converted to evenly spaced quantiles.
+
+- |Deprecated| **Transitional output-mode compatibility added**:
+  ``output_mode="gaussian"`` and ``output_mode="mixture"`` are accepted in
+  the compatibility layer, with explicit warnings when the requested
+  behavior is not yet wired into the active path.
+
+- |Deprecated| **Precedence rules are now explicit**.
+  When both deprecated and canonical names are provided, the canonical
+  parameter wins and the deprecated one is ignored with a warning.
+
+Runtime and Backend Architecture
+--------------------------------
+
+- |Internal| **Backend foundation refactored around a cleaner Keras 3
+  multi-backend runtime surface**.
+
+  - Root package imports were lightened.
+  - ``keras_runtime`` was made lazy.
+  - backend initialization was deferred so ``import base_attentive`` no
+    longer behaves like full runtime initialization.
+
+- |Internal| **Collection-safe bootstrap improvements** reduce accidental
+  TensorFlow/Keras imports during module import and test discovery.
+
+- |Internal| **Explicit runtime imports** were adopted in core modules.
+  Runtime symbols such as ``KERAS_DEPS`` now come from their defining
+  runtime modules (for example ``_bootstrap.py``) instead of being pulled
+  indirectly through package ``__init__``.
+
+- |Feature| **Torch and JAX resolver coverage expanded** across the V2
+  component surface, including projections, pooling, fusion, decoder-side
+  blocks, and forecast heads.
+
+- |Internal| **Resolver-built V2 components are more serialization-safe**.
+  Generic resolver pieces that were previously plain callables are now
+  tracked as serializable Keras layers where appropriate.
+
+- |Internal| **Backend registration and registry aliasing were hardened**.
+  Resolver registrations now better tolerate repeated setup and legacy key
+  aliases such as ``head.quantile``.
+
+Model Behavior and Output Contracts
+-----------------------------------
+
+- |Feature| **Forecast-output contract standardized**.
+
+  - point forecasts follow ``BHO``
+  - quantile forecasts follow ``BHQO``
+
+  This aligns the quantile path with the conventional
+  ``batch × horizon × quantile × output`` ordering.
+
+- |Internal| **TensorFlow builder kwargs filtering** prevents resolver
+  metadata (such as ``component_key``) from leaking into Keras layer
+  constructors.
+
+- |Bugfix| **TensorFlow registration idempotence improved** so repeated
+  resolver setup no longer fails with duplicate component-registration
+  errors.
+
+- |Bugfix| **Torch/JAX runtime wrappers hardened** with improved builder
+  shims, alias coverage, and backend-safe paths for the V2 stack.
+
+Fallback, Validation, and Numeric Stability
+-------------------------------------------
+
+- |Bugfix| **Fallback numeric operations were hardened** for mixed runtime
+  situations and Torch-backed tensors.
+
+  This includes safer conversion paths for:
+
+  - reductions,
+  - concatenation,
+  - ``reduce_logsumexp``,
+  - validation helpers operating on BH/BH1/BHQO-style outputs.
+
+- |Bugfix| **Temporal multiscale aggregation fallback paths** were corrected
+  so sum-based aggregation works consistently in non-native fallback
+  situations.
+
+- |Bugfix| **Probabilistic head fallback paths** were improved so scalar NLL
+  reductions no longer break when backend tensors flow through the safe
+  NumPy fallback route.
+
+Serialization and Configuration
+-------------------------------
+
+- |Internal| **V2 config round-trips were stabilized**.
+
+  - nested spec serialization is normalized,
+  - alias paths are cleaned during export,
+  - ``from_config`` accepts the modern nested-spec form,
+  - resolver-built assemblies survive JSON/config round-trips more
+    reliably.
+
+- |Feature| **V2 JSON/config workflows improved** with better support for
+  normalized spec export and reconstruction.
+
+Documentation and Examples
+--------------------------
+
+- |Feature| **Examples refreshed for the current API and v2.1.0 release**.
+
+  Updated notebooks include:
+
+  - ``01_quickstart.ipynb``
+  - ``04_standalone_applications.ipynb``
+  - ``05_kernel_robust_networks.ipynb``
+  - ``06_crps_probabilistic_forecasting.ipynb``
+  - ``07_v2_spec_registry.ipynb``
+
+- |Internal| **Notebook content now reflects the post-v2.0.1 API**,
+  including refreshed constructor arguments, updated registry/spec
+  examples, and versioned install/display snippets for v2.1.0.
+
+- |Internal| **Release-note structure expanded** to document the transition
+  from the original TensorFlow/GeoPrior kernel usage toward the new,
+  broader BaseAttentive compatibility and multi-backend design.

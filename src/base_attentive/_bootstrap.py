@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib
 import os
+import sys
 from types import SimpleNamespace
 from typing import Any
 
@@ -26,7 +27,35 @@ __all__ = [
     "set_backend",
     "get_available_backends",
     "get_backend_capabilities",
+    "enable_eager_runtime_imports",
 ]
+
+
+_ALLOW_EAGER_RUNTIME_IMPORTS = (
+    os.environ.get("BASE_ATTENTIVE_EAGER_RUNTIME", "0") == "1"
+)
+
+
+def enable_eager_runtime_imports(
+    enabled: bool = True,
+) -> None:
+    """Toggle eager imports of standalone Keras / TensorFlow runtime modules."""
+    global _ALLOW_EAGER_RUNTIME_IMPORTS
+    _ALLOW_EAGER_RUNTIME_IMPORTS = bool(enabled)
+    os.environ["BASE_ATTENTIVE_EAGER_RUNTIME"] = (
+        "1" if enabled else "0"
+    )
+
+
+def _runtime_imports_permitted() -> bool:
+    """Return whether importing real runtime modules is allowed now.
+
+    During pytest collection we prefer loaded-module lookups and fallback
+    symbols instead of importing TensorFlow or Keras eagerly.
+    """
+    if "pytest" in sys.modules:
+        return False
+    return _ALLOW_EAGER_RUNTIME_IMPORTS
 
 
 _BACKEND_ALIASES = {
@@ -120,7 +149,7 @@ def _get_static_value(value: Any) -> Any:
     if scalar is not None:
         return scalar
 
-    tensor = _safe_import("tensorflow")
+    tensor = sys.modules.get("tensorflow")
     if tensor is not None:
         get_static_value = getattr(
             tensor, "get_static_value", None
@@ -233,6 +262,20 @@ class _KerasDeps:
     def __init__(self):
         self._cache: dict[str, Any] = {}
         self._fallback_runtime = None
+        self._cache_state: tuple[Any, ...] | None = None
+
+    def _current_state(self) -> tuple[Any, ...]:
+        return (
+            KERAS_BACKEND,
+            id(sys.modules.get("keras")),
+            id(sys.modules.get("tensorflow")),
+        )
+
+    def _maybe_reset_cache(self) -> None:
+        state = self._current_state()
+        if self._cache_state != state:
+            self._cache.clear()
+            self._cache_state = state
 
     def _load_fallback_runtime(self):
         if self._fallback_runtime is None:
@@ -242,15 +285,13 @@ class _KerasDeps:
         return self._fallback_runtime
 
     def _load_keras_root(self):
-        """Prefer standalone Keras and avoid importing ``tf.keras`` directly.
-
-        On TensorFlow-backed Keras 3 installations, traversing ``tf.keras`` can
-        recurse through TensorFlow's lazy-loader bridge on some Windows setups.
-        The standalone ``keras`` package is the primary API surface for this
-        project, so we deliberately avoid using ``tensorflow.keras`` as a
-        secondary namespace here.
-        """
-        return _safe_import("keras")
+        """Return standalone Keras only when already loaded or explicitly enabled."""
+        loaded = sys.modules.get("keras")
+        if loaded is not None:
+            return loaded
+        if _runtime_imports_permitted():
+            return _safe_import("keras")
+        return None
 
     def _load_namespace(self, root: Any, name: str | None):
         if root is None:
@@ -263,14 +304,30 @@ class _KerasDeps:
             return namespace
 
         module_name = getattr(root, "__name__", None)
-        if module_name:
+        loaded_root = (
+            sys.modules.get(module_name)
+            if module_name
+            else None
+        )
+        # Only walk into submodules when ``root`` is the actual loaded module
+        # object, not an arbitrary stand-in that merely advertises a ``__name__``.
+        if (
+            module_name
+            and loaded_root is root
+            and isinstance(root, type(sys))
+        ):
             return _safe_import(f"{module_name}.{name}")
         return None
 
     def _load_tensorflow(self):
         if KERAS_BACKEND != "tensorflow":
             return None
-        return _safe_import("tensorflow")
+        loaded = sys.modules.get("tensorflow")
+        if loaded is not None:
+            return loaded
+        if _runtime_imports_permitted():
+            return _safe_import("tensorflow")
+        return None
 
     def _resolve_special(self, name: str) -> Any:
         fallback = self._load_fallback_runtime()
@@ -296,9 +353,10 @@ class _KerasDeps:
             return getattr(
                 fallback,
                 "Assert",
-                lambda condition, data=None, summarize=None, name=None: (
-                    condition
-                ),
+                lambda condition,
+                data=None,
+                summarize=None,
+                name=None: (condition),
             )
         if name == "Tensor":
             tf = self._load_tensorflow()
@@ -445,6 +503,7 @@ class _KerasDeps:
         return getattr(fallback, target_name, None)
 
     def __getattr__(self, name: str) -> Any:
+        self._maybe_reset_cache()
         if name in self._cache:
             return self._cache[name]
         if name == "newaxis":

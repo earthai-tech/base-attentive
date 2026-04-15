@@ -9,7 +9,7 @@ import numpy as np
 from ..logging import get_logger
 
 try:
-    from .. import KERAS_BACKEND, KERAS_DEPS
+    from .._bootstrap import KERAS_BACKEND, KERAS_DEPS
 except Exception:  # pragma: no cover
     KERAS_BACKEND = ""
     KERAS_DEPS = None

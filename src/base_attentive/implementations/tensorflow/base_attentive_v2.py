@@ -11,9 +11,9 @@ components with optimizations including:
 
 from __future__ import annotations
 
-from ...resolver.builder_contract import resolve_head_units
-
 from typing import Any
+
+from ...resolver.builder_contract import resolve_head_units
 
 try:
     import tensorflow as tf
@@ -71,7 +71,9 @@ class _TFTemporalSelfAttentionEncoder(
         **kwargs,
     ):
         _ensure_tensorflow()
-        super().__init__(name=name, **_clean_builder_kwargs(kwargs))
+        super().__init__(
+            name=name, **_clean_builder_kwargs(kwargs)
+        )
 
         key_dim = max(1, units // max(1, num_heads))
 
@@ -181,7 +183,10 @@ def _build_tf_dense_projection(
     del context, spec
     _ensure_tensorflow()
     return layers.Dense(
-        units, activation=activation, name=name, **kwargs
+        units,
+        activation=activation,
+        name=name,
+        **_clean_builder_kwargs(kwargs),
     )
 
 
@@ -356,7 +361,7 @@ def _build_tf_point_forecast_head(
         total_output,
         activation=activation,
         name=name or "head",
-        **kwargs,
+        **_clean_builder_kwargs(kwargs),
     )
 
 
@@ -386,7 +391,7 @@ def _build_tf_quantile_head(
         total_output,
         activation=None,
         name=name or "quantile_head",
-        **kwargs,
+        **_clean_builder_kwargs(kwargs),
     )
 
 

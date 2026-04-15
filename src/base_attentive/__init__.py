@@ -10,7 +10,7 @@ try:
 
     __version__ = _meta_version("base_attentive")
 except PackageNotFoundError:
-    __version__ = "unknown"
+    __version__ = "2.1.0"
 
 __author__ = "Laurent Kouadio"
 __email__ = "etanoyau@gmail.com"
@@ -57,7 +57,10 @@ for _cached_name in (
     globals().pop(_cached_name, None)
 
 _LAZY_EXPORTS = {
-    "BaseAttentive": ("base_attentive.core.base_attentive", "BaseAttentive"),
+    "BaseAttentive": (
+        "base_attentive.core.base_attentive",
+        "BaseAttentive",
+    ),
     "make_fast_predict_fn": (
         "base_attentive.runtime",
         "make_fast_predict_fn",
@@ -131,7 +134,11 @@ def __getattr__(name: str):
     module_name, export_name = target
     try:
         module = importlib.import_module(module_name)
-        value = module if export_name is None else getattr(module, export_name)
+        value = (
+            module
+            if export_name is None
+            else getattr(module, export_name)
+        )
     except Exception as exc:
         raise ImportError(
             f"Failed to import {name} from {module_name}: {exc}"

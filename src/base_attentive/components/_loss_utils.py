@@ -13,7 +13,6 @@ from __future__ import annotations
 from ._config import (
     Loss,
     Tensor,
-    register_keras_serializable,
     abs_op,
     cast,
     constant,
@@ -21,6 +20,7 @@ from ._config import (
     maximum,
     reduce_mean,
     reduce_sum,
+    register_keras_serializable,
     square,
     where,
 )
