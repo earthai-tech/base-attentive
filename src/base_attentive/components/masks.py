@@ -15,15 +15,15 @@ from __future__ import annotations
 from ..compat.types import TensorLike
 from ._config import (
     Tensor,
-    tf_bool,
-    tf_cast,
-    tf_expand_dims,
-    tf_float32,
-    tf_int32,
-    tf_logical_not,
-    tf_range,
-    tf_reduce_max,
-    tf_shape,
+    bool_dtype,
+    cast,
+    expand_dims,
+    float32,
+    int32,
+    logical_not,
+    range,
+    reduce_max,
+    shape,
 )
 
 __all__ = ["pad_mask_from_lengths", "sequence_mask_3d"]
@@ -33,7 +33,7 @@ def pad_mask_from_lengths(
     lengths: Tensor,
     max_len: int | None = None,
     *,
-    dtype: Tensor = tf_bool,
+    dtype: Tensor = bool_dtype,
     invert: bool = False,
 ) -> Tensor:
     """
@@ -55,21 +55,21 @@ def pad_mask_from_lengths(
     Tensor
         Mask of shape (B, T). True/1.0 = keep (unless invert=True).
     """
-    lengths = tf_cast(lengths, tf_int32)
+    lengths = cast(lengths, int32)
     if max_len is None:
-        max_len = tf_reduce_max(lengths)
-    max_len = tf_cast(max_len, tf_int32)
+        max_len = reduce_max(lengths)
+    max_len = cast(max_len, int32)
 
-    rng = tf_range(max_len)  # (T,)
-    rng = tf_expand_dims(rng, 0)  # (1, T)
-    len_col = tf_expand_dims(lengths, 1)  # (B, 1)
+    rng = range(max_len)  # (T,)
+    rng = expand_dims(rng, 0)  # (1, T)
+    len_col = expand_dims(lengths, 1)  # (B, 1)
 
-    mask = tf_cast(rng < len_col, tf_bool)  # (B, T) bool
+    mask = cast(rng < len_col, bool_dtype)  # (B, T) bool
     if invert:
-        mask = tf_logical_not(mask)
+        mask = logical_not(mask)
 
-    if dtype is tf_float32:
-        return tf_cast(mask, tf_float32)
+    if dtype is float32:
+        return cast(mask, float32)
     return mask
 
 
@@ -80,7 +80,7 @@ def sequence_mask_3d(
     mask_2d: TensorLike | None = None,
     time_axis: int = 1,
     invert: bool = False,
-    dtype: Tensor = tf_bool,
+    dtype: Tensor = bool_dtype,
 ) -> Tensor:
     """
     Produce a broadcastable mask for a (B, T, F) tensor.
@@ -111,22 +111,22 @@ def sequence_mask_3d(
         raise ValueError("Provide `lengths` or `mask_2d`.")
 
     # Infer batch/time from data
-    b = tf_shape(data)[0]  # noqa
-    t = tf_shape(data)[time_axis]
+    b = shape(data)[0]  # noqa
+    t = shape(data)[time_axis]
 
     if mask_2d is None:
         mask_2d = pad_mask_from_lengths(
-            lengths, max_len=t, dtype=tf_bool
+            lengths, max_len=t, dtype=bool_dtype
         )
     else:
-        mask_2d = tf_cast(mask_2d, tf_bool)
+        mask_2d = cast(mask_2d, bool_dtype)
 
     if invert:
-        mask_2d = tf_logical_not(mask_2d)
+        mask_2d = logical_not(mask_2d)
 
     # Expand to (B, T, 1) so it broadcasts over feature dim
-    mask_3d = tf_expand_dims(mask_2d, -1)
+    mask_3d = expand_dims(mask_2d, -1)
 
-    if dtype is tf_float32:
-        return tf_cast(mask_3d, tf_float32)
+    if dtype is float32:
+        return cast(mask_3d, float32)
     return mask_3d

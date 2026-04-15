@@ -1,25 +1,68 @@
-"""Experimental V2 model assembled through the new resolver path."""
+"""Experimental V2 model assembled through the resolver path."""
 
 from __future__ import annotations
 
-from dataclasses import asdict
+import json
+from dataclasses import fields
 from typing import Any
 
-from .. import KERAS_DEPS, dependency_message
-from ..config import BaseAttentiveSpec, normalize_base_attentive_spec
+from .._bootstrap import KERAS_DEPS, dependency_message
+from ..config import (
+    BaseAttentiveSpec,
+    normalize_base_attentive_spec,
+    serialize_base_attentive_spec,
+)
 from ..resolver import BackendContext, assemble_model
 from ..utils.deps_utils import ensure_pkg
 
 Model = KERAS_DEPS.Model
 reshape = KERAS_DEPS.reshape
-register_keras_serializable = KERAS_DEPS.register_keras_serializable
+register_keras_serializable = (
+    KERAS_DEPS.register_keras_serializable
+)
 
 DEP_MSG = dependency_message("experimental models")
 
 
+def _extract_spec_payload(
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    """Extract nested or flattened spec fields from a config mapping."""
+    payload = dict(config.pop("spec", None) or {})
+
+    nested_keys = (
+        "architecture",
+        "runtime",
+        "components",
+        "extras",
+    )
+    for key in nested_keys:
+        if key in config and key not in payload:
+            payload[key] = config.pop(key)
+
+    spec_field_names = tuple(
+        BaseAttentiveSpec.__dataclass_fields__.keys()
+    )
+    for key in spec_field_names:
+        if key in config and key not in payload:
+            payload[key] = config.pop(key)
+
+    return payload
+
+
+def _invoke(component, inputs, *, training: bool = False):
+    """Call a component, passing ``training`` when accepted."""
+    if component is None:
+        return inputs
+    try:
+        return component(inputs, training=training)
+    except TypeError:
+        return component(inputs)
+
+
 @register_keras_serializable(__name__, name="BaseAttentiveV2")
 class BaseAttentiveV2(Model):
-    """Experimental V2 model scaffold using config, registry, and resolver."""
+    """Experimental V2 model scaffold using config and resolver."""
 
     @ensure_pkg("keras", extra=DEP_MSG)
     def __init__(
@@ -30,7 +73,9 @@ class BaseAttentiveV2(Model):
         output_dim: int = 1,
         forecast_horizon: int = 1,
         *,
-        quantiles: tuple[float, ...] | list[float] | None = None,
+        quantiles: tuple[float, ...]
+        | list[float]
+        | None = None,
         embed_dim: int = 32,
         hidden_units: int = 64,
         attention_heads: int = 4,
@@ -39,7 +84,9 @@ class BaseAttentiveV2(Model):
         activation: str = "relu",
         backend_name: str | None = None,
         head_type: str = "point",
-        spec: BaseAttentiveSpec | dict[str, Any] | None = None,
+        spec: BaseAttentiveSpec
+        | dict[str, Any]
+        | None = None,
         name: str = "BaseAttentiveV2",
         **kwargs,
     ):
@@ -69,6 +116,7 @@ class BaseAttentiveV2(Model):
             spec=self.spec,
             backend_context=self.backend_context,
         )
+        self._track_assembly_components()
 
     def _normalize_inputs(self, inputs):
         if not isinstance(inputs, (list, tuple)):
@@ -87,51 +135,443 @@ class BaseAttentiveV2(Model):
             "BaseAttentiveV2 expects one, two, or three input tensors."
         )
 
+    def _resolve_processor(
+        self, modern_name: str, legacy_name: str
+    ):
+        component = getattr(self._assembly, modern_name, None)
+        if component is not None:
+            return component
+        return getattr(self._assembly, legacy_name, None)
+
+    def _track_assembly_components(self) -> None:
+        """Attach resolved components as model attributes for tracking.
+
+        Keras tracks layers and models assigned as attributes on the
+        parent model. Keeping the full assembly dataclass is useful for
+        readability, but explicit attributes make serialization and layer
+        discovery more reliable across the multi-backend runtime.
+        """
+        tracked_names: list[str] = []
+        for field in fields(self._assembly):
+            name = field.name
+            component = getattr(self._assembly, name)
+            setattr(self, name, component)
+            if component is not None:
+                tracked_names.append(name)
+        self._tracked_component_names = tuple(tracked_names)
+
+    def _normalized_mode(self) -> str:
+        return (self.spec.mode or "pihal_like").replace(
+            "-", "_"
+        )
+
+    def _tensor_width(self, value):
+        """Return the static last-dimension width when available."""
+        shape = getattr(value, "shape", None)
+        if shape is None:
+            return None
+        try:
+            width = shape[-1]
+        except Exception:
+            return None
+        if width is None:
+            return None
+        try:
+            return int(width)
+        except Exception:
+            return width
+
+    def _align_residual_base(
+        self,
+        value,
+        base,
+        residual_projection=None,
+        *,
+        training: bool = False,
+    ):
+        """Project the residual branch when its width differs."""
+        value_width = self._tensor_width(value)
+        base_width = self._tensor_width(base)
+        if (
+            value_width is None
+            or base_width is None
+            or value_width == base_width
+        ):
+            return base
+
+        if residual_projection is not None:
+            projected = _invoke(
+                residual_projection,
+                base,
+                training=training,
+            )
+            projected_width = self._tensor_width(projected)
+            if (
+                projected_width is None
+                or projected_width == value_width
+            ):
+                return projected
+
+        raise ValueError(
+            "Residual width mismatch: "
+            f"main path width={value_width}, residual width={base_width}."
+        )
+
+    def _apply_residual(
+        self,
+        value,
+        base,
+        add_layer,
+        norm_layer,
+        residual_projection=None,
+        *,
+        training: bool = False,
+    ):
+        base = self._align_residual_base(
+            value,
+            base,
+            residual_projection,
+            training=training,
+        )
+        if add_layer is not None:
+            value = add_layer([value, base])
+        else:
+            value = value + base
+        if norm_layer is not None:
+            value = norm_layer(value)
+        return value
+
+    def _apply_decoder_stack(
+        self,
+        decoder_input,
+        encoder_sequences,
+        *,
+        training: bool = False,
+    ):
+        stack = set(self.spec.attention_levels)
+        context_att = decoder_input
+
+        if "cross" in stack:
+            cross_out = _invoke(
+                self._assembly.decoder_cross_attention,
+                [decoder_input, encoder_sequences],
+                training=training,
+            )
+            att_proc = _invoke(
+                self._assembly.decoder_cross_postprocess,
+                cross_out,
+                training=training,
+            )
+            if self.spec.use_residuals:
+                context_att = self._apply_residual(
+                    att_proc,
+                    decoder_input,
+                    self._assembly.decoder_residual_add,
+                    self._assembly.decoder_residual_norm,
+                    self._assembly.residual_projection,
+                    training=training,
+                )
+            else:
+                context_att = att_proc
+
+        if "hierarchical" in stack:
+            hierarchical_out = _invoke(
+                self._assembly.decoder_hierarchical_attention,
+                [context_att, context_att],
+                training=training,
+            )
+        else:
+            hierarchical_out = context_att
+
+        if "memory" in stack:
+            memory_out = _invoke(
+                self._assembly.decoder_memory_attention,
+                hierarchical_out,
+                training=training,
+            )
+        else:
+            memory_out = hierarchical_out
+
+        final_sequence = _invoke(
+            self._assembly.decoder_fusion,
+            memory_out,
+            training=training,
+        )
+
+        if self.spec.use_residuals:
+            final_sequence = self._apply_residual(
+                final_sequence,
+                context_att,
+                self._assembly.final_residual_add,
+                self._assembly.final_residual_norm,
+                self._assembly.residual_projection,
+                training=training,
+            )
+
+        return final_sequence
+
+    def build(self, input_shape):
+        """Mark the assembled model as build-aware for Keras serialization.
+
+        The resolved sublayers build lazily on first call, but providing a
+        lightweight ``build`` implementation prevents Keras from treating the
+        model as having unresolved state simply because the parent model does
+        not override ``build``.
+        """
+        super().build(input_shape)
+
+    def build_from_config(self, config):
+        """Eagerly materialize sublayer weights from saved input shapes.
+
+        Keras saves subclassed models with a top-level ``build_config``. For
+        resolver-built V2 assemblies, calling the model once with dummy arrays
+        is the most reliable way to ensure every resolved child layer has its
+        variables created before weight restoration runs. This is especially
+        important for the JAX backend, where deserialization may otherwise load
+        into an unmaterialized layer tree and silently miss weight assignment.
+        """
+        input_shape = (
+            None
+            if config is None
+            else config.get("input_shape")
+        )
+        if input_shape is None:
+            return
+
+        try:
+            import numpy as np
+
+            def _normalize_shape(shape):
+                dims = []
+                for index, dim in enumerate(tuple(shape)):
+                    if dim is None:
+                        dims.append(1 if index == 0 else 1)
+                    else:
+                        dims.append(int(dim))
+                return tuple(dims)
+
+            if (
+                isinstance(input_shape, (list, tuple))
+                and input_shape
+                and isinstance(input_shape[0], (list, tuple))
+            ):
+                dummy_inputs = [
+                    np.zeros(
+                        _normalize_shape(shape),
+                        dtype="float32",
+                    )
+                    for shape in input_shape
+                ]
+            else:
+                dummy_inputs = np.zeros(
+                    _normalize_shape(input_shape),
+                    dtype="float32",
+                )
+            self.call(dummy_inputs, training=False)
+        except Exception:
+            # Leave the model in its deserialized state; Keras will surface any
+            # real restoration errors during normal use.
+            pass
+
     def call(self, inputs, training: bool = False):
-        static_x, dynamic_x, future_x = self._normalize_inputs(inputs)
+        static_x, dynamic_x, future_x = (
+            self._normalize_inputs(inputs)
+        )
         if dynamic_x is None:
             raise ValueError(
                 "dynamic input is required for BaseAttentiveV2."
             )
 
-        features = []
+        static_processor = self._resolve_processor(
+            "static_processor",
+            "static_projection",
+        )
+        dynamic_processor = self._resolve_processor(
+            "dynamic_processor",
+            "dynamic_projection",
+        )
+        future_processor = self._resolve_processor(
+            "future_processor",
+            "future_projection",
+        )
+
+        static_context = None
         if (
-            self._assembly.static_projection is not None
+            static_processor is not None
             and static_x is not None
         ):
-            features.append(
-                self._assembly.static_projection(static_x)
-            )
-
-        dynamic_encoded = self._assembly.dynamic_projection(dynamic_x)
-        if self._assembly.dynamic_encoder is not None:
-            dynamic_encoded = self._assembly.dynamic_encoder(
-                dynamic_encoded,
+            static_context = _invoke(
+                static_processor,
+                static_x,
                 training=training,
             )
-        features.append(self._assembly.sequence_pool(dynamic_encoded))
 
+        dynamic_processed = _invoke(
+            dynamic_processor,
+            dynamic_x,
+            training=training,
+        )
+        future_processed = None
         if (
-            self._assembly.future_projection is not None
+            future_processor is not None
             and future_x is not None
         ):
-            future_encoded = self._assembly.future_projection(
-                future_x
+            future_processed = _invoke(
+                future_processor,
+                future_x,
+                training=training,
             )
-            if self._assembly.future_encoder is not None:
-                future_encoded = self._assembly.future_encoder(
-                    future_encoded,
+
+        time_steps = self.backend_context.shape(dynamic_x)[1]
+        mode = self._normalized_mode()
+
+        encoder_parts = [dynamic_processed]
+        if (
+            mode == "tft_like"
+            and future_processed is not None
+        ):
+            encoder_parts.append(
+                future_processed[:, :time_steps, :]
+            )
+        encoder_input = self.backend_context.concat(
+            encoder_parts,
+            axis=-1,
+        )
+        if (
+            self._assembly.encoder_positional_encoding
+            is not None
+        ):
+            encoder_input = _invoke(
+                self._assembly.encoder_positional_encoding,
+                encoder_input,
+                training=training,
+            )
+
+        encoder_sequences = encoder_input
+        if self._assembly.dynamic_encoder is not None:
+            encoder_sequences = _invoke(
+                self._assembly.dynamic_encoder,
+                encoder_sequences,
+                training=training,
+            )
+        if self._assembly.dynamic_window is not None:
+            encoder_sequences = _invoke(
+                self._assembly.dynamic_window,
+                encoder_sequences,
+                training=training,
+            )
+
+        decoder_future = None
+        if future_processed is not None:
+            if mode == "tft_like":
+                decoder_future = future_processed[
+                    :, time_steps:, :
+                ]
+            else:
+                decoder_future = future_processed
+
+        decoder_parts = []
+        if static_context is not None:
+            static_expanded = (
+                self.backend_context.expand_dims(
+                    static_context,
+                    axis=1,
+                )
+            )
+            static_expanded = self.backend_context.tile(
+                static_expanded,
+                [1, self.spec.forecast_horizon, 1],
+            )
+            decoder_parts.append(static_expanded)
+
+        if decoder_future is not None:
+            if (
+                self._assembly.future_positional_encoding
+                is not None
+            ):
+                decoder_future = _invoke(
+                    self._assembly.future_positional_encoding,
+                    decoder_future,
                     training=training,
                 )
-            features.append(
-                self._assembly.sequence_pool(future_encoded)
+            decoder_parts.append(decoder_future)
+
+        if not decoder_parts:
+            batch_size = self.backend_context.shape(
+                dynamic_x
+            )[0]
+            raw_decoder_input = self.backend_context.zeros(
+                (
+                    batch_size,
+                    self.spec.forecast_horizon,
+                    self.spec.attention_units,
+                )
+            )
+        else:
+            raw_decoder_input = self.backend_context.concat(
+                decoder_parts,
+                axis=-1,
             )
 
-        fused = self._assembly.fusion(features)
-        hidden = self._assembly.hidden_projection(fused)
+        projected_decoder_input = raw_decoder_input
+        if (
+            self._assembly.decoder_input_projection
+            is not None
+        ):
+            projected_decoder_input = _invoke(
+                self._assembly.decoder_input_projection,
+                projected_decoder_input,
+                training=training,
+            )
 
+        final_sequence = self._apply_decoder_stack(
+            projected_decoder_input,
+            encoder_sequences,
+            training=training,
+        )
+        final_features = _invoke(
+            self._assembly.final_pool,
+            final_sequence,
+            training=training,
+        )
+
+        hidden = self._assembly.hidden_projection(
+            final_features
+        )
         if self._assembly.dropout is not None:
-            hidden = self._assembly.dropout(hidden, training=training)
+            hidden = self._assembly.dropout(
+                hidden, training=training
+            )
+
+        migrated_multi_horizon = getattr(
+            self._assembly,
+            "multi_horizon_head",
+            None,
+        )
+        migrated_quantile_head = getattr(
+            self._assembly,
+            "quantile_distribution_head",
+            None,
+        )
+
+        if migrated_multi_horizon is not None:
+            point_outputs = _invoke(
+                migrated_multi_horizon,
+                hidden,
+                training=training,
+            )
+            if self.spec.head_type == "quantile":
+                if migrated_quantile_head is None:
+                    raise RuntimeError(
+                        "Quantile head type requires a quantile distribution "
+                        "component in the resolved assembly."
+                    )
+                return _invoke(
+                    migrated_quantile_head,
+                    point_outputs,
+                    training=training,
+                )
+            return point_outputs
 
         outputs = self._assembly.output_head(hidden)
         if self.spec.head_type == "quantile":
@@ -147,20 +587,123 @@ class BaseAttentiveV2(Model):
 
         return reshape(
             outputs,
-            (-1, self.spec.forecast_horizon, self.spec.output_dim),
+            (
+                -1,
+                self.spec.forecast_horizon,
+                self.spec.output_dim,
+            ),
         )
+
+    def compute_output_shape(self, input_shape):
+        batch_dim = None
+        if isinstance(input_shape, (list, tuple)):
+            for shape in input_shape:
+                if shape is None:
+                    continue
+                try:
+                    batch_dim = tuple(shape)[0]
+                except Exception:
+                    continue
+                if batch_dim is not None:
+                    break
+        else:
+            try:
+                batch_dim = tuple(input_shape)[0]
+            except Exception:
+                batch_dim = None
+
+        if self.spec.head_type == "quantile":
+            return (
+                batch_dim,
+                self.spec.forecast_horizon,
+                len(self.spec.quantiles),
+                self.spec.output_dim,
+            )
+        return (
+            batch_dim,
+            self.spec.forecast_horizon,
+            self.spec.output_dim,
+        )
+
+    def to_json(self, **kwargs):
+        """Serialize the model config to a JSON string."""
+        payload = {
+            "class_name": self.__class__.__name__,
+            "module": self.__class__.__module__,
+            "config": self.get_config(),
+        }
+        return json.dumps(payload)
 
     def get_config(self):
         base_get_config = getattr(super(), "get_config", None)
         config = (
-            base_get_config() if callable(base_get_config) else {}
+            base_get_config()
+            if callable(base_get_config)
+            else {}
         )
-        config.update(asdict(self.spec))
+        config.update(
+            {
+                "spec": serialize_base_attentive_spec(
+                    self.spec
+                ),
+                "static_input_dim": self.spec.static_input_dim,
+                "dynamic_input_dim": self.spec.dynamic_input_dim,
+                "future_input_dim": self.spec.future_input_dim,
+                "output_dim": self.spec.output_dim,
+                "forecast_horizon": self.spec.forecast_horizon,
+                "quantiles": list(self.spec.quantiles),
+                "embed_dim": self.spec.embed_dim,
+                "hidden_units": self.spec.hidden_units,
+                "attention_heads": self.spec.attention_heads,
+                "layer_norm_epsilon": self.spec.layer_norm_epsilon,
+                "dropout_rate": self.spec.dropout_rate,
+                "activation": self.spec.activation,
+                "backend_name": self.spec.backend_name,
+                "head_type": self.spec.head_type,
+                "name": self.name,
+            }
+        )
         return config
 
     @classmethod
     def from_config(cls, config):
-        return cls(**config)
+        payload = dict(config)
+        spec_payload = _extract_spec_payload(payload)
+
+        init_kwargs: dict[str, Any] = {}
+        passthrough_kwargs = ("name", "trainable", "dtype")
+        for key in passthrough_kwargs:
+            if key in payload:
+                init_kwargs[key] = payload[key]
+
+        if spec_payload:
+            normalized = normalize_base_attentive_spec(
+                spec_payload
+            )
+            init_kwargs.update(
+                {
+                    "static_input_dim": normalized.static_input_dim,
+                    "dynamic_input_dim": normalized.dynamic_input_dim,
+                    "future_input_dim": normalized.future_input_dim,
+                    "output_dim": normalized.output_dim,
+                    "forecast_horizon": normalized.forecast_horizon,
+                    "quantiles": tuple(normalized.quantiles),
+                    "embed_dim": normalized.embed_dim,
+                    "hidden_units": normalized.hidden_units,
+                    "attention_heads": normalized.attention_heads,
+                    "layer_norm_epsilon": normalized.layer_norm_epsilon,
+                    "dropout_rate": normalized.dropout_rate,
+                    "activation": normalized.activation,
+                    "backend_name": normalized.backend_name,
+                    "head_type": normalized.head_type,
+                    "spec": serialize_base_attentive_spec(
+                        normalized
+                    ),
+                }
+            )
+            return cls(**init_kwargs)
+
+        return cls(**payload)
 
 
 __all__ = ["BaseAttentiveV2"]

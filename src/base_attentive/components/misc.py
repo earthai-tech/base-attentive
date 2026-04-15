@@ -25,18 +25,14 @@ from ._config import (
     Tensor,
     TensorShape,
     activations,
+    cast,
+    concat,
+    do_not_convert,
+    float32,
+    floordiv,
+    power,
     register_keras_serializable,
-    tf_autograph,
-    tf_cast,
-    tf_concat,
-    tf_cos,
-    tf_float32,
-    tf_floordiv,
-    tf_newaxis,
-    tf_pow,
-    tf_range,
-    tf_shape,
-    tf_sin,
+    shape,
 )
 
 __all__ = [
@@ -49,7 +45,9 @@ __all__ = [
 SERIALIZATION_PACKAGE = __name__
 
 
-@register_keras_serializable(SERIALIZATION_PACKAGE, name="Activation")
+@register_keras_serializable(
+    SERIALIZATION_PACKAGE, name="Activation"
+)
 class Activation(Layer, NNLearner):
     r"""
     Flexible activation layer that transparently delegates to any
@@ -146,7 +144,9 @@ class Activation(Layer, NNLearner):
             # Try to get a standard name via serialize,
             # fallback to object name
             try:
-                self.activation_fn = activations.get(activation)
+                self.activation_fn = activations.get(
+                    activation
+                )
                 self.activation_str = activation
             except ValueError as err:
                 raise ValueError(
@@ -186,7 +186,7 @@ class Activation(Layer, NNLearner):
                 f"Resolved activation '{self.activation_str}' is not callable."
             )
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, training: bool = False):
         """
         Apply the stored activation to `inputs`.
@@ -330,12 +330,18 @@ class PositionwiseFeedForward(Layer, NNLearner):
         self.dropout_rate = dropout_rate
 
         # Define the internal layers once in the constructor
-        self.dense_1 = Dense(units=ffn_dim, name="ffn_dense_1")
+        self.dense_1 = Dense(
+            units=ffn_dim, name="ffn_dense_1"
+        )
         self.activation = Activation(activation).activation_fn
-        self.dense_2 = Dense(units=embed_dim, name="ffn_dense_2")
+        self.dense_2 = Dense(
+            units=embed_dim, name="ffn_dense_2"
+        )
         self.dropout = Dropout(rate=dropout_rate)
 
-    def call(self, x: Tensor, training: bool = False) -> Tensor:
+    def call(
+        self, x: Tensor, training: bool = False
+    ) -> Tensor:
         """Defines the forward pass for the FFN layer."""
         # Project to the intermediate dimension
         x = self.dense_1(x)
@@ -372,8 +378,8 @@ class PositionalEncoding(Layer, NNLearner):
     This layer adds a deterministic (non-trainable) sinusoidal table to
     the input sequence so the model can distinguish positions.
 
-    Key design goals (why this implementation looks “special”)
-    ----------------------------------------------------------
+    Key design goals (why this implementation looks "special")
+
     1) **Graph-scope safety**
        We build the table with NumPy inside `build()` and store it as a
        **non-trainable Keras weight** via `add_weight(...)`.
@@ -458,7 +464,9 @@ class PositionalEncoding(Layer, NNLearner):
             # that can be tied to a temporary FuncGraph during tracing.
             # The result is then stored as a TF Variable via add_weight.
             # ---------------------------------------------------------
-            pos = np.arange(self.max_length)[:, np.newaxis]  # (L, 1)
+            pos = np.arange(self.max_length)[
+                :, np.newaxis
+            ]  # (L, 1)
             i = np.arange(d)[np.newaxis, :]  # (1, D)
 
             # rates[j] = 1 / 10000^(2*floor(j/2)/D)
@@ -469,7 +477,9 @@ class PositionalEncoding(Layer, NNLearner):
             angles = pos * rates  # (L, D)
 
             # Interleave sin for even dims and cos for odd dims.
-            pe = np.zeros((self.max_length, d), dtype=np.float32)
+            pe = np.zeros(
+                (self.max_length, d), dtype=np.float32
+            )
             pe[:, 0::2] = np.sin(angles[:, 0::2])
             pe[:, 1::2] = np.cos(angles[:, 1::2])
 
@@ -536,11 +546,13 @@ class PositionalEncoding(Layer, NNLearner):
         returns: (B, T, D)
         """
         # Current sequence length T (dynamic at runtime).
-        seq_len = tf_shape(inputs)[1]
+        seq_len = shape(inputs)[1]
 
         # Slice to the required length and broadcast across batch:
         # (B, T, D) + (1, T, D) -> (B, T, D)
-        return inputs + self.positional_encoding[:, :seq_len, :]
+        return (
+            inputs + self.positional_encoding[:, :seq_len, :]
+        )
 
     def get_config(self) -> dict:
         """
@@ -550,7 +562,10 @@ class PositionalEncoding(Layer, NNLearner):
         """
         config = super().get_config()
         config.update(
-            {"max_length": self.max_length, "d_model": self.d_model}
+            {
+                "max_length": self.max_length,
+                "d_model": self.d_model,
+            }
         )
         return config
 
@@ -588,7 +603,9 @@ class _PositionalEncoding(Layer, NNLearner):
     Examples
     --------
     >>> import tensorflow as tf
-    >>> from geoprior.nn.components import PositionalEncoding
+    >>> from base_attentive.components import (
+    ...     PositionalEncoding,
+    ... )
     >>> batch_size = 4
     >>> sequence_length = 50
     >>> feature_dimension = 128
@@ -599,7 +616,9 @@ class _PositionalEncoding(Layer, NNLearner):
     ... )
 
     >>> # Instantiate and apply the layer
-    >>> pos_encoding_layer = PositionalEncoding(max_length=5000)
+    >>> pos_encoding_layer = PositionalEncoding(
+    ...     max_length=5000
+    ... )
     >>> output_tensor = pos_encoding_layer(input_tensor)
 
     >>> print("Input Tensor Shape:", input_tensor.shape)
@@ -632,53 +651,6 @@ class _PositionalEncoding(Layer, NNLearner):
         super().__init__(**kwargs)
         self.max_length = max_length
         self.positional_encoding = None
-
-    # def build(self, input_shape: TensorShape):
-    #     """Pre-calculates the positional encoding matrix."""
-    #     # The input shape is (batch, sequence_length, feature_dim)
-    #     _, _, feature_dim = input_shape
-
-    #     if self.positional_encoding is None:
-    #         # The calculation is done once and stored.
-    #         # Ensure feature_dim is a concrete value for matrix creation.
-    #         if feature_dim is None:
-    #             raise ValueError(
-    #                 "The feature dimension of the input to "
-    #                 "PositionalEncoding cannot be `None`. Please "
-    #                 "ensure the input has a defined feature dimension."
-    #             )
-
-    #         # Cast to float for calculations
-    #         d_model = tf_cast(feature_dim, tf_float32)
-
-    #         # Create a matrix of positions (max_length, 1)
-    #         positions = tf_range(
-    #             self.max_length, dtype=tf_float32)[:, tf_newaxis]
-
-    #         # Create the division term for the sine/cosine functions
-    #         # Shape: (feature_dim / 2)
-    #         div_term = tf_exp(
-    #             tf_range(0, feature_dim, 2, dtype=tf_float32) * \
-    #             (-tf_log(10000.0) / d_model)
-    #         )
-
-    #         # Calculate sinusoidal values for even and odd indices
-    #         # Shape of each: (max_length, feature_dim / 2)
-    #         pe_sin = tf_sin(positions * div_term)
-    #         pe_cos = tf_cos(positions * div_term)
-
-    #         # Interleave sin and cos values to get final encoding
-    #         # Resulting shape: (max_length, feature_dim)
-    #         pe_interleaved = tf_reshape(
-    #             tf_stack([pe_sin, pe_cos], axis=-1),
-    #             shape=[self.max_length, feature_dim]
-    #         )
-
-    #         # Add an extra dimension for broadcasting across the batch
-    #         # Shape: (1, max_length, feature_dim)
-    #         self.positional_encoding = pe_interleaved[tf_newaxis, :, :]
-
-    #     super().build(input_shape)
 
     def build(self, input_shape: TensorShape):
         # `input_shape` is expected to be (B, T, D).
@@ -782,12 +754,14 @@ class _PositionalEncoding(Layer, NNLearner):
 
         """
         # Get the sequence length of the current input batch.
-        seq_len = tf_shape(inputs)[1]
+        seq_len = shape(inputs)[1]
 
         # Slice the pre-calculated encoding matrix to match the input
         # sequence length and add it to the input tensor.
         # The broadcasting mechanism will handle the batch dimension.
-        return inputs + self.positional_encoding[:, :seq_len, :]
+        return (
+            inputs + self.positional_encoding[:, :seq_len, :]
+        )
 
     def get_config(self) -> dict:
         """Returns the configuration of the layer."""
@@ -856,24 +830,30 @@ class TSPositionalEncoding(Layer, NNLearner):
         angle_rads_np = pos_np * angle_rates_np
 
         # 2. Apply sin to even indices in the array; 2i
-        angle_rads_np[:, 0::2] = np.sin(angle_rads_np[:, 0::2])
+        angle_rads_np[:, 0::2] = np.sin(
+            angle_rads_np[:, 0::2]
+        )
 
         # 3. Apply cos to odd indices in the array; 2i+1
-        angle_rads_np[:, 1::2] = np.cos(angle_rads_np[:, 1::2])
+        angle_rads_np[:, 1::2] = np.cos(
+            angle_rads_np[:, 1::2]
+        )
 
         # 4. Add a new axis for batch dimension and cast to TensorFlow tensor
         # The self.pos_encoding expects (1, max_position, embed_dim)
-        pos_encoding_tensor = tf_cast(
-            angle_rads_np[np.newaxis, ...], dtype=tf_float32
+        pos_encoding_tensor = cast(
+            angle_rads_np[np.newaxis, ...], dtype=float32
         )
 
         return pos_encoding_tensor
 
-    def _tf_build_positional_encoding(self, position, d_model):
+    def _build_positional_encoding_tensor(
+        self, position, d_model
+    ):
         """Builds the positional encoding matrix."""
         # Build entirely in numpy to avoid MPS in-place slice-assignment
         # failures (MPS tensors cannot be converted to numpy for __array__).
-        # Only materialise to a backend tensor at the very end via tf_cast.
+        # Only materialise to a backend tensor at the very end via cast.
         angle_rads = self._get_angles(
             np.arange(position)[:, np.newaxis],
             np.arange(d_model)[np.newaxis, :],
@@ -884,7 +864,17 @@ class TSPositionalEncoding(Layer, NNLearner):
         # Apply cos to odd indices in the array; 2i+1
         angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
 
-        return tf_cast(angle_rads[np.newaxis, ...], dtype=tf_float32)
+        return cast(
+            angle_rads[np.newaxis, ...], dtype=float32
+        )
+
+    def _tf_build_positional_encoding(
+        self, position, d_model
+    ):
+        """Backward-compatible alias for the legacy helper name."""
+        return self._build_positional_encoding_tensor(
+            position, d_model
+        )
 
     def _get_angles(self, pos, i, d_model):
         """Calculates the angle rates for positional encoding."""
@@ -894,20 +884,24 @@ class TSPositionalEncoding(Layer, NNLearner):
         )
         return pos * angle_rates
 
-    def _tf_get_angles(self, pos, i, d_model):
+    def _get_angles_tensor(self, pos, i, d_model):
         """Calculates the angle rates for positional encoding."""
         # cast d_model to float32
-        d_model_f = tf_cast(d_model, tf_float32)
+        d_model_f = cast(d_model, float32)
         # compute floor(i/2) as an integer tensor
-        half_i = tf_floordiv(i, 2)
+        half_i = floordiv(i, 2)
         # build the numerator 2 * (i//2), then cast to float32
-        numer = tf_cast(2 * half_i, tf_float32)
+        numer = cast(2 * half_i, float32)
         # now both numer and d_model_f are float32
         exponent = numer / d_model_f
         # compute the rates with float constants
-        angle_rates = 1.0 / tf_pow(10000.0, exponent)
+        angle_rates = 1.0 / power(10000.0, exponent)
         # and finally apply to pos (cast pos to float32 if needed)
-        return tf_cast(pos, tf_float32) * angle_rates
+        return cast(pos, float32) * angle_rates
+
+    def _tf_get_angles(self, pos, i, d_model):
+        """Backward-compatible alias for the legacy helper name."""
+        return self._get_angles_tensor(pos, i, d_model)
 
     def call(self, x, training=False):
         """Adds positional encoding to the input tensor `x`.
@@ -920,14 +914,16 @@ class TSPositionalEncoding(Layer, NNLearner):
             )
         input_seq_len = x.shape[1]
         if input_seq_len is None:
-            input_seq_len = tf_shape(x)[1]
+            input_seq_len = shape(x)[1]
             if hasattr(input_seq_len, "item"):
                 try:
                     input_seq_len = int(input_seq_len.item())
                 except Exception:
                     pass
             if not isinstance(input_seq_len, int):
-                detach = getattr(input_seq_len, "detach", None)
+                detach = getattr(
+                    input_seq_len, "detach", None
+                )
                 if callable(detach):
                     input_seq_len = detach()
                 cpu = getattr(input_seq_len, "cpu", None)
@@ -949,7 +945,9 @@ class TSPositionalEncoding(Layer, NNLearner):
                     pos_enc = pos_enc.to(x.device)
                 else:
                     pos_enc = _torch.tensor(
-                        _np.asarray(pos_enc, dtype=_np.float32),
+                        _np.asarray(
+                            pos_enc, dtype=_np.float32
+                        ),
                         device=x.device,
                     )
         except ImportError:
@@ -1067,7 +1065,7 @@ class MultiModalEmbedding(Layer, NNLearner):
                 raise ValueError("Unsupported modality type.")
         super().build(input_shape)
 
-    @tf_autograph.experimental.do_not_convert
+    @do_not_convert
     def call(self, inputs, training=False):
         r"""
         Forward pass: project each modality
@@ -1092,12 +1090,14 @@ class MultiModalEmbedding(Layer, NNLearner):
         embeddings = []
         for idx, modality in enumerate(inputs):
             if isinstance(modality, Tensor):
-                modality_embed = self.dense_layers[idx](modality)
+                modality_embed = self.dense_layers[idx](
+                    modality
+                )
             else:
                 raise ValueError("Unsupported modality type.")
             embeddings.append(modality_embed)
 
-        return tf_concat(embeddings, axis=-1)
+        return concat(embeddings, axis=-1)
 
     def get_config(self):
         r"""

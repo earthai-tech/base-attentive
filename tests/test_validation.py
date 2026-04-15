@@ -77,7 +77,9 @@ class TestValidationModule:
         )
 
         static, dynamic, future = (
-            validation_module.validate_model_inputs(raw_inputs)
+            validation_module.validate_model_inputs(
+                raw_inputs
+            )
         )
 
         assert static is raw_inputs[0]
@@ -94,8 +96,8 @@ class TestValidationModule:
             np.zeros((2, 5, 6)),
         ]
 
-        static, dynamic, future = fake_runtime.validate_model_inputs(
-            inputs
+        static, dynamic, future = (
+            fake_runtime.validate_model_inputs(inputs)
         )
 
         assert isinstance(static, np.ndarray)
@@ -107,8 +109,10 @@ class TestValidationModule:
         self, fake_runtime
     ):
         """Single inputs should be mapped to the static slot."""
-        static, dynamic, future = fake_runtime.validate_model_inputs(
-            np.ones((4, 8))
+        static, dynamic, future = (
+            fake_runtime.validate_model_inputs(
+                np.ones((4, 8))
+            )
         )
 
         assert static.shape == (4, 8)
@@ -178,8 +182,10 @@ class TestValidationModule:
             np.ones((2, 4, 5)),
             np.ones((2, 6, 7)),
         ]
-        static, dynamic, future = fake_runtime.validate_model_inputs(
-            inputs, verbose=1
+        static, dynamic, future = (
+            fake_runtime.validate_model_inputs(
+                inputs, verbose=1
+            )
         )
         assert static.shape == (2, 3)
         assert dynamic.shape == (2, 4, 5)
@@ -189,8 +195,10 @@ class TestValidationModule:
         self, fake_runtime
     ):
         """With error='warn', a bad input is kept as-is instead of raising."""
-        static, dynamic, future = fake_runtime.validate_model_inputs(
-            "__boom__", error="warn"
+        static, dynamic, future = (
+            fake_runtime.validate_model_inputs(
+                "__boom__", error="warn"
+            )
         )
         # The raw (unconverted) value is stored in the static slot.
         assert static == "__boom__"
@@ -209,10 +217,14 @@ class TestValidationModule:
             validation_module, "_has_runtime", lambda: False
         )
         x = np.ones((4, 5))
-        result = validation_module.maybe_reduce_quantiles_bh(x)
+        result = validation_module.maybe_reduce_quantiles_bh(
+            x
+        )
         assert result is x
 
-    def test_maybe_reduce_quantiles_bh_rank4_mean(self, fake_runtime):
+    def test_maybe_reduce_quantiles_bh_rank4_mean(
+        self, fake_runtime
+    ):
         """Rank-4 tensor with reduction='mean' should collapse axis 2."""
         x = np.ones((2, 5, 3, 1), dtype=np.float32)
         result = fake_runtime.maybe_reduce_quantiles_bh(
@@ -220,7 +232,9 @@ class TestValidationModule:
         )
         assert result.shape == (2, 5, 1)
 
-    def test_maybe_reduce_quantiles_bh_rank4_sum(self, fake_runtime):
+    def test_maybe_reduce_quantiles_bh_rank4_sum(
+        self, fake_runtime
+    ):
         """Rank-4 tensor with reduction='sum' should collapse axis 2."""
         x = np.ones((2, 5, 3, 1), dtype=np.float32)
         result = fake_runtime.maybe_reduce_quantiles_bh(
@@ -248,7 +262,9 @@ class TestValidationModule:
         )
         assert result.shape == (2, 5, 1)
 
-    def test_maybe_reduce_quantiles_bh_3d_sum(self, fake_runtime):
+    def test_maybe_reduce_quantiles_bh_3d_sum(
+        self, fake_runtime
+    ):
         """3D tensor with last dim > 1 and reduction='sum' should collapse."""
         x = np.arange(32 * 10 * 5, dtype=np.float32).reshape(
             32, 10, 5
@@ -301,7 +317,9 @@ class TestValidationModule:
         )
         assert result.shape == (2, 5)
 
-    def test_ensure_bh1_reduce_axis_callable(self, fake_runtime):
+    def test_ensure_bh1_reduce_axis_callable(
+        self, fake_runtime
+    ):
         """reduce_axis with a callable should apply it to the axis."""
         x = np.ones((2, 5, 4), dtype=np.float32)
         result = fake_runtime.ensure_bh1(

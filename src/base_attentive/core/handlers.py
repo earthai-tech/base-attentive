@@ -101,7 +101,9 @@ def param_deprecated_message(
 
                 return func_or_class(*args, **kwargs)
 
-            wrapper.__signature__ = inspect.signature(func_or_class)
+            wrapper.__signature__ = inspect.signature(
+                func_or_class
+            )
             return wrapper
 
     return decorator

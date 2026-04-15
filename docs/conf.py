@@ -20,7 +20,7 @@ sys.path.insert(0, str(SRC))
 # This keeps examples/ as the single source of truth while making the
 # notebooks reachable by nbsphinx (which requires files inside the source dir).
 # ---------------------------------------------------------------------------
-_EXAMPLES_DIR  = ROOT / "examples"
+_EXAMPLES_DIR = ROOT / "examples"
 _NOTEBOOKS_DIR = Path(__file__).parent / "notebooks"
 _NOTEBOOKS_DIR.mkdir(exist_ok=True)
 for _nb in _EXAMPLES_DIR.glob("*.ipynb"):
@@ -99,7 +99,8 @@ intersphinx_mapping = {
 
 html_theme = (
     "sphinx_rtd_theme"
-    if importlib.util.find_spec("sphinx_rtd_theme") is not None
+    if importlib.util.find_spec("sphinx_rtd_theme")
+    is not None
     else "alabaster"
 )
 html_title = f"{project} {release} documentation"

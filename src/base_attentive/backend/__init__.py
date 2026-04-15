@@ -1,293 +1,191 @@
 # SPDX-License-Identifier: Apache-2.0
 # Author: LKouadio <etanoyau@gmail.com>
-"""Backend runtime abstraction with intelligent selection.
+"""Lazy backend runtime abstraction for Base-Attentive.
 
-This module provides a flexible backend system supporting TensorFlow, JAX,
-and PyTorch through Keras 3 multi-backend runtimes.
-
-Architecture Overview
----------------------
-The backend package is structured for maximum modularity and clarity:
-
-- ``base.py`` : Abstract Backend class (extensible for new backends)
-- ``implementations.py`` : Concrete implementations (TensorFlow, JAX, Torch)
-- ``detector.py`` : Intelligent backend selection and fallback logic
-- ``version_check.py`` : Version compatibility utilities
-- ``__init__.py`` : Public API (this file)
-
-This modular design enables:
-- Easy addition of new backends (extend Backend class)
-- Clear separation of concerns (each module has single responsibility)
-- Simple testing and debugging
-- Better maintainability and code reuse
-
-Features
---------
-- Automatic backend detection based on installed packages
-- Intelligent fallback when preferred backend unavailable
-- Version compatibility checking (e.g., TensorFlow ≥ 2.10.0)
-- Automatic backend installation if none available
-- Environment variable configuration (BASE_ATTENTIVE_BACKEND, KERAS_BACKEND)
-- Detailed capability reporting
-
-Clean Architecture
--------------------
-This package is the sole source of all backend functionality.
-No legacy compatibility shims or file-based modules.
-
-Usage Examples
---------------
-Basic usage::
-
-    from base_attentive.backend import get_backend, set_backend
-
-    # Automatically select best available backend
-    backend = get_backend()
-
-    # Or specify a backend explicitly
-    backend = set_backend("tensorflow")
-
-    # Query backend capabilities
-    from base_attentive.backend import get_backend_capabilities
-
-    caps = get_backend_capabilities()
-    print(caps["version"])  # e.g., "2.15.0"
-
-Advanced usage::
-
-    from base_attentive.backend import (
-        detect_available_backends,
-        select_best_backend,
-        ensure_default_backend,
-        check_tensorflow_compatibility,
-    )
-
-    # Detect all available backends
-    backends = detect_available_backends()
-    print(backends["tensorflow"]["version"])
-
-    # Intelligently select the best backend
-    best = select_best_backend(prefer="jax")
-
-    # Ensure a backend is available (auto-install if needed)
-    backend_name = ensure_default_backend(auto_install=True)
-
-    # Check version compatibility
-    is_compatible, msg = check_tensorflow_compatibility()
-
-Environment Configuration
---------------------------
-Control backend selection via environment variables::
-
-    # Highest priority: BaseAttentive-specific
-    export BASE_ATTENTIVE_BACKEND=tensorflow
-
-    # Fallback: Keras standard
-    export KERAS_BACKEND=jax
-
-Selection Priority Order
-------------------------
-When no backend is explicitly specified, the system tries in order:
-
-1. ``BASE_ATTENTIVE_BACKEND`` environment variable
-2. ``KERAS_BACKEND`` environment variable
-3. Previously set in-process backend
-4. Best available backend (auto-detected)
-5. Default backend (TensorFlow, with auto-install if needed)
-
-Supported Backends
-------------------
-- **TensorFlow** (✅ Fully Supported)
-  - Status: Production ready
-  - Required: TensorFlow ≥ 2.10.0
-
-- **JAX** (⚠️ Experimental)
-  - Status: Limited feature parity
-  - Required: Keras 3 + JAX
-
-- **PyTorch** (⚠️ Experimental)
-  - Status: Limited feature parity
-  - Required: Keras 3 + PyTorch
-  - Aliases: torch, pytorch
+This package exposes backend selection, capability inspection, and helper
+utilities without importing all backend implementations eagerly.
 """
 
 from __future__ import annotations
 
+import importlib
 import os
 import warnings
-from typing import Any, Optional, Type
-
-from .base import Backend
-from .detector import (
-    _has_module as _has_module,
-)
-from .detector import (
-    _import_module as _import_module,
-)
-from .detector import (
-    detect_available_backends,
-    ensure_default_backend,
-    get_available_backends,
-    normalize_backend_name,
-    select_best_backend,
-)
-from .implementations import (
-    JaxBackend,
-    PyTorchBackend,
-    TensorFlowBackend,
-    TorchBackend,
-)
-from .torch_utils import (
-    TorchDeviceManager,
-    get_torch_device,
-    get_torch_version,
-    torch_is_available,
-)
-from .version_check import (
-    check_tensorflow_compatibility,
-    check_torch_compatibility,
-    get_backend_version,
-    parse_version,
-    version_at_least,
-)
+from typing import Any
 
 __all__ = [
-    # Base classes
     "Backend",
-    # Backend implementations
     "TensorFlowBackend",
     "JaxBackend",
     "TorchBackend",
     "PyTorchBackend",
-    # Core API
     "get_backend",
     "set_backend",
     "get_available_backends",
     "get_backend_capabilities",
     "normalize_backend_name",
-    # Detection and selection
     "detect_available_backends",
     "select_best_backend",
     "ensure_default_backend",
-    # Version checking
     "get_backend_version",
     "check_tensorflow_compatibility",
     "check_torch_compatibility",
     "parse_version",
     "version_at_least",
-    # Torch utilities
     "get_torch_device",
     "get_torch_version",
     "torch_is_available",
     "TorchDeviceManager",
+    "_has_module",
+    "_import_module",
 ]
 
-# Registry of available backends
-_BACKENDS: dict[str, Type[Backend]] = {
-    "tensorflow": TensorFlowBackend,
-    "jax": JaxBackend,
-    "torch": TorchBackend,
-    "pytorch": PyTorchBackend,
-}
-
-# Global backend instance
-_CURRENT_BACKEND: Optional[Backend] = None
+_CURRENT_BACKEND = None
 
 
-def get_backend(name: Optional[str] = None) -> Backend:
-    """Get the current or requested backend runtime.
+def _module(name: str):
+    return importlib.import_module(name)
 
-    Lookup order:
-        1. Explicit ``name`` parameter
-        2. ``BASE_ATTENTIVE_BACKEND`` environment variable
-        3. ``KERAS_BACKEND`` environment variable
-        4. Previously set in-process backend
-        5. Best available backend (auto-detect)
-        6. Default (tensorflow, auto-install if needed)
 
-    Parameters
-    ----------
-    name : str, optional
-        Backend name ('tensorflow', 'jax', 'torch', 'pytorch').
-        If None, will auto-detect.
+def _backend_classes() -> dict[str, type]:
+    implementations = _module(
+        "base_attentive.backend.implementations"
+    )
+    return {
+        "tensorflow": implementations.TensorFlowBackend,
+        "jax": implementations.JaxBackend,
+        "torch": implementations.TorchBackend,
+        "pytorch": implementations.PyTorchBackend,
+    }
 
-    Returns
-    -------
-    Backend
-        The configured backend instance.
 
-    Raises
-    ------
-    ValueError
-        If the requested backend is not available.
+def normalize_backend_name(name: str | None) -> str:
+    detector = _module("base_attentive.backend.detector")
+    return detector.normalize_backend_name(name)
 
-    Examples
-    --------
-    >>> # Use default backend (auto-detected)
-    >>> backend = get_backend()
 
-    >>> # Explicitly request TensorFlow
-    >>> backend = get_backend("tensorflow")
-    """
+# detector wrappers -------------------------------------------------------
+def detect_available_backends():
+    detector = _module("base_attentive.backend.detector")
+    return detector.detect_available_backends()
+
+
+def select_best_backend(
+    prefer: str | None = None,
+    require_supported: bool = True,
+):
+    detector = _module("base_attentive.backend.detector")
+    return detector.select_best_backend(
+        prefer=prefer,
+        require_supported=require_supported,
+    )
+
+
+def ensure_default_backend(
+    auto_install: bool = False,
+    install_tensorflow: bool = True,
+) -> str:
+    detector = _module("base_attentive.backend.detector")
+    return detector.ensure_default_backend(
+        auto_install=auto_install,
+        install_tensorflow=install_tensorflow,
+    )
+
+
+def get_available_backends():
+    detector = _module("base_attentive.backend.detector")
+    return detector.get_available_backends()
+
+
+# version wrappers --------------------------------------------------------
+def get_backend_version(name: str):
+    version_check = _module(
+        "base_attentive.backend.version_check"
+    )
+    return version_check.get_backend_version(name)
+
+
+def check_tensorflow_compatibility():
+    version_check = _module(
+        "base_attentive.backend.version_check"
+    )
+    return version_check.check_tensorflow_compatibility()
+
+
+def check_torch_compatibility():
+    version_check = _module(
+        "base_attentive.backend.version_check"
+    )
+    return version_check.check_torch_compatibility()
+
+
+def parse_version(version: str):
+    version_check = _module(
+        "base_attentive.backend.version_check"
+    )
+    return version_check.parse_version(version)
+
+
+def version_at_least(version: str, minimum: str):
+    version_check = _module(
+        "base_attentive.backend.version_check"
+    )
+    return version_check.version_at_least(version, minimum)
+
+
+# core API ----------------------------------------------------------------
+def get_backend(name: str | None = None):
     global _CURRENT_BACKEND
 
+    requested_name = name
+
     if name is None:
-        # Check environment variables
         env_name = os.environ.get("BASE_ATTENTIVE_BACKEND")
         if env_name is None:
             env_name = os.environ.get("KERAS_BACKEND")
 
-        # Use current if already set
         if env_name is None and _CURRENT_BACKEND is not None:
             return _CURRENT_BACKEND
 
-        # Auto-detect if not specified
         if env_name is None:
             name = select_best_backend(require_supported=True)
             if name is None:
-                name = ensure_default_backend(auto_install=True)
+                name = select_best_backend(
+                    require_supported=False
+                )
+            if name is None:
+                name = "tensorflow"
         else:
             name = env_name
 
     normalized = normalize_backend_name(name)
-    if normalized not in _BACKENDS:
+    backends = _backend_classes()
+    if normalized not in backends:
         raise ValueError(
-            f"Unknown backend: {name}. Available: {list(_BACKENDS.keys())}"
+            f"Unknown backend: {name}. Available: {list(backends.keys())}"
         )
 
-    backend_cls = _BACKENDS[normalized]
+    backend_cls = backends[normalized]
     try:
-        return backend_cls()
+        backend = backend_cls()
     except ImportError as exc:
         available = get_available_backends()
         raise ValueError(
             f"Backend '{normalized}' is not available. "
             f"Available backends: {available}. "
-            f"Try: pip install {normalized}"
+            f"Try installing the required runtime explicitly."
         ) from exc
+
+    if requested_name is None:
+        _CURRENT_BACKEND = backend
+    return backend
 
 
 def get_backend_capabilities(
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> dict[str, Any]:
-    """Return a capability report for the current or requested backend.
+    backends = _backend_classes()
 
-    Parameters
-    ----------
-    name : str, optional
-        Backend name. If None, uses current backend.
-
-    Returns
-    -------
-    dict
-        Capabilities including name, framework, version, support status.
-
-    Examples
-    --------
-    >>> caps = get_backend_capabilities("tensorflow")
-    >>> print(caps["supported"])  # True/False
-    >>> print(caps["version"])  # "2.15.0"
-    """
     if name is None:
         try:
             backend = get_backend()
@@ -319,14 +217,21 @@ def get_backend_capabilities(
             )
             caps.setdefault(
                 "supports_base_attentive",
-                getattr(backend, "supports_base_attentive", False),
+                getattr(
+                    backend, "supports_base_attentive", False
+                ),
             )
             caps.setdefault(
                 "supports_base_attentive_v2",
-                getattr(backend, "supports_base_attentive_v2", False),
+                getattr(
+                    backend,
+                    "supports_base_attentive_v2",
+                    False,
+                ),
             )
             caps.setdefault(
-                "blockers", list(getattr(backend, "blockers", ()))
+                "blockers",
+                list(getattr(backend, "blockers", ())),
             )
             caps.setdefault(
                 "v2_blockers",
@@ -340,21 +245,29 @@ def get_backend_capabilities(
             )
             return caps
         except Exception:
-            name = "tensorflow"
+            name = os.environ.get(
+                "BASE_ATTENTIVE_BACKEND"
+            ) or os.environ.get(
+                "KERAS_BACKEND",
+                "tensorflow",
+            )
 
     normalized = normalize_backend_name(name)
-    if normalized not in _BACKENDS:
+    if normalized not in backends:
         raise ValueError(
-            f"Unknown backend: {name}. Available: {list(_BACKENDS.keys())}"
+            f"Unknown backend: {name}. Available: {list(backends.keys())}"
         )
 
+    backend_cls = backends[normalized]
     try:
-        backend = _BACKENDS[normalized](load_runtime=False)
+        backend = backend_cls(load_runtime=False)
         caps = backend.get_capabilities()
-        caps.setdefault("name", getattr(backend, "name", normalized))
+        caps.setdefault(
+            "name", getattr(backend, "name", normalized)
+        )
         caps.setdefault(
             "framework",
-            getattr(_BACKENDS[normalized], "framework", normalized),
+            getattr(backend_cls, "framework", normalized),
         )
         caps.setdefault(
             "available",
@@ -367,96 +280,78 @@ def get_backend_capabilities(
             getattr(backend, "uses_keras_runtime", False),
         )
         caps.setdefault(
-            "experimental", getattr(backend, "experimental", False)
+            "experimental",
+            getattr(backend, "experimental", False),
         )
         caps.setdefault(
             "supports_base_attentive",
-            getattr(backend, "supports_base_attentive", False),
+            getattr(
+                backend, "supports_base_attentive", False
+            ),
         )
         caps.setdefault(
             "supports_base_attentive_v2",
-            getattr(backend, "supports_base_attentive_v2", False),
+            getattr(
+                backend, "supports_base_attentive_v2", False
+            ),
         )
         caps.setdefault(
             "blockers", list(getattr(backend, "blockers", ()))
         )
         caps.setdefault(
-            "v2_blockers", list(getattr(backend, "v2_blockers", ()))
+            "v2_blockers",
+            list(getattr(backend, "v2_blockers", ())),
         )
         caps["version"] = get_backend_version(normalized)
         return caps
-    except Exception as e:
+    except Exception as exc:
         return {
             "name": normalized,
             "framework": getattr(
-                _BACKENDS[normalized], "framework", normalized
+                backend_cls, "framework", normalized
             ),
             "available": False,
             "uses_keras_runtime": getattr(
-                _BACKENDS[normalized], "uses_keras_runtime", False
+                backend_cls,
+                "uses_keras_runtime",
+                False,
             ),
             "experimental": getattr(
-                _BACKENDS[normalized], "experimental", False
+                backend_cls, "experimental", False
             ),
             "supports_base_attentive": getattr(
-                _BACKENDS[normalized],
+                backend_cls,
                 "supports_base_attentive",
                 False,
             ),
             "supports_base_attentive_v2": getattr(
-                _BACKENDS[normalized],
+                backend_cls,
                 "supports_base_attentive_v2",
                 False,
             ),
             "blockers": list(
-                getattr(_BACKENDS[normalized], "blockers", ())
+                getattr(backend_cls, "blockers", ())
             ),
             "v2_blockers": list(
-                getattr(_BACKENDS[normalized], "v2_blockers", ())
+                getattr(backend_cls, "v2_blockers", ())
             ),
             "version": get_backend_version(normalized),
-            "error": str(e),
+            "error": str(exc),
         }
 
 
-def set_backend(name: str) -> Backend:
-    """Set the default backend.
-
-    Notes
-    -----
-    For Keras 3 multi-backend runtimes, the backend should ideally be set
-    before importing ``keras``. If Keras is already loaded with a different
-    runtime, a restart is recommended.
-
-    Parameters
-    ----------
-    name : str
-        Backend name ('tensorflow', 'jax', 'torch', 'pytorch').
-
-    Returns
-    -------
-    Backend
-        The configured backend instance.
-
-    Examples
-    --------
-    >>> backend = set_backend("tensorflow")
-    >>> backend = set_backend("jax")
-    """
+def set_backend(name: str):
     global _CURRENT_BACKEND
 
     normalized = normalize_backend_name(name)
 
-    # Check version compatibility for TensorFlow
     if normalized == "tensorflow":
         is_compatible, msg = check_tensorflow_compatibility()
         if not is_compatible:
             warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
-    # Warn if Keras already loaded
-    from .base import _read_loaded_keras_backend
-
-    loaded_backend = _read_loaded_keras_backend()
+    base = _module("base_attentive.backend.base")
+    loaded_backend = base._read_loaded_keras_backend()
     if loaded_backend and loaded_backend != normalized:
         warnings.warn(
             "Keras is already loaded with backend "
@@ -472,43 +367,63 @@ def set_backend(name: str) -> Backend:
     return _CURRENT_BACKEND
 
 
-# Initialize on import with intelligent selection
-def _auto_initialize():
-    """Auto-initialize backend on module import."""
-    try:
-        configured_backend = os.environ.get("BASE_ATTENTIVE_BACKEND")
-        if configured_backend:
-            normalized = normalize_backend_name(configured_backend)
-            os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
-            os.environ.setdefault("KERAS_BACKEND", normalized)
-            return
+# lazy attribute surface --------------------------------------------------
+_LAZY_ATTRS = {
+    "Backend": ("base_attentive.backend.base", "Backend"),
+    "TensorFlowBackend": (
+        "base_attentive.backend.implementations",
+        "TensorFlowBackend",
+    ),
+    "JaxBackend": (
+        "base_attentive.backend.implementations",
+        "JaxBackend",
+    ),
+    "TorchBackend": (
+        "base_attentive.backend.implementations",
+        "TorchBackend",
+    ),
+    "PyTorchBackend": (
+        "base_attentive.backend.implementations",
+        "PyTorchBackend",
+    ),
+    "TorchDeviceManager": (
+        "base_attentive.backend.torch_utils",
+        "TorchDeviceManager",
+    ),
+    "get_torch_device": (
+        "base_attentive.backend.torch_utils",
+        "get_torch_device",
+    ),
+    "get_torch_version": (
+        "base_attentive.backend.torch_utils",
+        "get_torch_version",
+    ),
+    "torch_is_available": (
+        "base_attentive.backend.torch_utils",
+        "torch_is_available",
+    ),
+    "_has_module": (
+        "base_attentive.backend.detector",
+        "_has_module",
+    ),
+    "_import_module": (
+        "base_attentive.backend.detector",
+        "_import_module",
+    ),
+}
 
-        keras_backend = os.environ.get("KERAS_BACKEND")
-        if keras_backend:
-            normalized = normalize_backend_name(keras_backend)
-            os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
-            os.environ["KERAS_BACKEND"] = normalized
-            return
 
-        # Try to auto-select best backend
-        best = select_best_backend(require_supported=True)
-        if best:
-            normalized = normalize_backend_name(best)
-            os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
-            os.environ["KERAS_BACKEND"] = normalized
-            return
-
-        # Fall back to any available
-        available = select_best_backend(require_supported=False)
-        if available:
-            normalized = normalize_backend_name(available)
-            os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
-            os.environ["KERAS_BACKEND"] = normalized
-            return
-
-        # Will trigger auto-install on first get_backend() call
-    except Exception:
-        pass
+def __getattr__(name: str):
+    target = _LAZY_ATTRS.get(name)
+    if target is None:
+        raise AttributeError(
+            f"module {__name__!r} has no attribute {name!r}"
+        )
+    module_name, attr_name = target
+    value = getattr(_module(module_name), attr_name)
+    globals()[name] = value
+    return value
 
 
-_auto_initialize()
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__))

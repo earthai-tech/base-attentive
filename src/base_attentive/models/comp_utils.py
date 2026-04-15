@@ -50,12 +50,16 @@ def resolve_attention_levels(
     if isinstance(architecture_config, str):
         normalized = architecture_config.strip().lower()
         if normalized in {"*", "all", "use_all", "auto"}:
-            return list(default_attention["decoder_attention_stack"])
+            return list(
+                default_attention["decoder_attention_stack"]
+            )
 
         resolved = aliases.get(normalized, normalized)
         if (
             resolved
-            not in default_attention["decoder_attention_stack"]
+            not in default_attention[
+                "decoder_attention_stack"
+            ]
         ):
             raise ValueError(
                 f"Unknown attention level: {architecture_config}"
@@ -74,9 +78,13 @@ def resolve_attention_levels(
             )
             if (
                 normalized
-                not in default_attention["decoder_attention_stack"]
+                not in default_attention[
+                    "decoder_attention_stack"
+                ]
             ):
-                raise ValueError(f"Unknown attention level: {level}")
+                raise ValueError(
+                    f"Unknown attention level: {level}"
+                )
             resolved_stack.append(normalized)
         return resolved_stack
 

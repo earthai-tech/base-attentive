@@ -10,7 +10,9 @@ import pytest
 
 def _fake_keras_module(runtime: str = "jax"):
     keras = types.ModuleType("keras")
-    keras.backend = types.SimpleNamespace(backend=lambda: runtime)
+    keras.backend = types.SimpleNamespace(
+        backend=lambda: runtime
+    )
     keras.layers = types.SimpleNamespace(
         Layer=object,
         Dense=object,
@@ -60,7 +62,9 @@ class TestBackendModule:
         fake_keras = _fake_keras_module("jax")
         fake_jax = types.ModuleType("jax")
 
-        monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+        monkeypatch.delenv(
+            "BASE_ATTENTIVE_BACKEND", raising=False
+        )
         monkeypatch.setenv("KERAS_BACKEND", "jax")
         monkeypatch.setattr(
             backend_module,
@@ -123,12 +127,18 @@ class TestBackendModule:
             lambda name: name in {"keras", "jax"},
         )
 
-        capabilities = backend_module.get_backend_capabilities("jax")
+        capabilities = (
+            backend_module.get_backend_capabilities("jax")
+        )
 
         assert capabilities["name"] == "jax"
         assert capabilities["experimental"] is True
-        assert capabilities["supports_base_attentive"] is False
-        assert capabilities["supports_base_attentive_v2"] is True
+        assert (
+            capabilities["supports_base_attentive"] is False
+        )
+        assert (
+            capabilities["supports_base_attentive_v2"] is True
+        )
         assert capabilities["blockers"]
         assert capabilities["v2_blockers"]
 
@@ -156,7 +166,9 @@ class TestBackendModule:
         )
         monkeypatch.setitem(sys.modules, "keras", fake_keras)
 
-        with pytest.warns(RuntimeWarning, match="Restart Python"):
+        with pytest.warns(
+            RuntimeWarning, match="Restart Python"
+        ):
             backend = backend_module.set_backend("jax")
 
         assert backend.name == "jax"

@@ -32,7 +32,9 @@ def _has_module(module_name: str) -> bool:
     if helper is not None:
         return helper(module_name)
     try:
-        return importlib.util.find_spec(module_name) is not None
+        return (
+            importlib.util.find_spec(module_name) is not None
+        )
     except (ImportError, ValueError):
         return False
 
