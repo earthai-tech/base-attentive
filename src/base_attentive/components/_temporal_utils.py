@@ -13,12 +13,12 @@ from __future__ import annotations
 
 from ._config import (
     Tensor,
-    register_keras_serializable,
     concat,
     maximum,
     pad,
     reduce_mean,
     reduce_sum,
+    register_keras_serializable,
     reshape,
     shape,
 )

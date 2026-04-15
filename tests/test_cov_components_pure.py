@@ -31,9 +31,10 @@ _FALLBACKS = {
         else tensors
     ),
     "gather": lambda p, i, axis=None, **kw: p,
-    "reduce_logsumexp": lambda x, axis=None, keepdims=False, **kw: (
-        x
-    ),
+    "reduce_logsumexp": lambda x,
+    axis=None,
+    keepdims=False,
+    **kw: (x),
     "pow": lambda x, y, **kw: x,
     "rank": lambda x, **kw: len(getattr(x, "shape", [])),
     "expand_dims": lambda x, axis=-1, **kw: _np.expand_dims(
@@ -55,9 +56,8 @@ _FALLBACKS = {
     "int32": _np.int32,
     # Keras class stubs — must be real classes so they can be used as base classes.
     # Decorator factory stub — must return a callable that accepts a class.
-    "register_keras_serializable": lambda package="Custom", name=None: (
-        lambda cls: cls
-    ),
+    "register_keras_serializable": lambda package="Custom",
+    name=None: (lambda cls: cls),
 }
 
 
@@ -88,6 +88,7 @@ from base_attentive.config.validate import (
 )
 
 _ba._KerasDeps.__getattr__ = _orig_ga
+_ba.KERAS_DEPS._cache.clear()
 
 
 # ---------------------------------------------------------------------------

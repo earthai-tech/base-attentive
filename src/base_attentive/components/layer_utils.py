@@ -21,20 +21,22 @@ from ._config import (
     Dense,
     Layer,
     Tensor,
-    register_keras_serializable,
     add,
-    do_not_convert,
     bool_dtype,
     cast,
+    do_not_convert,
     expand_dims,
     float32,
     multiply,
-    rank as tensor_rank,
     reduce_mean,
+    register_keras_serializable,
     shape,
     stack,
     tile,
     where,
+)
+from ._config import (
+    rank as tensor_rank,
 )
 
 K = KERAS_DEPS

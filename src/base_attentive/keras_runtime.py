@@ -17,16 +17,24 @@ __all__ = [
 ]
 
 
-for _cached_name in ("KERAS_BACKEND", "KERAS_DEPS", "dependency_message"):
+for _cached_name in (
+    "KERAS_BACKEND",
+    "KERAS_DEPS",
+    "dependency_message",
+):
     globals().pop(_cached_name, None)
 
 
 def _bootstrap_module():
-    return importlib.import_module("base_attentive._bootstrap")
+    return importlib.import_module(
+        "base_attentive._bootstrap"
+    )
 
 
 def _internal_runtime_module():
-    return importlib.import_module("base_attentive._keras_runtime")
+    return importlib.import_module(
+        "base_attentive._keras_runtime"
+    )
 
 
 def __getattr__(name: str) -> Any:

@@ -20,13 +20,23 @@ _tf = tf
 
 
 def _import_tensorflow():
-    """Return an already-loaded TensorFlow module, if any."""
-    global tf, _tf, HAS_TF
+    """Return the active TensorFlow module without importing it.
+
+    The compatibility helpers are governed by the module-level ``HAS_TF`` flag.
+    When callers set ``HAS_TF = False`` we must *not* reach into a real
+    TensorFlow module that may already be present in ``sys.modules``.
+    """
+    global tf, _tf
+    if not HAS_TF:
+        return None
+    if tf is not None:
+        _tf = tf
+        return tf
+
     module = sys.modules.get("tensorflow")
     if module is not None:
         tf = module
         _tf = module
-        HAS_TF = True
         return module
     return None
 
@@ -51,7 +61,9 @@ def suppress_tf_warnings():
     if tensorflow is not None:
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
         tensorflow.get_logger().setLevel("ERROR")
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        warnings.filterwarnings(
+            "ignore", category=DeprecationWarning
+        )
     return None
 
 
@@ -64,7 +76,12 @@ def optional_tf_function(*args, **kwargs):
             return tensorflow.function(*args, **kwargs)(func)
         return func
 
-    if args and callable(args[0]) and len(args) == 1 and not kwargs:
+    if (
+        args
+        and callable(args[0])
+        and len(args) == 1
+        and not kwargs
+    ):
         func = args[0]
         tensorflow = _import_tensorflow()
         if tensorflow is not None:
@@ -74,7 +91,9 @@ def optional_tf_function(*args, **kwargs):
     return _decorate
 
 
-def tf_debugging_assert_equal(x, y, message="", name="assert_equal"):
+def tf_debugging_assert_equal(
+    x, y, message="", name="assert_equal"
+):
     """TensorFlow ``assert_equal`` wrapper."""
     if not HAS_TF and "tensorflow" not in sys.modules:
         return None

@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pytest
 
-
 BACKENDS = ("tensorflow", "jax", "torch")
 
 

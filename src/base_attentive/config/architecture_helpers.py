@@ -10,7 +10,6 @@ from __future__ import annotations
 import warnings
 from typing import Any
 
-from ..models.comp_utils import resolve_attention_levels
 from ..utils.generic_utils import select_mode
 
 __all__ = [

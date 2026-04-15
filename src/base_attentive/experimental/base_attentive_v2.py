@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import fields
 from typing import Any
 
-from .. import KERAS_DEPS, dependency_message
+from .._bootstrap import KERAS_DEPS, dependency_message
 from ..config import (
     BaseAttentiveSpec,
     normalize_base_attentive_spec,
@@ -623,6 +624,15 @@ class BaseAttentiveV2(Model):
             self.spec.forecast_horizon,
             self.spec.output_dim,
         )
+
+    def to_json(self, **kwargs):
+        """Serialize the model config to a JSON string."""
+        payload = {
+            "class_name": self.__class__.__name__,
+            "module": self.__class__.__module__,
+            "config": self.get_config(),
+        }
+        return json.dumps(payload)
 
     def get_config(self):
         base_get_config = getattr(super(), "get_config", None)

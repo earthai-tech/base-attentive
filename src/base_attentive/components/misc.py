@@ -25,18 +25,14 @@ from ._config import (
     Tensor,
     TensorShape,
     activations,
-    register_keras_serializable,
-    do_not_convert,
     cast,
     concat,
-    cos,
+    do_not_convert,
     float32,
     floordiv,
-    newaxis,
     power,
-    range,
+    register_keras_serializable,
     shape,
-    sin,
 )
 
 __all__ = [

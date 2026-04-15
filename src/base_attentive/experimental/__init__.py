@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
-import warnings
+import importlib
 
-__all__: list[str] = []
+__all__ = ["BaseAttentiveV2"]
 
-try:
-    from .base_attentive_v2 import BaseAttentiveV2
-except Exception as exc:
-    warnings.warn(
-        f"Failed to import BaseAttentiveV2 from base_attentive.experimental: {exc}",
-        RuntimeWarning,
-        stacklevel=2,
+
+def __getattr__(name: str):
+    if name != "BaseAttentiveV2":
+        raise AttributeError(
+            f"module {__name__!r} has no attribute {name!r}"
+        )
+    module = importlib.import_module(
+        "base_attentive.experimental.base_attentive_v2"
     )
-else:
-    __all__.append("BaseAttentiveV2")
+    value = getattr(module, name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__))

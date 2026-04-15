@@ -7,13 +7,10 @@ coverage rises even when Keras is unavailable.
 
 from __future__ import annotations
 
-import math
-
 import numpy as np
 import pytest
 
 import base_attentive._keras_fallback as fb
-
 
 # ---------------------------------------------------------------------------
 # DTypeProxy

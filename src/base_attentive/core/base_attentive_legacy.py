@@ -26,10 +26,6 @@ from ..compat.sklearn import (
     StrOptions,
     validate_params,
 )
-from ..logging import get_logger
-from ..models.comp_utils import resolve_attention_levels
-from ..utils.deps_utils import ensure_pkg
-from ..utils.generic_utils import select_mode
 from ..components._config import (
     assert_equal,
     concat,
@@ -39,6 +35,10 @@ from ..components._config import (
     tile,
     zeros,
 )
+from ..logging import get_logger
+from ..models.comp_utils import resolve_attention_levels
+from ..utils.deps_utils import ensure_pkg
+from ..utils.generic_utils import select_mode
 
 if KERAS_BACKEND:
     from ..components import (

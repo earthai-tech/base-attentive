@@ -467,7 +467,9 @@ class _Activations:
             return activation
         name = str(activation).lower()
         if name == "relu":
-            return lambda x: np.maximum(np.asarray(x), 0.0)
+            return lambda x: np.maximum(
+                _to_numpy_array(x), 0.0
+            )
         if name == "sigmoid":
             return lambda x: 1.0 / (
                 1.0 + np.exp(-np.asarray(x))
@@ -477,7 +479,7 @@ class _Activations:
         if name == "elu":
             return lambda x: np.where(
                 np.asarray(x) > 0,
-                np.asarray(x),
+                _to_numpy_array(x),
                 np.exp(np.asarray(x)) - 1.0,
             )
         if name == "selu":
@@ -485,7 +487,7 @@ class _Activations:
             alpha = 1.6732632423543772
             return lambda x: scale * np.where(
                 np.asarray(x) > 0,
-                np.asarray(x),
+                _to_numpy_array(x),
                 alpha * (np.exp(np.asarray(x)) - 1.0),
             )
         if name == "gelu":
@@ -601,16 +603,49 @@ def repeat(value, repeats, axis=None):
 
 
 def add(x, y):
-    return np.asarray(x) + np.asarray(y)
+    return _to_numpy_array(x) + _to_numpy_array(y)
 
 
 def maximum(x, y):
-    return np.maximum(np.asarray(x), np.asarray(y))
+    return np.maximum(_to_numpy_array(x), _to_numpy_array(y))
+
+
+def _to_numpy_array(value):
+    detach = getattr(value, "detach", None)
+    if callable(detach):
+        try:
+            value = detach()
+        except Exception:
+            pass
+    cpu = getattr(value, "cpu", None)
+    if callable(cpu):
+        try:
+            value = cpu()
+        except Exception:
+            pass
+    numpy = getattr(value, "numpy", None)
+    if callable(numpy):
+        try:
+            return np.asarray(numpy())
+        except Exception:
+            pass
+    array = np.asarray(value)
+    if array.shape == () and array.dtype == object:
+        try:
+            item = array.item()
+        except Exception:
+            item = value
+        if item is not value:
+            try:
+                return _to_numpy_array(item)
+            except Exception:
+                pass
+    return array
 
 
 def mean(x, axis=None, keepdims=False):
     return np.mean(
-        np.asarray(x), axis=axis, keepdims=keepdims
+        _to_numpy_array(x), axis=axis, keepdims=keepdims
     )
 
 
@@ -629,23 +664,27 @@ def add_n(values, **kwargs):
 
 
 def square(x):
-    return np.square(np.asarray(x))
+    return np.square(_to_numpy_array(x))
 
 
 def transpose(x, perm=None):
-    return np.transpose(np.asarray(x), axes=perm)
+    return np.transpose(_to_numpy_array(x), axes=perm)
 
 
 def logical_and(x, y):
-    return np.logical_and(np.asarray(x), np.asarray(y))
+    return np.logical_and(
+        _to_numpy_array(x), _to_numpy_array(y)
+    )
 
 
 def logical_not(x):
-    return np.logical_not(np.asarray(x))
+    return np.logical_not(_to_numpy_array(x))
 
 
 def logical_or(x, y):
-    return np.logical_or(np.asarray(x), np.asarray(y))
+    return np.logical_or(
+        _to_numpy_array(x), _to_numpy_array(y)
+    )
 
 
 def get_static_value(value):
@@ -659,19 +698,21 @@ def get_static_value(value):
         ),
     ):
         return value
-    array = np.asarray(value)
+    array = _to_numpy_array(value)
     if array.shape == ():
         return array.item()
     return None
 
 
 def reduce_sum(x, axis=None, keepdims=False):
-    return np.sum(np.asarray(x), axis=axis, keepdims=keepdims)
+    return np.sum(
+        _to_numpy_array(x), axis=axis, keepdims=keepdims
+    )
 
 
 def stack(values, axis=0):
     return np.stack(
-        [np.asarray(v) for v in values], axis=axis
+        [_to_numpy_array(v) for v in values], axis=axis
     )
 
 
@@ -684,12 +725,12 @@ def unstack(value, axis=0):
 
 
 def expand_dims(value, axis=-1, **kwargs):
-    return np.expand_dims(np.asarray(value), axis=axis)
+    return np.expand_dims(_to_numpy_array(value), axis=axis)
 
 
 def tile(value, reps):
     return np.tile(
-        np.asarray(value),
+        _to_numpy_array(value),
         tuple(int(v) for v in np.asarray(reps).tolist()),
     )
 
@@ -710,11 +751,11 @@ def range(start, limit=None, delta=1, dtype=None):
 
 
 def rank(value, **kwargs):
-    return np.ndim(value)
+    return np.ndim(_to_numpy_array(value))
 
 
 def split(value, num_or_size_splits, axis=0):
-    array = np.asarray(value)
+    array = _to_numpy_array(value)
     if isinstance(num_or_size_splits, int):
         return np.array_split(
             array, num_or_size_splits, axis=axis
@@ -724,7 +765,7 @@ def split(value, num_or_size_splits, axis=0):
 
 
 def multiply(x, y):
-    return np.asarray(x) * np.asarray(y)
+    return _to_numpy_array(x) * _to_numpy_array(y)
 
 
 def cond(pred, true_fn, false_fn):
@@ -732,12 +773,12 @@ def cond(pred, true_fn, false_fn):
 
 
 def equal(x, y):
-    return np.equal(np.asarray(x), np.asarray(y))
+    return np.equal(_to_numpy_array(x), _to_numpy_array(y))
 
 
 def pad(x, paddings, mode="constant", constant_values=0):
     return np.pad(
-        np.asarray(x),
+        _to_numpy_array(x),
         paddings,
         mode=mode,
         constant_values=constant_values,
@@ -746,47 +787,47 @@ def pad(x, paddings, mode="constant", constant_values=0):
 
 def ones_like(x, dtype=None):
     return np.ones_like(
-        np.asarray(x),
+        _to_numpy_array(x),
         dtype=_to_numpy_dtype(dtype) if dtype else None,
     )
 
 
 def abs(x):
-    return np.abs(np.asarray(x))
+    return np.abs(_to_numpy_array(x))
 
 
 def pow(x, y, **kwargs):
-    return np.power(np.asarray(x), y)
+    return np.power(_to_numpy_array(x), y)
 
 
 def sin(x):
-    return np.sin(np.asarray(x))
+    return np.sin(_to_numpy_array(x))
 
 
 def cos(x):
-    return np.cos(np.asarray(x))
+    return np.cos(_to_numpy_array(x))
 
 
 def exp(x):
-    return np.exp(np.asarray(x))
+    return np.exp(_to_numpy_array(x))
 
 
 def log(x):
-    return np.log(np.asarray(x))
+    return np.log(_to_numpy_array(x))
 
 
 def sigmoid(x):
-    x = np.asarray(x)
+    x = _to_numpy_array(x)
     return 1.0 / (1.0 + np.exp(-x))
 
 
 def cumsum(x, axis=0):
-    return np.cumsum(np.asarray(x), axis=axis)
+    return np.cumsum(_to_numpy_array(x), axis=axis)
 
 
 def gather(params, indices, axis=0, batch_dims=0, **kwargs):
-    params = np.asarray(params)
-    indices = np.asarray(indices)
+    params = _to_numpy_array(params)
+    indices = _to_numpy_array(indices)
     if batch_dims == 1 and params.ndim >= 2:
         gathered = []
         flat_indices = indices.reshape(indices.shape[0], -1)
@@ -812,18 +853,12 @@ def gather(params, indices, axis=0, batch_dims=0, **kwargs):
 
 
 def softplus(x):
-    x = np.asarray(x)
+    x = _to_numpy_array(x)
     return np.log1p(np.exp(-np.abs(x))) + np.maximum(x, 0)
 
 
 def reduce_logsumexp(x, axis=None, keepdims=False):
-    detach = getattr(x, "detach", None)
-    if callable(detach):
-        x = detach()
-    cpu = getattr(x, "cpu", None)
-    if callable(cpu):
-        x = cpu()
-    array = np.asarray(x)
+    array = _to_numpy_array(x)
     max_x = np.max(array, axis=axis, keepdims=True)
     result = (
         np.log(
@@ -856,16 +891,27 @@ def ones(shape, dtype=float32):
 
 
 def floordiv(x, y):
-    return np.floor_divide(np.asarray(x), y)
+    return np.floor_divide(_to_numpy_array(x), y)
 
 
 def greater(x, y):
-    return np.greater(np.asarray(x), np.asarray(y))
+    return np.greater(_to_numpy_array(x), np.asarray(y))
 
 
-concatenate = concat = lambda values, axis=0: np.concatenate(
-    [np.asarray(v) for v in values], axis=axis
-)
+def concatenate(values, axis=0):
+    arrays = [_to_numpy_array(v) for v in values]
+    if not arrays:
+        raise ValueError(
+            "No values were provided for concatenation."
+        )
+    arrays = [
+        np.atleast_1d(array) if np.ndim(array) == 0 else array
+        for array in arrays
+    ]
+    return np.concatenate(arrays, axis=axis)
+
+
+concat = concatenate
 
 
 layers = SimpleNamespace(

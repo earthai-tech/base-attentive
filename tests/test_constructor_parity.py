@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 
-
 EXPECTED_LEGACY_PARAMS = {
     "static_input_dim",
     "dynamic_input_dim",
@@ -63,4 +62,27 @@ def test_v2_accepts_spec_based_construction(
     assert (
         model.spec.forecast_horizon
         == sample_dims["forecast_horizon"]
+    )
+
+
+EXPECTED_MODERN_PARAMS = {
+    "static_dim",
+    "dynamic_dim",
+    "future_dim",
+    "lookback_window",
+    "attention_stack",
+    "output_mode",
+    "n_quantiles",
+}
+
+
+def test_base_attentive_public_signature_exposes_modern_surface():
+    from base_attentive import BaseAttentive
+
+    params = set(
+        inspect.signature(BaseAttentive.__init__).parameters
+    )
+    missing = EXPECTED_MODERN_PARAMS - params
+    assert not missing, (
+        f"Missing modern parameters: {sorted(missing)}"
     )
