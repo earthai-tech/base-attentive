@@ -16,6 +16,11 @@ import sys
 from types import SimpleNamespace
 from typing import Any
 
+from ._runtime_requirements import (
+    backend_install_command,
+    backend_packages,
+)
+
 import numpy as np
 
 __all__ = [
@@ -67,35 +72,127 @@ _BACKEND_ALIASES = {
 }
 
 
-def _normalize_configured_backend(name: str | None) -> str:
+def _normalize_configured_backend(name: str | None) -> str | None:
     if name is None:
-        return "tensorflow"
+        return None
     normalized = str(name).strip().lower()
     if not normalized:
-        return "tensorflow"
+        return None
+    if normalized == "auto":
+        return "auto"
     if normalized == "keras":
-        configured = os.environ.get(
-            "KERAS_BACKEND", "tensorflow"
-        )
+        configured = os.environ.get("KERAS_BACKEND")
         return _normalize_configured_backend(configured)
     return _BACKEND_ALIASES.get(normalized, normalized)
 
 
-def _resolve_runtime_backend() -> str:
+def _resolve_runtime_backend() -> str | None:
     configured = os.environ.get("BASE_ATTENTIVE_BACKEND")
-    if configured:
-        return _normalize_configured_backend(configured)
+    normalized = _normalize_configured_backend(configured)
+    if normalized is not None:
+        return normalized
 
     configured = os.environ.get("KERAS_BACKEND")
-    if configured:
-        return _normalize_configured_backend(configured)
+    normalized = _normalize_configured_backend(configured)
+    if normalized is not None:
+        return normalized
 
-    return "tensorflow"
+    return None
 
 
-KERAS_BACKEND = _resolve_runtime_backend()
-os.environ.setdefault("BASE_ATTENTIVE_BACKEND", KERAS_BACKEND)
-os.environ.setdefault("KERAS_BACKEND", KERAS_BACKEND)
+def _auto_install_enabled() -> bool:
+    return os.environ.get("BASE_ATTENTIVE_AUTO_INSTALL", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _configured_backend_display() -> str:
+    configured = _resolve_runtime_backend()
+    return configured or "<unset>"
+
+
+def _backend_not_configured_message(module_name: str) -> str:
+    return (
+        f"BaseAttentive backend is not configured for {module_name}. "
+        "Set BASE_ATTENTIVE_BACKEND to one of: tensorflow, torch, jax, or auto. "
+        "Example: BASE_ATTENTIVE_BACKEND=torch. "
+        "If you want deferred installation when a runtime is missing, set "
+        "BASE_ATTENTIVE_AUTO_INSTALL=1."
+    )
+
+
+def _backend_missing_message(module_name: str, backend_name: str) -> str:
+    packages = ", ".join(backend_packages(backend_name)) or backend_name
+    install_cmd = backend_install_command(backend_name)
+    auto_install_note = (
+        " Automatic installation is enabled (BASE_ATTENTIVE_AUTO_INSTALL=1), "
+        "so BaseAttentive will try to install it when runtime resolution is attempted."
+        if _auto_install_enabled()
+        else " Set BASE_ATTENTIVE_AUTO_INSTALL=1 to allow deferred installation when needed."
+    )
+    return (
+        f"BaseAttentive backend '{backend_name}' is configured for {module_name}, "
+        f"but its runtime is not installed ({packages}). Install it with: `{install_cmd}`."
+        f"{auto_install_note}"
+    )
+
+
+KERAS_BACKEND = _resolve_runtime_backend() or ""
+
+
+def _set_runtime_backend(name: str | None) -> str | None:
+    global KERAS_BACKEND
+    normalized = _normalize_configured_backend(name)
+    KERAS_BACKEND = normalized or ""
+    if normalized:
+        os.environ["BASE_ATTENTIVE_BACKEND"] = normalized
+        os.environ["KERAS_BACKEND"] = normalized
+    else:
+        os.environ.pop("BASE_ATTENTIVE_BACKEND", None)
+        os.environ.pop("KERAS_BACKEND", None)
+    return normalized
+
+
+def ensure_runtime_backend(module_name: str) -> str:
+    """Ensure a configured backend is available when runtime resolution is needed."""
+    configured_backend = _resolve_runtime_backend()
+    if configured_backend is None:
+        raise ImportError(_backend_not_configured_message(module_name))
+
+    detector = importlib.import_module("base_attentive.backend.detector")
+    auto_install = _auto_install_enabled()
+
+    if configured_backend == "auto":
+        try:
+            chosen = detector.ensure_default_backend(
+                auto_install=auto_install,
+                install_tensorflow=True,
+            )
+        except RuntimeError as exc:
+            raise ImportError(
+                dependency_message(module_name)
+            ) from exc
+        _set_runtime_backend(chosen)
+        return chosen
+
+    available = detector.get_available_backends()
+    if configured_backend not in available:
+        if auto_install:
+            try:
+                detector.install_backend_runtime(configured_backend)
+            except RuntimeError as exc:
+                raise ImportError(
+                    _backend_missing_message(module_name, configured_backend)
+                ) from exc
+        else:
+            raise ImportError(
+                _backend_missing_message(module_name, configured_backend)
+            )
+    _set_runtime_backend(configured_backend)
+    return configured_backend
 
 
 def get_backend(name: str | None = None):
@@ -518,9 +615,22 @@ class _KerasDeps:
         if value is None:
             value = self._resolve_from_fallback(name)
         if value is None:
+            configured_backend = _resolve_runtime_backend()
+            if configured_backend is None:
+                raise ImportError(
+                    _backend_not_configured_message("base_attentive runtime")
+                )
+            if configured_backend == "auto":
+                raise ImportError(
+                    "BaseAttentive backend is set to 'auto', but no suitable "
+                    "runtime has been resolved yet. Install one of: "
+                    "tensorflow keras, torch keras, or jax jaxlib keras; "
+                    "or set BASE_ATTENTIVE_AUTO_INSTALL=1."
+                )
             raise ImportError(
-                f"Cannot import {name} from Keras runtime "
-                f"{KERAS_BACKEND!r}."
+                _backend_missing_message(
+                    "base_attentive runtime", configured_backend
+                )
             )
 
         self._cache[name] = value
@@ -533,8 +643,14 @@ _ORIGINAL_KERAS_DEPS_GETATTR = _KerasDeps.__getattr__
 
 def dependency_message(module_name: str) -> str:
     """Return a dependency hint for missing runtime packages."""
-    return (
-        f"Keras is required for {module_name}. "
-        f"Install a runtime such as `tensorflow`, "
-        f"`keras jax jaxlib`, or `keras torch`."
-    )
+    configured_backend = _resolve_runtime_backend()
+    if configured_backend is None:
+        return _backend_not_configured_message(module_name)
+    if configured_backend == "auto":
+        return (
+            f"BaseAttentive backend is set to 'auto' for {module_name}. "
+            "A runtime will be chosen on first use from the installed backends. "
+            "If none is installed, install one of: `tensorflow keras`, `torch keras`, "
+            "or `jax jaxlib keras`; or set BASE_ATTENTIVE_AUTO_INSTALL=1."
+        )
+    return _backend_missing_message(module_name, configured_backend)

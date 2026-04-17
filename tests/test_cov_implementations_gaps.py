@@ -995,6 +995,7 @@ def fresh_resolver_registries(monkeypatch):
     return component_registry, model_registry
 
 
+@pytest.mark.usefixtures("configured_runtime_backend")
 class TestExperimentalBaseAttentiveV2:
     def test_instantiation_basic(
         self, fresh_resolver_registries

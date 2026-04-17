@@ -147,19 +147,26 @@ def get_backend(name: str | None = None):
         if env_name is None and _CURRENT_BACKEND is not None:
             return _CURRENT_BACKEND
 
-        if env_name is None:
-            name = select_best_backend(require_supported=True)
-            if name is None:
-                name = select_best_backend(
-                    require_supported=False
-                )
-            if name is None:
-                name = "tensorflow"
-        else:
-            name = env_name
+        if env_name is None or not str(env_name).strip():
+            raise RuntimeError(
+                "BaseAttentive backend is not configured. Set "
+                "BASE_ATTENTIVE_BACKEND to one of: tensorflow, torch, jax, or auto."
+            )
+        name = env_name
 
     normalized = normalize_backend_name(name)
     backends = _backend_classes()
+    detector = _module("base_attentive.backend.detector")
+    auto_install = os.environ.get(
+        "BASE_ATTENTIVE_AUTO_INSTALL", "0"
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    if normalized == "auto":
+        normalized = detector.ensure_default_backend(
+            auto_install=auto_install,
+            install_tensorflow=True,
+        )
+
     if normalized not in backends:
         raise ValueError(
             f"Unknown backend: {name}. Available: {list(backends.keys())}"
@@ -169,12 +176,18 @@ def get_backend(name: str | None = None):
     try:
         backend = backend_cls()
     except ImportError as exc:
-        available = get_available_backends()
-        raise ValueError(
-            f"Backend '{normalized}' is not available. "
-            f"Available backends: {available}. "
-            f"Try installing the required runtime explicitly."
-        ) from exc
+        if auto_install:
+            detector.install_backend_runtime(normalized)
+            backend = backend_cls()
+        else:
+            available = detector.get_available_backends()
+            install_cmd = detector.backend_install_command(normalized)
+            raise ValueError(
+                f"Backend '{normalized}' is not available. "
+                f"Available backends: {available}. "
+                f"Install it with: {install_cmd}. "
+                "Or set BASE_ATTENTIVE_AUTO_INSTALL=1."
+            ) from exc
 
     if requested_name is None:
         _CURRENT_BACKEND = backend
@@ -367,8 +380,26 @@ def set_backend(name: str):
     return _CURRENT_BACKEND
 
 
+def _auto_initialize():
+    env_name = os.environ.get("BASE_ATTENTIVE_BACKEND")
+    if env_name is None:
+        env_name = os.environ.get("KERAS_BACKEND")
+    if env_name is None or not str(env_name).strip():
+        raise RuntimeError(
+            "BaseAttentive backend is not configured. Set BASE_ATTENTIVE_BACKEND first."
+        )
+    if normalize_backend_name(env_name) == "auto":
+        chosen = ensure_default_backend(
+            auto_install=os.environ.get("BASE_ATTENTIVE_AUTO_INSTALL", "0").strip().lower() in {"1", "true", "yes", "on"},
+            install_tensorflow=True,
+        )
+        return set_backend(chosen)
+    return set_backend(env_name)
+
+
 # lazy attribute surface --------------------------------------------------
 _LAZY_ATTRS = {
+    "_BACKENDS": ("base_attentive.backend.detector", "_BACKENDS"),
     "Backend": ("base_attentive.backend.base", "Backend"),
     "TensorFlowBackend": (
         "base_attentive.backend.implementations",

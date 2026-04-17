@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import pytest
+
+pytestmark = pytest.mark.usefixtures("configured_runtime_backend")
+
 
 def test_base_attentive_get_config_roundtrip(
     point_kwargs: dict[str, object],

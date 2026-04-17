@@ -4,6 +4,8 @@ import warnings
 
 import pytest
 
+pytestmark = pytest.mark.usefixtures("configured_runtime_backend")
+
 from base_attentive.compat.versioning import (
     BASE_ATTENTIVE_PARAMETER_RULES,
     DeprecatedParameterWarning,
