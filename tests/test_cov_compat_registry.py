@@ -190,7 +190,7 @@ class TestSuppressTfWarnings:
         original = tf_mod.HAS_TF
         try:
             tf_mod.HAS_TF = False
-            suppress_tf_warnings()  # Should not raise
+            tf_mod.suppress_tf_warnings()  # Should not raise
         finally:
             tf_mod.HAS_TF = original
 
@@ -212,7 +212,7 @@ class TestSuppressTfWarnings:
                 "_import_tensorflow",
                 return_value=mock_tf,
             ):
-                suppress_tf_warnings()
+                tf_mod.suppress_tf_warnings()
             mock_tf.get_logger.assert_called_once()
         finally:
             tf_mod.HAS_TF = original_has_tf
@@ -227,7 +227,7 @@ class TestOptionalTfFunction:
         original = tf_mod.HAS_TF
         try:
             tf_mod.HAS_TF = False
-            dec = optional_tf_function()
+            dec = tf_mod.optional_tf_function()
 
             def my_fn():
                 return 42
@@ -245,7 +245,7 @@ class TestOptionalTfFunction:
         original = tf_mod.HAS_TF
         try:
             tf_mod.HAS_TF = False
-            dec = optional_tf_function()
+            dec = tf_mod.optional_tf_function()
 
             @dec
             def add(a, b):
@@ -264,7 +264,7 @@ class TestTfDebuggingAssertEqual:
         original = tf_mod.HAS_TF
         try:
             tf_mod.HAS_TF = False
-            result = tf_debugging_assert_equal(1, 1)
+            result = tf_mod.tf_debugging_assert_equal(1, 1)
             assert result is None
         finally:
             tf_mod.HAS_TF = original
@@ -297,7 +297,9 @@ class TestTfDebuggingAssertEqual:
                 "_import_tensorflow",
                 return_value=FakeTF(),
             ):
-                tf_debugging_assert_equal(1, 1, message="test")
+                tf_mod.tf_debugging_assert_equal(
+                    1, 1, message="test"
+                )
             assert call_record.get("called") is True
         finally:
             tf_mod.HAS_TF = original_has_tf

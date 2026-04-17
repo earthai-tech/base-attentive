@@ -567,7 +567,7 @@ class TestTorchDeviceManager:
             tu, "_get_torch_module", lambda: None
         )
 
-        mgr = TorchDeviceManager()
+        mgr = tu.TorchDeviceManager()
         assert mgr.get_available_devices() == {
             "cuda": False,
             "cpu": True,
@@ -609,8 +609,13 @@ class TestTorchDeviceManager:
         monkeypatch.setattr(
             tu, "_get_torch_module", lambda: None
         )
+        monkeypatch.setattr(
+            tu,
+            "get_torch_device",
+            lambda prefer="cuda", verbose=False: "cpu",
+        )
 
-        mgr = TorchDeviceManager()
+        mgr = tu.TorchDeviceManager()
         info = mgr.get_device_info()
         assert info["current_device"] == "cpu"
         assert info["available_devices"].get("cpu") is True
@@ -665,11 +670,18 @@ class TestTorchDeviceManager:
         monkeypatch.setattr(
             tu, "_get_torch_module", lambda: fake_torch
         )
+        monkeypatch.setattr(
+            tu,
+            "get_torch_device",
+            lambda prefer="cuda", verbose=False: "cpu",
+        )
 
-        mgr = TorchDeviceManager(prefer="cpu")
+        mgr = tu.TorchDeviceManager(prefer="cpu")
         info = mgr.get_device_info()
 
-        assert info["torch_version"] in {"2.5.0", getattr(fake_torch, "__version__", None)}
+        assert info["torch_version"] == getattr(
+            fake_torch, "__version__", None
+        )
         assert info["cuda_available"] is True
         assert info["cuda_device_count"] == 2
         assert info["cuda_devices"] == ["GPU-0", "cuda:1"]
