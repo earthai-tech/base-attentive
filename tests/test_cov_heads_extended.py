@@ -12,6 +12,8 @@ import os
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.usefixtures("configured_torch_backend")
+
 os.environ.setdefault("KERAS_BACKEND", "torch")
 os.environ.setdefault("BASE_ATTENTIVE_BACKEND", "torch")
 

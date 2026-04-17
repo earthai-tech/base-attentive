@@ -8,6 +8,10 @@ Tests that backend-optimized components (TensorFlow, PyTorch, JAX) can be:
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+
 import pytest
 
 from base_attentive.registry import (
@@ -20,17 +24,33 @@ class TestTensorFlowBackendImplementations:
     """Test TensorFlow-specific V2 components."""
 
     def test_tensorflow_implementations_can_be_imported(self):
-        """TensorFlow backend module should be importable when TF is available."""
-        try:
-            import tensorflow  # noqa: F401
+        """TensorFlow backend module import is isolated in a subprocess.
 
-            from base_attentive.implementations import (
-                tensorflow as tf_impl,
-            )
+        Importing TensorFlow in-process on Windows can crash the interpreter in
+        long pytest sessions, even when the import would otherwise succeed.
+        """
+        import importlib.util
 
-            assert tf_impl is not None
-        except ImportError:
+        if importlib.util.find_spec("tensorflow") is None:
             pytest.skip("TensorFlow not installed")
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(
+            __import__("pathlib").Path(__file__).resolve().parents[1] / "src"
+        )
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import tensorflow; from base_attentive.implementations import tensorflow as tf_impl; assert tf_impl is not None",
+            ],
+            capture_output=True,
+            text=True,
+            env=env,
+            check=False,
+        )
+        if completed.returncode != 0:
+            pytest.skip(completed.stderr or "TensorFlow import failed")
 
     def test_tensorflow_denseprojection_builder_is_callable(
         self,

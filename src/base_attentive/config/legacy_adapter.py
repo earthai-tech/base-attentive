@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, is_dataclass
 from typing import Any, Mapping
 
+from ..compat.sklearn import Interval, StrOptions, validate_params
 from .defaults import (
     DEFAULT_BASE_ATTENTIVE_RUNTIME,
     DEFAULT_LEGACY_ARCHITECTURE,
@@ -20,6 +21,50 @@ _ALLOWED_ATTENTION_LEVELS = {
     "cross",
     "hierarchical",
     "memory",
+}
+_ALLOWED_RUNTIME_MODES = {
+    "tft",
+    "pihal",
+    "tft_like",
+    "pihal_like",
+    "tft-like",
+    "pihal-like",
+    "point",
+    "quantile",
+}
+_LEGACY_BASE_ATTENTIVE_PARAM_RULES = {
+    "static_input_dim": [Interval(int, 0, None, closed="left")],
+    "dynamic_input_dim": [Interval(int, 1, None, closed="left")],
+    "future_input_dim": [Interval(int, 0, None, closed="left")],
+    "output_dim": [Interval(int, 1, None, closed="left")],
+    "forecast_horizon": [Interval(int, 1, None, closed="left")],
+    "mode": [StrOptions(_ALLOWED_RUNTIME_MODES), None],
+    "num_encoder_layers": [Interval(int, 1, None, closed="left")],
+    "quantiles": [list, tuple, None],
+    "embed_dim": [Interval(int, 1, None, closed="left")],
+    "hidden_units": [Interval(int, 1, None, closed="left")],
+    "lstm_units": [int, tuple],
+    "attention_units": [Interval(int, 1, None, closed="left")],
+    "num_heads": [Interval(int, 1, None, closed="left")],
+    "dropout_rate": [Interval(float, 0.0, 1.0, closed="both")],
+    "max_window_size": [Interval(int, 1, None, closed="left")],
+    "memory_size": [Interval(int, 1, None, closed="left")],
+    "scales": [list, tuple, StrOptions({"auto"}), None],
+    "multi_scale_agg": [str],
+    "final_agg": [str],
+    "activation": [str],
+    "use_residuals": [bool],
+    "use_vsn": [bool],
+    "vsn_units": [Interval(int, 1, None, closed="left"), None],
+    "use_batch_norm": [bool],
+    "apply_dtw": [bool],
+    "attention_levels": [str, list, tuple, None],
+    "objective": [str, None],
+    "architecture_config": [BaseAttentiveArchitectureSpec, dict, None],
+    "backend_name": [str, None],
+    "component_overrides": [BaseAttentiveComponentSpec, dict, None],
+    "verbose": [Interval(int, 0, None, closed="left")],
+    "extras": [dict, None],
 }
 
 
@@ -84,6 +129,53 @@ def _normalize_attention_stack(
         if item not in normalized:
             normalized.append(item)
     return tuple(normalized)
+
+
+def _normalize_legacy_mode(
+    value: str | None,
+) -> tuple[str | None, str | None]:
+    """Normalize legacy ``mode`` into runtime and head intent.
+
+    The legacy constructor sometimes used ``mode='point'`` or
+    ``mode='quantile'`` to express output-head intent. In the V2 spec,
+    ``runtime.mode`` is reserved for runtime/decoder style and point vs.
+    quantile is encoded through ``head_type`` plus ``quantiles``.
+    """
+    if value is None:
+        return None, None
+
+    normalized = str(value).strip().lower().replace("-", "_")
+    if normalized in {"point", "quantile"}:
+        return None, normalized
+    if normalized in {"tft", "pihal", "tft_like", "pihal_like"}:
+        return normalized, None
+    raise ValueError(
+        "mode must resolve to one of 'tft', 'pihal', 'tft_like', "
+        f"'pihal_like', 'point', or 'quantile'; got {value!r}."
+    )
+
+
+def _resolve_legacy_head_type(
+    *,
+    mode: str | None,
+    quantiles: list[float] | tuple[float, ...] | None,
+) -> tuple[str | None, str]:
+    runtime_mode, legacy_head_mode = _normalize_legacy_mode(mode)
+    quantiles_tuple = tuple(quantiles or ())
+    inferred_head_type = "quantile" if quantiles_tuple else "point"
+
+    if legacy_head_mode == "point" and quantiles_tuple:
+        raise ValueError(
+            "legacy mode='point' conflicts with quantiles. "
+            "Remove mode or omit quantiles for a point head."
+        )
+    if legacy_head_mode == "quantile" and not quantiles_tuple:
+        raise ValueError(
+            "legacy mode='quantile' requires quantiles. "
+            "Provide quantiles or remove mode."
+        )
+
+    return runtime_mode, legacy_head_mode or inferred_head_type
 
 
 def normalize_legacy_architecture_spec(
@@ -164,6 +256,10 @@ def normalize_legacy_runtime_spec(
     return BaseAttentiveRuntimeSpec(**data)
 
 
+@validate_params(
+    _LEGACY_BASE_ATTENTIVE_PARAM_RULES,
+    prefer_skip_nested_validation=False,
+)
 def legacy_base_attentive_to_spec(
     *,
     static_input_dim: int,
@@ -201,10 +297,22 @@ def legacy_base_attentive_to_spec(
     verbose: int = 0,
     extras: Mapping[str, Any] | None = None,
 ) -> BaseAttentiveSpec:
-    """Adapt the legacy constructor payload into ``BaseAttentiveSpec``."""
+    """Adapt the legacy constructor payload into ``BaseAttentiveSpec``.
+
+    This function is the compatibility boundary between the permissive
+    legacy ``BaseAttentive`` constructor and the strict resolver-driven
+    ``BaseAttentiveSpec`` world. Broad type/range checks happen here,
+    while final structural validation remains the responsibility of the
+    normalized spec validators.
+    """
     from .normalize import (
         normalize_base_attentive_spec,
         normalize_component_spec,
+    )
+
+    runtime_mode, head_type = _resolve_legacy_head_type(
+        mode=mode,
+        quantiles=quantiles,
     )
 
     architecture = normalize_legacy_architecture_spec(
@@ -214,7 +322,7 @@ def legacy_base_attentive_to_spec(
         architecture_config=architecture_config,
     )
     runtime = normalize_legacy_runtime_spec(
-        mode=mode,
+        mode=runtime_mode,
         num_encoder_layers=num_encoder_layers,
         max_window_size=max_window_size,
         memory_size=memory_size,
@@ -231,6 +339,7 @@ def legacy_base_attentive_to_spec(
     extras_payload = dict(extras or {})
     extras_payload.update(
         {
+            "legacy_mode": mode,
             "legacy_objective": objective,
             "legacy_attention_levels": attention_levels,
             "legacy_architecture_config": dict(
@@ -258,7 +367,7 @@ def legacy_base_attentive_to_spec(
         dropout_rate=dropout_rate,
         activation=activation,
         backend_name=backend_name,
-        head_type="quantile" if quantiles else "point",
+        head_type=head_type,
         lstm_units=lstm_units,
         attention_units=attention_units,
         vsn_units=vsn_units,

@@ -112,17 +112,13 @@ class TestValidateParams:
 class TestCompatFallbackPaths:
     """Test the sklearn fallback paths by mocking sklearn imports."""
 
-    def test_interval_raises_when_sklearn_none(self):
+    def test_interval_raises_when_sklearn_none(self, monkeypatch):
         """Interval raises ImportError when sklearn_Interval is None."""
-        import base_attentive.compat as compat_mod
-
-        original = compat_mod.sklearn_Interval
-        try:
-            compat_mod.sklearn_Interval = None
-            with pytest.raises(ImportError):
-                Interval(int, 0, 10, closed="both")
-        finally:
-            compat_mod.sklearn_Interval = original
+        monkeypatch.setitem(
+            Interval.__new__.__globals__, "sklearn_Interval", None
+        )
+        with pytest.raises(ImportError):
+            Interval(int, 0, 10, closed="both")
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +195,7 @@ class TestSuppressTfWarnings:
             tf_mod.HAS_TF = original
 
     def test_when_tf_available(self):
-        """suppress_tf_warnings calls TF logger when HAS_TF is True."""
+        """suppress_tf_warnings calls TF logger when TensorFlow is active."""
         import base_attentive.compat.tf as tf_mod
 
         original_has_tf = tf_mod.HAS_TF
@@ -210,8 +206,13 @@ class TestSuppressTfWarnings:
 
         try:
             tf_mod.HAS_TF = True
-            tf_mod.tf = mock_tf
-            suppress_tf_warnings()
+            tf_mod.tf = None
+            with patch.object(
+                tf_mod,
+                "_import_tensorflow",
+                return_value=mock_tf,
+            ):
+                suppress_tf_warnings()
             mock_tf.get_logger.assert_called_once()
         finally:
             tf_mod.HAS_TF = original_has_tf
@@ -269,7 +270,7 @@ class TestTfDebuggingAssertEqual:
             tf_mod.HAS_TF = original
 
     def test_when_tf_available_calls_tf(self):
-        """tf_debugging_assert_equal calls tf.debugging when HAS_TF=True."""
+        """tf_debugging_assert_equal calls tf.debugging when TensorFlow is active."""
         import base_attentive.compat.tf as tf_mod
 
         original_has_tf = tf_mod.HAS_TF
@@ -283,15 +284,20 @@ class TestTfDebuggingAssertEqual:
                 x, y, message="", name="assert_equal"
             ):
                 call_record["called"] = True
-                call_record["args"] = (x, y)
+                call_record["args"] = (x, y, message, name)
 
         class FakeTF:
             debugging = FakeDebugging()
 
         try:
             tf_mod.HAS_TF = True
-            tf_mod.tf = FakeTF()
-            tf_debugging_assert_equal(1, 1, message="test")
+            tf_mod.tf = None
+            with patch.object(
+                tf_mod,
+                "_import_tensorflow",
+                return_value=FakeTF(),
+            ):
+                tf_debugging_assert_equal(1, 1, message="test")
             assert call_record.get("called") is True
         finally:
             tf_mod.HAS_TF = original_has_tf

@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import pytest
+
+pytestmark = pytest.mark.usefixtures("configured_runtime_backend")
+
 import inspect
 
 EXPECTED_LEGACY_PARAMS = {

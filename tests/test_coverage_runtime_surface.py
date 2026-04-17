@@ -96,10 +96,7 @@ def test_top_level_runtime_helpers_cover_scalar_and_lazy_import_paths(
 ):
     import base_attentive._bootstrap as bootstrap
 
-    assert (
-        bootstrap._normalize_configured_backend(None)
-        == "tensorflow"
-    )
+    assert bootstrap._normalize_configured_backend(None) is None
     assert (
         bootstrap._normalize_configured_backend(" pytorch ")
         == "torch"
@@ -188,9 +185,7 @@ def test_top_level_runtime_backend_resolution_prefers_env_then_detected_backend(
     assert bootstrap._resolve_runtime_backend() == "jax"
 
     monkeypatch.delenv("KERAS_BACKEND", raising=False)
-    assert (
-        bootstrap._resolve_runtime_backend() == "tensorflow"
-    )
+    assert bootstrap._resolve_runtime_backend() is None
 
 
 def test_top_level_keras_deps_resolve_symbols_from_keras_and_tensorflow(
@@ -884,3 +879,40 @@ def test_detector_and_backend_runtime_cover_selection_and_install_paths(
         == "jax"
     )
     assert installs
+
+
+def test_runtime_policy_dependency_message_for_unset_backend(monkeypatch):
+    import base_attentive._bootstrap as bootstrap
+
+    monkeypatch.delenv("BASE_ATTENTIVE_BACKEND", raising=False)
+    monkeypatch.delenv("KERAS_BACKEND", raising=False)
+    monkeypatch.delenv("BASE_ATTENTIVE_AUTO_INSTALL", raising=False)
+
+    message = bootstrap.dependency_message("base_attentive.components")
+    assert "backend is not configured" in message
+    assert "BASE_ATTENTIVE_BACKEND" in message
+    assert "tensorflow, torch, jax, or auto" in message
+
+
+def test_runtime_policy_dependency_message_for_explicit_backend(monkeypatch):
+    import base_attentive._bootstrap as bootstrap
+
+    monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "torch")
+    monkeypatch.delenv("KERAS_BACKEND", raising=False)
+    monkeypatch.delenv("BASE_ATTENTIVE_AUTO_INSTALL", raising=False)
+
+    message = bootstrap.dependency_message("base_attentive.components")
+    assert "backend 'torch'" in message
+    assert "pip install torch keras" in message
+    assert "BASE_ATTENTIVE_AUTO_INSTALL=1" in message
+
+
+def test_runtime_policy_dependency_message_for_auto_backend(monkeypatch):
+    import base_attentive._bootstrap as bootstrap
+
+    monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "auto")
+    monkeypatch.delenv("KERAS_BACKEND", raising=False)
+
+    message = bootstrap.dependency_message("base_attentive.components")
+    assert "backend is set to 'auto'" in message
+    assert "A runtime will be chosen on first use" in message
