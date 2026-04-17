@@ -132,13 +132,19 @@ ignore_missing_imports = true
 disallow_untyped_defs = false
 
 [tool.coverage.run]
+source = ["src/base_attentive"]
 omit = [
     "src/base_attentive/components/*",
-    "src/base_attentive/api/*",
-    "src/base_attentive/compat/tf.py",
-    "src/base_attentive/validation.py",
     "src/base_attentive/core/base_attentive_legacy.py",
+    "*/tests/*",
+    "*/site-packages/*",
 ]
 
 [tool.coverage.report]
-fail_under = 90
+omit = [
+    "src/base_attentive/components/*",
+    "src/base_attentive/core/base_attentive_legacy.py",
+    "*/tests/*",
+    "*/site-packages/*",
+]
+fail_under = 92
