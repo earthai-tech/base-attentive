@@ -350,7 +350,7 @@ reduce_max = _dep("reduce_max", np.max)
 subtract = _dep("subtract", np.subtract)
 
 _logger = get_logger(__name__)
-DEP_MSG = dependency_message("nn.components")
+DEP_MSG = dependency_message(__name__)
 
 __all__ = [
     "activations",

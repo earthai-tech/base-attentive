@@ -128,10 +128,15 @@ class BackendContext:
         )
 
         runtime = None
-        try:
-            runtime = get_backend(normalized_name)
-        except Exception:
-            runtime = None
+        # Avoid importing heavyweight native runtimes during backend-context
+        # discovery. Resolver-driven assembly can operate from capability
+        # reports plus KERAS_DEPS, and this keeps TensorFlow import out of
+        # lightweight config/serialization paths on Windows.
+        if normalize_backend_name(KERAS_BACKEND) == normalized_name:
+            try:
+                runtime = get_backend(normalized_name)
+            except Exception:
+                runtime = None
 
         keras_runtime = _first_available(
             getattr(runtime, "keras", None),

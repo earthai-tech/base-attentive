@@ -6,6 +6,8 @@ import copy
 
 import pytest
 
+pytestmark = pytest.mark.usefixtures("configured_runtime_backend")
+
 from base_attentive.config.legacy_adapter import (
     legacy_base_attentive_to_spec,
 )

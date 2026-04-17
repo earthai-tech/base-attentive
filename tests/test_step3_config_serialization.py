@@ -4,6 +4,8 @@ import json
 
 import pytest
 
+pytestmark = pytest.mark.usefixtures("configured_runtime_backend")
+
 from base_attentive.config import (
     normalize_base_attentive_spec,
     serialize_base_attentive_spec,
@@ -12,6 +14,31 @@ from base_attentive.experimental.base_attentive_v2 import (
     BaseAttentiveV2,
 )
 
+
+
+@pytest.fixture
+def fresh_resolver_registries(monkeypatch):
+    import base_attentive.registry as registry_mod
+    from base_attentive.registry import ComponentRegistry, ModelRegistry
+    from base_attentive.resolver import registrars
+
+    component_registry = ComponentRegistry()
+    model_registry = ModelRegistry()
+    monkeypatch.setattr(
+        registry_mod, "DEFAULT_COMPONENT_REGISTRY", component_registry
+    )
+    monkeypatch.setattr(
+        registry_mod, "DEFAULT_MODEL_REGISTRY", model_registry
+    )
+    monkeypatch.setattr(
+        registrars, "DEFAULT_COMPONENT_REGISTRY", component_registry
+    )
+    monkeypatch.setattr(
+        registrars, "DEFAULT_MODEL_REGISTRY", model_registry
+    )
+    registrars._LOADED_COMPONENT_REGISTRARS.clear()
+    registrars._LOADED_MODEL_REGISTRARS.clear()
+    return component_registry, model_registry
 
 def test_serialize_base_attentive_spec_normalizes_alias_paths(
     sample_dims,
@@ -39,7 +66,10 @@ def test_serialize_base_attentive_spec_normalizes_alias_paths(
     assert payload["quantiles"] == [0.1, 0.5, 0.9]
 
 
-def test_v2_from_config_accepts_nested_spec_only(sample_dims):
+def test_v2_from_config_accepts_nested_spec_only(
+    sample_dims,
+    fresh_resolver_registries,
+):
     model = BaseAttentiveV2(
         **sample_dims,
         quantiles=(0.1, 0.5, 0.9),
@@ -85,6 +115,7 @@ def test_v2_from_config_accepts_nested_spec_only(sample_dims):
 )
 def test_v2_to_json_roundtrip_preserves_resolver_spec(
     sample_dims,
+    fresh_resolver_registries,
 ):
     import keras
 

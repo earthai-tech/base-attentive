@@ -14,6 +14,66 @@ if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
 
+
+
+@pytest.fixture(autouse=True)
+def _reset_runtime_env(monkeypatch):
+    """Isolate runtime/backend env between tests.
+
+    The runtime policy now treats an explicitly configured backend as a hard
+    requirement. Tests that need a backend must set it themselves; all others
+    should start from a clean environment to avoid cross-test leakage from the
+    developer shell or previous tests.
+    """
+    for key in (
+        "BASE_ATTENTIVE_BACKEND",
+        "BASE_ATTENTIVE_AUTO_INSTALL",
+        "BASE_ATTENTIVE_EAGER_RUNTIME",
+        "KERAS_BACKEND",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+
+@pytest.fixture
+def configured_tensorflow_backend(monkeypatch):
+    """Configure the TensorFlow backend explicitly for runtime-backed tests."""
+    monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "tensorflow")
+    monkeypatch.setenv("KERAS_BACKEND", "tensorflow")
+    monkeypatch.setenv("BASE_ATTENTIVE_EAGER_RUNTIME", "1")
+
+
+
+
+@pytest.fixture
+def configured_runtime_backend(monkeypatch):
+    """Configure any available Keras runtime backend for runtime-backed tests."""
+    import importlib.util
+
+    if importlib.util.find_spec("keras") is None:
+        pytest.skip("Keras not installed")
+
+    backend = None
+    for candidate in ("torch", "tensorflow", "jax"):
+        if importlib.util.find_spec(candidate) is not None:
+            if candidate == "jax" and importlib.util.find_spec("jaxlib") is None:
+                continue
+            backend = candidate
+            break
+
+    if backend is None:
+        pytest.skip("No supported backend runtime installed")
+
+    monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", backend)
+    monkeypatch.setenv("KERAS_BACKEND", backend)
+    monkeypatch.setenv("BASE_ATTENTIVE_EAGER_RUNTIME", "1")
+    return backend
+@pytest.fixture
+def configured_torch_backend(monkeypatch):
+    """Configure the Torch backend explicitly for runtime-backed tests."""
+    monkeypatch.setenv("BASE_ATTENTIVE_BACKEND", "torch")
+    monkeypatch.setenv("KERAS_BACKEND", "torch")
+    monkeypatch.setenv("BASE_ATTENTIVE_EAGER_RUNTIME", "1")
+
 @pytest.fixture
 def sample_inputs():
     """Fixture providing sample model inputs."""

@@ -44,6 +44,23 @@ def ensure_pkg(
     def decorator(func: _T) -> _T:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            if name == "keras":
+                try:
+                    from base_attentive._bootstrap import ensure_runtime_backend
+
+                    module_name = getattr(func, "__module__", "base_attentive")
+                    ensure_runtime_backend(module_name)
+                except Exception as exc:
+                    if error == "raise":
+                        raise ImportError(str(exc)) from exc
+                    elif error == "warn":
+                        import warnings
+
+                        warnings.warn(
+                            str(exc), UserWarning, stacklevel=2
+                        )
+                    return func(*args, **kwargs)
+
             available = sys.modules.get(name) is not None
             if not available:
                 try:

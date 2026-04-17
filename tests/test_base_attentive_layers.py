@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+pytestmark = pytest.mark.usefixtures("configured_runtime_backend")
+
 from base_attentive.config.legacy_adapter import (
     normalize_legacy_architecture_spec,
 )

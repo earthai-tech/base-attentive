@@ -46,6 +46,8 @@ dependencies = [
     "keras>=3.0.0",
     "numpy>=1.23.0",
     "scikit-learn>=1.2.0",
+    "scipy>=1.10.0",
+    "pandas>=1.5.0",
 ]
 
 [project.optional-dependencies]
@@ -132,8 +134,10 @@ disallow_untyped_defs = false
 [tool.coverage.run]
 omit = [
     "src/base_attentive/components/*",
+    "src/base_attentive/api/*",
     "src/base_attentive/compat/tf.py",
     "src/base_attentive/validation.py",
+    "src/base_attentive/core/base_attentive_legacy.py",
 ]
 
 [tool.coverage.report]
