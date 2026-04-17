@@ -85,7 +85,7 @@ tf_assert_equal = assert_equal
 
 logger = get_logger(__name__)
 
-DEP_MSG = dependency_message("models")
+DEP_MSG = dependency_message(__name__)
 _param_docs = DocstringComponents.from_nested_components(
     base=DocstringComponents(_halnet_core_params),
 )

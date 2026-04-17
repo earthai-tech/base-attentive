@@ -106,8 +106,7 @@ def test_keras_deps_resolves_symbols_from_standalone_keras(
     assert base_attentive.KERAS_DEPS.newaxis is None
     assert (
         base_attentive.dependency_message("models")
-        == "Keras is required for models. Install a runtime such as "
-        "`tensorflow`, `keras jax jaxlib`, or `keras torch`."
+        == "BaseAttentive backend 'jax' is configured for models, but its runtime is not installed (jax, jaxlib, keras). Install it with: `pip install jax jaxlib keras`. Set BASE_ATTENTIVE_AUTO_INSTALL=1 to allow deferred installation when needed."
     )
 
     base_attentive.KERAS_DEPS.debugging.assert_equal(3, 3)

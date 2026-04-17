@@ -26,7 +26,7 @@ from ..utils.deps_utils import ensure_pkg
 register_keras_serializable = (
     KERAS_DEPS.register_keras_serializable
 )
-DEP_MSG = dependency_message("models")
+DEP_MSG = dependency_message(__name__)
 SERIALIZATION_PACKAGE = __name__
 
 

@@ -13,6 +13,7 @@ import sys
 from typing import Optional, Type
 
 from .base import Backend
+from .._runtime_requirements import backend_install_command, backend_packages
 from .implementations import (
     JaxBackend,
     PyTorchBackend,
@@ -26,6 +27,7 @@ __all__ = [
     "detect_available_backends",
     "select_best_backend",
     "ensure_default_backend",
+    "install_backend_runtime",
 ]
 
 _logger = logging.getLogger(__name__)
@@ -48,6 +50,35 @@ _BACKENDS: dict[str, Type[Backend]] = {
 
 _CANONICAL_BACKENDS = ("tensorflow", "jax", "torch")
 _BACKEND_PREFERENCES = ["tensorflow", "jax", "torch"]
+
+
+def _backend_install_target(backend_name: str) -> list[str]:
+    packages = list(backend_packages(backend_name))
+    if not packages:
+        raise RuntimeError(f"Unknown backend install target: {backend_name!r}.")
+    return packages
+
+
+def install_backend_runtime(backend_name: str) -> None:
+    normalized = normalize_backend_name(backend_name)
+    if normalized not in _CANONICAL_BACKENDS:
+        raise RuntimeError(
+            f"Cannot install unknown backend {backend_name!r}."
+        )
+
+    packages = _backend_install_target(normalized)
+    install_cmd = backend_install_command(normalized)
+    _logger.info("Installing backend runtime via: %s", install_cmd)
+    try:
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", *packages],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(
+            f"Failed to install backend '{normalized}'. Try: {install_cmd}"
+        ) from exc
 
 
 def normalize_backend_name(name: Optional[str]) -> str:
@@ -190,76 +221,30 @@ def ensure_default_backend(
     auto_install: bool = True,
     install_tensorflow: bool = True,
 ) -> str:
-    """Ensure a default backend is available, installing if necessary.
-
-    Parameters
-    ----------
-    auto_install : bool, default=True
-        Whether to automatically install a backend if none available.
-    install_tensorflow : bool, default=True
-        If auto_install=True, prefer TensorFlow as default.
-
-    Returns
-    -------
-    str
-        The selected backend name.
-
-    Raises
-    ------
-    RuntimeError
-        If no backend available and auto_install=False.
-    """
-    # Try to select best available backend
+    """Ensure a default backend is available, installing if necessary."""
     backend = select_best_backend(require_supported=True)
     if backend:
-        _logger.info(f"Using available backend: {backend}")
+        _logger.info("Using available backend: %s", backend)
         return backend
 
-    # Try any available backend
     backend = select_best_backend(require_supported=False)
     if backend:
         _logger.warning(
-            f"No 'supported' backend available. Using experimental backend: {backend}"
+            "No 'supported' backend available. Using experimental backend: %s",
+            backend,
         )
         return backend
 
-    # No backend available
     if not auto_install:
         raise RuntimeError(
-            "No compatible backend installed (tensorflow, jax, or torch). "
-            "Please install one of them or set auto_install=True."
+            "No compatible backend is installed. Configure BASE_ATTENTIVE_BACKEND "
+            "to one of: tensorflow, torch, jax, or auto; then install the runtime "
+            "for that backend."
         )
 
-    # Auto-install default backend
-    install_package = (
-        "tensorflow[and-cuda]"
-        if install_tensorflow
-        else "jax"
-    )
-    _logger.info(
-        f"No backend found. Installing {install_package}..."
-    )
-
-    try:
-        subprocess.check_call(
-            [
-                sys.executable,
-                "-m",
-                "pip",
-                "install",
-                install_package,
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        _logger.info(
-            f"Successfully installed {install_package}"
-        )
-        return "tensorflow" if install_tensorflow else "jax"
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(
-            f"Failed to install {install_package}: {e}"
-        ) from e
+    preferred = "tensorflow" if install_tensorflow else "jax"
+    install_backend_runtime(preferred)
+    return preferred
 
 
 def get_available_backends() -> list[str]:

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+pytestmark = pytest.mark.usefixtures("configured_runtime_backend")
+
 from base_attentive.experimental import BaseAttentiveV2
 from base_attentive.implementations.generic.base_attentive_v2 import (
     _GenericConcatFusion,
@@ -19,6 +21,31 @@ from base_attentive.implementations.torch import (
 )
 from base_attentive.registry import ComponentRegistry
 
+
+
+@pytest.fixture
+def fresh_resolver_registries(monkeypatch):
+    import base_attentive.registry as registry_mod
+    from base_attentive.registry import ComponentRegistry, ModelRegistry
+    from base_attentive.resolver import registrars
+
+    component_registry = ComponentRegistry()
+    model_registry = ModelRegistry()
+    monkeypatch.setattr(
+        registry_mod, "DEFAULT_COMPONENT_REGISTRY", component_registry
+    )
+    monkeypatch.setattr(
+        registry_mod, "DEFAULT_MODEL_REGISTRY", model_registry
+    )
+    monkeypatch.setattr(
+        registrars, "DEFAULT_COMPONENT_REGISTRY", component_registry
+    )
+    monkeypatch.setattr(
+        registrars, "DEFAULT_MODEL_REGISTRY", model_registry
+    )
+    registrars._LOADED_COMPONENT_REGISTRARS.clear()
+    registrars._LOADED_MODEL_REGISTRARS.clear()
+    return component_registry, model_registry
 
 def test_generic_pool_and_fusion_builders_return_serializable_layers():
     mean_pool = _GenericMeanPool(
@@ -78,7 +105,9 @@ def test_jax_registration_covers_extended_resolver_surface():
         )
 
 
-def test_v2_tracks_resolved_components_as_model_attributes():
+def test_v2_tracks_resolved_components_as_model_attributes(
+    fresh_resolver_registries,
+):
     model = BaseAttentiveV2(
         static_input_dim=2,
         dynamic_input_dim=3,
