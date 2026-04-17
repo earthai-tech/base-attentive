@@ -654,7 +654,9 @@ def reduce_mean(x, axis=None, keepdims=False):
 
 
 def add_n(values, **kwargs):
-    arrays = [np.asarray(v) for v in values]
+    arrays = [_to_numpy_array(v) for v in values]
+    if not arrays:
+        return 0
     result = np.zeros_like(
         arrays[0], dtype=np.result_type(*arrays)
     )
