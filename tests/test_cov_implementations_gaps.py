@@ -818,12 +818,8 @@ class _FakeContext:
     """Minimal fake backend context."""
 
     def __init__(self):
-        from types import SimpleNamespace
-
-        import keras
-
-        self.layers = keras.layers
-        self.ops = SimpleNamespace(
+        self.layers = _ba.KERAS_DEPS
+        self.ops = types.SimpleNamespace(
             mean=lambda x, axis=None: x.mean(axis=axis)
             if hasattr(x, "mean")
             else x,
@@ -1118,3 +1114,956 @@ class TestExperimentalBaseAttentiveV2:
         )
         assert model.spec.head_type == "quantile"
         assert model.spec.quantiles == (0.1, 0.5, 0.9)
+
+
+def _generic_spec(
+    *,
+    feature_processing="dense",
+    final_agg="flatten",
+    mode="pihal-like",
+):
+    return types.SimpleNamespace(
+        architecture=types.SimpleNamespace(
+            feature_processing=feature_processing
+        ),
+        runtime=types.SimpleNamespace(
+            multi_scale_agg="concat"
+        ),
+        components=types.SimpleNamespace(
+            final_pool_mean="pool.final_mean",
+            final_pool_flatten="pool.final_flatten",
+            final_pool_last="pool.final_last",
+        ),
+        lstm_units=[8, 4],
+        scales=[1, 2],
+        max_window_size=3,
+        attention_units=8,
+        num_heads=2,
+        memory_size=4,
+        output_dim=2,
+        forecast_horizon=3,
+        quantiles=(0.1, 0.5, 0.9),
+        final_agg=final_agg,
+        mode=mode,
+        attention_levels=("cross", "hierarchical", "memory"),
+        use_residuals=False,
+        hidden_units=8,
+        embed_dim=8,
+        static_input_dim=0,
+        dynamic_input_dim=4,
+        future_input_dim=2,
+        head_type="point",
+    )
+
+
+def test_generic_builder_helpers_cover_more_paths():
+    import base_attentive.implementations.generic.base_attentive_v2 as mod
+
+    spec = _generic_spec()
+    ctx = types.SimpleNamespace(
+        layers=types.SimpleNamespace(),
+        ops=types.SimpleNamespace(),
+    )
+
+    assert mod._resolve_lstm_units(4) == 4
+    assert mod._resolve_lstm_units([7, 5]) == 7
+    with pytest.raises(ValueError, match="cannot be empty"):
+        mod._resolve_lstm_units([])
+
+    with pytest.raises(ValueError, match="require a spec"):
+        mod._build_feature_processor(
+            context=ctx,
+            spec=None,
+            role="dynamic",
+            input_dim=4,
+            output_units=8,
+        )
+
+    dense_proc = mod._build_feature_processor(
+        context=ctx,
+        spec=spec,
+        role="static",
+        input_dim=4,
+        output_units=8,
+        name="dense_proc",
+    )
+    dense_proc._post_grn = (
+        lambda inputs, training=False: np.ones(
+            (2, 8), dtype=np.float32
+        )
+    )
+    assert dense_proc(np.ones((2, 4), dtype=np.float32)).shape == (
+        2,
+        8,
+    )
+
+    none_proc = mod._build_feature_processor(
+        context=ctx,
+        spec=spec,
+        role="dynamic",
+        input_dim=0,
+        output_units=8,
+    )
+    assert none_proc(None) is None
+
+    vsn_spec = _generic_spec(feature_processing="vsn")
+    vsn_proc = mod._build_feature_processor(
+        context=ctx,
+        spec=vsn_spec,
+        role="dynamic",
+        input_dim=4,
+        output_units=8,
+    )
+    assert vsn_proc is not None
+
+    pos = mod._build_positional_encoding(context=ctx, spec=spec)
+    assert pos is not None
+
+    with pytest.raises(
+        ValueError, match="requires a spec or lstm_units"
+    ):
+        mod._build_hybrid_multiscale_encoder(
+            context=ctx,
+            spec=None,
+            lstm_units=None,
+        )
+
+    hybrid = mod._build_hybrid_multiscale_encoder(
+        context=ctx,
+        spec=spec,
+        aggregation="average",
+    )
+    assert hybrid.get_config()["scales"] == [1, 2]
+
+    encoder = mod._build_temporal_self_attention_encoder(
+        context=ctx,
+        spec=spec,
+        units=8,
+        hidden_units=16,
+        num_heads=2,
+        activation="relu",
+        dropout_rate=0.0,
+    )
+    encoder.attention = (
+        lambda query, value, training=False: np.ones_like(query)
+    )
+    encoder.norm1 = lambda value: value
+    encoder.ffn_hidden = lambda value: value
+    encoder.ffn_output = lambda value: value
+    encoder.norm2 = lambda value: value
+    encoded = encoder(
+        np.ones((2, 3, 8), dtype=np.float32)
+    )
+    assert encoded.shape == (2, 3, 8)
+
+    window = mod._build_dynamic_window(
+        context=ctx, spec=spec
+    )
+    assert window.max_window_size == 3
+
+    assert mod._build_cross_attention(
+        context=ctx, spec=spec
+    ) is not None
+    assert mod._build_hierarchical_attention(
+        context=ctx, spec=spec
+    ) is not None
+    assert mod._build_memory_attention(
+        context=ctx, spec=spec
+    ) is not None
+    assert mod._build_multi_resolution_attention_fusion(
+        context=ctx, spec=spec
+    ) is not None
+
+    flat = mod._build_flatten_pool(context=ctx, spec=spec)
+    assert flat(np.ones((2, 3, 4), dtype=np.float32)).shape == (
+        2,
+        12,
+    )
+
+    multi = mod._build_multi_horizon_head(
+        context=ctx,
+        spec=spec,
+    )
+    assert multi(np.ones((2, 6), dtype=np.float32)).shape == (
+        2,
+        3,
+        2,
+    )
+
+    qdist = mod._build_quantile_distribution_head(
+        context=ctx,
+        spec=spec,
+    )
+    assert qdist is not None
+
+    assert (
+        mod._resolve_final_pool_key(
+            _generic_spec(final_agg="average")
+        )
+        == "pool.final_mean"
+    )
+    assert (
+        mod._resolve_final_pool_key(
+            _generic_spec(final_agg="flatten")
+        )
+        == "pool.final_flatten"
+    )
+    assert (
+        mod._resolve_final_pool_key(
+            _generic_spec(final_agg="last")
+        )
+        == "pool.final_last"
+    )
+
+    from base_attentive.registry.component_registry import (
+        ComponentRegistry,
+    )
+    from base_attentive.registry.model_registry import (
+        ModelRegistry,
+    )
+
+    component_registry = ComponentRegistry()
+    model_registry = ModelRegistry()
+    mod.ensure_generic_v2_registered(
+        component_registry=component_registry,
+        model_registry=model_registry,
+    )
+    assert component_registry.has(
+        "feature.static_processor",
+        backend="generic",
+    )
+    assert component_registry.has(
+        "pool.final_flatten",
+        backend="generic",
+    )
+    assert model_registry.has(
+        "base_attentive.v2",
+        backend="generic",
+    )
+
+
+def test_experimental_helper_methods_cover_internal_paths(
+    monkeypatch,
+):
+    from dataclasses import dataclass
+
+    import base_attentive.experimental.base_attentive_v2 as mod
+
+    payload = {
+        "spec": {"output_dim": 2},
+        "architecture": {"kind": "x"},
+        "output_dim": 9,
+    }
+    assert mod._extract_spec_payload(payload) == {
+        "output_dim": 2,
+        "architecture": {"kind": "x"},
+    }
+
+    assert mod._invoke(None, "x") == "x"
+    assert mod._invoke(
+        lambda value, training=False: (value, training),
+        "y",
+        training=True,
+    ) == ("y", True)
+    assert mod._invoke(lambda value: value + 1, 2) == 3
+
+    model = object.__new__(mod.BaseAttentiveV2)
+    model.spec = _generic_spec(mode="tft-like")
+
+    @dataclass
+    class _Assembly:
+        foo: object
+        bar: object
+
+    model._assembly = _Assembly(foo="tracked", bar=None)
+    model._track_assembly_components()
+    assert model.foo == "tracked"
+    assert model._tracked_component_names == ("foo",)
+
+    assert model._normalized_mode() == "tft_like"
+    assert model._tensor_width(np.ones((2, 3, 4))) == 4
+    assert (
+        model._tensor_width(types.SimpleNamespace(shape=None))
+        is None
+    )
+
+    base = np.ones((2, 3, 4), dtype=np.float32)
+    value = np.ones((2, 3, 6), dtype=np.float32)
+    projected = model._align_residual_base(
+        value,
+        base,
+        lambda x, training=False: np.ones(
+            (2, 3, 6), dtype=np.float32
+        ),
+    )
+    assert projected.shape == (2, 3, 6)
+    with pytest.raises(ValueError, match="Residual width mismatch"):
+        model._align_residual_base(value, base, None)
+
+    residual = model._apply_residual(
+        np.ones((2, 3, 4), dtype=np.float32),
+        np.ones((2, 3, 4), dtype=np.float32),
+        lambda values: values[0] + values[1],
+        lambda output: output + 1,
+    )
+    np.testing.assert_allclose(residual, 3.0)
+
+    model._assembly = types.SimpleNamespace(
+        decoder_cross_attention=lambda values, training=False: values[0] + 1,
+        decoder_cross_postprocess=lambda value, training=False: value + 1,
+        decoder_hierarchical_attention=lambda values, training=False: values[0] + 2,
+        decoder_memory_attention=lambda value, training=False: value + 3,
+        decoder_fusion=lambda value, training=False: value + 4,
+        decoder_residual_add=None,
+        decoder_residual_norm=None,
+        final_residual_add=None,
+        final_residual_norm=None,
+        residual_projection=None,
+    )
+    decoder = np.ones((2, 3, 4), dtype=np.float32)
+    encoded = np.ones((2, 5, 4), dtype=np.float32)
+    stacked = model._apply_decoder_stack(decoder, encoded)
+    np.testing.assert_allclose(stacked, 12.0)
+
+    seen = []
+    model.call = lambda inputs, training=False: seen.append(
+        np.asarray(inputs).shape
+    )
+    model.build_from_config({"input_shape": (None, 3, 4)})
+    assert seen == [(1, 3, 4)]
+    model.build_from_config(None)
+
+    model.spec = _generic_spec()
+    assert model.compute_output_shape((None, 3, 4)) == (
+        None,
+        3,
+        2,
+    )
+    model.spec = _generic_spec()
+    model.spec.head_type = "quantile"
+    assert model.compute_output_shape(
+        [(None, 3, 4), (None, 3, 2)]
+    ) == (None, 3, 3, 2)
+
+    class _Capture(mod.BaseAttentiveV2):
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    normalized = types.SimpleNamespace(
+        static_input_dim=1,
+        dynamic_input_dim=2,
+        future_input_dim=3,
+        output_dim=4,
+        forecast_horizon=5,
+        quantiles=(0.1, 0.9),
+        embed_dim=6,
+        hidden_units=7,
+        attention_heads=2,
+        layer_norm_epsilon=1e-5,
+        dropout_rate=0.1,
+        activation="relu",
+        backend_name="torch",
+        head_type="point",
+    )
+    monkeypatch.setattr(
+        mod,
+        "normalize_base_attentive_spec",
+        lambda payload=None, **kwargs: normalized,
+    )
+    monkeypatch.setattr(
+        mod,
+        "serialize_base_attentive_spec",
+        lambda spec: {"serialized": True},
+    )
+    created = _Capture.from_config(
+        {
+            "spec": {"x": 1},
+            "name": "captured",
+            "trainable": True,
+        }
+    )
+    assert created.kwargs["static_input_dim"] == 1
+    assert created.kwargs["spec"] == {"serialized": True}
+
+    passthrough = _Capture.from_config(
+        {
+            "static_input_dim": 1,
+            "dynamic_input_dim": 2,
+            "future_input_dim": 0,
+        }
+    )
+    assert passthrough.kwargs["dynamic_input_dim"] == 2
+
+
+def test_experimental_call_covers_migrated_heads_and_decoder_paths():
+    import base_attentive.experimental.base_attentive_v2 as mod
+
+    model = object.__new__(mod.BaseAttentiveV2)
+    model.spec = _generic_spec(mode="tft-like")
+    model.spec.forecast_horizon = 2
+    model.spec.attention_units = 6
+    model.spec.head_type = "point"
+    model.backend_context = types.SimpleNamespace(
+        shape=lambda value: np.asarray(value).shape,
+        concat=lambda values, axis=-1: np.concatenate(
+            [np.asarray(v) for v in values], axis=axis
+        ),
+        expand_dims=lambda value, axis=-1: np.expand_dims(
+            np.asarray(value), axis=axis
+        ),
+        tile=lambda value, reps: np.tile(np.asarray(value), reps),
+        zeros=lambda shape: np.zeros(shape, dtype=np.float32),
+    )
+    model._assembly = types.SimpleNamespace(
+        static_processor=lambda value, training=False: np.ones(
+            (2, 3), dtype=np.float32
+        ),
+        dynamic_processor=lambda value, training=False: np.asarray(
+            value
+        ),
+        future_processor=lambda value, training=False: np.asarray(
+            value
+        ),
+        encoder_positional_encoding=lambda value, training=False: value + 1,
+        dynamic_encoder=lambda value, training=False: value + 2,
+        dynamic_window=lambda value, training=False: value + 3,
+        future_positional_encoding=lambda value, training=False: value + 4,
+        decoder_input_projection=lambda value, training=False: value + 5,
+        final_pool=lambda value, training=False: value.mean(axis=1),
+        hidden_projection=lambda value: value + 6,
+        dropout=lambda value, training=False: value,
+        multi_horizon_head=lambda value, training=False: np.ones(
+            (2, 2, 2), dtype=np.float32
+        )
+        * 7,
+        quantile_distribution_head=lambda value, training=False: np.ones(
+            (2, 2, 3, 2), dtype=np.float32
+        )
+        * 9,
+        output_head=lambda value: np.ones((2, 12), dtype=np.float32),
+    )
+    model._apply_decoder_stack = (
+        lambda decoder_input, encoder_sequences, training=False: decoder_input
+    )
+
+    static_x = np.ones((2, 1), dtype=np.float32)
+    dynamic_x = np.ones((2, 3, 4), dtype=np.float32)
+    future_x = np.ones((2, 5, 2), dtype=np.float32)
+
+    point = model.call([static_x, dynamic_x, future_x], training=True)
+    assert point.shape == (2, 2, 2)
+
+    model.spec.head_type = "quantile"
+    quantile = model.call(
+        [static_x, dynamic_x, future_x], training=False
+    )
+    assert quantile.shape == (2, 2, 3, 2)
+
+    model._assembly.quantile_distribution_head = None
+    with pytest.raises(RuntimeError, match="Quantile head type"):
+        model.call([static_x, dynamic_x, future_x])
+
+
+def test_experimental_call_covers_zero_decoder_and_output_reshape():
+    import base_attentive.experimental.base_attentive_v2 as mod
+
+    model = object.__new__(mod.BaseAttentiveV2)
+    model.spec = _generic_spec(mode="pihal-like")
+    model.spec.forecast_horizon = 2
+    model.spec.attention_units = 4
+    model.spec.output_dim = 2
+    model.spec.quantiles = (0.1, 0.5, 0.9)
+    model.spec.head_type = "point"
+    model.backend_context = types.SimpleNamespace(
+        shape=lambda value: np.asarray(value).shape,
+        concat=lambda values, axis=-1: np.concatenate(
+            [np.asarray(v) for v in values], axis=axis
+        ),
+        expand_dims=lambda value, axis=-1: np.expand_dims(
+            np.asarray(value), axis=axis
+        ),
+        tile=lambda value, reps: np.tile(np.asarray(value), reps),
+        zeros=lambda shape: np.zeros(shape, dtype=np.float32),
+    )
+    model._assembly = types.SimpleNamespace(
+        static_processor=None,
+        dynamic_processor=lambda value, training=False: np.asarray(
+            value
+        ),
+        future_processor=None,
+        encoder_positional_encoding=None,
+        dynamic_encoder=None,
+        dynamic_window=None,
+        future_positional_encoding=None,
+        decoder_input_projection=None,
+        final_pool=lambda value, training=False: value.mean(axis=1),
+        hidden_projection=lambda value: value,
+        dropout=None,
+        multi_horizon_head=None,
+        quantile_distribution_head=None,
+        output_head=lambda value: np.arange(
+            2 * model.spec.forecast_horizon * model.spec.output_dim,
+            dtype=np.float32,
+        ).reshape(2, -1),
+    )
+    model._apply_decoder_stack = (
+        lambda decoder_input, encoder_sequences, training=False: decoder_input
+    )
+
+    dynamic_x = np.ones((2, 3, 4), dtype=np.float32)
+
+    point = model.call([dynamic_x], training=False)
+    assert point.shape == (2, 2, 2)
+
+    model.spec.head_type = "quantile"
+    model._assembly.output_head = lambda value: np.arange(
+        2
+        * model.spec.forecast_horizon
+        * len(model.spec.quantiles)
+        * model.spec.output_dim,
+        dtype=np.float32,
+    ).reshape(2, -1)
+    quantile = model.call([dynamic_x], training=False)
+    assert quantile.shape == (2, 2, 3, 2)
+
+    with pytest.raises(ValueError, match="dynamic input is required"):
+        model.call([None], training=False)
+
+
+def test_jax_and_torch_wrappers_cover_extra_builder_paths(
+    monkeypatch,
+):
+    import base_attentive.implementations.jax.base_attentive_v2 as jax_mod
+    import base_attentive.implementations.torch.base_attentive_v2 as torch_mod
+
+    monkeypatch.setattr(jax_mod, "_ensure_jax", lambda: None)
+    assert jax_mod._clean_builder_kwargs(
+        {
+            "units": 4,
+            "component_key": "x",
+            "forecast_horizon": 2,
+        }
+    ) == {"units": 4}
+
+    delegated = []
+    monkeypatch.setattr(
+        jax_mod,
+        "_build_generic_feature_processor",
+        lambda **kwargs: delegated.append(("feature", kwargs))
+        or "feature",
+    )
+    monkeypatch.setattr(
+        jax_mod,
+        "_build_generic_positional_encoding",
+        lambda **kwargs: delegated.append(("pos", kwargs))
+        or "pos",
+    )
+    monkeypatch.setattr(
+        jax_mod,
+        "_build_generic_hybrid_multiscale_encoder",
+        lambda **kwargs: delegated.append(("hybrid", kwargs))
+        or "hybrid",
+    )
+    monkeypatch.setattr(
+        jax_mod,
+        "_build_generic_dynamic_window",
+        lambda **kwargs: delegated.append(("window", kwargs))
+        or "window",
+    )
+    monkeypatch.setattr(
+        jax_mod,
+        "_build_generic_flatten_pool",
+        lambda **kwargs: delegated.append(("flat", kwargs))
+        or "flat",
+    )
+
+    assert jax_mod._build_jax_static_processor(role="static") == "feature"
+    assert jax_mod._build_jax_dynamic_processor(role="dynamic") == "feature"
+    assert jax_mod._build_jax_future_processor(role="future") == "feature"
+    assert jax_mod._build_jax_positional_encoding() == "pos"
+    assert jax_mod._build_jax_hybrid_multiscale_encoder() == "hybrid"
+    assert jax_mod._build_jax_dynamic_window() == "window"
+    assert jax_mod._build_jax_flatten_pool() == "flat"
+    assert len(delegated) == 7
+
+    spec = _generic_spec()
+    q = np.ones((2, 3, 4), dtype=np.float32)
+    c = np.ones((2, 5, 4), dtype=np.float32)
+    jax_cross = jax_mod._build_jax_cross_attention(spec=spec)
+    assert jax_cross([q, c]).shape == (2, 3, 8)
+    jax_hier = jax_mod._build_jax_hierarchical_attention(spec=spec)
+    assert jax_hier(q).shape == (2, 3, 8)
+    jax_memory = jax_mod._build_jax_memory_attention(spec=spec)
+    assert jax_memory(q).shape == (2, 3, 8)
+    jax_fusion = jax_mod._build_jax_multi_resolution_attention_fusion(
+        spec=spec
+    )
+    assert jax_fusion(q).shape == (2, 3, 8)
+    jax_multi = jax_mod._build_jax_multi_horizon_head(spec=spec)
+    assert jax_multi(np.ones((2, 8), dtype=np.float32)).shape == (
+        2,
+        3,
+        2,
+    )
+    jax_q = jax_mod._build_jax_quantile_distribution_head(spec=spec)
+    assert jax_q(
+        np.ones((2, 3, 2), dtype=np.float32)
+    ).shape == (2, 3, 3, 2)
+
+    monkeypatch.setattr(torch_mod, "_ensure_torch", lambda: None)
+    delegated.clear()
+    monkeypatch.setattr(
+        torch_mod,
+        "_build_generic_feature_processor",
+        lambda **kwargs: delegated.append(("feature", kwargs))
+        or "feature",
+    )
+    monkeypatch.setattr(
+        torch_mod,
+        "_build_generic_positional_encoding",
+        lambda **kwargs: delegated.append(("pos", kwargs))
+        or "pos",
+    )
+    monkeypatch.setattr(
+        torch_mod,
+        "_build_generic_hybrid_multiscale_encoder",
+        lambda **kwargs: delegated.append(("hybrid", kwargs))
+        or "hybrid",
+    )
+    monkeypatch.setattr(
+        torch_mod,
+        "_build_generic_dynamic_window",
+        lambda **kwargs: delegated.append(("window", kwargs))
+        or "window",
+    )
+    monkeypatch.setattr(
+        torch_mod,
+        "_build_generic_flatten_pool",
+        lambda **kwargs: delegated.append(("flat", kwargs))
+        or "flat",
+    )
+
+    assert torch_mod._build_torch_static_processor(role="static") == "feature"
+    assert torch_mod._build_torch_dynamic_processor(role="dynamic") == "feature"
+    assert torch_mod._build_torch_future_processor(role="future") == "feature"
+    assert torch_mod._build_torch_positional_encoding() == "pos"
+    assert torch_mod._build_torch_hybrid_multiscale_encoder() == "hybrid"
+    assert torch_mod._build_torch_dynamic_window() == "window"
+    assert torch_mod._build_torch_flatten_pool() == "flat"
+
+    tq = torch.randn(2, 3, 4)
+    tc = torch.randn(2, 5, 4)
+    torch_cross = torch_mod._build_torch_cross_attention(spec=spec)
+    assert torch_cross([tq, tc]).shape == (2, 3, 8)
+    torch_hier = torch_mod._build_torch_hierarchical_attention(spec=spec)
+    assert torch_hier(tq).shape == (2, 3, 8)
+    torch_memory = torch_mod._build_torch_memory_attention(spec=spec)
+    assert torch_memory(tq).shape == (2, 3, 8)
+    torch_fusion = torch_mod._build_torch_multi_resolution_attention_fusion(
+        spec=spec
+    )
+    assert torch_fusion(tq).shape == (2, 3, 8)
+    torch_multi = torch_mod._build_torch_multi_horizon_head(spec=spec)
+    assert torch_multi(torch.randn(2, 8)).shape == (2, 3, 2)
+    torch_q = torch_mod._build_torch_quantile_distribution_head(
+        spec=spec
+    )
+    assert torch_q(tq).shape == (2, 3, 3, 2)
+
+
+def test_generic_runtime_layer_classes_cover_configs_and_edges():
+    import base_attentive.implementations.generic.base_attentive_v2 as mod
+
+    x = np.ones((2, 3, 4), dtype=np.float32)
+
+    dense_proc = mod._GenericFeatureProcessor(
+        role="static",
+        input_dim=4,
+        output_units=6,
+        vsn_units=None,
+        feature_processing="dense",
+        activation="relu",
+        dropout_rate=0.1,
+        use_batch_norm=False,
+        name="dense_proc",
+    )
+    dense_proc._post_grn = (
+        lambda inputs, training=False: np.ones(
+            (2, 6), dtype=np.float32
+        )
+    )
+    assert dense_proc(x[:, 0, :]).shape == (2, 6)
+    dense_cfg = dense_proc.get_config()
+    assert dense_cfg["role"] == "static"
+    assert dense_cfg["output_units"] == 6
+
+    vsn_proc = mod._GenericFeatureProcessor(
+        role="dynamic",
+        input_dim=4,
+        output_units=5,
+        vsn_units=7,
+        feature_processing="vsn",
+        name="vsn_proc",
+    )
+    vsn_proc._vsn = (
+        lambda inputs, training=False: np.ones(
+            (2, 3, 7), dtype=np.float32
+        )
+    )
+    vsn_proc._post_grn = (
+        lambda inputs, training=False: np.ones(
+            (2, 3, 5), dtype=np.float32
+        )
+    )
+    assert vsn_proc(x).shape == (2, 3, 5)
+    vsn_cfg = vsn_proc.get_config()
+    assert vsn_cfg["feature_processing"] == "vsn"
+    assert vsn_cfg["vsn_units"] == 7
+
+    null_proc = mod._GenericFeatureProcessor(
+        role="future",
+        input_dim=0,
+        output_units=5,
+        vsn_units=None,
+        feature_processing="dense",
+    )
+    assert null_proc(None) is None
+
+    mean_pool = mod._GenericMeanPool(axis=1, keepdims=True)
+    assert mean_pool(x).shape == (2, 1, 4)
+    assert mean_pool.get_config()["keepdims"] is True
+
+    last_pool = mod._GenericLastPool(axis=1)
+    assert last_pool(x).shape == (2, 4)
+    assert last_pool.get_config()["axis"] == 1
+    with pytest.raises(ValueError, match="axis=1 only"):
+        mod._GenericLastPool(axis=0)
+
+    flatten_pool = mod._GenericFlattenPool(axis=1)
+    assert flatten_pool(x).shape == (2, 12)
+    assert flatten_pool.get_config()["axis"] == 1
+    with pytest.raises(ValueError, match="axis=1 only"):
+        mod._GenericFlattenPool(axis=0)
+
+    concat = mod._GenericConcatFusion(axis=-1)
+    assert concat([x, None, x]).shape == (2, 3, 8)
+    assert concat([x]).shape == x.shape
+    assert concat.get_config()["axis"] == -1
+    with pytest.raises(
+        ValueError, match="no active feature tensors"
+    ):
+        concat([None, None])
+
+    temporal = mod._TemporalSelfAttentionEncoder(
+        units=4,
+        hidden_units=8,
+        num_heads=2,
+        activation="relu",
+        dropout_rate=0.1,
+        layer_norm_epsilon=1e-5,
+        name="temporal",
+    )
+    temporal.attention = (
+        lambda query, value, training=False: np.ones_like(query)
+    )
+    temporal.norm1 = lambda value: value
+    temporal.ffn_hidden = lambda value: value
+    temporal.ffn_output = lambda value: value
+    temporal.dropout = lambda value, training=False: value
+    temporal.norm2 = lambda value: value
+    assert temporal(x, training=True).shape == x.shape
+    temporal_cfg = temporal.get_config()
+    assert temporal_cfg["hidden_units"] == 8
+    assert temporal_cfg["dropout_rate"] == 0.1
+
+    hybrid = mod._HybridMultiScaleEncoder(
+        lstm_units=4,
+        scales=[1, 2],
+        sequence_mode="average",
+        name="hybrid",
+    )
+    hybrid_out = hybrid(np.ones((2, 5, 4), dtype=np.float32))
+    assert hybrid_out.shape[0] == 2
+    hybrid_cfg = hybrid.get_config()
+    assert hybrid_cfg["lstm_units"] == 4
+    assert hybrid_cfg["scales"] == [1, 2]
+
+
+def test_jax_runtime_layer_classes_cover_configs(monkeypatch):
+    import base_attentive.implementations.jax.base_attentive_v2 as mod
+
+    monkeypatch.setattr(mod, "_ensure_jax", lambda: None)
+
+    x = np.ones((2, 3, 8), dtype=np.float32)
+    context = np.ones((2, 5, 8), dtype=np.float32)
+
+    encoder = mod._JaxTemporalSelfAttentionEncoder(
+        units=8,
+        hidden_units=12,
+        num_heads=2,
+        activation="relu",
+        dropout_rate=0.1,
+        layer_norm_epsilon=1e-5,
+        name="jax_enc",
+    )
+    assert encoder(x, training=True).shape == x.shape
+    enc_cfg = encoder.get_config()
+    assert enc_cfg["units"] == 8
+    assert enc_cfg["dropout_rate"] == 0.1
+
+    mean_pool = mod._MeanPool(axis=1, keepdims=True)
+    assert mean_pool(x).shape == (2, 1, 8)
+    assert mean_pool.get_config()["keepdims"] is True
+
+    last_pool = mod._LastPool(axis=1)
+    assert last_pool(x).shape == (2, 8)
+    with pytest.raises(ValueError, match="axis=1 only"):
+        mod._LastPool(axis=0)
+
+    concat = mod._ConcatFusion(axis=-1)
+    assert concat([x, None, x]).shape == (2, 3, 16)
+    assert concat([x]).shape == x.shape
+    assert concat.get_config()["axis"] == -1
+
+    assert mod._SelfAttentionBlockMixin._key_dim(8, 3) == 2
+
+    cross = mod._JaxCrossAttention(
+        units=8, num_heads=2, dropout_rate=0.1
+    )
+    assert cross([x, context]).shape == x.shape
+    assert cross.get_config()["num_heads"] == 2
+
+    hierarchical = mod._JaxHierarchicalAttention(
+        units=8, num_heads=2, dropout_rate=0.1
+    )
+    assert hierarchical([x, context[:, :3, :]]).shape == x.shape
+    assert hierarchical(x).shape == x.shape
+    assert hierarchical.get_config()["dropout_rate"] == 0.1
+
+    memory = mod._JaxMemoryAttention(
+        units=8, memory_size=4, num_heads=2, dropout_rate=0.1
+    )
+    assert memory(x).shape == x.shape
+    memory_cfg = memory.get_config()
+    assert memory_cfg["memory_size"] == 4
+    assert memory_cfg["units"] == 8
+
+    fusion = mod._JaxMultiResolutionAttentionFusion(
+        units=8, num_heads=2, dropout_rate=0.1
+    )
+    assert fusion(x).shape == x.shape
+    assert fusion.get_config()["num_heads"] == 2
+
+    multi_head = mod._JaxMultiHorizonHead(
+        output_dim=2,
+        forecast_horizon=4,
+        activation="relu",
+    )
+    assert multi_head(np.ones((2, 8), dtype=np.float32)).shape == (
+        2,
+        4,
+        2,
+    )
+    assert multi_head.get_config()["forecast_horizon"] == 4
+
+    quantile_head = mod._JaxQuantileDistributionHead(
+        quantiles=(0.1, 0.5, 0.9),
+        output_dim=8,
+        forecast_horizon=4,
+    )
+    assert quantile_head(x).shape == (2, 3, 3, 8)
+    quantile_cfg = quantile_head.get_config()
+    assert quantile_cfg["quantiles"] == [0.1, 0.5, 0.9]
+    assert quantile_cfg["forecast_horizon"] == 4
+
+
+def test_torch_runtime_layer_classes_cover_configs(monkeypatch):
+    import base_attentive.implementations.torch.base_attentive_v2 as mod
+
+    monkeypatch.setattr(mod, "_ensure_torch", lambda: None)
+
+    x = np.ones((2, 3, 8), dtype=np.float32)
+    context = np.ones((2, 5, 8), dtype=np.float32)
+
+    encoder = mod._TorchTemporalSelfAttentionEncoder(
+        units=8,
+        hidden_units=12,
+        num_heads=2,
+        activation="relu",
+        dropout_rate=0.1,
+        layer_norm_epsilon=1e-5,
+        name="torch_enc",
+    )
+    assert encoder(x, training=True).shape == x.shape
+    assert encoder.forward(x, training=False).shape == x.shape
+    enc_cfg = encoder.get_config()
+    assert enc_cfg["hidden_units"] == 12
+    assert enc_cfg["layer_norm_epsilon"] == 1e-5
+
+    mean_pool = mod._MeanPool(axis=1, keepdims=True)
+    assert mean_pool(x).shape == (2, 1, 8)
+    assert mean_pool.get_config()["axis"] == 1
+
+    last_pool = mod._LastPool(axis=1)
+    assert last_pool(x).shape == (2, 8)
+    with pytest.raises(ValueError, match="axis=1 only"):
+        mod._LastPool(axis=0)
+
+    concat = mod._ConcatFusion(axis=-1)
+    assert concat([x, None, x]).shape == (2, 3, 16)
+    assert concat([x]).shape == x.shape
+    assert concat.get_config()["axis"] == -1
+
+    assert mod._SelfAttentionBlockMixin._key_dim(8, 3) == 2
+
+    cross = mod._TorchCrossAttention(
+        units=8, num_heads=2, dropout_rate=0.1
+    )
+    assert cross([x, context], training=True).shape == x.shape
+    assert cross.get_config()["dropout_rate"] == 0.1
+
+    hierarchical = mod._TorchHierarchicalAttention(
+        units=8, num_heads=2, dropout_rate=0.1
+    )
+    assert hierarchical([x, context[:, :3, :]], training=True).shape == (
+        2,
+        3,
+        8,
+    )
+    assert hierarchical(x).shape == x.shape
+    assert hierarchical.get_config()["num_heads"] == 2
+
+    memory = mod._TorchMemoryAttention(
+        units=8, memory_size=4, num_heads=2, dropout_rate=0.1
+    )
+    assert memory(x, training=True).shape == x.shape
+    memory_cfg = memory.get_config()
+    assert memory_cfg["memory_size"] == 4
+    assert memory_cfg["dropout_rate"] == 0.1
+
+    fusion = mod._TorchMultiResolutionAttentionFusion(
+        units=8, num_heads=2, dropout_rate=0.1
+    )
+    assert fusion(x, training=True).shape == x.shape
+    assert fusion.get_config()["units"] == 8
+
+    multi_head = mod._TorchMultiHorizonHead(
+        output_dim=2,
+        forecast_horizon=4,
+        activation="relu",
+    )
+    assert multi_head(np.ones((2, 8), dtype=np.float32)).shape == (
+        2,
+        4,
+        2,
+    )
+    assert multi_head.get_config()["output_dim"] == 2
+
+    quantile_head = mod._TorchQuantileDistributionHead(
+        quantiles=(0.1, 0.5, 0.9),
+        output_dim=2,
+    )
+    assert quantile_head(x).shape == (2, 3, 3, 2)
+    quantile_cfg = quantile_head.get_config()
+    assert quantile_cfg["quantiles"] == [0.1, 0.5, 0.9]
+    assert quantile_cfg["output_dim"] == 2
