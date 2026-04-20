@@ -136,6 +136,11 @@ class TestTorchTemporalSelfAttentionEncoder:
         encoder = _TorchTemporalSelfAttentionEncoder(
             units=32, hidden_units=64, num_heads=4
         )
+        if not hasattr(encoder, "parameters"):
+            pytest.skip(
+                "torch Keras backend not active; "
+                "layer lacks torch.nn.Module.parameters()"
+            )
         x = torch.randn(2, 5, 32)
         out = encoder.forward(x, training=False)
         assert out.shape == (2, 5, 32)
@@ -144,6 +149,11 @@ class TestTorchTemporalSelfAttentionEncoder:
         encoder = _TorchTemporalSelfAttentionEncoder(
             units=32, hidden_units=64, num_heads=4
         )
+        if not hasattr(encoder, "parameters"):
+            pytest.skip(
+                "torch Keras backend not active; "
+                "layer lacks torch.nn.Module.parameters()"
+            )
         x = torch.randn(2, 5, 32)
         out = encoder.forward(x, training=True)
         assert out.shape == (2, 5, 32)
@@ -156,6 +166,11 @@ class TestTorchTemporalSelfAttentionEncoder:
             dropout_rate=0.1,
         )
         assert encoder.dropout is not None
+        if not hasattr(encoder, "parameters"):
+            pytest.skip(
+                "torch Keras backend not active; "
+                "layer lacks torch.nn.Module.parameters()"
+            )
         x = torch.randn(2, 5, 32)
         out = encoder.forward(x, training=False)
         assert out.shape == (2, 5, 32)
