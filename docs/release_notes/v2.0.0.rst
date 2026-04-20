@@ -5,74 +5,99 @@
 
 *Released: April 2026*
 
-Upgrading from v2.0.0rc1
--------------------------
+Upgrading from v1.0.0
+---------------------
 
-No user-facing API changes.  This stable release closes out the v2 release
-candidate cycle.  All CI matrices (Linux, macOS, Windows × Python 3.10/3.11/3.12)
-are green at 94 % test coverage.
+No user-facing API changes relative to v1.0.0.  The v2.0 line hardens the
+internal test infrastructure, continuous-integration pipeline, and multi-backend
+support.  All constructor signatures, parameter names, and return shapes are
+identical to v1.0.0.
 
 Bug Fixes
 ---------
 
+- |Bugfix| Resolved ``TypeError: metaclass conflict`` that prevented importing
+  the four Keras ``Loss`` sub-classes (``MeanSquaredErrorLoss``, ``QuantileLoss``,
+  ``HuberLoss``, ``WeightedLoss``) when the ``NNLearner`` mixin was present in the
+  inheritance chain.  Fixed by removing ``NNLearner`` from all four loss classes.
+
+- |Bugfix| Resolved ``ModuleNotFoundError: No module named 'torch'`` that caused
+  pytest collection to abort on environments where PyTorch is not installed.  The
+  bare ``import torch`` at module level in ``test_cov_implementations_gaps.py`` was
+  replaced with ``pytest.importorskip("torch", ...)`` so the file is gracefully
+  skipped.
+
+- |Bugfix| Resolved ``TypeError: function() argument 'code' must be code, not str``
+  during test collection on TensorFlow-only environments.  Root cause: the Keras-patch
+  helper used ``lambda *a, **kw: None`` as the default fallback for unknown
+  ``KERAS_DEPS`` attributes.  Fixed by introducing ``_KerasStub`` — a genuine Python
+  class — as the default fallback, and explicitly mapping ``"Loss"``, ``"Layer"``,
+  ``"Model"``, and ``"register_keras_serializable"`` in ``_FALLBACKS``.
+
 - |Bugfix| Fixed ``TypeError: can't convert mps:0 device type tensor to numpy``
-  in ``CRPSLoss._crps_mixture_mc`` on Apple Silicon (MPS).  The entire mixture
-  MC computation now moves inputs to CPU at entry when an MPS device is
-  detected, because ``keras.ops.mean/sum/abs`` internally call NumPy in the
-  CI-runner version of Keras, which fails for MPS tensors.
+  in ``CRPSLoss._crps_mixture_mc`` on Apple Silicon (MPS).  The mixture MC
+  computation now moves inputs to CPU at entry when an MPS device is detected.
 
-- |Bugfix| Fixed ``ValueError: operands could not be broadcast together with
-  shapes (2,3,2,1) (2,3,1)`` in ``CRPSLoss._crps_mixture_mc`` on Linux CI.
-  Weight normalisation now uses ``tf_expand_dims(tf_reduce_sum(w, axis=2),
-  axis=2)`` instead of ``tf_reduce_sum(w, axis=2, keepdims=True)`` for
-  non-torch backends, making the shape reconstruction explicit and independent
-  of ``keepdims`` behaviour in the installed Keras version.
+- |Bugfix| Fixed ``ValueError: operands could not be broadcast together`` in
+  ``CRPSLoss._crps_mixture_mc`` on Linux CI.  Weight normalisation now uses
+  explicit ``expand_dims`` for non-torch backends.
 
-- |Bugfix| Fixed ``TypeError`` in ``SqueezeExcite1D.call`` and
-  ``drop_path`` when the output of ``keras.ops`` landed on a different device
-  than the input tensor (MPS vs. CPU mismatch); added ``.to(x.device)``
-  guards matching the pattern already used in ``layer_utils.py``.
+- |Bugfix| Fixed ``TypeError`` in ``SqueezeExcite1D.call`` and ``drop_path``
+  from MPS vs CPU device mismatches; added ``.to(x.device)`` guards.
 
-- |Bugfix| Fixed ``TypeError`` from ``np.asarray(mps_tensor)`` calls in
-  ``test_cov_components_keras.py``; replaced with the ``_to_numpy`` helper
-  (which first calls ``.cpu()`` on torch tensors) in all five affected
-  assertion sites.
+- |Bugfix| Fixed ``np.asarray(mps_tensor)`` calls in test helpers; replaced with
+  the ``_to_numpy`` helper (which calls ``.cpu()`` first on torch tensors).
 
-- |Bugfix| Fixed monkey-patch lambda ``np.asarray(x).shape`` in the
-  ``test_query_mask_builds_attention_mask`` test — replaced with
-  ``_to_numpy(x).shape`` to survive MPS tensors.
+- |Bugfix| Fixed ``_get_static_value`` in ``base_attentive/__init__.py``: added a
+  ``result is not value`` guard so the function correctly returns ``None`` for
+  non-tensor Python objects.
 
-- |Bugfix| Fixed ``_get_static_value`` in ``base_attentive/__init__.py``:
-  TensorFlow's ``get_static_value`` returns the input object unchanged for
-  non-tensor Python objects; added a ``result is not value`` guard so the
-  function correctly returns ``None`` in that case.
-
-- |Bugfix| Fixed ``_tf_build_positional_encoding`` in
-  ``components/misc.py`` to build the angle matrix entirely in NumPy and only
-  materialise a backend tensor at the end via ``tf_cast``, avoiding MPS
-  in-place slice-assignment failures (``mps_tensor[:, 0::2] = …``).
+- |Bugfix| Fixed ``_tf_build_positional_encoding`` to build the angle matrix
+  entirely in NumPy, avoiding MPS in-place slice-assignment failures.
 
 - |Bugfix| Fixed ``broadcast_like`` in ``layer_utils.py``: added a
-  ``_scalar_to_int`` helper that calls ``.cpu().item()`` on each rep scalar
-  before ``tf_tile``, preventing ``keras.src.backend.torch.numpy.tile`` from
-  calling ``repeats.int().numpy()`` on an MPS tensor.
+  ``_scalar_to_int`` helper to move rep scalars to CPU before ``tf_tile``.
 
 Infrastructure / CI
 --------------------
 
-- |Internal| Test suite now passes the full Linux × macOS × Windows CI matrix
-  at 94 % coverage (up from ~88 % at rc0).
+- |Internal| Fixed PyPI publishing workflow — ``pypa/gh-action-pypi-publish``
+  now uses API token authentication exclusively; removed ``id-token: write``
+  permission that caused failed OIDC Trusted Publishing attempts, and added
+  ``attestations: false`` to skip the OIDC code path entirely.
 
-- |Internal| ``test_cov_losses_extended.py`` — ``test_mixture_mode_dict``
-  mock refactored across three rounds to minimise monkey-patching: only
-  ``tf_gather`` is mocked (``batch_dims=1`` cross-backend compat); real Keras
-  ops are used for all other computations.
+- |Internal| Fixed CI hang on Linux and macOS runners: added
+  ``CUDA_VISIBLE_DEVICES: ''``, ``TF_CPP_MIN_LOG_LEVEL: '3'``, and
+  ``TF_ENABLE_ONEDNN_OPTS: '0'``; set ``log_cli = false`` and
+  ``log_file_level = WARNING`` in ``pytest.ini``; added ``pytest-timeout>=2.3.0``
+  with ``--timeout=120`` and ``timeout-minutes: 30`` at the job level.
+
+- |Internal| Fixed ``tomllib`` import error in the publish workflow version-detection
+  step — replaced with a ``re.search`` on raw ``pyproject.toml`` text (Python 3.10
+  compatible).
+
+- |Internal| Fixed secret name mismatch: workflow now references the correct
+  ``TEST_PYPI_API_TOKENS`` secret name.
+
+- |Internal| Test suite passes the full Linux × macOS × Windows CI matrix at
+  94 % coverage across Python 3.10, 3.11, and 3.12.
 
 Documentation
 -------------
 
-- |Internal| Version badge in ``docs/index.rst`` updated to ``2.0.0``.
-- |Internal| Citation in ``README.md`` updated to ``version = {2.0.0}``.
-- |Internal| ``pyproject.toml`` classifier promoted from
-  ``Development Status :: 4 - Beta`` to
+- |Internal| Split monolithic ``release_notes.rst`` into ``docs/release_notes/``
+  directory; each version now has its own file.
+- |Internal| Added PyPI version, Semantic Versioning, GitHub last commit, Open
+  Issues, and PRs Welcome badges to ``docs/index.rst``.
+- |Internal| README logo updated to raw GitHub URL so it renders on PyPI; Quick
+  Start updated to v2 API.
+- |Internal| Citation updated: year 2025 → 2026, title reflects multi-backend
+  design; ``pyproject.toml`` classifier promoted to
   ``Development Status :: 5 - Production/Stable``.
+
+Removed from Repository
+------------------------
+
+- |Internal| ``V2_BACKENDS_IMPLEMENTATION.md``, ``V2_IMPLEMENTATION_PLAN.md``,
+  and ``.claude/`` directory removed from the remote; patterns added to
+  ``.gitignore``.

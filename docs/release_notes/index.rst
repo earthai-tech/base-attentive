@@ -12,8 +12,6 @@ page so you can jump directly to the changes that matter to you.
    v2.1.0
    v2.0.1
    v2.0.0
-   v2.0.0rc1
-   v2.0.0rc0
    v1.0.0
    v0.5.0
    v0.4.2
