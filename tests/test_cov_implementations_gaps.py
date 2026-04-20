@@ -1247,7 +1247,7 @@ def test_generic_builder_helpers_cover_more_paths():
     object.__setattr__(
         encoder,
         "attention",
-        lambda query, value, training=False: np.ones_like(query),
+        lambda query, value, training=False: query * 0 + 1,
     )
     object.__setattr__(encoder, "norm1", lambda value: value)
     object.__setattr__(encoder, "ffn_hidden", lambda value: value)
@@ -1865,14 +1865,24 @@ def test_generic_runtime_layer_classes_cover_configs_and_edges():
         layer_norm_epsilon=1e-5,
         name="temporal",
     )
-    temporal.attention = (
-        lambda query, value, training=False: np.ones_like(query)
+    object.__setattr__(
+        temporal,
+        "attention",
+        lambda query, value, training=False: query * 0 + 1,
     )
-    temporal.norm1 = lambda value: value
-    temporal.ffn_hidden = lambda value: value
-    temporal.ffn_output = lambda value: value
-    temporal.dropout = lambda value, training=False: value
-    temporal.norm2 = lambda value: value
+    object.__setattr__(temporal, "norm1", lambda value: value)
+    object.__setattr__(
+        temporal, "ffn_hidden", lambda value: value
+    )
+    object.__setattr__(
+        temporal, "ffn_output", lambda value: value
+    )
+    object.__setattr__(
+        temporal,
+        "dropout",
+        lambda value, training=False: value,
+    )
+    object.__setattr__(temporal, "norm2", lambda value: value)
     assert temporal(x, training=True).shape == x.shape
     temporal_cfg = temporal.get_config()
     assert temporal_cfg["hidden_units"] == 8

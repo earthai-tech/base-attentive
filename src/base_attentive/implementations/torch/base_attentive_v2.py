@@ -137,6 +137,13 @@ class _TorchTemporalSelfAttentionEncoder(Layer):
         import torch as _torch  # noqa: PLC0415
         if isinstance(inputs, _np.ndarray):
             inputs = _torch.from_numpy(inputs)
+        if isinstance(inputs, _torch.Tensor):
+            try:
+                param = next(self.parameters())
+                if param.device != inputs.device:
+                    inputs = inputs.to(param.device)
+            except StopIteration:
+                pass
         return self.call(inputs, training=training)
 
     def call(

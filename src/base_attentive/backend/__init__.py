@@ -42,6 +42,19 @@ __all__ = [
 
 _CURRENT_BACKEND = None
 
+# Eagerly bind torch_utils symbols so they are always real objects in
+# this module's namespace regardless of test-ordering or sys.modules state.
+try:
+    from base_attentive.backend.torch_utils import (  # noqa: E402
+        TorchDeviceManager,
+        check_torch_compatibility,
+        get_torch_device,
+        get_torch_version,
+        torch_is_available,
+    )
+except Exception:
+    pass
+
 
 def _module(name: str):
     return importlib.import_module(name)
