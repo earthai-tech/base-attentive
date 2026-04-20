@@ -70,18 +70,16 @@ class TestTorchIsAvailable:
 
     def test_torch_not_available_mock(self, monkeypatch):
         """Test torch_is_available returns False when torch import fails."""
-        from base_attentive.backend import torch_utils
+        from base_attentive.backend import torch_utils as _tu
 
-        # Use mock.patch to mock the torch import
-        with mock.patch.dict(sys.modules, {"torch": None}):
-            # Reimport to test handling of torch not available
-            import importlib
-
-            importlib.reload(torch_utils)
-
-            # This test is complex; better to test with actual torch availability
-            result = torch_utils.torch_is_available()
+        orig = _tu._get_torch_module
+        try:
+            _tu._get_torch_module = lambda: None
+            result = _tu.torch_is_available()
             assert isinstance(result, bool)
+            assert result is False
+        finally:
+            _tu._get_torch_module = orig
 
 
 class TestGetTorchVersion:
@@ -405,7 +403,7 @@ class TestTorchBackendIntegration:
 
     def test_torch_device_manager_with_backend(self):
         """Test TorchDeviceManager works within backend context."""
-        from base_attentive.backend import TorchDeviceManager
+        from base_attentive.backend.torch_utils import TorchDeviceManager
 
         manager = TorchDeviceManager(prefer="cuda")
         device = manager.device

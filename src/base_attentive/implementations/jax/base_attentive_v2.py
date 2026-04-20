@@ -224,6 +224,14 @@ class _ConcatFusion(Layer):
         )
         self.axis = axis
 
+    def __call__(self, inputs, **kwargs):
+        active = [v for v in inputs if v is not None]
+        if not active:
+            return None
+        if len(active) == 1:
+            return active[0]
+        return super().__call__(active, **kwargs)
+
     def call(self, inputs, training: bool = False):  # noqa: ARG002, FBT002
         active = [
             value for value in inputs if value is not None

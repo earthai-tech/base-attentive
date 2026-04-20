@@ -1,0 +1,197 @@
+.. _release-v2.2.0:
+
+**v2.2.0** — |MAJOR| Keras 3 Multi-Backend Architecture
+=========================================================
+
+*Released: April 2026*
+
+Upgrading from v2.1.0
+-----------------------
+
+This release is a major internal modernization of the v2 line.
+It introduces the structured V2 specification system, a resolver/registry
+architecture for backend-aware component assembly, lighter imports, and an
+explicit backend-selection policy under Keras 3.
+
+Projects upgrading from v2.1.0 should set ``BASE_ATTENTIVE_BACKEND``
+explicitly (see `Migration Notes`_ below).  The legacy ``BaseAttentive``
+constructor remains supported through the compatibility layer.
+
+Highlights
+----------
+
+- |MAJOR| **BaseAttentive v2.2.0 standardizes the v2 line around
+  Keras 3 multi-backend use** with TensorFlow, Torch, and JAX treated as
+  Keras 3 backends rather than framework targets.
+
+- |Feature| **A structured specification system** was added under
+  ``base_attentive.config`` to formalize model definition and separate
+  legacy input adaptation from the new internal representation.
+
+- |Feature| **A resolver and registry architecture** was introduced under
+  ``base_attentive.registry`` and ``base_attentive.resolver`` for
+  backend-aware component assembly.
+
+- |Internal| **Top-level imports are significantly lighter**.  Backend
+  detection, runtime bootstrap, and installation logic are deferred until
+  the backend is actually needed.
+
+- |Feature| **Explicit backend configuration and backend-specific install
+  guidance** replace the previous silent TensorFlow fallback.
+
+- |Feature| **End-to-end training-path tests** were added covering
+  ``compile()``, ``fit()``, ``predict()``, save, reload, configuration
+  round-trips, and legacy-to-spec adaptation.
+
+Structured Configuration Layer
+-------------------------------
+
+- |Feature| **New** ``base_attentive.config`` **package** formalizes model
+  definition with a set of focused modules:
+
+  - ``schema.py`` — core spec dataclasses (``BaseAttentiveSpec``,
+    ``BaseAttentiveComponentSpec``).
+  - ``defaults.py`` — structured defaults for the spec.
+  - ``normalize.py`` — spec normalization and serialization-safe export.
+  - ``validate.py`` — strict spec validation.
+  - ``legacy_adapter.py`` — adapts the legacy public constructor to the
+    new spec system, including coarse parameter validation and legacy
+    ``mode`` normalization.
+  - ``architecture_helpers.py`` — pure architecture helpers relocated out
+    of runtime component modules.
+
+- |Feature| **Legacy** ``BaseAttentive`` **now acts as a facade over the
+  V2 model path**.  Legacy constructor arguments are normalized into a
+  ``BaseAttentiveSpec``, point vs quantile output is handled by structured
+  head selection, and architecture choices are routed through the resolver
+  system.
+
+- |Feature| **Forecast-output contract standardized**:
+
+  - point output follows ``BHO``
+  - quantile output follows ``BHQO``
+
+  This aligns the quantile axis ordering with the package convention
+  established in v2.1.0.
+
+Resolver and Registry Architecture
+------------------------------------
+
+- |Feature| **Backend-aware assembly added** around
+  ``base_attentive.registry`` and ``base_attentive.resolver``, providing:
+
+  - component registries and model registries,
+  - backend-sensitive assembly flow,
+  - resolver contracts for projections, encoders, pooling, fusion, and
+    heads.
+
+- |Internal| **Backend registration and registry aliasing hardened**.
+  Resolver registrations now tolerate repeated setup, and legacy key
+  aliases such as ``head.quantile`` are handled consistently.
+
+- |Internal| **Resolver-built V2 components are more serialization-safe**.
+  Generic resolver pieces that were plain callables are now tracked as
+  serializable Keras layers where appropriate.
+
+Runtime and Import Architecture
+--------------------------------
+
+- |Feature| **Public runtime shim added** as ``base_attentive.keras_runtime``
+  to separate public runtime access from internal bootstrap logic.
+
+- |Internal| **Root package imports lightened**.
+
+  - ``base_attentive.__init__``, ``keras_runtime.py``,
+    ``_keras_runtime.py``, and ``backend.__init__`` were revised.
+  - ``import base_attentive`` no longer behaves like full runtime
+    initialization.
+  - Backend initialization is deferred until the backend is actually
+    needed.
+
+- |Internal| **Explicit backend configuration policy** replaces the silent
+  TensorFlow fallback.  Behavior now follows three main cases:
+
+  1. If the backend is not configured, BaseAttentive raises a
+     configuration error instructing the user to set
+     ``BASE_ATTENTIVE_BACKEND``.
+  2. If the backend is configured but not installed, BaseAttentive
+     provides backend-specific installation guidance.
+  3. If ``BASE_ATTENTIVE_BACKEND=auto`` and
+     ``BASE_ATTENTIVE_AUTO_INSTALL=1`` are set, runtime installation may
+     be deferred until the backend is needed.
+
+Bug Fixes
+---------
+
+- |Bugfix| **TensorFlow builder kwargs leakage fixed** — resolver metadata
+  such as ``component_key`` no longer leaks into Keras layer constructors.
+
+- |Bugfix| **TensorFlow registration idempotence improved** — repeated
+  resolver setup no longer fails with duplicate component-registration
+  errors, and alias consistency for quantile heads (``head.quantile``) was
+  restored.
+
+- |Bugfix| **JAX output path and round-trip issues resolved** in the V2
+  quantile and multi-horizon heads.
+
+- |Bugfix| **Torch encoder compatibility gaps fixed**, including missing
+  ``forward()`` shim behavior in the Keras-backed implementation path.
+
+- |Bugfix| **Legacy adapter hardened** with better ``mode`` normalization
+  and clearer handling of contradictions (e.g. ``mode='point'`` with
+  explicit quantiles).
+
+- |Bugfix| **MPS fallback loss handling corrected** for Apple Silicon
+  environments.
+
+Internal Cleanup
+----------------
+
+- |Internal| **Backend-neutral rewrites** in component configuration
+  helpers, attention and temporal helper modules, loss and masking helpers,
+  and legacy core imports to remove TensorFlow-shaped assumptions.
+
+- |Internal| **Runtime-dead and mislocated helper modules removed or
+  relocated**.  Developer-only matrix tools were moved out of the
+  installable runtime package.
+
+Testing
+-------
+
+- |Feature| **Greatly expanded test coverage** across multi-backend
+  runtime behavior, import lightening, V2 constructor parity,
+  configuration and JSON round-trip serialization, backend registration
+  coverage, and ``BaseAttentive`` training API behavior.  Full CI matrix
+  (Windows + Linux, Python 3.10–3.12) passes cleanly.
+
+- |Feature| **Training-path tests added** that verify ``BaseAttentive``
+  behaves as a real Keras model under correct runtime loading, covering
+  ``compile()``, ``fit()``, ``predict()``, and save/reload.
+
+.. _Migration Notes:
+
+Migration Notes
+---------------
+
+- |Feature| **Backend selection is now explicit**.  Set one of:
+
+  - ``BASE_ATTENTIVE_BACKEND=tensorflow``
+  - ``BASE_ATTENTIVE_BACKEND=torch``
+  - ``BASE_ATTENTIVE_BACKEND=jax``
+  - ``BASE_ATTENTIVE_BACKEND=auto``
+
+  Do not rely on silent TensorFlow fallback.  If automatic installation is
+  desired when the backend is missing, also set
+  ``BASE_ATTENTIVE_AUTO_INSTALL=1``.
+
+- |Deprecated| **Point vs quantile intent is now structural, not a
+  runtime mode**.  Legacy users should note that ``mode='point'`` and
+  ``mode='quantile'`` are no longer meaningful runtime concepts.  Providing
+  no quantiles selects a point head; providing quantiles selects a quantile
+  head.  The legacy adapter still translates older usage, but new code
+  should follow the structured head semantics.
+
+- |Internal| **Keras runtime binding**: to use ``BaseAttentive`` as a real
+  Keras model with training APIs, ensure the chosen Keras backend/runtime
+  is available before importing model-defining modules in user code or
+  notebooks.

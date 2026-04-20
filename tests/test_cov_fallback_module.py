@@ -711,6 +711,37 @@ class TestFunctionalOps:
         )
         np.testing.assert_allclose(result, [4.0, 6.0])
 
+    def test_add_n_handles_mps_like_tensors(self):
+        class _FakeCpuTensor:
+            def __init__(self, values):
+                self._values = np.asarray(values)
+
+            def numpy(self):
+                return self._values
+
+        class _FakeMpsTensor:
+            def __init__(self, values):
+                self._values = np.asarray(values)
+
+            def detach(self):
+                return self
+
+            def cpu(self):
+                return _FakeCpuTensor(self._values)
+
+            def __array__(self, dtype=None):
+                raise TypeError(
+                    "must move tensor to CPU before numpy conversion"
+                )
+
+        result = fb.add_n(
+            [
+                _FakeMpsTensor([1.0, 2.0]),
+                _FakeMpsTensor([3.0, 4.0]),
+            ]
+        )
+        np.testing.assert_allclose(result, [4.0, 6.0])
+
     def test_square(self):
         np.testing.assert_array_equal(
             fb.square([2.0, 3.0]), [4.0, 9.0]

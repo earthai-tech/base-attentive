@@ -133,6 +133,17 @@ class _TorchTemporalSelfAttentionEncoder(Layer):
     def forward(
         self, inputs: Any, training: bool = False
     ) -> Any:  # noqa: FBT002
+        import numpy as _np  # noqa: PLC0415
+        import torch as _torch  # noqa: PLC0415
+        if isinstance(inputs, _np.ndarray):
+            inputs = _torch.from_numpy(inputs)
+        if isinstance(inputs, _torch.Tensor):
+            try:
+                param = next(self.parameters())
+                if param.device != inputs.device:
+                    inputs = inputs.to(param.device)
+            except StopIteration:
+                pass
         return self.call(inputs, training=training)
 
     def call(
@@ -228,6 +239,14 @@ class _ConcatFusion(Layer):
             name=name, **_clean_builder_kwargs(kwargs)
         )
         self.axis = axis
+
+    def __call__(self, inputs, **kwargs):
+        active = [v for v in inputs if v is not None]
+        if not active:
+            return None
+        if len(active) == 1:
+            return active[0]
+        return super().__call__(active, **kwargs)
 
     def call(self, inputs, training: bool = False):  # noqa: ARG002, FBT002
         active = [

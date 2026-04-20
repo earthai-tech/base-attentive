@@ -21,7 +21,7 @@ register_keras_serializable = (
     KERAS_DEPS.register_keras_serializable
 )
 
-DEP_MSG = dependency_message("experimental models")
+DEP_MSG = dependency_message(__name__)
 
 
 def _extract_spec_payload(

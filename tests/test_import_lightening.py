@@ -45,6 +45,8 @@ def test_runtime_attr_bootstraps_without_backend_import():
     with _ModuleGuard("base_attentive"):
         module = importlib.import_module("base_attentive")
         assert module.KERAS_BACKEND in {
+            "",
+            "auto",
             "tensorflow",
             "jax",
             "torch",

@@ -292,12 +292,15 @@ class _GenericConcatFusion(Layer):
         self.axis = axis
 
     def __call__(self, inputs, *args, **kwargs):
-        if isinstance(inputs, (list, tuple)) and not any(
-            feature is not None for feature in inputs
-        ):
-            raise ValueError(
-                "fusion received no active feature tensors."
-            )
+        if isinstance(inputs, (list, tuple)):
+            active = [f for f in inputs if f is not None]
+            if not active:
+                raise ValueError(
+                    "fusion received no active feature tensors."
+                )
+            if len(active) == 1:
+                return active[0]
+            inputs = active
         return super().__call__(inputs, *args, **kwargs)
 
     def call(self, inputs, training: bool = False):  # noqa: ARG002, FBT002
