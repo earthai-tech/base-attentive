@@ -403,7 +403,7 @@ class TestTorchBackendIntegration:
 
     def test_torch_device_manager_with_backend(self):
         """Test TorchDeviceManager works within backend context."""
-        from base_attentive.backend import TorchDeviceManager
+        from base_attentive.backend.torch_utils import TorchDeviceManager
 
         manager = TorchDeviceManager(prefer="cuda")
         device = manager.device
