@@ -1187,10 +1187,10 @@ def test_generic_builder_helpers_cover_more_paths():
         output_units=8,
         name="dense_proc",
     )
-    dense_proc._post_grn = (
-        lambda inputs, training=False: np.ones(
-            (2, 8), dtype=np.float32
-        )
+    object.__setattr__(
+        dense_proc,
+        "_post_grn",
+        lambda inputs, training=False: np.ones((2, 8), dtype=np.float32),
     )
     assert dense_proc(np.ones((2, 4), dtype=np.float32)).shape == (
         2,
@@ -1244,13 +1244,15 @@ def test_generic_builder_helpers_cover_more_paths():
         activation="relu",
         dropout_rate=0.0,
     )
-    encoder.attention = (
-        lambda query, value, training=False: np.ones_like(query)
+    object.__setattr__(
+        encoder,
+        "attention",
+        lambda query, value, training=False: np.ones_like(query),
     )
-    encoder.norm1 = lambda value: value
-    encoder.ffn_hidden = lambda value: value
-    encoder.ffn_output = lambda value: value
-    encoder.norm2 = lambda value: value
+    object.__setattr__(encoder, "norm1", lambda value: value)
+    object.__setattr__(encoder, "ffn_hidden", lambda value: value)
+    object.__setattr__(encoder, "ffn_output", lambda value: value)
+    object.__setattr__(encoder, "norm2", lambda value: value)
     encoded = encoder(
         np.ones((2, 3, 8), dtype=np.float32)
     )
@@ -1787,10 +1789,10 @@ def test_generic_runtime_layer_classes_cover_configs_and_edges():
         use_batch_norm=False,
         name="dense_proc",
     )
-    dense_proc._post_grn = (
-        lambda inputs, training=False: np.ones(
-            (2, 6), dtype=np.float32
-        )
+    object.__setattr__(
+        dense_proc,
+        "_post_grn",
+        lambda inputs, training=False: np.ones((2, 6), dtype=np.float32),
     )
     assert dense_proc(x[:, 0, :]).shape == (2, 6)
     dense_cfg = dense_proc.get_config()
@@ -1805,15 +1807,15 @@ def test_generic_runtime_layer_classes_cover_configs_and_edges():
         feature_processing="vsn",
         name="vsn_proc",
     )
-    vsn_proc._vsn = (
-        lambda inputs, training=False: np.ones(
-            (2, 3, 7), dtype=np.float32
-        )
+    object.__setattr__(
+        vsn_proc,
+        "_vsn",
+        lambda inputs, training=False: np.ones((2, 3, 7), dtype=np.float32),
     )
-    vsn_proc._post_grn = (
-        lambda inputs, training=False: np.ones(
-            (2, 3, 5), dtype=np.float32
-        )
+    object.__setattr__(
+        vsn_proc,
+        "_post_grn",
+        lambda inputs, training=False: np.ones((2, 3, 5), dtype=np.float32),
     )
     assert vsn_proc(x).shape == (2, 3, 5)
     vsn_cfg = vsn_proc.get_config()
