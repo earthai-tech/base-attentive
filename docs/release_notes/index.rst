@@ -8,7 +8,7 @@ page so you can jump directly to the changes that matter to you.
    :maxdepth: 1
    :caption: Versions (newest first)
    
-   v2.2.0rc0
+   v2.2.0
    v2.1.0
    v2.0.1
    v2.0.0
