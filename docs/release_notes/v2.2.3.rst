@@ -1,0 +1,100 @@
+.. _release-v2.2.3:
+
+**v2.2.3** — |PATCH| Example Notebooks & Documentation
+========================================================
+
+*Released: April 2026*
+
+Summary
+-------
+
+Patch release adding three new end-to-end example notebooks that cover
+real-world use cases, deep interpretability, and systematic benchmarking.
+No API changes; fully backward-compatible with v2.2.0.
+
+New Example Notebooks
+---------------------
+
+- |Feature| **08 — Financial Forecasting** (``examples/08_financial_forecasting.ipynb``)
+
+  Multi-asset return forecasting with a 6-asset portfolio over 1 000 simulated trading
+  days.  Demonstrates the complete quantitative-finance evaluation workflow:
+
+  - Regime-switching data generation (Markov bull/bear model)
+  - Walk-forward validation with zero look-ahead bias
+  - Information Coefficient (IC), ICIR, Sharpe ratio, Calmar ratio, max drawdown
+  - Long-short strategy simulation with equity curves and drawdown plots
+  - Regime-conditional performance (bull vs. bear IC and Sharpe split)
+  - Horizon-dependent accuracy (h=1 … h=5)
+  - Gradient saliency for financial feature importance
+  - Residual autocorrelation and ARCH test (volatility clustering)
+
+- |Feature| **09 — Attention Interpretability** (``examples/09_attention_interpretability.ipynb``)
+
+  Deep interpretability study on a smart-building energy demand dataset with a
+  *known* ground-truth formula, allowing every attention pattern to be validated
+  against the true signal:
+
+  - ``AttentionExtractor`` class using ``MultiHeadAttention`` and ``Softmax``
+    monkey-patching to capture weights without modifying model code
+  - VSN (Variable Selection Network) feature importance for static, dynamic,
+    and future inputs
+  - Cross-attention heatmaps showing which encoder windows each decoder step
+    attends to
+  - Hierarchical attention patterns across forecast horizon
+  - Multi-head diversity analysis (cosine similarity matrix, per-head entropy)
+  - Gradient saliency maps (static, dynamic temporal, future features)
+  - Horizon-dependent attention profiles
+  - Contrastive analysis: peak-demand vs. off-peak samples
+  - Integrated gradients (IG) for non-saturating attribution
+  - Radar-chart summary comparing saliency methods per feature
+
+- |Feature| **10 — Benchmarking** (``examples/10_benchmarking.ipynb``)
+
+  Systematic comparison of 7 ``BaseAttentive`` architecture variants against
+  Naive / Linear / MLP baselines across six benchmarking axes:
+
+  - Architecture variants: BA-Cross, BA-Hier, BA-Cross+Hier, BA-Memory,
+    BA-Transformer, BA-Small, BA-Large
+  - Accuracy: RMSE, MAE, R², directional accuracy
+  - **Efficiency frontier**: parameter count × training time × RMSE Pareto plot
+  - **Hyperparameter sensitivity**: ``embed_dim`` sweep (8–64) and
+    ``dropout_rate`` sweep (0.0–0.3) with train/test overfitting-gap overlay
+  - **Noise robustness**: performance degradation across 4 SNR levels
+  - **Per-horizon accuracy profile**: RMSE and relative improvement vs. Naive
+    per forecast step
+  - **Statistical significance**: bootstrap 95% confidence intervals and
+    pairwise CI-overlap heatmap
+  - Full leaderboard table + radar chart + architecture selection guide
+
+Documentation Updates
+----------------------
+
+- |Feature| **Notebook index updated** (``docs/notebooks/index.rst``) with
+  entries for notebooks 08–10 and a new **"Before you run"** admonition block
+  explaining the mandatory backend / import ordering for all notebooks and
+  scripts:
+
+  .. code-block:: python
+
+     # Correct order — always follow this pattern
+     import os
+     os.environ["BASE_ATTENTIVE_BACKEND"] = "tensorflow"
+     os.environ["KERAS_BACKEND"]          = "tensorflow"
+     import keras
+     import base_attentive
+     from base_attentive import BaseAttentive
+
+  The admonition also includes specific guidance for Binder users (run the
+  first cell before any other cell) and local users (restart kernel before
+  changing the backend).
+
+Creation Scripts
+----------------
+
+- |Internal| ``scripts/create_nb08.py`` — creation script for notebook 08
+- |Internal| ``scripts/create_nb09.py`` — creation script for notebook 09
+- |Internal| ``scripts/create_nb10.py`` — creation script for notebook 10
+
+All three scripts are reproducible: running them regenerates the notebook
+JSON from scratch, enabling easy updates and CI-based re-execution.

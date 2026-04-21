@@ -10,7 +10,7 @@ try:
 
     __version__ = _meta_version("base_attentive")
 except PackageNotFoundError:
-    __version__ = "2.2.0"
+    __version__ = "2.2.3"
 
 __author__ = "Laurent Kouadio"
 __email__ = "etanoyau@gmail.com"

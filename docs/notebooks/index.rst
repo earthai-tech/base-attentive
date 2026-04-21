@@ -8,6 +8,38 @@ The notebooks below are rendered directly from the
 folder in the repository.  Each one can be run interactively on Binder
 (no local installation required) or downloaded and run locally.
 
+.. admonition:: Before you run — Backend & Import Order
+   :class: important
+
+   Every notebook (and any script using ``BaseAttentive``) requires the backend to be
+   set **before** Keras or BaseAttentive are imported.  Follow this order every time:
+
+   .. code-block:: python
+
+      # 1. Set the backend environment variables FIRST
+      import os
+      os.environ["BASE_ATTENTIVE_BACKEND"] = "tensorflow"   # or "torch" / "jax"
+      os.environ["KERAS_BACKEND"]          = "tensorflow"   # must match above
+
+      # 2. Import Keras SECOND
+      import keras
+
+      # 3. Import BaseAttentive THIRD
+      import base_attentive
+      from base_attentive import BaseAttentive
+
+   If you skip step 1 or import in a different order, BaseAttentive will raise a
+   ``BackendConfigurationError`` because it cannot detect the backend after Keras
+   has already initialised.
+
+   **Binder users**: open a notebook, execute the very first cell (it already
+   contains the environment setup), and then run the remaining cells in order.
+   Do not skip the first cell.
+
+   **Local users**: the ``os.environ`` calls work only when they run *before*
+   any Keras import in the same Python process.  If you have already imported
+   Keras in a prior cell or session, restart the kernel and re-run from the top.
+
 .. list-table::
    :header-rows: 1
    :widths: 5 45 50
@@ -36,6 +68,15 @@ folder in the repository.  Each one can be run interactively on Binder
    * - 07
      - :doc:`07_v2_spec_registry`
      - **V2 Spec & Registry** — ``BaseAttentiveSpec``, ``ComponentRegistry``, custom encoders
+   * - 08
+     - :doc:`08_financial_forecasting`
+     - **Financial ML** — walk-forward validation, IC/ICIR/Sharpe/drawdown, regime analysis, gradient saliency
+   * - 09
+     - :doc:`09_attention_interpretability`
+     - **Interpretability** — VSN weights, cross/hierarchical attention heatmaps, integrated gradients, multi-head diversity
+   * - 10
+     - :doc:`10_benchmarking`
+     - **Benchmarking** — 7 architecture variants vs baselines, efficiency frontier, hyperparameter sensitivity, noise robustness, statistical significance
 
 .. admonition:: Run on Binder
 
@@ -56,3 +97,6 @@ folder in the repository.  Each one can be run interactively on Binder
    05_kernel_robust_networks
    06_crps_probabilistic_forecasting
    07_v2_spec_registry
+   08_financial_forecasting
+   09_attention_interpretability
+   10_benchmarking
