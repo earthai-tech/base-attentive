@@ -77,6 +77,9 @@ folder in the repository.  Each one can be run interactively on Binder
    * - 10
      - :doc:`10_benchmarking`
      - **Benchmarking** — 7 architecture variants vs baselines, efficiency frontier, hyperparameter sensitivity, noise robustness, statistical significance
+   * - 11
+     - :doc:`11_landslide_susceptibility`
+     - **Landslide Susceptibility** — physics-informed FS regularisation, depth-profile attention, ensemble uncertainty, scenario-conditioned hazard curves, method comparison (LR/RF/BA)
 
 .. admonition:: Run on Binder
 
@@ -100,3 +103,4 @@ folder in the repository.  Each one can be run interactively on Binder
    08_financial_forecasting
    09_attention_interpretability
    10_benchmarking
+   11_landslide_susceptibility
