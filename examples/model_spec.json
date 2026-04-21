@@ -1,0 +1,72 @@
+{
+  "static_input_dim": 4,
+  "dynamic_input_dim": 8,
+  "future_input_dim": 6,
+  "output_dim": 2,
+  "forecast_horizon": 24,
+  "embed_dim": 64,
+  "hidden_units": 96,
+  "attention_heads": 8,
+  "layer_norm_epsilon": 1e-06,
+  "dropout_rate": 0.15,
+  "activation": "relu",
+  "backend_name": "tensorflow",
+  "head_type": "quantile",
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "lstm_units": 64,
+  "attention_units": 32,
+  "vsn_units": null,
+  "architecture": {
+    "encoder_type": "hybrid",
+    "decoder_attention_stack": [
+      "cross",
+      "hierarchical"
+    ],
+    "feature_processing": "dense"
+  },
+  "runtime": {
+    "mode": null,
+    "num_encoder_layers": 2,
+    "max_window_size": 10,
+    "memory_size": 64,
+    "scales": [],
+    "multi_scale_agg": "last",
+    "final_agg": "last",
+    "use_residuals": true,
+    "use_batch_norm": false,
+    "apply_dtw": true,
+    "verbose": 0
+  },
+  "components": {
+    "static_projection": "projection.static",
+    "dynamic_projection": "projection.dynamic",
+    "future_projection": "projection.future",
+    "dynamic_encoder": "encoder.temporal_self_attention",
+    "future_encoder": "encoder.temporal_self_attention",
+    "sequence_pooling": "pool.mean",
+    "fusion": "fusion.concat",
+    "hidden_projection": "projection.hidden",
+    "point_head": "head.point_forecast",
+    "quantile_head": "head.quantile_forecast",
+    "static_processor": "feature.static_processor",
+    "dynamic_processor": "feature.dynamic_processor",
+    "future_processor": "feature.future_processor",
+    "positional_encoder": "embedding.positional",
+    "hybrid_encoder": "encoder.hybrid_multiscale",
+    "dynamic_window": "encoder.dynamic_window",
+    "decoder_cross_attention": "decoder.cross_attention",
+    "decoder_hierarchical_attention": "decoder.hierarchical_attention",
+    "decoder_memory_attention": "decoder.memory_attention",
+    "decoder_fusion": "fusion.multi_resolution_attention",
+    "multi_horizon_head": "head.multi_horizon",
+    "quantile_distribution_head": "head.quantile_distribution",
+    "final_pool_last": "pool.final_last",
+    "final_pool_mean": "pool.final_mean",
+    "final_pool_flatten": "pool.final_flatten"
+  },
+  "extras": {}
+}
