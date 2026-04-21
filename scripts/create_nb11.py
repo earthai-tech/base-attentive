@@ -1522,16 +1522,348 @@ contributions:
 """)
 
 # ===========================================================================
+# Interpretation cells (inserted after each major plot)
+# ===========================================================================
+
+I06 = mc("""\
+### Interpretation — Section 1: Study Area Overview
+
+**Panel (top-left) — Digital Elevation Model (DEM)**: the DEM shows two mountain
+massifs rising to approximately 2 100 m a.s.l. (metres above sea level) separated
+by a valley floor at ~200 m.  Elevation is the primary topographic driver of all
+downstream conditioning factors: slope gradient, lithology (harder rocks outcrop at
+altitude), and orographic rainfall all derive from the DEM.
+
+**Panel (top-centre) — Slope**: slope angle (°) is the single most important
+mechanical trigger for shallow landslides.  The steep flanks of both peaks
+(orange–red zones, > 25°) are the primary instability zones.  The flat valley
+floor (green, < 5°) is stable under any realistic rainfall scenario.  Note that
+slopes > 45° in natural terrain are rare and indicate rock cliffs rather than
+soil-covered hillslopes.
+
+**Panel (top-right) — Lithology**: four geological units define the study area.
+*Granite* (unit 0, hard, high elevation) resists failure even on steep slopes.
+*Schist* (unit 1, medium strength) is the dominant rock at mid-slope.
+*Clay shale* (unit 2, near fault zones, weakest) has low cohesion and friction
+angle — the most landslide-prone bedrock type.
+*Alluvium* (unit 3, valley floors) is susceptible to debris flows and channelised
+failures but is rarely mapped as classical rotational or translational slides.
+
+**Panel (bottom-left) — Distance to fault (km)**: fault zones shatter rock and
+create preferential pathways for groundwater infiltration, lowering effective
+cohesion.  The three NE–SW faults are visible as green corridors (< 1 km distance)
+crossing the study area from south-west to north-east.  Proximity to a fault is
+one of the strongest regional landslide conditioning factors in crystalline-rock
+terrains (Keefer, 1984).
+
+**Panel (bottom-centre) — Factor of Safety, FS (T=50 yr trigger)**: FS is the
+ratio of resisting forces (cohesion + friction) to driving forces (gravity component
+along the slope).  **FS < 1** means failure is mechanically possible; **FS > 1**
+means the slope is stable.  The FS here is computed using the *infinite-slope model*
+(see Section 0 header for the formula) for the T=50-year rainfall return period.
+Red pixels near the steep flanks are the zones the model should predict as
+high-susceptibility.
+
+**Panel (bottom-right) — Landslide inventory**: black dots mark pixels classified
+as landslides in the binary inventory.  Observe that inventory points cluster
+near steep slopes AND close to fault lines — confirming that both topographic and
+structural controls combine to produce failures.  In a real study, these dots would
+be derived from aerial photography or LiDAR change-detection.\
+""")
+
+I10 = mc("""\
+### Interpretation — Section 2: Feature Class Separation
+
+**Panel (A) — Static feature distributions (boxplots)**:
+Red boxes = landslide pixels; blue boxes = stable pixels.  Key observations:
+
+- **Slope**: landslide pixels have clearly higher median slope than stable pixels —
+  confirming slope is a primary discriminator.
+- **TWI** (Topographic Wetness Index = ln[upslope drainage area / tan(slope)]): a
+  higher TWI indicates wetter locations (channel heads, concave hollows) where
+  pore-water pressure builds up during storms.  Landslide pixels tend to have
+  moderately high TWI, reflecting their position on slopes that receive convergent
+  drainage.
+- **NDVI** (Normalized Difference Vegetation Index, range –1 to +1): positive NDVI
+  values indicate live green vegetation.  Landslide pixels typically have *lower*
+  NDVI because failures remove vegetative cover and expose bare soil — this acts
+  as a *negative indicator* of stability (higher NDVI → more root cohesion → more
+  stable).
+- **dist_fault**: landslide pixels are concentrated at smaller fault distances,
+  consistent with weaker rock near fault zones.
+
+**Panel (B) — Cohesion and friction depth profile**:
+The plot shows how mean cohesion (kPa, left axis) and friction angle (°, right axis)
+vary with depth for landslide vs. stable pixels.  Landslide pixels have systematically
+*lower* cohesion and *lower* friction angle than stable pixels — the geomechanical
+signature of unstable terrain.  The depth trend (cohesion increasing with depth,
+friction slightly decreasing) reflects realistic soil consolidation behaviour.
+The attention encoder will learn to assign higher weight to the depth layer whose
+cohesion/friction contrast between classes is largest — that is the predicted
+**critical failure plane**.
+
+**Panel (C) — FS distribution by inventory class**:
+The histogram shows the Factor of Safety distribution for stable pixels (blue) and
+landslide pixels (red) under the T=50 yr trigger.  The vertical dashed line at
+FS = 1.0 marks the theoretical failure boundary.  In a perfectly physics-consistent
+dataset, all red bars would be left of FS = 1; in practice, the inventory also
+includes pixels with FS > 1 (failures driven by unmapped micro-topography, pipes,
+or tree-throw) and excludes some FS < 1 pixels (slopes that are unstable but have
+not yet failed due to root reinforcement or lack of a triggering event).  The
+**Spearman correlation** (ρ) printed below quantifies how strongly each feature
+ranks with the binary label; a negative ρ for FS confirms that lower FS → higher
+landslide probability.\
+""")
+
+I13 = mc("""\
+### Interpretation — Section 3: Classification Performance
+
+**Panel (A) — ROC Curve** (Receiver Operating Characteristic):
+The ROC curve plots the **True Positive Rate** (TPR = correctly predicted landslides
+/ all actual landslides) against the **False Positive Rate** (FPR = falsely predicted
+landslides / all actual stable pixels) as the decision threshold varies from 0 to 1.
+A perfect classifier hugs the top-left corner (TPR = 1, FPR = 0).  The diagonal
+dashed line represents a random classifier (AUC = 0.5).
+The **AUC-ROC** (Area Under the ROC Curve) summarises performance in a single number:
+values above 0.70 are considered acceptable for susceptibility mapping, above 0.80
+is good, and above 0.90 is excellent (Hosmer & Lemeshow, 2000).
+The red dot marks the **optimal threshold** selected by Youden's J statistic
+(J = TPR − FPR, maximised), which provides the best trade-off between sensitivity
+and specificity for this dataset.
+
+**Panel (B) — Precision–Recall (PR) Curve**:
+For *imbalanced* datasets (few landslide pixels relative to stable pixels), the PR
+curve is more informative than the ROC curve.
+- **Precision** = predicted landslides that are truly landslide / all predicted
+  landslides (measures how often the model is *right* when it flags a pixel).
+- **Recall** = correctly predicted landslides / all actual landslides (measures how
+  many real landslides the model *finds*).
+The gray horizontal line is the **baseline precision** equal to the landslide
+prevalence in the test set — a random classifier would match this line.
+The **AP** (Average Precision, area under the PR curve) penalises methods that
+achieve high recall only by generating many false alarms.
+
+**Panel (C) — Confusion Matrix** (at the Youden optimal threshold):
+The four cells show: True Negatives (top-left), False Positives (top-right),
+False Negatives (bottom-left), True Positives (bottom-right).
+A good model maximises the diagonal (TN + TP) while minimising off-diagonal cells.
+For hazard applications, **False Negatives** (missed landslides) are more dangerous
+than False Positives (unnecessary evacuations), so a slightly lower threshold (higher
+recall) is often preferred in practice.\
+""")
+
+I14 = mc("""\
+### Interpretation — Section 3: Susceptibility Map
+
+**Panel (A) — Continuous susceptibility map**:
+The colour scale (green → yellow → red) represents the predicted failure probability
+P(failure | T50 trigger), where T50 is the 50-year return-period rainfall scenario.
+Black dots are inventory landslide locations.  A well-performing model should assign
+high probabilities (red) in the regions where black dots cluster — check that the
+red zones overlap with the dot clusters near the steep slopes and fault corridors.
+Note that the model predicts *continuous* probabilities, not just a binary mask;
+this is essential for risk-quantitative frameworks (e.g., risk = P(failure) ×
+consequence × exposure).
+
+**Panel (B) — Susceptibility class distribution**:
+The five classes follow the standard IUGS (International Union of Geological Sciences)
+susceptibility terminology.  The bar chart shows what fraction of the study area falls
+into each class.  A good susceptibility map should NOT classify the entire study area
+as "high" (that would have no discriminative value for land-use planners); typically,
+"High" + "Very High" classes should cover 15–30% of mountainous terrain.
+If the Very High class dominates, the model threshold may be set too low; if only
+Very Low dominates, the model may be under-predicting.\
+""")
+
+I23 = mc("""\
+### Interpretation — Section 5: Physics-Informed Training
+
+**Panel (A) — Training curves**:
+Three losses are tracked per epoch:
+- **MSE (data loss)**: mean squared error between the model's predicted failure
+  probability and the FS-derived target probability — this is the standard
+  supervised learning signal.
+- **Physics loss (FS)**: MSE between the model's T50 prediction and the
+  physics-based prior P(fail | FS) = σ(−4·(FS − 1)).  This term penalises the
+  model whenever its prediction contradicts the geomechanical expectation.
+- **Total loss** = MSE + λ · physics loss, where λ = 0.4 is the regularisation
+  weight (LAMBDA_PHYS).
+
+The green dotted line (right axis) shows the validation AUC-ROC evolving during
+training.  Ideally, both the data loss and the physics loss should decrease together,
+confirming that the two objectives are compatible.  If the physics loss remains high
+while MSE decreases, it signals a conflict between the inventory and the physics prior
+— which in a real study would indicate an unreliable or spatially biased inventory.
+
+**Panel (B) — Physics consistency scatter plot**:
+Each point is a pixel; the x-axis is the FS-based failure probability and the y-axis
+is the model's predicted probability.  Points along the dashed diagonal (y = x) are
+*perfectly physically consistent*.  The physics-informed model (red) should cluster
+more tightly around the diagonal than the standard model (blue).  Deviations below the
+diagonal (model under-predicts relative to FS) often correspond to inventory-positive
+pixels with FS > 1 (failures not explained by the simple infinite-slope formula).
+
+**Panel (C) — Prediction difference map**:
+Positive values (red) indicate zones where the physics-informed model predicts *higher*
+susceptibility than the standard model — these are typically steep slopes near faults
+where the inventory is sparse and the standard model underestimates risk.  Negative
+values (blue) indicate zones where the physics model is *more conservative*.  In
+practice, these difference maps help identify where additional field investigation
+is most urgently needed to reconcile model and physics signals.\
+""")
+
+I26 = mc("""\
+### Interpretation — Section 6: Method Comparison (ROC & PR)
+
+**Panel (A) — ROC curves, all methods**:
+- **Logistic Regression (LR)**: the linear baseline.  LR can only form a linear
+  decision boundary in feature space, which limits performance when susceptibility
+  is controlled by non-linear interactions (e.g., high slope *and* low cohesion *and*
+  proximity to fault jointly needed for failure).
+- **Random Forest (RF)**: a non-linear ensemble of decision trees.  RF captures
+  feature interactions and typically outperforms LR significantly, but it treats
+  each depth layer as an independent feature — it cannot learn *which layer* is
+  most critical for a given trigger scenario.
+- **BA (standard)**: BaseAttentive with cross + hierarchical attention.  The
+  depth-profile encoder processes layers as a *sequence*, allowing the model to
+  identify the critical failure plane.
+- **BA (ensemble)**: mean of three architecturally distinct BA models.  Ensemble
+  averaging reduces variance and typically improves AUC.
+- **BA (physics)**: physics-informed regularisation.  AUC may be slightly lower
+  than the standard BA because the physics constraint prevents the model from
+  perfectly fitting biases in the inventory — but it should be more reliable on
+  out-of-sample terrain.
+
+A higher AUC-ROC means the model's probability ranking is better aligned with the
+true binary inventory across all possible classification thresholds.
+
+**Panel (B) — PR curves**:
+Because landslide pixels are a minority class, the PR curve is critical.  A method
+that achieves high AUC-ROC by correctly classifying the many stable pixels but missing
+most landslides will have a poor AP (low area under the PR curve).  Compare the AP
+values: a method that substantially exceeds the baseline precision (gray horizontal
+line) while maintaining high recall is the most operationally useful for hazard
+zonation.\
+""")
+
+I27 = mc("""\
+### Interpretation — Section 6: Spatial Map Comparison
+
+Comparing susceptibility maps visually is as important as comparing numerical metrics,
+because maps with similar AUC can have very different spatial patterns.
+
+- **Logistic Regression (LR)** tends to produce smooth, gradual probability fields
+  because its decision boundary is linear in feature space — it cannot create sharp
+  transitions between stable and unstable zones.
+- **Random Forest (RF)** produces more spatially heterogeneous maps that can capture
+  local non-linear patterns, but may exhibit a characteristic "speckled" appearance
+  because it classifies each pixel independently without spatial coherence.
+- **BA (standard)** and **BA (ensemble)** should produce geomorphologically coherent
+  maps where high susceptibility is concentrated on steep slopes and near fault
+  corridors — consistent with the physical understanding of the terrain.
+- **BA (physics)** should look broadly similar to BA (standard) but may assign
+  higher probabilities to physically unstable zones (steep + weak lithology) that are
+  absent from the inventory — precisely the added value of the physics constraint.
+
+**Key validation check**: do the black inventory dots (ground truth) fall
+preferentially on high-susceptibility (red) zones in *all* maps?  If the dots are
+equally distributed across all colours for a given method, that method has failed to
+learn the spatial pattern of instability.\
+""")
+
+I28 = mc("""\
+### Interpretation — Section 6: Scenario-Conditioned Failure Plane Depth
+
+This is the **key novel result** of the framework (Contribution 1).
+
+**Panel (A) — Heatmap (trigger scenario × depth layer)**:
+Each row is a return-period trigger (T10 yr = frequent, low-intensity; T200 yr = rare,
+extreme).  Each column is a depth layer (surface 0–0.5 m to deep 5–10 m).  Brighter
+cells indicate that the model's predictions for that trigger scenario are most
+sensitive to that depth layer — i.e., the model is attending to that layer to
+determine failure probability for that scenario.
+
+**Panel (B) — Line profiles**:
+- **Shallow return periods (T10, T25)**: if the lines peak at the surface layers
+  (0–0.5 m, 0.5–1 m), this confirms the model has learned that frequent, moderate
+  rainfall events mainly trigger *shallow translational failures* where the
+  wetting front reaches only the top metre of soil.
+- **Extreme return periods (T100, T200)**: if the peak shifts toward deeper layers
+  (2–5 m, 5–10 m), the model is correctly inferring that rare, prolonged or seismic
+  events mobilise *deep-seated failures* along clay-rich interfaces at depth.
+
+This depth-shifting attention pattern validates the model against the well-established
+geotechnical principle that failure-plane depth increases with trigger severity
+(Iverson, 2000).  No classical ML model (LR, RF) can produce this output because
+they do not preserve the sequential structure of the depth profile.\
+""")
+
+I29 = mc("""\
+### Interpretation — Section 6: Summary Performance Table
+
+The table reports five complementary metrics for each method at the Youden optimal
+threshold:
+
+| Metric | Definition | Range | Interpretation |
+|--------|-----------|-------|---------------|
+| **AUC-ROC** | Area under the ROC curve | 0.5–1.0 | Ranking ability across all thresholds |
+| **AUC-PR** | Area under the Precision–Recall curve | 0–1.0 | Performance on the minority (landslide) class |
+| **F1** | 2 · Precision · Recall / (Precision + Recall) | 0–1.0 | Harmonic mean of precision and recall at one threshold |
+| **MCC** | Matthews Correlation Coefficient = (TP·TN − FP·FN) / √((TP+FP)(TP+FN)(TN+FP)(TN+FN)) | –1 to +1 | Balanced metric robust to class imbalance; +1 = perfect, 0 = random |
+| **FS-ρ** | Spearman rank correlation between predicted susceptibility and FS-based prior | –1 to +1 | *Physical consistency*: higher ρ = predictions better aligned with geomechanics |
+
+**How to use this table in a paper**:
+- Report AUC-ROC and AUC-PR as the primary performance metrics (threshold-independent).
+- Report MCC as a single-threshold balanced metric (more informative than accuracy for
+  imbalanced classes).
+- Report FS-ρ as a *physical consistency* index — a novel metric specific to
+  physics-informed methods that journal reviewers in geotechnical or geomorphological
+  journals will appreciate.
+- A method can have lower AUC than RF but higher FS-ρ — this is a valid and publishable
+  result, as it demonstrates the physics-informed model sacrifices a small amount of
+  discriminative performance to gain physical credibility in unsampled regions.\
+""")
+
+I30 = mc("""\
+### Interpretation — Publication Summary Figure
+
+This six-panel figure is designed as a *ready-to-submit* figure for a journal paper.
+Each panel contributes a distinct scientific message:
+
+- **(A) Ensemble susceptibility map**: the primary product — spatial zonation of
+  failure probability.  Include the colour bar and scale bar in the final version
+  and replace the coordinate axes with a proper north arrow and graticule.
+- **(B) Epistemic uncertainty**: demonstrates that you understand the limits of
+  your model — a key criterion for high-impact journals.  Zones of high uncertainty
+  (dark purple) are explicit recommendations for targeted field investigation.
+- **(C) ROC comparison**: provides quantitative evidence that the BA framework
+  outperforms (or matches) classical methods while adding interpretability.
+- **(D) Failure-plane heatmap**: the scientific novelty panel.  Even if AUC is
+  similar to RF, this panel shows something RF *cannot* show — the mechanistically
+  identified rupture depth per trigger scenario.
+- **(E) Physical consistency**: justifies the physics-informed approach.  The
+  tighter clustering of the red (physics BA) points around the diagonal demonstrates
+  that the physics constraint successfully anchors predictions to geomechanical reality.
+- **(F) Static feature importance**: provides a concise summary of which conditioning
+  factors drive susceptibility — expected to show slope and fault distance as top
+  contributors, consistent with the geomorphological literature.
+
+**For your paper**: use this figure as Figure 4 or Figure 5 (after the study area and
+methods figures).  Add a table caption that defines all symbols (FS, AUC-ROC, AUC-PR,
+MCC, TWI, NDVI) on their first use in the caption text.\
+""")
+
+# ===========================================================================
 # Assemble notebook
 # ===========================================================================
 cells = [
     C00, C01,
-    C02, C03, C04, C05, C06,
-    C07, C08, C09, C10,
-    C11, C12, C13, C14, C15, C16,
+    C02, C03, C04, C05, C06, I06,
+    C07, C08, C09, C10, I10,
+    C11, C12, C13, I13, C14, I14, C15, C16,
     C17, C18, C19, C20,
-    C21, C22, C23,
-    C24, C25, C26, C27, C28, C29, C30,
+    C21, C22, C23, I23,
+    C24, C25, C26, I26, C27, I27, C28, I28, C29, I29, C30, I30,
     C31,
     C32,
 ]
