@@ -69,13 +69,13 @@ folder in the repository.  Each one can be run interactively on Binder
      - :doc:`07_v2_spec_registry`
      - **V2 Spec & Registry** — ``BaseAttentiveSpec``, ``ComponentRegistry``, custom encoders
    * - 08
-     - :doc:`08_financial_forecasting`
+     - :doc:`Financial Forecasting <08_financial_forecasting>`
      - **Financial ML** — walk-forward validation, IC/ICIR/Sharpe/drawdown, regime analysis, gradient saliency
    * - 09
-     - :doc:`09_attention_interpretability`
+     - :doc:`Attention Interpretability <09_attention_interpretability>`
      - **Interpretability** — VSN weights, cross/hierarchical attention heatmaps, integrated gradients, multi-head diversity
    * - 10
-     - :doc:`10_benchmarking`
+     - :doc:`Benchmarking <10_benchmarking>`
      - **Benchmarking** — 7 architecture variants vs baselines, efficiency frontier, hyperparameter sensitivity, noise robustness, statistical significance
    * - 11
      - :doc:`11_landslide_susceptibility`
