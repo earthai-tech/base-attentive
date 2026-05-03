@@ -83,6 +83,9 @@ folder in the repository.  Each one can be run interactively on Binder
    * - 12
      - :doc:`12_icu_sepsis_early_warning`
      - **ICU Sepsis Early Warning** — SOFA-informed regularisation, multi-horizon risk curves (+6 h/+12 h/+24 h), temporal attention heatmaps, ensemble epistemic uncertainty, calibration curves, method comparison (LR/RF/BA); PhysioNet 2019 integration guide
+   * - 12b
+     - :doc:`12b_icu_sepsis_real_data`
+     - **ICU Sepsis — PhysioNet 2019 Real Data** — full 5-component SOFA score (SpO₂/FiO₂ respiratory proxy, Platelets, Bilirubin, MAP, Creatinine; GCS absent — noted), demo-mode fallback, SOFA-consistency plots, multi-horizon BA vs LR/RF on ~40 k real patients
 
 .. admonition:: Run on Binder
 
@@ -108,3 +111,4 @@ folder in the repository.  Each one can be run interactively on Binder
    10_benchmarking
    11_landslide_susceptibility
    12_icu_sepsis_early_warning
+   12b_icu_sepsis_real_data
