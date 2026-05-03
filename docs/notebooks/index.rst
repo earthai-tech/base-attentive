@@ -80,6 +80,9 @@ folder in the repository.  Each one can be run interactively on Binder
    * - 11
      - :doc:`11_landslide_susceptibility`
      - **Landslide Susceptibility** — physics-informed FS regularisation, depth-profile attention, ensemble uncertainty, scenario-conditioned hazard curves, method comparison (LR/RF/BA)
+   * - 12
+     - :doc:`12_icu_sepsis_early_warning`
+     - **ICU Sepsis Early Warning** — SOFA-informed regularisation, multi-horizon risk curves (+6 h/+12 h/+24 h), temporal attention heatmaps, ensemble epistemic uncertainty, calibration curves, method comparison (LR/RF/BA); PhysioNet 2019 integration guide
 
 .. admonition:: Run on Binder
 
@@ -104,3 +107,4 @@ folder in the repository.  Each one can be run interactively on Binder
    09_attention_interpretability
    10_benchmarking
    11_landslide_susceptibility
+   12_icu_sepsis_early_warning
