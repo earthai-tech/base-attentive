@@ -86,6 +86,9 @@ folder in the repository.  Each one can be run interactively on Binder
    * - 12b
      - :doc:`12b_icu_sepsis_real_data`
      - **ICU Sepsis — PhysioNet 2019 Real Data** — full 5-component SOFA score (SpO₂/FiO₂ respiratory proxy, Platelets, Bilirubin, MAP, Creatinine; GCS absent — noted), demo-mode fallback, SOFA-consistency plots, multi-horizon BA vs LR/RF on ~40 k real patients
+   * - 13
+     - :doc:`13_flood_early_warning`
+     - **Flood Early Warning System** — FSI physics prior (Manning bankfull ratio), multi-horizon alerts (+1 h/+3 h/+6 h/+12 h/+24 h), NWP future covariates, horizon-conditioned attention saliency, ensemble epistemic uncertainty, decision-curve analysis, confidence-gated alarm API (REST/MQTT); USGS NWIS/CAMELS/ERA5 real-data guide
 
 .. admonition:: Run on Binder
 
@@ -112,3 +115,4 @@ folder in the repository.  Each one can be run interactively on Binder
    11_landslide_susceptibility
    12_icu_sepsis_early_warning
    12b_icu_sepsis_real_data
+   13_flood_early_warning
