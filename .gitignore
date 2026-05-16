@@ -60,6 +60,7 @@ ipython_config.py
 
 # Environments
 .env
+.env.*
 .venv
 env/
 venv/
@@ -143,3 +144,8 @@ dmypy.json
 _V2_BACKEND*.md
 V2_BACKEND*.md
 V2_IMPLEM*.md
+
+# Local paper workspace
+data/
+paper/flood_nature_geoscience/
+paper/landslide_big_data_earth_system/
