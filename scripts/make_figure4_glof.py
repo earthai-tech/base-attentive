@@ -82,8 +82,12 @@ def _make_glof_dem(nx: int = 80, ny: int = 60) -> tuple[np.ndarray, ...]:
 def _make_hydrograph() -> pd.DataFrame:
     """GLOF breach hydrograph — liquid and solid phases.
 
-    Peak calibrated to Sattar et al. (2025) Sikkim-class GLOF
-    (~36 000 m³/s peak at breach).
+    Peak discharge calibrated to Sattar et al. (2025): Q_peak ≈ 13,500 m³/s
+    at the South Lhonak terminal moraine breach.  The solid-phase (sediment-
+    slurry) component is scaled using peak volumetric concentration C_s ≈ 0.38
+    (Supplementary Note 7, §S7.2), giving a combined peak ≈ 8,200 m³/s for
+    the density-enhanced slurry phase.  The 200-yr Teesta monsoon flow used as
+    the reference baseflow is ~2,100 m³/s (CWC gauge records).
     """
     t = np.linspace(0, 9, 900)   # hours
 
@@ -93,12 +97,12 @@ def _make_hydrograph() -> pd.DataFrame:
         fall = q_peak * np.exp(-fall_k * np.maximum(t - t_peak, 0))
         return np.where(t < t_peak, rise, fall)
 
-    q_liquid = _hydro(t, 1.8, 36_500, 2.8, 0.85)
-    # Solid phase (sediment slurry): slightly higher peak density, wider
-    q_solid  = _hydro(t, 2.1, 28_000, 2.2, 0.70) * 0.92
+    q_liquid = _hydro(t, 1.8, 13_500, 2.8, 0.85)
+    # Solid phase: C_s ≈ 0.38 → slurry peak ≈ 61 % of liquid peak
+    q_solid  = _hydro(t, 2.1,  8_200, 2.2, 0.70)
 
-    # Monsoon baseflow: roughly constant with small diurnal variation
-    q_monsoon = 780 + 80 * np.sin(2 * np.pi * t / 24) + np.random.default_rng(3).normal(0, 25, len(t))
+    # 200-yr monsoon flow: ~2,100 m³/s (CWC Teesta at Chungthang records)
+    q_monsoon = 2_100 + 80 * np.sin(2 * np.pi * t / 24) + np.random.default_rng(3).normal(0, 25, len(t))
 
     return pd.DataFrame({"t": t, "liquid": q_liquid,
                           "solid": q_solid, "monsoon": q_monsoon})
@@ -283,17 +287,17 @@ def _panel_b(ax: plt.Axes, df: pd.DataFrame) -> None:
     )
 
     ax.set_xlim(0, 9)
-    ax.set_ylim(-500, 42_000)
+    ax.set_ylim(-200, 16_000)
     ax.set_xlabel("Time since breach (hours)")
     ax.set_ylabel("Discharge (m³ s⁻¹)")
     ax.yaxis.set_major_formatter(
-        mpl.ticker.FuncFormatter(lambda v, _: f"{v/1000:.0f}k"))
+        mpl.ticker.FuncFormatter(lambda v, _: f"{v/1000:.1f}k"))
     ax.legend(loc="upper right", fontsize=_FS["tick"] - 0.3,
               handlelength=1.2)
     _clean_spines(ax)
     ax.grid(axis="y", color="#e5e5e5", lw=0.5, zorder=0)
     _panel_label(ax, "b")
-    ax.set_title("Breach hydrograph vastly exceeds\nclimatological flood magnitudes",
+    ax.set_title("Breach hydrograph substantially exceeds\nclimatological monsoon magnitude (×6.4)",
                  fontsize=_FS["label"], loc="left", pad=4)
 
 
