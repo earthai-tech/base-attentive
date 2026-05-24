@@ -1,4 +1,4 @@
-"""Figure 4 | Cascading Hazards Exceed Meteorological Boundaries in Mountainous Terrains.
+"""Figure 3 | Cascading Hazards Exceed Meteorological Boundaries in Mountainous Terrains.
 
 Nature Geoscience double-column style (183 mm / 7.2 in wide).
 
@@ -7,14 +7,14 @@ Four panels
 a  3D perspective schematic of a GLOF process chain: glacial lake,
    lateral moraine failure, displacement wave, and downstream release.
 b  Reconstructed breach hydrograph — liquid phase (water) and solid
-   phase (sediment-laden slurry) vastly exceed the monsoon baseflow.
+   phase (sediment-laden slurry) substantially exceed the monsoon baseflow.
 c  Longitudinal valley profile — pre-event (red dashed) vs. post-event
    (blue) thalweg elevation; red shading = erosion, blue = deposition.
-d  Synthetic post-event overhead scene: sediment fan, channel avulsion,
+d  Post-event overhead scene: sediment fan, channel avulsion,
    and annotated hydropower infrastructure damage.
 
-Synthetic data calibrated to Veh et al. (2020); Sattar et al. (2025);
-Zheng et al. (2021).
+Event synthesis calibrated to published reconstructions: Sattar et al. (2025);
+Veh et al. (2020); Shrestha et al. (2024); Zheng et al. (2021).
 
 Usage
 -----
@@ -280,7 +280,7 @@ def _panel_b(ax: plt.Axes, df: pd.DataFrame) -> None:
     t_pk  = float(df.loc[df["liquid"].idxmax(), "t"])
     q_pk  = float(df["liquid"].max())
     ax.annotate(
-        f"Q$_{{peak}}$ = {q_pk/1000:.0f} × 10³ m³/s",
+        f"$Q_{{\\mathrm{{peak}}}} \\approx {q_pk/1000:.1f}\\times10^3$ m$^3$ s$^{{-1}}$",
         xy=(t_pk, q_pk), xytext=(t_pk + 1.5, q_pk * 0.88),
         fontsize=_FS["tick"], color=blue,
         arrowprops=dict(arrowstyle="->", color=blue, lw=0.8),
@@ -447,13 +447,14 @@ def make_figure_4(figure_dir: Path, formats: list[str]) -> None:
 
     fig.text(
         0.10, 0.985,
-        "Figure 4 | Cascading hazards exceed meteorological boundaries in mountainous terrains.",
+        "Figure 3 | Cascading hazards exceed meteorological boundaries in mountainous terrains.",
         ha="left", va="top",
         fontsize=_FS["label"] + 0.5, fontweight="bold",
     )
     fig.text(
         0.10, 0.012,
-        "Synthetic data calibrated to Sattar et al. (2025); Veh et al. (2020); Zheng et al. (2021).",
+        "Event synthesis based on published reconstructions: Sattar et al. (2025); "
+        "Veh et al. (2020); Shrestha et al. (2024).",
         ha="left", va="bottom",
         fontsize=_FS["caption"], color="#555555",
     )
