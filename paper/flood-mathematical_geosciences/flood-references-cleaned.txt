@@ -1,0 +1,3212 @@
+% flood-references-cleaned.bib
+% Cleaned from the uploaded flood-references draft.
+% Processing: duplicate records removed; stronger full-author entries
+% retained; placeholder author lists removed; DOI
+% fields added where confidently identified.
+
+@article{Heidel1956,
+  author = {Heidel, S. G.},
+  title = {The progressive lag of sediment concentration with flood waves},
+  journal = {Eos},
+  year = {1956},
+  volume = {37},
+  pages = {56--66}
+}
+
+@article{Otsu1975,
+  author = {Otsu, N.},
+  title = {A threshold selection method from gray-level histograms},
+  journal = {Automatica},
+  year = {1975},
+  volume = {11},
+  pages = {23--27}
+}
+
+@article{Tversky1992,
+  author = {Tversky, A. and Kahneman, D.},
+  title = {Advances in prospect theory: cumulative representation of uncertainty},
+  journal = {Journal of Risk and Uncertainty},
+  year = {1992},
+  volume = {5},
+  pages = {297--323}
+}
+
+@article{Duan1994,
+  author = {Duan, Q. and Sorooshian, S. and Gupta, V. K.},
+  title = {Optimal Use of the {SCE-UA} Global Optimization Method for Calibrating Watershed Models},
+  journal = {Journal of Hydrology},
+  year = {1994},
+  volume = {158},
+  pages = {265--284}
+}
+
+@article{Burbank1996,
+  author = {Burbank, D. W. and Leland, J. and Fielding, E. and Anderson, R. S. and Brozovic, N. and Reid, M. R. and Duncan, C.},
+  title = {Bedrock incision, rock uplift and threshold hillslopes in the northwestern Himalayas},
+  journal = {Nature},
+  year = {1996},
+  volume = {379},
+  pages = {505--510},
+  doi = {10.1038/379505a0}
+}
+
+@article{Refsgaard1996,
+  author = {Refsgaard, J. C. and Knudsen, J.},
+  title = {Operational Validation and Intercomparison of Different Types of Hydrological Models},
+  journal = {Water Resources Research},
+  year = {1996},
+  volume = {32},
+  pages = {2189--2202}
+}
+
+@article{Giorgi1999,
+  author = {Giorgi, F. and Mearns, L. O.},
+  title = {Introduction to Special Section: Regional Climate Modeling Revisited},
+  journal = {Journal of Geophysical Research: Atmospheres},
+  year = {1999},
+  volume = {104},
+  pages = {6335--6352}
+}
+
+@article{Legates1999,
+  author = {Legates, D. R. and McCabe, G. J.},
+  title = {Evaluating the Use of “Goodness-Of-Fit” Measures in Hydrologic and Hydroclimatic Model Validation},
+  journal = {Water Resources Research},
+  year = {1999},
+  volume = {35},
+  pages = {233--241}
+}
+
+@article{Trenberth1999,
+  author = {Trenberth, K. E.},
+  title = {Conceptual framework for changes of extremes of the hydrological cycle with climate change},
+  journal = {Climatic Change},
+  year = {1999},
+  volume = {42},
+  pages = {327--339},
+  doi = {10.1023/A:1005488920935}
+}
+
+@article{Giorgi2000,
+  author = {Giorgi, F. and Francisco, R.},
+  title = {Uncertainties in regional climate change prediction: A regional analysis of ensemble simulations with the HADCM2 coupled AOGCM},
+  journal = {Climate Dynamics},
+  year = {2000},
+  volume = {16},
+  pages = {169--182}
+}
+
+@article{Hsu2000,
+  author = {Hsu, M. H. and Chen, S. H. and Chang, T. J.},
+  title = {Inundation simulation for urban drainage basin with storm sewer system},
+  journal = {Journal of Hydrology},
+  year = {2000},
+  volume = {234},
+  pages = {21--37}
+}
+
+@article{Richardson2000,
+  author = {Richardson, S. D. and Reynolds, J. M.},
+  title = {An overview of glacial hazards in the Himalayas},
+  journal = {Quaternary International},
+  year = {2000},
+  volume = {65--66},
+  pages = {31--47}
+}
+
+@article{Vorosmarty2000,
+  author = {Vörösmarty, C. J. and Green, P. and Salisbury, J. and Lammers, R. B.},
+  title = {Global water resources: Vulnerability from climate change and population growth},
+  journal = {Science},
+  year = {2000},
+  volume = {289},
+  pages = {284--288},
+  doi = {10.1126/science.289.5477.284}
+}
+
+@article{Dai2002,
+  author = {Dai, A. and Trenberth, K.},
+  title = {Estimates of freshwater discharge from continents: Latitudinal and seasonal variations},
+  journal = {Journal of Hydrometeorology},
+  year = {2002},
+  volume = {3},
+  pages = {660--687}
+}
+
+@article{Doll2002,
+  author = {Döll, P. and Lehner, B.},
+  title = {Validation of a new global 30-min drainage direction map},
+  journal = {Journal of Hydrology},
+  year = {2002},
+  volume = {258},
+  pages = {214--231}
+}
+
+@article{Franks2002,
+  author = {Franks, S. W.},
+  title = {Identification of a change in climate state using regional flood data},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2002},
+  volume = {6},
+  pages = {11--16}
+}
+
+@article{Horritt2002,
+  author = {Horritt, M. S. and Bates, P. D.},
+  title = {Evaluation of 1D and 2D numerical models for predicting river flood inundation},
+  journal = {Journal of Hydrology},
+  year = {2002},
+  volume = {268},
+  pages = {87--99}
+}
+
+@article{Bocchiola2003,
+  author = {Bocchiola, D. and De Michele, C. and Rosso, R.},
+  title = {Review of recent advances in index flood estimation},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2003},
+  volume = {7},
+  pages = {283--296}
+}
+
+@article{Hisdal2003,
+  author = {Hisdal, H. and Tallaksen, L. M.},
+  title = {Estimation of regional meteorological and hydrological drought characteristics: A case study for Denmark},
+  journal = {Journal of Hydrology},
+  year = {2003},
+  volume = {281},
+  pages = {230--247}
+}
+
+@article{Lee2003,
+  author = {Lee, J. G. and Heaney, J. P.},
+  title = {Estimation of Urban Imperviousness and its Impacts on Storm Water Systems},
+  journal = {Journal of Water Resources Planning and Management},
+  year = {2003},
+  volume = {129},
+  pages = {419--426}
+}
+
+@article{Perrin2003,
+  author = {Perrin, C. and Michel, C. and Andréassian, V.},
+  title = {Improvement of a Parsimonious Model for Streamflow Simulation},
+  journal = {Journal of Hydrology},
+  year = {2003},
+  volume = {279},
+  pages = {275--289}
+}
+
+@article{Ponce2003,
+  author = {Ponce, V. M. and Taher-shamsi, A. and Shetty, A. V.},
+  title = {Dam-breach flood wave propagation using dimensionless parameters},
+  journal = {Journal of Hydraulic Engineering},
+  year = {2003},
+  volume = {129},
+  pages = {777--782}
+}
+
+@article{Barring2004,
+  author = {Bärring, L.},
+  title = {Scandinavian storminess since about 1800},
+  journal = {Geophysical Research Letters},
+  year = {2004},
+  volume = {31}
+}
+
+@article{Bates2004,
+  author = {Bates, P. D.},
+  title = {Remote sensing and flood inundation modelling},
+  journal = {Hydrological Processes},
+  year = {2004},
+  volume = {18},
+  pages = {2593--2597}
+}
+
+@article{Bradbrook2004,
+  author = {Bradbrook, K. F. and Lane, S. N. and Waller, S. G. and Bates, P. D.},
+  title = {Two dimensional diffusion wave modelling of flood inundation using a simplified channel representation},
+  journal = {International Journal of River Basin Management},
+  year = {2004},
+  volume = {2},
+  pages = {211--223}
+}
+
+@article{Andreadis2005,
+  author = {Andreadis, K. M. and Clark, E. A. and Wood, A. W. and Hamlet, A. F. and Lettenmaier, D. P.},
+  title = {Twentieth-century drought in the conterminous United States},
+  journal = {Journal of Hydrometeorology},
+  year = {2005},
+  volume = {6},
+  pages = {985--1001}
+}
+
+@article{FischerBruns2005,
+  author = {Fischer-Bruns, I. and von Storch, H. and González-Rouco, J. F. and Zorita, E.},
+  title = {Modelling the variability of midlatitude storm activity on decadal to century time scales},
+  journal = {Climate Dynamics},
+  year = {2005},
+  volume = {25},
+  pages = {461--476}
+}
+
+@article{Rao2005,
+  author = {Rao, P.},
+  title = {A parallel RMA2 model for simulating large-scale free surface flows},
+  journal = {Environmental Modelling \& Software},
+  year = {2005},
+  volume = {20},
+  pages = {47--53}
+}
+
+@article{Scott2005,
+  author = {Scott, K. M. and Vallance, J. W. and Kerle, N. and Luis Macías, J. and Strauch, W. and Devoli, G.},
+  title = {Catastrophic precipitation-triggered lahar at Casita volcano, Nicaragua: Occurrence, bulking and transformation},
+  journal = {Earth Surface Processes and Landforms},
+  year = {2005},
+  volume = {30},
+  pages = {59--79}
+}
+
+@article{Webster2005,
+  author = {Webster, P. J. and Holland, G. J. and Curry, J. A. and Chang, H.-R.},
+  title = {Changes in tropical cyclone number, duration, and intensity in a warming environment},
+  journal = {Science},
+  year = {2005},
+  volume = {309},
+  pages = {1844--1846},
+  doi = {10.1126/science.1116448}
+}
+
+@article{Burke2006,
+  author = {Burke, E. J. and Brown, S. J. and Christidis, N.},
+  title = {Modeling the recent evolution of global drought and projections for the twenty-first century with the Hadley Centre Climate Model},
+  journal = {Journal of Hydrometeorology},
+  year = {2006},
+  volume = {7},
+  pages = {1113--1125}
+}
+
+@article{Chin2006,
+  author = {Chin, A.},
+  title = {Urban transformation of river landscapes in a global context},
+  journal = {Geomorphology},
+  year = {2006},
+  volume = {79},
+  pages = {460--487}
+}
+
+@article{Dunning2006,
+  author = {Dunning, S. A. and Rosser, N. J. and Petley, D. N. and Massey, C. R.},
+  title = {Formation and failure of the Tsatichhu landslide dam, Bhutan},
+  journal = {Landslides},
+  year = {2006},
+  volume = {3},
+  pages = {107--113}
+}
+
+@article{Haeberli2006,
+  author = {Haeberli, W. and Hallet, B. and Arenson, L. and Elconin, R. and Humlum, O. and Kääb, A. and Kaufmann, V. and Ladanyi, B. and Matsuoka, N. and Springman, S. and Mühll, D. V.},
+  title = {Permafrost creep and rock glacier dynamics},
+  journal = {Permafrost and Periglacial Processes},
+  year = {2006},
+  volume = {17},
+  pages = {189--214}
+}
+
+@article{Betts2007,
+  author = {Betts, Richard A. and Boucher, Olivier and Collins, Matthew and Cox, Peter M. and Falloon, Peter D. and Gedney, Nicola and Hemming, Deborah L. and Huntingford, Chris and Jones, Chris D. and Sexton, David M. H. and Webb, Mark J.},
+  title = {Projected increase in continental runoff due to plant responses to increasing carbon dioxide},
+  journal = {Nature},
+  year = {2007},
+  volume = {448},
+  number = {7157},
+  pages = {1037--1041},
+  doi = {10.1038/nature06045}
+}
+
+@article{Brown2007,
+  author = {Brown, J. D. and Spencer, T. and Moeller, I.},
+  title = {Modeling storm surge flooding of an urban area with particular reference to modeling uncertainties: A case study of Canvey Island, United Kingdom},
+  journal = {Water Resources Research},
+  year = {2007},
+  volume = {43}
+}
+
+@article{Deque2007,
+  author = {Déqué, M.},
+  title = {Frequency of Precipitation and Temperature Extremes over France in an Anthropogenic Scenario: Model Results and Statistical Correction According to Observed Values},
+  journal = {Global and Planetary Change},
+  year = {2007},
+  volume = {57},
+  pages = {16--26}
+}
+
+@article{Farr2007,
+  author = {Farr, Tom G. and Rosen, Paul A. and Caro, Edward and Crippen, Robert and Duren, Riley and Hensley, Scott and Kobrick, Mike and Paller, Mimi and Rodriguez, Ernesto and Roth, Ladislav and Seal, David and Shaffer, Scott and Shimada, Joanne and Umland, Jeffrey and Werner, Marian and Oskin, Michael and Burbank, Douglas and Alsdorf, Douglas},
+  title = {The shuttle radar topography mission},
+  journal = {Reviews of Geophysics},
+  year = {2007},
+  volume = {45},
+  doi = {10.1029/2005RG000183}
+}
+
+@article{Holland2007,
+  author = {Holland, G. J. and Webster, P. J.},
+  title = {Heightened tropical cyclone activity in the North Atlantic: Natural variability or climate trend?},
+  journal = {Philosophical Transactions of the Royal Society A},
+  year = {2007},
+  volume = {365},
+  pages = {2695--2716}
+}
+
+@article{Alo2008,
+  author = {Alo, C. A. and Wang, G. L.},
+  title = {Potential future changes of the terrestrial ecosystem based on climate projections by eight general circulation models},
+  journal = {Journal of Geophysical Research},
+  year = {2008},
+  volume = {113}
+}
+
+@article{Birkmann2008,
+  author = {Birkmann, J. and Fernando, N.},
+  title = {Measuring revealed and emergent vulnerabilities of coastal communities to tsunami in Sri Lanka},
+  journal = {Disasters},
+  year = {2008},
+  volume = {32},
+  pages = {82--105}
+}
+
+@article{Burke2008,
+  author = {Burke, E. J. and Brown, S. J.},
+  title = {Evaluating uncertainties in the projection of future drought},
+  journal = {Journal of Hydrometeorology},
+  year = {2008},
+  volume = {9},
+  pages = {292--299}
+}
+
+@article{Mykhnenko2008,
+  author = {Mykhnenko, V. and Turok, I.},
+  title = {East European Cities — Patterns of Growth and Decline, 1960–2005},
+  journal = {International Planning Studies},
+  year = {2008},
+  volume = {13},
+  pages = {311--342}
+}
+
+@article{Pappenberger2008,
+  author = {Pappenberger, F. and Bartholmes, J. and Thielen, J. and Cloke, H. L. and Buizza, R. and de Roo, A.},
+  title = {New dimensions in early flood warning across the globe using grand-ensemble weather predictions},
+  journal = {Geophysical Research Letters},
+  year = {2008},
+  volume = {35},
+  doi = {10.1029/2008GL033837}
+}
+
+@article{Sheffield2008,
+  author = {Sheffield, J. and Wood, E. F.},
+  title = {Projected changes in drought occurrence under future global warming from multi-model, multi-scenario, IPCC AR4 simulations},
+  journal = {Climate Dynamics},
+  year = {2008},
+  volume = {13},
+  pages = {79--105}
+}
+
+@article{Yimer2008,
+  author = {Yimer, F. and Messing, I. and Ledin, S. and Abdelkadir, A.},
+  title = {Effects of different land use types on infiltration capacity in a catchment in the highlands of Ethiopia},
+  journal = {Soil Use and Management},
+  year = {2008},
+  volume = {24},
+  pages = {344--349}
+}
+
+@article{Zevenbergen2008,
+  author = {Zevenbergen, C. and Veerbeek, W. and Gersonius, B. and Herk, S. V.},
+  title = {Challenges in urban flood management: travelling across spatial and temporal scales},
+  journal = {Journal of Flood Risk Management},
+  year = {2008},
+  volume = {1},
+  pages = {81--88}
+}
+
+@article{Allan2009,
+  author = {Allan, R. and Tett, S. and Alexander, L.},
+  title = {Fluctuations in autumn-winter severe storms over the British Isles: 1920 to present},
+  journal = {International Journal of Climatology},
+  year = {2009},
+  volume = {29},
+  pages = {357--371}
+}
+
+@article{Apel2009,
+  author = {Apel, H. and Aronica, G. T. and Kreibich, H. and Thieken, A. H.},
+  title = {Flood risk analyses—How detailed do we need to be?},
+  journal = {Natural Hazards},
+  year = {2009},
+  volume = {49},
+  pages = {79--98},
+  doi = {10.1007/s11069-008-9277-8}
+}
+
+@article{Barring2009,
+  author = {Bärring, L. and Fortuniak, K.},
+  title = {Multi-indices analysis of southern Scandinavian storminess 1780–2005 and links to interdecadal variations in the NW Europe–North Sea region},
+  journal = {International Journal of Climatology},
+  year = {2009},
+  volume = {29},
+  pages = {373--384}
+}
+
+@article{DiBaldassarre2009,
+  author = {Di Baldassarre, G. and Montanari, A.},
+  title = {Uncertainty in river discharge observations: A quantitative analysis},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2009},
+  volume = {13},
+  pages = {913--921}
+}
+
+@article{Gupta2009,
+  author = {Gupta, Hoshin V. and Kling, Harald and Yilmaz, Koray K. and Martinez, Guillermo F.},
+  title = {Decomposition of the Mean Squared Error and {NSE} Performance Criteria: Implications for Improving Hydrological Modelling},
+  journal = {Journal of Hydrology},
+  year = {2009},
+  volume = {377},
+  pages = {80--91},
+  doi = {10.1016/j.jhydrol.2009.08.003}
+}
+
+@article{Huffman2009,
+  author = {Huffman, G. J. and Adler, R. F. and Bolvin, D. T. and Gu, G.},
+  title = {Improving the global precipitation record: GPCP Version 2.1},
+  journal = {Geophysical Research Letters},
+  year = {2009},
+  volume = {36}
+}
+
+@article{Korup2009,
+  author = {Korup, O. and Clague, J. J.},
+  title = {Natural hazards, extreme events, and mountain topography},
+  journal = {Quaternary Science Reviews},
+  year = {2009},
+  volume = {28},
+  pages = {977--990}
+}
+
+@article{Michelangeli2009,
+  author = {Michelangeli, P. and Vrac, M. and Loukos, H.},
+  title = {Probabilistic Downscaling Approaches: Application to Wind Cumulative Distribution Functions},
+  journal = {Geophysical Research Letters},
+  year = {2009},
+  volume = {36}
+}
+
+@article{Thielen2009,
+  author = {Thielen, J. and Bartholmes, J. and Ramos, M. H. and de Roo, A.},
+  title = {The European flood alert system—Part 1: Concept and development},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2009},
+  volume = {13},
+  pages = {125--140}
+}
+
+@article{Adhikari2010,
+  author = {Adhikari, P. and Hong, Y. and Douglas, K. R. and Kirschbaum, D. B. and Gourley, J. and Adler, R. and Brakenridge, G. R.},
+  title = {A digitized global flood inventory (1998–2008): Compilation and preliminary results},
+  journal = {Natural Hazards},
+  year = {2010},
+  volume = {55},
+  pages = {405--422},
+  doi = {10.1007/s11069-010-9537-2}
+}
+
+@article{Alkama2010,
+  author = {Alkama, R. and Kageyama, M. and Ramstein, G.},
+  title = {Relative contributions of climate change, stomatal closure, and leaf area index changes to 20th and 21st century runoff change: A modelling approach using the Organizing Carbon and Hydrology in Dynamic Ecosystems (ORCHIDEE) land surface model},
+  journal = {Journal of Geophysical Research},
+  year = {2010},
+  volume = {115}
+}
+
+@article{Bates2010,
+  author = {Bates, P. D. and Horritt, M. S. and Fewtrell, T. J.},
+  title = {A simple inertial formulation of the shallow water equations for efficient two-dimensional flood inundation modelling},
+  journal = {Journal of Hydrology},
+  year = {2010},
+  volume = {387},
+  pages = {33--45},
+  doi = {10.1016/j.jhydrol.2010.03.027}
+}
+
+@article{Cao2010,
+  author = {Cao, L. and Bala, G. and Caldeira, K. and Nemani, R. and Ban-Weiss, G.},
+  title = {Importance of carbon dioxide physiological forcing to future climate change},
+  journal = {Proceedings of the National Academy of Sciences},
+  year = {2010},
+  volume = {107},
+  pages = {9513--9518}
+}
+
+@article{Carrivick2010,
+  author = {Carrivick, J. L.},
+  title = {Dam break – Outburst flood propagation and transient hydraulics: A geosciences perspective},
+  journal = {Journal of Hydrology},
+  year = {2010},
+  volume = {380},
+  pages = {338--355}
+}
+
+@article{Cayan2010,
+  author = {Cayan, Daniel R. and Das, Tapash and Pierce, David W. and Barnett, Tim P. and Tyree, Mary and Gershunov, Alexander},
+  title = {Future dryness in the southwest US and the hydrology of the early 21st century drought},
+  journal = {Proceedings of the National Academy of Sciences},
+  year = {2010},
+  volume = {107},
+  number = {50},
+  pages = {21271--21276},
+  doi = {10.1073/pnas.0912391107}
+}
+
+@article{Cui2010,
+  author = {Cui, P. and Dang, C. and Cheng, Z. and Scott, K. M.},
+  title = {Debris flows resulting from glacial-lake outburst floods in Tibet, China},
+  journal = {Physical Geography},
+  year = {2010},
+  volume = {31},
+  pages = {508--527}
+}
+
+@article{DiBaldassarre2010,
+  author = {Di Baldassarre, Giuliano and Montanari, Alberto and Lins, Harry and Koutsoyiannis, Demetris and Brandimarte, Luigia and Blöschl, Günter},
+  title = {Flood fatalities in Africa: From diagnosis to mitigation},
+  journal = {Geophysical Research Letters},
+  year = {2010},
+  volume = {37},
+  pages = {L22402},
+  doi = {10.1029/2010GL045467}
+}
+
+@article{Ernst2010,
+  author = {Ernst, J. and Dewals, B. J. and Detrembleur, S. and Archambeau, P. and Erpicum, S. and Pirotton, M.},
+  title = {Micro-scale flood risk analysis based on detailed 2D hydraulic modelling and high resolution geographic data},
+  journal = {Natural Hazards},
+  year = {2010},
+  volume = {55},
+  pages = {181--209}
+}
+
+@article{Liang2010,
+  author = {Liang, Q.},
+  title = {Flood Simulation Using a Well-Balanced Shallow Flow Model},
+  journal = {Journal of Hydraulic Engineering},
+  year = {2010},
+  volume = {136},
+  pages = {669--675}
+}
+
+@article{Maraun2010,
+  author = {Maraun, Douglas and Wetterhall, Fredrik and Ireson, Ana M. and Chandler, Richard E. and Kendon, Elizabeth J. and Widmann, Martin and Brienen, Susanne and Rust, Henning W. and Sauter, Thordis and Themeßl, Matthias and Venema, Victor K. C. and Chun, Kwok-Pan and Goodess, Clare M. and Jones, Richard G. and Onof, Christian and Vrac, Mathieu and Thiele-Eich, Ines},
+  title = {Precipitation Downscaling under Climate Change: Recent Developments to Bridge the Gap between Dynamical Models and the End User},
+  journal = {Reviews of Geophysics},
+  year = {2010},
+  volume = {48},
+  doi = {10.1029/2009RG000314}
+}
+
+@article{Moss2010,
+  author = {Moss, Richard H. and Edmonds, Jae A. and Hibbard, Kathy A. and Manning, Martin R. and Rose, Steven K. and van Vuuren, Detlef P. and Carter, Timothy R. and Emori, Seita and Kainuma, Mikiko and Kram, Tom and Meehl, Gerald A. and Mitchell, John F. B. and Nakicenovic, Nebojsa and Riahi, Keywan and Smith, Steven J. and Stouffer, Ronald J. and Thomson, Allison M. and Weyant, John P. and Wilbanks, Thomas J.},
+  title = {The next generation of scenarios for climate change research and assessment},
+  journal = {Nature},
+  year = {2010},
+  volume = {463},
+  number = {7282},
+  pages = {747--756},
+  doi = {10.1038/nature08823}
+}
+
+@article{Piani2010,
+  author = {Piani, Claudio and Haerter, Jan O. and Coppola, Erika},
+  title = {Statistical Bias Correction of Global Simulated Daily Precipitation and Temperature for the Application of Hydrological Climate Change Impact Studies},
+  journal = {Journal of Hydrology},
+  year = {2010},
+  volume = {395},
+  pages = {199--215},
+  doi = {10.1016/j.jhydrol.2010.10.024}
+}
+
+@article{Samaniego2010,
+  author = {Samaniego, L. and Kumar, R. and Attinger, S.},
+  title = {Multiscale parameter regionalization of a grid-based hydrologic model at the mesoscale},
+  journal = {Water Resources Research},
+  year = {2010},
+  volume = {46}
+}
+
+@article{Seneviratne2010,
+  author = {Seneviratne, Sonia I. and Corti, Thierry and Davin, Edouard L. and Hirschi, Martin and Jaeger, Eric B. and Lehner, Irene and Orlowsky, Boris and Teuling, Adriaan J.},
+  title = {Investigating soil moisture–climate interactions in a changing climate: A review},
+  journal = {Earth-Science Reviews},
+  year = {2010},
+  volume = {99},
+  pages = {125--161},
+  doi = {10.1016/j.earscirev.2010.02.004}
+}
+
+@article{VanDerKnijff2010,
+  author = {Van Der Knijff, J. M. and Younis, J. and De Roo, A. P. J.},
+  title = {LISFLOOD: A GIS-based distributed model for river basin scale water balance and flood simulation},
+  journal = {International Journal of Geographical Information Science},
+  year = {2010},
+  volume = {24},
+  pages = {189--212}
+}
+
+@article{Ward2010,
+  author = {Ward, P. J. and Beets, W. and Bouwer, L. M. and Aerts, J. C. J. H. and Renssen, H.},
+  title = {Sensitivity of river discharge to ENSO},
+  journal = {Geophysical Research Letters},
+  year = {2010},
+  volume = {37}
+}
+
+@article{Watanabe2010,
+  author = {Watanabe, Masahiro and Suzuki, Tatsuo and O'ishi, Ryouta and Komuro, Yoshiki and Watanabe, Seiji and Emori, Seita and Takemura, Toshihiko and Chikira, Minoru and Ogura, Tomoo and Sekiguchi, Miho and Takata, Kumiko and Yamazaki, Dai and Yokohata, Tokuta and Nozawa, Toru and Hasumi, Hiroyasu and Tatebe, Hiroaki and Kimoto, Masahide},
+  title = {Improved Climate Simulation by {MIROC5}: Mean States, Variability, and Climate Sensitivity},
+  journal = {Journal of Climate},
+  year = {2010},
+  volume = {23},
+  number = {23},
+  pages = {6312--6335},
+  doi = {10.1175/2010JCLI3679.1}
+}
+
+@article{Collins2011,
+  author = {Collins, W. J. and Bellouin, N. and Doutriaux-Boucher, M. and Gedney, N. and Halloran, P. and Hinton, T.},
+  title = {Development and Evaluation of an Earth-System Model—Hadgem2},
+  journal = {Geoscientific Model Development},
+  year = {2011},
+  volume = {4},
+  pages = {1051--1075}
+}
+
+@article{CorzoPerez2011,
+  author = {Corzo Perez, G. A. and van Huijgevoort, M. H. J. and Voß, F. and van Lanen, H. A. J.},
+  title = {On the spatio-temporal analysis of hydrological droughts from global hydrological models},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2011},
+  volume = {15},
+  pages = {2963--2978}
+}
+
+@article{Dee2011,
+  author = {Dee, D. P. and Uppala, S. M. and Simmons, A. J. and Berrisford, P. and Poli, P. and Kobayashi, S. and Andrae, U. and Balmaseda, M. A. and Balsamo, G. and Bauer, P. and Bechtold, P. and Beljaars, A. C. M. and van de Berg, L. and Bidlot, J. and Bormann, N. and Delsol, C. and Dragani, R. and Fuentes, M. and Geer, A. J. and Haimberger, L. and Healy, S. B. and Hersbach, H. and Hólm, E. V. and Isaksen, L. and Kållberg, P. and Köhler, M. and Matricardi, M. and McNally, A. P. and Monge-Sanz, B. M. and Morcrette, J.-J. and Park, B.-K. and Peubey, C. and de Rosnay, P. and Tavolato, C. and Thépaut, J.-N. and Vitart, F.},
+  title = {The {ERA-Interim} reanalysis: Configuration and performance of the data assimilation system},
+  journal = {Quarterly Journal of the Royal Meteorological Society},
+  year = {2011},
+  volume = {137},
+  number = {656},
+  pages = {553--597},
+  doi = {10.1002/qj.828}
+}
+
+@article{Dottori2011,
+  author = {Dottori, F. and Todini, E.},
+  title = {Developments of a flood inundation model based on the cellular automata approach: Testing different methods to improve model performance},
+  journal = {Physics and Chemistry of the Earth, Parts A/B/C},
+  year = {2011},
+  volume = {36},
+  pages = {266--280}
+}
+
+@article{Gosling2011,
+  author = {Gosling, S. N. and Arnell, N. W.},
+  title = {Simulating current global river runoff with a global hydrological model: Model revisions, validation, and sensitivity analysis},
+  journal = {Hydrological Processes},
+  year = {2011},
+  volume = {25},
+  pages = {1129--1145}
+}
+
+@article{Haddeland2011,
+  author = {Haddeland, Ingjerd and Clark, Douglas B. and Franssen, Wietse and Ludwig, Fulco and Voß, Frank and Arnell, Nigel W. and Bertrand, Nathalie and Best, Martin and Folwell, Sarah and Gerten, Dieter and Gomes, Sandra and Gosling, Simon N. and Hagemann, Stefan and Hanasaki, Naota and Harding, Richard and Heinke, Jens and Kabat, Pavel and Koirala, Sujan and Oki, Taikan and Polcher, Jan and Stacke, Tobias and Viterbo, Pedro and Weedon, Graham P. and Yeh, Pat J.-F.},
+  title = {Multimodel estimate of the global terrestrial water balance: Setup and first results},
+  journal = {Journal of Hydrometeorology},
+  year = {2011},
+  volume = {12},
+  number = {5},
+  pages = {869--884},
+  doi = {10.1175/2011JHM1324.1}
+}
+
+@article{Kirono2011,
+  author = {Kirono, D. G. C. and Kent, D. M. and Hennessy, K. J. and Mpelasoka, F.},
+  title = {Characteristics of Australian droughts under enhanced greenhouse conditions: Results from 14 global climate models},
+  journal = {Journal of Arid Environments},
+  year = {2011},
+  volume = {75},
+  pages = {566--575}
+}
+
+@article{vanVuuren2011,
+  author = {van Vuuren, Detlef P. and Edmonds, Jae and Kainuma, Mikiko and Riahi, Keywan and Thomson, Allison and Hibbard, Kathy and Hurtt, George C. and Kram, Tom and Krey, Volker and Lamarque, Jean-Francois and Masui, Toshihiko and Meinshausen, Malte and Nakicenovic, Nebojsa and Smith, Steven J. and Rose, Steven K.},
+  title = {The representative concentration pathways: An overview},
+  journal = {Climatic Change},
+  year = {2011},
+  volume = {109},
+  pages = {5--31},
+  doi = {10.1007/s10584-011-0148-z}
+}
+
+@article{Wood2011,
+  author = {Wood, Eric F. and Roundy, Joshua K. and Troy, Tara J. and van Beek, Ludovicus P. H. and Bierkens, Marc F. P. and Blyth, Eleanor and de Roo, Ad and Döll, Petra and Ek, Michael and Famiglietti, James and Gochis, David and van de Giesen, Nick and Houser, Paul and Jaffé, Peter R. and Kollet, Stefan and Lehner, Bernhard and Lettenmaier, Dennis P. and Peters-Lidard, Christa and Sivapalan, Murugesu and Sheffield, Justin and Wade, Andrew and Whitehead, Paul},
+  title = {Hyperresolution global land surface modeling: Meeting a grand challenge for monitoring Earth’s terrestrial water},
+  journal = {Water Resources Research},
+  year = {2011},
+  volume = {47},
+  doi = {10.1029/2010WR010090}
+}
+
+@article{Yamazaki2011,
+  author = {Yamazaki, D. and Kanae, S. and Kim, H. and Oki, T.},
+  title = {A physically based description of floodplain inundation dynamics in a global river routing model},
+  journal = {Water Resources Research},
+  year = {2011},
+  volume = {47}
+}
+
+@article{Abdullah2012,
+  author = {Abdullah, A. F. and Vojinovic, Z. and Price, R. K. and Aziz, N. A. A.},
+  title = {Improved methodology for processing raw LiDAR data to support urban flood modelling-accounting for elevated roads and bridges},
+  journal = {Journal of Hydroinformatics},
+  year = {2012},
+  volume = {14},
+  pages = {253--269}
+}
+
+@article{Almeida2012,
+  author = {Almeida, G. A. M. and Bates, P. and Freer, J. E. and Souvignet, M.},
+  title = {Improving the stability of a simple formulation of the shallow water equations for 2-D flood modeling},
+  journal = {Water Resources Research},
+  year = {2012},
+  volume = {48}
+}
+
+@article{Ariff2012,
+  author = {Ariff, N. M. and Jemain, A. A. and Ibrahim, K. and Wan Zin, W. Z.},
+  title = {{IDF} relationships using bivariate copula for storm events in Peninsular Malaysia},
+  journal = {Journal of Hydrology},
+  year = {2012},
+  volume = {470--471},
+  pages = {158--171}
+}
+
+@article{Chen2012,
+  author = {Chen, A. S. and Evans, B. and Djordjević, S. and Savić, D. A.},
+  title = {A coarse-grid approach to representing building blockage effects in 2D urban flood modelling},
+  journal = {Journal of Hydrology},
+  year = {2012},
+  volume = {426--427},
+  pages = {1--16}
+}
+
+@article{Dunne2012,
+  author = {Dunne, J. P. and John, J. G. and Adcroft, A. J. and Griffies, S. M. and Hallberg, R. W. and Shevliakova, E.},
+  title = {GFDL’s ESM2 Global Coupled Climate-Carbon Earth System Models. Part I: Physical Formulation and Baseline Simulation Characteristics},
+  journal = {Journal of Climate},
+  year = {2012},
+  volume = {25},
+  pages = {6646--6665}
+}
+
+@article{Ehret2012,
+  author = {Ehret, U. and Zehe, E. and Wulfmeyer, V. and Warrach-Sagi, K. and Liebert, J.},
+  title = {HESS Opinions “Should We Apply Bias Correction to Global and Regional Climate Model Data?”},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2012},
+  volume = {16},
+  pages = {3391--3404}
+}
+
+@article{Gleyzes2012,
+  author = {Gleyzes, M. A. and Perret, L. and Kubik, P.},
+  title = {Pleiades system architecture and main performances},
+  journal = {International Archives of the Photogrammetry, Remote Sensing and Spatial Information Sciences},
+  year = {2012},
+  volume = {XXXIX},
+  pages = {537--542}
+}
+
+@article{Gruber2012,
+  author = {Gruber, S.},
+  title = {Derivation and analysis of a high-resolution estimate of global permafrost zonation},
+  journal = {The Cryosphere},
+  year = {2012},
+  volume = {6},
+  pages = {221--233}
+}
+
+@article{Gudmundsson2012,
+  author = {Gudmundsson, L. and Wagener, T. and Tallaksen, L. M. and Engeland, K.},
+  title = {Evaluation of nine large-scale hydrological models with respect to the seasonal runoff climatology in Europe},
+  journal = {Water Resources Research},
+  year = {2012},
+  volume = {48}
+}
+
+@article{Jongman2012,
+  author = {Jongman, B. and Ward, P. J. and Aerts, J. C. J. H.},
+  title = {Global exposure to river and coastal flooding: Long term trends and changes},
+  journal = {Global Environmental Change},
+  year = {2012},
+  volume = {22},
+  pages = {823--835}
+}
+
+@article{Kron2012,
+  author = {Kron, W. and Steuer, M. and Löw, P. and Wirtz, A.},
+  title = {How to deal properly with a natural catastrophe database—Analysis of flood losses},
+  journal = {Natural Hazards and Earth System Sciences},
+  year = {2012},
+  volume = {12},
+  pages = {535--550}
+}
+
+@article{Lindell2012,
+  author = {Lindell, M. K. and Perry, R. W.},
+  title = {The protective action decision model: theoretical modifications and additional evidence},
+  journal = {Risk Analysis},
+  year = {2012},
+  volume = {32},
+  pages = {616--632}
+}
+
+@article{LloydHughes2012,
+  author = {Lloyd-Hughes, B. and Shaffrey, L. C. and Vidale, P. L. and Arnell, N. W.},
+  title = {An evaluation of the spatiotemporal structure of large-scale European drought within the HiGEM climate model},
+  journal = {International Journal of Climatology},
+  year = {2012},
+  volume = {33},
+  pages = {2024--2035}
+}
+
+@article{Nikulin2012,
+  author = {Nikulin, Grigory and Jones, Colin and Giorgi, Filippo and Asrar, Ghassem and Büchner, Matthias and Cerezo-Mota, Ruth and Christensen, Ole Bøssing and Déqué, Michel and Fernandez, Jesus and Hänsler, Andreas and van Meijgaard, Erik and Samuelsson, Patrick and Sylla, Mouhamadou Bamba and Sushama, Laxmi},
+  title = {Precipitation Climatology in an Ensemble of Cordex-Africa Regional Climate Simulations},
+  journal = {Journal of Climate},
+  year = {2012},
+  volume = {25},
+  pages = {6057--6078},
+  doi = {10.1175/JCLI-D-11-00375.1}
+}
+
+@article{Orlowsky2012,
+  author = {Orlowsky, B. and Seneviratne, S. I.},
+  title = {Elusive drought: Uncertainty in observed trends and short- and long-term CMIP5 projections},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2012},
+  volume = {9},
+  pages = {13773--13803}
+}
+
+@article{Taylor2012,
+  author = {Taylor, C. M. and de Jeu, R. A. M. and Guichard, F. and Harris, P. P. and Dorigo, W. A.},
+  title = {Afternoon rain more likely over drier soils},
+  journal = {Nature},
+  year = {2012},
+  volume = {489},
+  pages = {423--426},
+  doi = {10.1038/nature11377}
+}
+
+@article{Teutschbein2012,
+  author = {Teutschbein, C. and Seibert, J.},
+  title = {Bias Correction of Regional Climate Model Simulations for Hydrological Climate-Change Impact Studies},
+  journal = {Journal of Hydrology},
+  year = {2012},
+  volume = {456},
+  pages = {12--29}
+}
+
+@article{Vrac2012,
+  author = {Vrac, Mathieu and Drobinski, Philippe and Merlo, Alessandra and Herrmann, Marine and Lavaysse, Christophe and Li, Li and Somot, Samuel},
+  title = {Dynamical and Statistical Downscaling of the French Mediterranean Climate: Uncertainty Assessment},
+  journal = {Natural Hazards and Earth System Sciences},
+  year = {2012},
+  volume = {12},
+  pages = {2769--2784},
+  doi = {10.5194/nhess-12-2769-2012}
+}
+
+@article{Wang2012,
+  author = {Wang, K. and Dickinson, R. E.},
+  title = {A review of global terrestrial evapotranspiration: Observation, modeling, climatology, and climatic variability},
+  journal = {Reviews of Geophysics},
+  year = {2012},
+  volume = {50}
+}
+
+@article{Zaninetti2012,
+  author = {Zaninetti, J.-M. and Colten, C. E.},
+  title = {Shrinking New Orleans: Post-Katrina Population Adjustments},
+  journal = {Urban Geography},
+  year = {2012},
+  volume = {33},
+  pages = {675--699}
+}
+
+@article{Alfieri2013,
+  author = {Alfieri, L. and Burek, P. and Dutra, E. and Krzeminski, B. and Muraro, D. and Thielen, J. and Pappenberger, F.},
+  title = {{GloFAS}—Global ensemble streamflow forecasting and flood early warning},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2013},
+  volume = {17},
+  pages = {1161--1175},
+  doi = {10.5194/hess-17-1161-2013}
+}
+
+@article{Alfieri2013_Wing,
+  author = {Alfieri, L. and Salamon, P. and Bianchi, A. and Neal, J. and Bates, P. and Feyen, L.},
+  title = {Advances in pan-European flood hazard mapping},
+  journal = {Hydrological Processes},
+  year = {2013},
+  volume = {28},
+  pages = {4067--4077}
+}
+
+@article{Almeida2013,
+  author = {Almeida, G. A. M. and Bates, P.},
+  title = {Applicability of the local inertial approximation of the shallow water equations to flood modeling},
+  journal = {Water Resources Research},
+  year = {2013},
+  volume = {49},
+  pages = {4833--4844}
+}
+
+@article{Andreadis2013,
+  author = {Andreadis, K. M. and Schumann, G. J.-P. and Pavelsky, T.},
+  title = {A simple global river bankfull width and depth database},
+  journal = {Water Resources Research},
+  year = {2013},
+  volume = {49},
+  pages = {7164--7168}
+}
+
+@article{Bentsen2013,
+  author = {Bentsen, M. and Bethke, I. and Debernard, J. B. and Iversen, T. and Kirkevåg, A. and Seland, Ø.},
+  title = {The Norwegian Earth System Model, Noresm1-M—Part 1: Description and Basic Evaluation of the Physical Climate},
+  journal = {Geoscientific Model Development},
+  year = {2013},
+  volume = {6},
+  pages = {687--720}
+}
+
+@article{Braman2013,
+  author = {Braman, L. M. and van Aalst, M. K. and Mason, S. J. and Suarez, P. and Ait-Chellouche, Y. and Tall, A.},
+  title = {Climate forecasts in disaster management: Red Cross flood operations in West Africa, 2008},
+  journal = {Disasters},
+  year = {2013},
+  volume = {37},
+  pages = {144--164}
+}
+
+@article{Dai2013,
+  author = {Dai, A.},
+  title = {Increasing drought under global warming in observations and models},
+  journal = {Nature Climate Change},
+  year = {2013},
+  volume = {3},
+  pages = {52--58},
+  doi = {10.1038/nclimate1633}
+}
+
+@article{Dufresne2013,
+  author = {Dufresne, J. and Foujols, M. and Denvil, S. and Caubel, A. and Marti, O. and Aumont, O.},
+  title = {Climate Change Projections Using the IPSL-CM5 Earth System Model: From CMIP3 to Cmip5},
+  journal = {Climate Dynamics},
+  year = {2013},
+  volume = {40},
+  pages = {2123--2165}
+}
+
+@article{Ekstrom2013,
+  author = {Ekström, G. and Stark, C. P.},
+  title = {Simple scaling of catastrophic landslide dynamics},
+  journal = {Science},
+  year = {2013},
+  volume = {339},
+  pages = {1416--1419},
+  doi = {10.1126/science.1232887}
+}
+
+@article{Fletcher2013,
+  author = {Fletcher, T. D. and Andrieu, H. and Hamel, P.},
+  title = {Understanding, management and modelling of urban hydrology and its consequences for receiving waters: A state of the art},
+  journal = {Advances in Water Resources},
+  year = {2013},
+  volume = {51},
+  pages = {261--279}
+}
+
+@article{Fundel2013,
+  author = {Fundel, F. and Jörg-Hess, S. and Zappa, M.},
+  title = {Monthly hydrometeorological ensemble prediction of streamflow droughts and corresponding drought indices},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2013},
+  volume = {17},
+  pages = {395--407}
+}
+
+@article{Gale2013,
+  author = {Gale, E. L. and Saunders, M. A.},
+  title = {The 2011 Thailand flood: Climate causes and return periods},
+  journal = {Weather},
+  year = {2013},
+  volume = {68},
+  pages = {233--237}
+}
+
+@article{GovindhaRaj2013,
+  author = {Govindha Raj, B. K. and Kumar, V. K. and R. S.N.},
+  title = {Remote sensing-based inventory of glacial lakes in Sikkim Himalaya: Semi-automated approach using satellite data},
+  journal = {Geomatics, Natural Hazards and Risk},
+  year = {2013},
+  volume = {4},
+  pages = {241--253}
+}
+
+@article{Hempel2013,
+  author = {Hempel, S. and Frieler, K. and Warszawski, L. and Schewe, J. and Piontek, F.},
+  title = {A trend-preserving bias correction: The {ISI-MIP} approach},
+  journal = {Earth System Dynamics},
+  year = {2013},
+  volume = {4},
+  pages = {49--92},
+  doi = {10.5194/esd-4-219-2013}
+}
+
+@article{Hirabayashi2013,
+  author = {Hirabayashi, Yukiko and Mahendran, Roobavannan and Koirala, Sujan and Konoshima, Lisako and Yamazaki, Dai and Watanabe, Satoshi and Kim, Hyungjun and Kanae, Shinjiro},
+  title = {Global flood risk under climate change},
+  journal = {Nature Climate Change},
+  year = {2013},
+  volume = {3},
+  number = {9},
+  pages = {816--821},
+  doi = {10.1038/nclimate1911}
+}
+
+@article{LloydHughes2013,
+  author = {Lloyd-Hughes, B.},
+  title = {The impracticality of a universal drought definition},
+  journal = {Theoretical and Applied Climatology},
+  year = {2013},
+  volume = {117},
+  pages = {607--611}
+}
+
+@article{Rauthe2013,
+  author = {Rauthe, Monika and Steiner, Heike and Riediger, Uta and Mazurkiewicz, Anna and Gratzki, Annegret},
+  title = {A central European precipitation climatology–part i: generation and validation of a high-resolution gridded daily data set (hyras)},
+  journal = {Meteorologische Zeitschrift},
+  year = {2013},
+  volume = {22},
+  pages = {235--256},
+  doi = {10.1127/0941-2948/2013/0436}
+}
+
+@article{Schumann2013,
+  author = {Schumann, Guy J.-P. and Neal, Jeffrey C. and Voisin, Nathalie and Andreadis, Konstantinos M. and Pappenberger, Florian and Phanthuwongpakdee, Narumol and Hall, Aric C. and Bates, Paul D.},
+  title = {A first large-scale flood inundation forecasting model},
+  journal = {Water Resources Research},
+  year = {2013},
+  volume = {49},
+  pages = {6248--6257},
+  doi = {10.1002/wrcr.20521}
+}
+
+@article{Wada2013,
+  author = {Wada, Yoshihide and Wisser, Dominik and Eisner, Stephanie and Flörke, Martina and Gerten, Dieter and Haddeland, Ingjerd and Hanasaki, Naota and Masaki, Yoshimitsu and Portmann, Felix T. and Stacke, Tobias and Tessler, Z. D. and Schewe, Jacob and Biemans, Hester},
+  title = {Multimodel projections and uncertainties of irrigation water demand under climate change},
+  journal = {Geophysical Research Letters},
+  year = {2013},
+  doi = {10.1002/grl.50686}
+}
+
+@article{Ward2013,
+  author = {Ward, Philip J. and Jongman, Brenden and Weiland, Frederiek S. and Bouwman, Arno and van Beek, Rens and Bierkens, Marc F. P. and Ligtvoet, Willem and Winsemius, Hessel C.},
+  title = {Assessing flood risk at the global scale: Model setup, results, and sensitivity},
+  journal = {Environmental Research Letters},
+  year = {2013},
+  volume = {8},
+  number = {4},
+  pages = {044019},
+  doi = {10.1088/1748-9326/8/4/044019}
+}
+
+@article{Warszawski2013,
+  author = {Warszawski, Lila and Frieler, Katja and Huber, Veronika and Piontek, Franziska and Serdeczny, Olivia and Schewe, Jacob},
+  title = {The Inter-Sectoral Impact Model Intercomparison Project ({ISI-MIP}): Project framework},
+  journal = {Proceedings of the National Academy of Sciences},
+  year = {2013},
+  volume = {111},
+  number = {9},
+  pages = {3228--3232},
+  doi = {10.1073/pnas.1312330110}
+}
+
+@article{Balsamo2014,
+  author = {Balsamo, G. and Agustì-Panareda, A. and Albergel, C.},
+  title = {Representing the Earth surfaces in the Integrated Forecasting System: Recent advances and future challenges},
+  journal = {Technical Report},
+  year = {2014}
+}
+
+@article{Ceola2014,
+  author = {Ceola, S. and Laio, F. and Montanari, A.},
+  title = {Satellite nighttime lights reveal increasing human exposure to floods worldwide},
+  journal = {Geophysical Research Letters},
+  year = {2014},
+  pages = {7184--7190}
+}
+
+@article{Kotlarski2014,
+  author = {Kotlarski, Sven and Keuler, Klaus and Christensen, Ole Bøssing and Colette, Augustin and Déqué, Michel and Gobiet, Andreas and Goergen, Klaus and Jacob, Daniela and Lüthi, Daniel and van Meijgaard, Erik and Nikulin, Grigory and Schär, Christoph and Teichmann, Claas and Vautard, Robert and Warrach-Sagi, Kirsten and Wulfmeyer, Volker},
+  title = {Regional Climate Modeling on European Scales: A Joint Standard Evaluation of the {EURO-CORDEX} RCM Ensemble},
+  journal = {Geoscientific Model Development},
+  year = {2014},
+  volume = {7},
+  pages = {1297--1333},
+  doi = {10.5194/gmd-7-1297-2014}
+}
+
+@article{Rivera2014,
+  author = {Rivera, C. and Wamsler, C.},
+  title = {Integrating climate change adaptation, disaster risk reduction and urban planning: A review of Nicaraguan policies and regulations},
+  journal = {International Journal of Disaster Risk Reduction},
+  year = {2014},
+  volume = {7},
+  pages = {78--90}
+}
+
+@article{Staudinger2014,
+  author = {Staudinger, M. and Stahl, K. and Seibert, J.},
+  title = {A drought index accounting for snow},
+  journal = {Water Resources Research},
+  year = {2014},
+  volume = {50},
+  pages = {7861--7872}
+}
+
+@article{Surminski2014,
+  author = {Surminski, S. and Oramas-Dorta, D.},
+  title = {Flood insurance schemes and climate adaptation in developing countries},
+  journal = {International Journal of Disaster Risk Reduction},
+  year = {2014},
+  volume = {7},
+  pages = {154--164}
+}
+
+@article{TahmasebiBirgani2014,
+  author = {Tahmasebi Birgani, Y. and Yazdandoost, F.},
+  title = {A framework for evaluating the persistence of urban drainage risk management systems},
+  journal = {Journal of Hydro-Environment Research},
+  year = {2014},
+  volume = {8},
+  pages = {330--342}
+}
+
+@article{Tallaksen2014,
+  author = {Tallaksen, L. M. and Stahl, K.},
+  title = {Spatial and temporal patterns of large-scale droughts in Europe: Model dispersion and performance},
+  journal = {Geophysical Research Letters},
+  year = {2014},
+  volume = {41},
+  pages = {429--434}
+}
+
+@article{Ward2014,
+  author = {Ward, P. J. and Jongman, B. and Kummu, M. and Dettinger, M. D. and Sperna Weiland, F. C. and Winsemius, H. C.},
+  title = {Strong influence of El Nino Southern Oscillation on flood risk around the world},
+  journal = {Proceedings of the National Academy of Sciences},
+  year = {2014},
+  volume = {111},
+  pages = {15659--15664},
+  doi = {10.1073/pnas.1409822111}
+}
+
+@article{Weisheimer2014,
+  author = {Weisheimer, A. and Palmer, T. N.},
+  title = {On the reliability of seasonal climate forecasts},
+  journal = {Journal of The Royal Society Interface},
+  year = {2014},
+  volume = {11}
+}
+
+@article{Allen2015,
+  author = {Allen, G. H. and Pavelsky, T. M.},
+  title = {Patterns of river width and surface area revealed by the satellite-derived North American River Width data set},
+  journal = {Geophysical Research Letters},
+  year = {2015},
+  volume = {42},
+  pages = {395--402}
+}
+
+@article{Angelina2015,
+  author = {Angelina, A. and Gado Djibo, A. and Seidou, O. and Seidou Sanda, I. and Sittichok, K.},
+  title = {Changes to Flow Regime on the Niger River at Koulikoro under a Changing Climate},
+  journal = {Hydrological Sciences Journal},
+  year = {2015},
+  volume = {60},
+  pages = {1709--1723}
+}
+
+@article{Balsamo2015,
+  author = {Balsamo, Gianpaolo and Albergel, Clément and Beljaars, Anton and Boussetta, Souhail and Brun, Eric and Cloke, Hannah and Dee, Dick and Dutra, Emanuel and Muñoz-Sabater, Joaquín and Pappenberger, Florian and de Rosnay, Patricia and Stockdale, Tim and Vitart, Frédéric},
+  title = {{ERA-Interim}/Land: A global land surface reanalysis data set},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2015},
+  volume = {19},
+  pages = {389--407},
+  doi = {10.5194/hess-19-389-2015}
+}
+
+@article{Bauer2015,
+  author = {Bauer, P. and Thorpe, A. and Brunet, G.},
+  title = {The quiet revolution of numerical weather prediction},
+  journal = {Nature},
+  year = {2015},
+  volume = {525},
+  pages = {47--55}
+}
+
+@article{Cannon2015,
+  author = {Cannon, A. J. and Sobie, S. R. and Murdock, T. Q.},
+  title = {Bias Correction of GCM Precipitation by Quantile Mapping: How Well Do Methods Preserve Changes in Quantiles and Extremes?},
+  journal = {Journal of Climate},
+  year = {2015},
+  volume = {28},
+  pages = {6938--6959}
+}
+
+@article{Chang2015,
+  author = {Chang, T. J. and Wang, C. H. and Chen, A. S.},
+  title = {A novel approach to model dynamic flow interactions between storm sewer system and overland surface for different land covers in urban areas},
+  journal = {Journal of Hydrology},
+  year = {2015},
+  volume = {524},
+  pages = {662--679}
+}
+
+@article{Coughlandeperez2015,
+  author = {Coughlan de Perez, E. and van den Hurk, B. and van Aalst, M. K. and Jongman, B. and Klose, T. and Suarez, P.},
+  title = {Forecast-based financing: An approach for catalyzing humanitarian action based on extreme weather and climate forecasts},
+  journal = {Natural Hazards and Earth System Sciences},
+  year = {2015},
+  volume = {15},
+  pages = {895--904}
+}
+
+@article{Dosio2015_2,
+  author = {Dosio, A. and Jones, R. G. and Jack, C. and Lennard, C. and Nikulin, G. and Hewitson, B.},
+  title = {What Can We Know about Future Precipitation in Africa? Robustness, Significance and Added Value of Projections from a Large Ensemble of Regional Climate Models},
+  journal = {Climate Dynamics},
+  year = {2015},
+  volume = {49},
+  pages = {711--726}
+}
+
+@article{Froidevaux2015,
+  author = {Froidevaux, P. and Schwanbeck, J. and Weingartner, R. and Chevalier, C. and Martius, O.},
+  title = {Flood triggering in Switzerland: The role of daily to monthly preceding precipitation},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2015},
+  volume = {19},
+  pages = {3903--3924}
+}
+
+@article{Jongman2015,
+  author = {Jongman, Brenden and Winsemius, Hessel C. and Aerts, Jeroen C. J. H. and Coughlan de Perez, Erin and van Aalst, Maarten K. and Kron, Wolfgang and Ward, Philip J.},
+  title = {Declining vulnerability to river floods and the global benefits of adaptation},
+  journal = {Proceedings of the National Academy of Sciences},
+  year = {2015},
+  volume = {112},
+  number = {18},
+  pages = {E2271--E2280},
+  doi = {10.1073/pnas.1414439112}
+}
+
+@article{Klein2015,
+  author = {Klein, I. and Dietz, A. and Gessner, U. and Dech, S. and Kuenzer, C.},
+  title = {Results of the Global WaterPack: a novel product to assess inland water body dynamics on a daily basis},
+  journal = {Remote Sensing Letters},
+  year = {2015},
+  volume = {6},
+  pages = {78--87}
+}
+
+@article{Meesuk2015,
+  author = {Meesuk, V. and Vojinovic, Z. and Mynett, A. E. and Abdullah, A. F.},
+  title = {Urban flood modelling combining top-view LiDAR data with ground-view SfM observations},
+  journal = {Advances in Water Resources},
+  year = {2015},
+  volume = {75},
+  pages = {105--117}
+}
+
+@article{Pappenberger2015,
+  author = {Pappenberger, F. and Cloke, H. L. and Parker, D. J. and Wetterhall, F. and Richardson, D. S. and Thielen, J.},
+  title = {The monetary benefit of early flood warnings in Europe},
+  journal = {Environmental Science \& Policy},
+  year = {2015},
+  volume = {51},
+  pages = {278--291}
+}
+
+@article{Russo2015,
+  author = {Russo, B. and Sunyer, D. and Velasco, M. and Djordjević, S.},
+  title = {Analysis of extreme flooding events through a calibrated 1D/2D coupled model: the case of Barcelona (Spain)},
+  journal = {Journal of Hydroinformatics},
+  year = {2015},
+  volume = {17},
+  pages = {473--491}
+}
+
+@article{Saksena2015,
+  author = {Saksena, S. and Merwade, V.},
+  title = {Incorporating the effect of DEM resolution and accuracy for improved flood inundation mapping},
+  journal = {Journal of Hydrology},
+  year = {2015},
+  volume = {530},
+  pages = {180--194}
+}
+
+@article{Sampson2015,
+  author = {Sampson, Christopher C. and Smith, Andrew M. and Bates, Paul D. and Neal, Jeffrey C. and Alfieri, Lorenzo and Freer, Jim E.},
+  title = {A high-resolution global flood hazard model},
+  journal = {Water Resources Research},
+  year = {2015},
+  volume = {51},
+  number = {9},
+  pages = {7358--7381},
+  doi = {10.1002/2015WR016954}
+}
+
+@article{Thiemig2015,
+  author = {Thiemig, V. and Bisselink, B. and Pappenberger, F. and Thielen, J.},
+  title = {A pan-African medium-range ensemble flood forecast system},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2015},
+  volume = {19},
+  pages = {3365--3385}
+}
+
+@article{Ward2015,
+  author = {Ward, Philip J. and Jongman, Brenden and Salamon, Peter and Simpson, Alanna and Bates, Paul D. and De Groeve, Tom and Muis, Sanne and Coughlan de Perez, Erin and Rudari, Roberto and Trigg, Mark A. and Winsemius, Hessel C.},
+  title = {Usefulness and limitations of global flood risk models},
+  journal = {Nature Climate Change},
+  year = {2015},
+  volume = {5},
+  number = {8},
+  pages = {712--715},
+  doi = {10.1038/nclimate2742}
+}
+
+@article{Yu2015,
+  author = {Yu, D. and Coulthard, T. J.},
+  title = {Evaluating the importance of catchment hydrological parameters for urban surface water flood modelling using a simple hydro-inundation model},
+  journal = {Journal of Hydrology},
+  year = {2015},
+  volume = {524},
+  pages = {385--400}
+}
+
+@article{Alfieri2016,
+  author = {Alfieri, L. and Bisselink, B. and Dottori, F. and Naumann, G. and De Roo, A. and Salamon, P.},
+  title = {Global projections of river flood risk in a warmer world},
+  journal = {Earth's Future},
+  year = {2016},
+  volume = {5},
+  pages = {171--182}
+}
+
+@article{Allen2016,
+  author = {Allen, S. K. and Rastner, P. and Arora, M. and Huggel, C. and Stoffel, M.},
+  title = {Lake outburst and debris flow disaster at Kedarnath, June 2013: Hydrometeorological triggering and topographic predisposition},
+  journal = {Landslides},
+  year = {2016},
+  volume = {13},
+  pages = {1479--1491}
+}
+
+@article{Azari2016,
+  author = {Azari, M. and Moradi, H. R. and Saghafian, B. and Faramarzi, M.},
+  title = {Climate Change Impacts on Streamflow and Sediment Yield in the North of Iran},
+  journal = {Hydrological Sciences Journal},
+  year = {2016},
+  volume = {61},
+  pages = {123--133}
+}
+
+@article{Carlier2016,
+  author = {Carlier, E. and Khattabi, J. E.},
+  title = {Impact of global warming on intensity-duration-frequency ({IDF}) relationship of precipitation: A case study of Toronto, Canada},
+  journal = {Open Journal of Modern Hydrology},
+  year = {2016},
+  volume = {6},
+  pages = {1--7}
+}
+
+@article{Carrivick2016,
+  author = {Carrivick, J. L. and Tweed, F. S.},
+  title = {A global assessment of the societal impacts of glacier outburst floods},
+  journal = {Global and Planetary Change},
+  year = {2016},
+  volume = {144},
+  pages = {1--16},
+  doi = {10.1016/j.gloplacha.2016.07.001}
+}
+
+@article{Chen2016,
+  author = {Chen, A. S. and Leandro, J. and Djordjević, S.},
+  title = {Modelling sewer discharge via displacement of manhole covers during flood events using 1D/2D SIPSON/P-DWave dual drainage simulations},
+  journal = {Urban Water Journal},
+  year = {2016},
+  volume = {13},
+  pages = {830--840}
+}
+
+@article{Coltin2016,
+  author = {Coltin, B. and McMichael, S. and Smith, T. and Fong, T.},
+  title = {Automatic boosted flood mapping from satellite data},
+  journal = {International Journal of Remote Sensing},
+  year = {2016},
+  volume = {37},
+  pages = {993--1015}
+}
+
+@article{Diallo2016,
+  author = {Diallo, I. and Giorgi, F. and Diba, I. and Camara, M. and Torma, C.},
+  title = {Uncertainties in the Late Twenty-First Century Climate Change Projections over Africa},
+  journal = {Climate Dynamics},
+  year = {2016},
+  volume = {47},
+  pages = {2935--2954}
+}
+
+@article{Dottori2016,
+  author = {Dottori, F. and Salamon, P. and Bianchi, A. and Alfieri, L. and Hirpa, F. A. and Feyen, L.},
+  title = {Development and evaluation of a framework for global flood hazard mapping},
+  journal = {Advances in Water Resources},
+  year = {2016},
+  volume = {94},
+  pages = {87--102},
+  doi = {10.1016/j.advwatres.2016.05.002}
+}
+
+@article{Emerton2016,
+  author = {Emerton, Rebecca E. and Cloke, Hannah L. and Stephens, Elisabeth M. and Zsoter, Ervin and Woolnough, Steven J. and Pappenberger, Florian},
+  title = {Continental and global scale flood forecasting systems},
+  journal = {Wiley Interdisciplinary Reviews: Water},
+  year = {2016},
+  volume = {3},
+  pages = {391--418},
+  doi = {10.1002/wat2.1137}
+}
+
+@article{FernandezPato2016,
+  author = {Fernández-Pato, J. and Caviedes-Voullième, D. and García-Navarro, P.},
+  title = {Rainfall/runoff simulation with 2D full shallow water equations: Sensitivity analysis and calibration of infiltration parameters},
+  journal = {Journal of Hydrology},
+  year = {2016},
+  volume = {536},
+  pages = {496--513}
+}
+
+@article{Guan2016,
+  author = {Guan, M. and Carrivick, J. L. and Wright, N. G. and Sleigh, P. A. and Staines, K. E. H.},
+  title = {Quantifying the combined effects of multiple extreme floods on river channel geometry and on flood hazards},
+  journal = {Journal of Hydrology},
+  year = {2016},
+  volume = {538},
+  pages = {256--268}
+}
+
+@article{Kauffeldt2016,
+  author = {Kauffeldt, Anna and Wetterhall, Fredrik and Pappenberger, Florian and Salamon, Peter and Thielen, Jutta},
+  title = {Technical review of large-scale hydrological models for implementation in operational flood forecasting schemes on continental level},
+  journal = {Environmental Modelling \& Software},
+  year = {2016},
+  volume = {75},
+  pages = {68--76},
+  doi = {10.1016/j.envsoft.2015.09.009}
+}
+
+@article{Leandro2016,
+  author = {Leandro, J. and Schumann, A. and Pfister, A.},
+  title = {A step towards considering the spatial heterogeneity of urban key features in urban hydrology flood modelling},
+  journal = {Journal of Hydrology},
+  year = {2016},
+  volume = {535},
+  pages = {356--365}
+}
+
+@article{Muis2016,
+  author = {Muis, Sanne and Verlaan, Martin and Winsemius, Hessel C. and Aerts, Jeroen C. J. H. and Ward, Philip J.},
+  title = {A global reanalysis of storm surges and extreme sea levels},
+  journal = {Nature Communications},
+  year = {2016},
+  volume = {7},
+  pages = {11969},
+  doi = {10.1038/ncomms11969}
+}
+
+@article{Pekel2016,
+  author = {Pekel, J.-F. and Cottam, A. and Gorelick, N. and Belward, A. S.},
+  title = {High-resolution mapping of global surface water and its long-term changes},
+  journal = {Nature},
+  year = {2016},
+  doi = {10.1038/nature20584}
+}
+
+@article{Redfern2016,
+  author = {Redfern, T. W. and Macdonald, N. and Kjeldsen, T. R. and Miller, J. D. and Reynard, N.},
+  title = {Current understanding of hydrological processes on common urban surfaces},
+  journal = {Progress in Physical Geography},
+  year = {2016},
+  volume = {40},
+  pages = {699--713}
+}
+
+@article{Schwanghart2016,
+  author = {Schwanghart, W. and Worni, R. and Huggel, C. and Stoffel, M. and Korup, O.},
+  title = {Uncertainty in the Himalayan energy–water nexus: Estimating regional exposure to glacial lake outburst floods},
+  journal = {Environmental Research Letters},
+  year = {2016},
+  volume = {11},
+  doi = {10.1088/1748-9326/11/7/074005}
+}
+
+@article{Seneviratne2016,
+  author = {Seneviratne, Sonia I. and Donat, Markus G. and Pitman, Andy J. and Knutti, Reto and Wilby, Robert L.},
+  title = {Allowable {CO2} emissions based on regional and impact-related climate targets},
+  journal = {Nature},
+  year = {2016},
+  volume = {529},
+  number = {7587},
+  pages = {477--483},
+  doi = {10.1038/nature16542}
+}
+
+@article{Shean2016,
+  author = {Shean, D. E. and Alexandrov, O. and Moratto, Z. M. and Smith, B. E. and Joughin, I. R. and Porter, C. and Morin, P.},
+  title = {An automated, open-source pipeline for mass production of digital elevation models (DEMs) from very-high-resolution commercial stereo satellite imagery},
+  journal = {ISPRS Journal of Photogrammetry and Remote Sensing},
+  year = {2016},
+  volume = {116},
+  pages = {101--117}
+}
+
+@article{Tanoue2016,
+  author = {Tanoue, M. and Hirabayashi, Y. and Ikeuchi, H.},
+  title = {Global-scale river flood vulnerability in the last 50 years},
+  journal = {Scientific Reports},
+  year = {2016},
+  volume = {6}
+}
+
+@article{Trigg2016,
+  author = {Trigg, Mark A. and Birch, Cathryn E. and Neal, Jeffrey C. and Bates, Paul D. and Smith, Andrew and Sampson, Christopher C. and Yamazaki, Dai and Hirabayashi, Yukiko and Pappenberger, Florian and Dutra, Emanuel and Ward, Philip J. and Winsemius, Hessel C. and Salamon, Peter and Dottori, Francesco and Rudari, Roberto and Kappes, Melanie S. and Simpson, Alanna L. and Hadzilacos, George and Fewtrell, Timothy J.},
+  title = {The credibility challenge for global fluvial flood risk analysis},
+  journal = {Environmental Research Letters},
+  year = {2016},
+  volume = {11},
+  number = {9},
+  pages = {094014},
+  doi = {10.1088/1748-9326/11/9/094014}
+}
+
+@article{Winsemius2016,
+  author = {Winsemius, Hessel C. and Aerts, Jeroen C. J. H. and van Beek, Ludovicus P. H. and Bierkens, Marc F. P. and Bouwman, Arno and Jongman, Brenden and Kwadijk, Jaap C. J. and Ligtvoet, Willem and Lucas, Paul L. and van Vuuren, Detlef P. and Ward, Philip J.},
+  title = {Global drivers of future river flood risk},
+  journal = {Nature Climate Change},
+  year = {2016},
+  volume = {6},
+  number = {4},
+  pages = {381--385},
+  doi = {10.1038/nclimate2893}
+}
+
+@article{Abiodun2017,
+  author = {Abiodun, B. J. and Adegoke, J. and Abatan, A. A. and Ibe, C. A. and Egbebiyi, T. S. and Engelbrecht, F.},
+  title = {Potential Impacts of Climate Change on Extreme Precipitation over Four African Coastal Cities},
+  journal = {Climatic Change},
+  year = {2017},
+  volume = {143},
+  pages = {399--413}
+}
+
+@article{Aggarwal2017,
+  author = {Aggarwal, S. and Rai, S. C. and Thakur, P. K. and Emmer, A.},
+  title = {Inventory and recently increasing GLOF susceptibility of glacial lakes in Sikkim, Eastern Himalaya},
+  journal = {Geomorphology},
+  year = {2017},
+  volume = {295},
+  pages = {39--54}
+}
+
+@article{Carrivick2017,
+  author = {Carrivick, J. L. and Heckmann, T.},
+  title = {Short-term geomorphological evolution of proglacial systems},
+  journal = {Geomorphology},
+  year = {2017},
+  volume = {287},
+  pages = {3--28}
+}
+
+@article{Coron2017,
+  author = {Coron, L. and Thirel, G. and Delaigue, O. and Perrin, C. and Andréassian, V.},
+  title = {The Suite of Lumped GR Hydrological Models in an R Package},
+  journal = {Environmental Modelling \& Software},
+  year = {2017},
+  volume = {94},
+  pages = {166--171}
+}
+
+@article{Courty2017,
+  author = {Courty, L. G. and Pedrozo-Acuña, A. and Bates, P. D.},
+  title = {Itzï (version 17.1): An open-source, distributed GIS model for dynamic flood simulation},
+  journal = {Geoscientific Model Development},
+  year = {2017},
+  volume = {10},
+  pages = {1835--1847}
+}
+
+@article{Dosio2017,
+  author = {Dosio, A.},
+  title = {Climate Simulations at High Resolution over West Africa: Representation of the West African Monsoon and Regional Precipitation Patterns},
+  journal = {Climate Dynamics},
+  year = {2017},
+  volume = {48},
+  pages = {2287--2308}
+}
+
+@article{Dottori2017,
+  author = {Dottori, Francesco and Salamon, Peter and Bianchi, Alessandra and Alfieri, Lorenzo and Hirpa, Feyera A. and Feyen, Luc},
+  title = {An operational procedure for rapid flood risk assessment in Europe},
+  journal = {Natural Hazards and Earth System Sciences},
+  year = {2017},
+  volume = {17},
+  pages = {1111--1126},
+  doi = {10.5194/nhess-17-1111-2017}
+}
+
+@article{Guinot2017,
+  author = {Guinot, V. and Sanders, B. F. and Schubert, J. E.},
+  title = {Dual integral porosity shallow water model for urban flood modelling},
+  journal = {Advances in Water Resources},
+  year = {2017},
+  volume = {103},
+  pages = {16--31}
+}
+
+@article{Qiang2017,
+  author = {Qiang, Y. and Lam, N. S. N. and Cai, H. and Zou, L.},
+  title = {Changes in Exposure to Flood Hazards in the United States},
+  journal = {Annals of the American Association of Geographers},
+  year = {2017},
+  volume = {107},
+  pages = {1332--1350}
+}
+
+@article{Samaniego2017,
+  author = {Samaniego, Luis and Kumar, Rohini and Thober, Stephan and Rakovec, Oldrich and Zink, Matthias and Wanders, Niko and Eisner, Stephanie and Müller Schmied, Hannes and Sutanudjaja, Edwin H. and Warrach-Sagi, Kirsten},
+  title = {Toward seamless hydrologic predictions across spatial scales},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2017},
+  volume = {21},
+  pages = {4323--4346},
+  doi = {10.5194/hess-21-4323-2017}
+}
+
+@article{Smith2017,
+  author = {Smith, L. and Liang, Q. and James, P. and Lin, W.},
+  title = {Assessing the utility of social media as a data source for flood risk management using a real-time modelling framework},
+  journal = {Journal of Flood Risk Management},
+  year = {2017},
+  volume = {10},
+  pages = {370--380}
+}
+
+@article{Taylor2017,
+  author = {Taylor, C. M. and Marsham, J. H.},
+  title = {Frequency of Extreme Sahelian Storms Tripled Since 1982 in Satellite Observations},
+  journal = {Geophysical Research Letters},
+  year = {2017},
+  volume = {44},
+  pages = {8510--8517}
+}
+
+@article{Ward2017,
+  author = {Ward, Philip J. and Jongman, Brenden and Aerts, Jeroen C. J. H. and Bates, Paul D. and Botzen, Wouter J. W. and Diaz Loaiza, Andres and Hallegatte, Stephane and Kind, Jarl M. and Kwadijk, Jaap C. J. and Scussolini, Paolo and Winsemius, Hessel C.},
+  title = {A global framework for future costs and benefits of river-flood protection in urban areas},
+  journal = {Nature Climate Change},
+  year = {2017},
+  volume = {7},
+  number = {9},
+  pages = {642--646},
+  doi = {10.1038/nclimate3350}
+}
+
+@article{Xia2017,
+  author = {Xia, X. and Liang, Q. and Ming, X. and Hou, J.},
+  title = {An efficient and stable hydrodynamic model with novel source term discretization schemes for overland flow and flood simulations},
+  journal = {Water Resources Research},
+  year = {2017},
+  volume = {53},
+  pages = {3730--3759}
+}
+
+@article{Yamazaki2017,
+  author = {Yamazaki, Dai and Ikeshima, Daisuke and Tawatari, Ryunosuke and Yamaguchi, Tomohiro and O'Loughlin, Fiachra and Neal, Jeffrey C. and Sampson, Christopher C. and Kanae, Shinjiro and Bates, Paul D.},
+  title = {A high-accuracy map of global terrain elevations},
+  journal = {Geophysical Research Letters},
+  year = {2017},
+  volume = {44},
+  number = {11},
+  pages = {5844--5853},
+  doi = {10.1002/2017GL072874}
+}
+
+@article{Zink2017,
+  author = {Zink, Matthias and Samaniego, Luis and Kumar, Rohini and Thober, Stephan and Mai, Juliane and Schäfer, Daniel and Marx, Andreas},
+  title = {A high-resolution dataset of water fluxes and states for Germany accounting for parametric uncertainty},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2017},
+  volume = {21},
+  pages = {1769--1790},
+  doi = {10.5194/hess-21-1769-2017}
+}
+
+@article{Allen2018,
+  author = {Allen, G. H. and Pavelsky, T. M.},
+  title = {Global extent of rivers and streams},
+  journal = {Science},
+  year = {2018},
+  volume = {361},
+  pages = {585--588},
+  doi = {10.1126/science.aat0636}
+}
+
+@article{Azam2018,
+  author = {Azam, M. F. and Wagnon, P. and Berthier, E. and Vincent, C. and Fujita, K. and Kargel, J. S.},
+  title = {Review of the status and mass changes of Himalayan-Karakoram glaciers},
+  journal = {Journal of Glaciology},
+  year = {2018},
+  volume = {64},
+  pages = {61--74}
+}
+
+@article{Basumatary2018,
+  author = {Basumatary, V. and Sil, B. S.},
+  title = {Generation of rainfall intensity-duration-frequency curves for the Barak River Basin},
+  journal = {Meteorology Hydrology and Water Management},
+  year = {2018},
+  volume = {6},
+  pages = {47--57}
+}
+
+@article{Bernhofen2018,
+  author = {Bernhofen, Matthew V. and Trigg, Mark A. and Sleigh, P. Andrew and Sampson, Christopher C. and Smith, Andrew M. and Bates, Paul D. and Yamazaki, Dai and Ward, Philip J. and Rudari, Roberto and Pappenberger, Florian and Dottori, Francesco and Salamon, Peter and Winsemius, Hessel C. and Pail, Richard and Schumann, Guy J.-P.},
+  title = {A first collective validation of global fluvial flood models for major floods in Nigeria and Mozambique},
+  journal = {Environmental Research Letters},
+  year = {2018},
+  volume = {13},
+  number = {10},
+  pages = {104007},
+  doi = {10.1088/1748-9326/aae014}
+}
+
+@article{Bodian2018,
+  author = {Bodian, A. and Dezetter, A. and Diop, L. and Deme, A. and Djaman, K. and Diop, A.},
+  title = {Future Climate Change Impacts on Streamflows of Two Main West Africa River Basins: Senegal and Gambia},
+  journal = {Hydrology},
+  year = {2018},
+  volume = {5}
+}
+
+@article{Cian2018,
+  author = {Cian, F. and Marconcini, M. and Ceccato, P.},
+  title = {Normalized Difference Flood Index for rapid flood mapping: Taking advantage of EO big data},
+  journal = {Remote Sensing of Environment},
+  year = {2018},
+  volume = {209},
+  pages = {712--730}
+}
+
+@article{Cook2018,
+  author = {Cook, K. L. and Andermann, C. and Gimbert, F. and Adhikari, B. R. and Hovius, N.},
+  title = {Glacial lake outburst floods as drivers of fluvial erosion in the Himalaya},
+  journal = {Science},
+  year = {2018},
+  volume = {362},
+  pages = {53--57},
+  doi = {10.1126/science.aat4981}
+}
+
+@article{Glenis2018,
+  author = {Glenis, V. and Kutija, V. and Kilsby, C. G.},
+  title = {A fully hydrodynamic urban flood modelling system representing buildings, green space and interventions},
+  journal = {Environmental Modelling \& Software},
+  year = {2018},
+  volume = {109},
+  pages = {272--292}
+}
+
+@article{Harrison2018,
+  author = {Harrison, S. and Kargel, J. S. and Huggel, C. and Reynolds, J. and Shugar, D. H. and Betts, R. A. and Emmer, A. and Glasser, N. and Haritashya, U. K. and Klimeš, J. and Reinhardt, L. and Schaub, Y. and Wiltshire, A. and Regmi, D. and Vilímek, V.},
+  title = {Climate change and the global pattern of moraine-dammed glacial lake outburst floods},
+  journal = {The Cryosphere},
+  year = {2018},
+  volume = {12},
+  pages = {1195--1209}
+}
+
+@article{Ji2018,
+  author = {Ji, L. and Gong, P. and Wang, J. and Shi, J. and Zhu, Z.},
+  title = {Construction of the 500-m Resolution Daily Global Surface Water Change Database (2001-2016)},
+  journal = {Water Resources Research},
+  year = {2018},
+  volume = {54},
+  pages = {10270--10292}
+}
+
+@article{Najibi2018,
+  author = {Najibi, N. and Devineni, N.},
+  title = {Recent trends in the frequency and duration of global floods},
+  journal = {Earth System Dynamics},
+  year = {2018},
+  volume = {9},
+  pages = {757--783}
+}
+
+@article{Noh2018,
+  author = {Noh, S. J. and Lee, J. H. and Lee, S. and Kawaike, K. and Seo, D. J.},
+  title = {Hyper-resolution 1D-2D urban flood modelling using LiDAR data and hybrid parallelization},
+  journal = {Environmental Modelling \& Software},
+  year = {2018},
+  volume = {103},
+  pages = {131--145}
+}
+
+@article{Schwanghart2018,
+  author = {Schwanghart, W. and Ryan, M. and Korup, O.},
+  title = {Topographic and seismic constraints on the vulnerability of Himalayan hydropower},
+  journal = {Geophysical Research Letters},
+  year = {2018},
+  volume = {45},
+  pages = {8985--8992},
+  doi = {10.1029/2018GL079173}
+}
+
+@article{Sun2018,
+  author = {Sun, D. and Yang, H. and Guan, D. and Yang, M. and Wu, J. and Yuan, F. and Jin, C. and Wang, A. and Zhang, Y.},
+  title = {The effects of land use change on soil infiltration capacity in China: A meta-analysis},
+  journal = {Science of the Total Environment},
+  year = {2018},
+  volume = {626},
+  pages = {1394--1401}
+}
+
+@article{Wang2018,
+  author = {Wang, Y. and Chen, A. S. and Fu, G. and Djordjević, S. and Zhang, C. and Savić, D. A.},
+  title = {An integrated framework for high-resolution urban flood modelling considering multiple information sources and urban features},
+  journal = {Environmental Modelling \& Software},
+  year = {2018},
+  volume = {107},
+  pages = {85--95}
+}
+
+@article{Weyrich2018,
+  author = {Weyrich, Philipp and Scolobig, Anna and Patt, Anthony and Bresch, David N.},
+  title = {Effects of impact-based warnings and behavioral recommendations for extreme weather events},
+  journal = {Weather, Climate, and Society},
+  year = {2018},
+  volume = {10},
+  pages = {781--796},
+  doi = {10.1175/WCAS-D-18-0038.1}
+}
+
+@article{Zheng2018,
+  author = {Zheng, F. and Tao, R. and Maier, H. R. and See, L. and Savic, D. and Zhang, T. and Chen, Q. and Assumpção, T. H. and Yang, P. and Heidari, B. and Rieckermann, J. and Minsker, B. and Bi, W. and Cai, X. and Solomatine, D. and Popescu, I.},
+  title = {Crowdsourcing Methods for Data Collection in Geophysics: State of the Art, Issues, and Future Directions},
+  journal = {Reviews of Geophysics},
+  year = {2018},
+  volume = {56},
+  pages = {698--740},
+  doi = {10.1029/2018RG000616}
+}
+
+@article{Alfieri2019,
+  author = {Alfieri, Lorenzo and Salamon, Peter and Pappenberger, Florian and Wetterhall, Fredrik and Thielen, Jutta},
+  title = {Range-dependent thresholds for global flood early warning},
+  journal = {Journal of Hydrology X},
+  year = {2019},
+  volume = {4},
+  pages = {100034},
+  doi = {10.1016/j.hydroa.2019.100034}
+}
+
+@article{Bloschl2019,
+  author = {Blöschl, G. and Hall, J. and Viglione, A. and Perdigão, R. A. P. and Parajka, J. and Merz, B.},
+  title = {Changing climate both increases and decreases European river floods},
+  journal = {Nature},
+  year = {2019},
+  volume = {573},
+  pages = {108--111}
+}
+
+@article{Chini2019,
+  author = {Chini, Marco and Pelich, Ramona and Pulvirenti, Luca and Pierdicca, Nazzareno and Hostache, Renaud and Matgen, Patrick},
+  title = {Sentinel-1 {InSAR} Coherence to Detect Floodwater in Urban Areas: Houston and Hurricane Harvey as A Test Case},
+  journal = {Remote Sensing},
+  year = {2019},
+  volume = {11},
+  number = {2},
+  pages = {107},
+  doi = {10.3390/rs11020107}
+}
+
+@article{Dey2019,
+  author = {Dey, S. and Saksena, S. and Merwade, V.},
+  title = {Assessing the effect of different bathymetric models on hydraulic simulation of rivers in data sparse regions},
+  journal = {Journal of Hydrology},
+  year = {2019},
+  volume = {575},
+  pages = {838--851}
+}
+
+@article{Farinotti2019,
+  author = {Farinotti, D. and Huss, M. and Fürst, J. J. and Landmann, J. and Machguth, H. and Maussion, F. and Pandit, A.},
+  title = {A consensus estimate for the ice thickness distribution of all glaciers on Earth},
+  journal = {Nature Geoscience},
+  year = {2019},
+  volume = {12},
+  pages = {168--173},
+  doi = {10.1038/s41561-019-0300-3}
+}
+
+@article{Formetta2019,
+  author = {Formetta, G. and Feyen, L.},
+  title = {Empirical evidence of declining global vulnerability to climate-related hazards},
+  journal = {Global Environmental Change},
+  year = {2019},
+  volume = {57},
+  pages = {101920}
+}
+
+@article{Fundel2019,
+  author = {Fundel, Veronika J. and Fleischhut, Nadine and Herzog, Stefan M. and Göber, Michael and Hagedorn, Renate},
+  title = {Promoting the use of probabilistic weather forecasts through a dialogue between scientists, developers and end-users},
+  journal = {Quarterly Journal of the Royal Meteorological Society},
+  year = {2019},
+  volume = {145},
+  pages = {210--231},
+  doi = {10.1002/qj.3482}
+}
+
+@article{Grill2019,
+  author = {Grill, Günther and Lehner, Bernhard and Thieme, Michele and Geenen, Bart and Tickner, David and Antonelli, Fabrice and Babu, Suresh and Borrelli, Pasquale and Cheng, L. and Crochetiere, Heather and Ehalt Macedo, H. and Filgueiras, Rafael and Goichot, Marc and Higgins, Jonathan and Hogan, Zeb and Lip, B. and McClain, Michael E. and Meng, Jian and Mulligan, Mark and Nilsson, Christer and Olden, Julian D. and Opperman, Jeff J. and Petry, Paulo and Reidy Liermann, Catherine and Sáenz, L. and Salinas-Rodríguez, Sergio and Schelle, Peter and Schmitt, R. J. P. and Snider, Jan and Tan, Felicity and Tockner, Klement and Valdujo, Paulo H. and van Soesbergen, Arnout and Zarfl, Christiane},
+  title = {Mapping the world's free-flowing rivers},
+  journal = {Nature},
+  year = {2019},
+  volume = {569},
+  number = {7755},
+  pages = {215--221},
+  doi = {10.1038/s41586-019-1111-9}
+}
+
+@article{Obu2019,
+  author = {Obu, J. and Westermann, S. and Bartsch, A. and Berdnikov, N. and Christiansen, H. H. and Dashtseren, A. and Delaloye, R. and Elberling, B. and Etzelmüller, B. and Kholodov, A. and Khomutov, A. and Kääb, A. and Leibman, M. O. and Lewkowicz, A. G. and Panda, S. K. and Romanovsky, V. and Way, R. G. and Westergaard-Nielsen, A. and Wu, T. and Yamkhin, J. and Zou, D.},
+  title = {Northern Hemisphere permafrost map based on TTOP modelling for 2000–2016 at 1 km2 scale},
+  journal = {Earth-Science Reviews},
+  year = {2019},
+  volume = {193},
+  pages = {299--316}
+}
+
+@article{Pudasaini2019,
+  author = {Pudasaini, S. P. and Mergili, M.},
+  title = {A multi-phase mass flow model},
+  journal = {Journal of Geophysical Research: Earth Surface},
+  year = {2019},
+  volume = {124},
+  pages = {2920--2942}
+}
+
+@article{Rakovec2019,
+  author = {Rakovec, Oldrich and Kumar, Rohini and Mai, Juliane and Cuntz, Matthias and Thober, Stephan and Zink, Matthias and Attinger, Sabine and Schäfer, Daniel and Schrön, Martin and Samaniego, Luis},
+  title = {Diagnostic evaluation of large-domain hydrologic models calibrated across the contiguous United States},
+  journal = {Journal of Geophysical Research: Atmospheres},
+  year = {2019},
+  volume = {124},
+  pages = {13991--14007},
+  doi = {10.1029/2019JD030767}
+}
+
+@article{Samaniego2019,
+  author = {Samaniego, Luis and Thober, Stephan and Wanders, Niko and Pan, Ming and Rakovec, Oldrich and Sheffield, Justin and Wood, Eric F. and Prudhomme, Christel and Rees, Gwyn and Houghton-Carr, Helen and Fry, Matthew and Smith, Katie and Watts, Glenis and Hisdal, Hege and Estrela, Teodoro and Buontempo, Carlo and Marx, Andreas and Kumar, Rohini},
+  title = {Hydrological forecasts and projections for improved decision-making in the water sector in Europe},
+  journal = {Bulletin of the American Meteorological Society},
+  year = {2019},
+  volume = {100},
+  pages = {2451--2472},
+  doi = {10.1175/BAMS-D-17-0274.1}
+}
+
+@article{Sebastian2019,
+  author = {Sebastian, A. and Gori, A. and Blessing, R. B. and van der Wiel, K. and Bass, B.},
+  title = {Disentangling the impacts of human and environmental change on catchment response during Hurricane Harvey},
+  journal = {Environmental Research Letters},
+  year = {2019},
+  volume = {14}
+}
+
+@article{See2019,
+  author = {See, L.},
+  title = {A review of citizen science and crowdsourcing in applications of pluvial flooding},
+  journal = {Frontiers in Earth Science},
+  year = {2019},
+  volume = {7}
+}
+
+@article{Siders2019,
+  author = {Siders, A. R. and Hino, M. and Mach, K. J.},
+  title = {The case for strategic and managed climate retreat},
+  journal = {Science},
+  year = {2019},
+  volume = {365},
+  pages = {761--763}
+}
+
+@article{Xia2019,
+  author = {Xia, X. and Liang, Q. and Ming, X.},
+  title = {A full-scale fluvial flood modelling framework based on a high-performance integrated hydrodynamic modelling system},
+  journal = {Advances in Water Resources},
+  year = {2019},
+  volume = {132}
+}
+
+@article{Xing2019,
+  author = {Xing, Y. and Liang, Q. and Wang, G. and Ming, X. and Xia, X.},
+  title = {City-scale hydrodynamic modelling of urban flash floods: the issues of scale and resolution},
+  journal = {Natural Hazards},
+  year = {2019},
+  volume = {96},
+  pages = {473--496}
+}
+
+@article{Yamazaki2019,
+  author = {Yamazaki, Dai and Ikeshima, Daisuke and Sosa, Josué and Bates, Paul D. and Allen, George H. and Pavelsky, Tamlin M.},
+  title = {{MERIT Hydro}: A high-resolution global hydrography map based on latest topography dataset},
+  journal = {Water Resources Research},
+  year = {2019},
+  volume = {55},
+  number = {6},
+  pages = {5053--5073},
+  doi = {10.1029/2019WR024873}
+}
+
+@article{Ayugi2020,
+  author = {Ayugi, B. and Tan, G. and Ruoyun, N. and Babaousmail, H. and Ojara, M. and Wido, H.},
+  title = {Quantile Mapping Bias Correction on Rossby Centre Regional Climate Models for Precipitation Analysis over Kenya, East Africa},
+  journal = {Water},
+  year = {2020},
+  volume = {12},
+  pages = {801}
+}
+
+@article{Baral2020,
+  author = {Baral, P. and Haq, M. A.},
+  title = {Spatial prediction of permafrost occurrence in Sikkim Himalayas using logistic regression, random forests, support vector machines and neural networks},
+  journal = {Geomorphology},
+  year = {2020},
+  volume = {371}
+}
+
+@article{Blum2020,
+  author = {Blum, A. G. and Ferraro, P. J. and Archfield, S. A. and Ryberg, K. R.},
+  title = {Causal Effect of Impervious Cover on Annual Flood Magnitude for the United States},
+  journal = {Geophysical Research Letters},
+  year = {2020},
+  volume = {47}
+}
+
+@article{Carrivick2020,
+  author = {Carrivick, J. L. and Tweed, F. S. and Sutherland, J. L. and Mallalieu, J.},
+  title = {Toward numerical modeling of interactions between ice-marginal proglacial lakes and glaciers},
+  journal = {Frontiers in Earth Science},
+  year = {2020},
+  volume = {8}
+}
+
+@article{Dembele2020,
+  author = {Dembélé, M. and Schaefli, B. and van de Giesen, N. and Mariéthoz, G.},
+  title = {Suitability of 17 Gridded Rainfall and Temperature Datasets for Large-Scale Hydrological Modelling in West Africa},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2020},
+  volume = {24},
+  pages = {5379--5406}
+}
+
+@article{DeVries2020,
+  author = {DeVries, Benjamin and Huang, Chengquan and Armston, John and Huang, Wenli and Jones, John W. and Lang, Mark W.},
+  title = {Rapid and robust monitoring of flood events using Sentinel-1 and Landsat data on the Google Earth Engine},
+  journal = {Remote Sensing of Environment},
+  year = {2020},
+  volume = {240},
+  pages = {111664},
+  doi = {10.1016/j.rse.2020.111664}
+}
+
+@article{DiaDiop2020,
+  author = {Dia-Diop, A. and Zebaze, S. and Wade, M. and Djiondo, R. N. and Diop, B. and Efon, E.},
+  title = {Interannual Variability of Rainfall over the West Africa Sahel},
+  journal = {Journal of Geoscience and Environment Protection},
+  year = {2020},
+  volume = {8},
+  pages = {85--101}
+}
+
+@article{HossainAnni2020,
+  author = {Hossain Anni, A. and Cohen, S. and Praskievicz, S.},
+  title = {Sensitivity of urban flood simulations to stormwater infrastructure and soil infiltration},
+  journal = {Journal of Hydrology},
+  year = {2020},
+  volume = {588}
+}
+
+@article{Kratt2020,
+  author = {Kratt, C. B. and Woo, D. K. and Johnson, K. N. and Haagsma, M. and Kumar, P. and Selker, J. and Tyler, S.},
+  title = {Field trials to detect drainage pipe networks using thermal and RGB data from unmanned aircraft},
+  journal = {Agricultural Water Management},
+  year = {2020},
+  volume = {229}
+}
+
+@article{Li2020,
+  author = {Li, Q. and Liang, Q. and Xia, X.},
+  title = {A novel 1D-2D coupled model for hydrodynamic simulation of flows in drainage networks},
+  journal = {Advances in Water Resources},
+  year = {2020},
+  volume = {137}
+}
+
+@article{Liu2020,
+  author = {Liu, Xiaoping and Huang, Yinghuai and Xu, Xiaocong and Li, Xuecao and Li, Xia and Ciais, Philippe and Lin, Peirong and Gong, Kai and Ziegler, Alan D. and Chen, Anping and Gong, Peng and Chen, Jun and Hu, Guohua and Chen, Yimin and Wang, Shaojian and Wu, Qiusheng and Huang, Kangning and Estes, Lyndon and Zeng, Zhenzhong},
+  title = {High-spatiotemporal-resolution mapping of global urban change from 1985 to 2015},
+  journal = {Nature Sustainability},
+  year = {2020},
+  volume = {3},
+  number = {7},
+  pages = {564--570},
+  doi = {10.1038/s41893-020-0521-x}
+}
+
+@article{Maurer2020,
+  author = {Maurer, J. M. and Schaefer, J. M. and Russell, J. B. and Rupper, S. and Wangdi, N. and Putnam, A. E. and Young, N.},
+  title = {Seismic observations, numerical modeling, and geomorphic analysis of a glacier lake outburst flood in the Himalayas},
+  journal = {Science Advances},
+  year = {2020},
+  volume = {6},
+  number = {38},
+  pages = {eaba3645},
+  doi = {10.1126/sciadv.aba3645}
+}
+
+@article{McClean2020,
+  author = {McClean, F. and Dawson, R. and Kilsby, C.},
+  title = {Implications of Using Global Digital Elevation Models for Flood Risk Analysis in Cities},
+  journal = {Water Resources Research},
+  year = {2020},
+  volume = {56}
+}
+
+@article{Ming2020,
+  author = {Ming, X. and Liang, Q. and Xia, X. and Li, D. and Fowler, H. J.},
+  title = {Real-Time Flood Forecasting Based on a High-Performance 2-D Hydrodynamic Model and Numerical Weather Predictions},
+  journal = {Water Resources Research},
+  year = {2020},
+  volume = {56}
+}
+
+@article{Muis2020,
+  author = {Muis, Sanne and Apecechea, Maria I. and Dullaart, Job C. M. and de Lima Rego, Joao and Madsen, Kristine S. and Su, Jian and Yan, Kun and Verlaan, Martin},
+  title = {A high-resolution global dataset of extreme sea levels, tides, and storm surges, including future projections},
+  journal = {Frontiers in Marine Science},
+  year = {2020},
+  volume = {7},
+  doi = {10.3389/fmars.2020.00263}
+}
+
+@article{Opach2020,
+  author = {Opach, T. and Glaas, E. and Hjerpe, M. and Navarra, C.},
+  title = {Vulnerability Visualization to Support Adaptation to Heat and Floods: Towards the EXTRA Interactive Tool in Norrköping, Sweden},
+  journal = {Sustainability},
+  year = {2020},
+  volume = {20}
+}
+
+@article{Paik2020,
+  author = {Paik, S. and Min, S.-K. and Zhang, X. and Donat, M. G. and King, A. D. and Sun, Q.},
+  title = {Determining the Anthropogenic Greenhouse Gas Contribution to the Observed Intensification of Extreme Precipitation},
+  journal = {Geophysical Research Letters},
+  year = {2020},
+  volume = {47}
+}
+
+@article{Painter2020,
+  author = {Painter, M.},
+  title = {An inconvenient cost: The effects of climate change on municipal bonds},
+  journal = {Journal of Financial Economics},
+  year = {2020},
+  volume = {135},
+  pages = {468--482}
+}
+
+@article{Pereira2020,
+  author = {Pereira, J. and Monteiro, J. and Silva, J. and Estima, J. and Martins, B.},
+  title = {Assessing flood severity from crowdsourced social media photos with deep neural networks},
+  journal = {Multimedia Tools and Applications},
+  year = {2020},
+  volume = {79},
+  pages = {26197--26223}
+}
+
+@article{Rahaman2020,
+  author = {Rahaman, M. M. and Al Mamun, A.},
+  title = {Hydropower development along Teesta river basin: Opportunities for cooperation},
+  journal = {Water Policy},
+  year = {2020},
+  volume = {22},
+  pages = {641--657}
+}
+
+@article{Shastry2020,
+  author = {Shastry, Apoorva and Durand, Michael and Neal, Jeffrey and Fernández, Alfonso and Phang, Sui Chian and Mohr, Brandon and Jung, Hahn Chul and Kari, Saïdou and Moritz, Mark and Mark, Bryan G. and Laborde, Sarah and Murumkar, Asmita and Hamilton, Ian},
+  title = {Small-scale anthropogenic changes impact floodplain hydraulics: Simulating the effects of fish canals on the Logone floodplain},
+  journal = {Journal of Hydrology},
+  year = {2020},
+  volume = {588},
+  pages = {125035},
+  doi = {10.1016/j.jhydrol.2020.125035}
+}
+
+@article{Shugar2020,
+  author = {Shugar, Dan H. and Burr, Aaron and Haritashya, Umesh K. and Kargel, Jeffrey S. and Watson, C. Scott and Kennedy, Maureen C. and Bevington, Alexandre R. and Betts, Richard A. and Harrison, Stephan and Strattman, Katherine},
+  title = {Rapid worldwide growth of glacial lakes since 1990},
+  journal = {Nature Climate Change},
+  year = {2020},
+  volume = {10},
+  number = {10},
+  pages = {939--945},
+  doi = {10.1038/s41558-020-0855-4}
+}
+
+@article{Veh2020,
+  author = {Veh, G. and Korup, O. and Walz, A.},
+  title = {Hazard from Himalayan glacier lake outburst floods},
+  journal = {Proceedings of the National Academy of Sciences},
+  year = {2020},
+  volume = {117},
+  pages = {907--912},
+  doi = {10.1073/pnas.1914898117}
+}
+
+@article{Bates2021,
+  author = {Bates, P. D. and Quinn, N. and Sampson, C. and Smith, A. and Wing, O. and Sosa, J.},
+  title = {Combined modelling of US fluvial, pluvial and coastal flood hazard under current and future climates},
+  journal = {Water Resources Research},
+  year = {2021},
+  volume = {57},
+  doi = {10.1029/2020WR028673}
+}
+
+@article{Berg2021,
+  author = {Berg, P. and Almén, F. and Bozhinova, D.},
+  title = {HydroGFD3.0 (hydrological global forcing data): A 25 km global precipitation and temperature data set updated in near-real time},
+  journal = {Earth System Science Data},
+  year = {2021},
+  volume = {13},
+  pages = {1531--1545}
+}
+
+@article{BertrandKrajewski2021,
+  author = {Bertrand-Krajewski, J.-L.},
+  title = {Integrated urban stormwater management: Evolution and multidisciplinary perspective},
+  journal = {Journal of Hydro-Environment Research},
+  year = {2021},
+  volume = {38},
+  pages = {72--83}
+}
+
+@article{Carey2021,
+  author = {Carey, M. and McDowell, G. and Huggel, C. and Marshall, B. and Moulton, H. and Portocarrero, C. and Provant, Z. and Reynolds, J. M. and Vicuña, L.},
+  title = {A socio-cryospheric systems approach to glacier hazards, glacier runoff variability, and climate change},
+  journal = {Snow and Ice-Related Hazards, Risks and Disasters},
+  year = {2021},
+  pages = {215--257}
+}
+
+@article{Cook2021,
+  author = {Cook, Kristen L. and Rekapalli, Rajesh and Dietze, Michael and Pilz, Marco and Cesca, Simone and Rao, N. Purnachandra and Srinagesh, D. and Paul, Himangshu and Metz, Markus and Mandal, Prantik and Suresh, G. and Cotton, Fabrice and Tiwari, V. M. and Hovius, Niels},
+  title = {Detection and potential early warning of catastrophic flow events with regional seismic networks},
+  journal = {Science},
+  year = {2021},
+  volume = {374},
+  number = {6563},
+  pages = {87--92},
+  doi = {10.1126/science.abj1227}
+}
+
+@article{Evans2021,
+  author = {Evans, S. G. and Delaney, K. B. and Rana, N. M.},
+  title = {The occurrence and mechanism of catastrophic mass flows in the mountain cryosphere},
+  journal = {Snow and Ice-Related Hazards, Risks and Disasters},
+  year = {2021},
+  pages = {541--596}
+}
+
+@article{Guo2021,
+  author = {Guo, K. and Guan, M. and Yu, D.},
+  title = {Urban surface water flood modelling-a comprehensive review of current models and future challenges},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2021},
+  volume = {25},
+  pages = {2843--2860},
+  doi = {10.5194/hess-25-2843-2021}
+}
+
+@article{Hugonnet2021,
+  author = {Hugonnet, R. and McNabb, R. and Berthier, E. and Menounos, B. and Nuth, C. and Girod, L. and Farinotti, D. and Huss, M. and Dussaillant, I. and Brun, F. and Kääb, A.},
+  title = {Accelerated global glacier mass loss in the early twenty-first century},
+  journal = {Nature},
+  year = {2021},
+  volume = {592},
+  pages = {726--731},
+  doi = {10.1038/s41586-021-03436-z}
+}
+
+@article{Ivanov2021,
+  author = {Ivanov, Valeriy Y. and Xu, Hao and Dwelle, Michael C. and Sela, Lina and Bras, Rafael L.},
+  title = {Breaking down the computational barriers to real-time urban flood forecasting},
+  journal = {Geophysical Research Letters},
+  year = {2021},
+  volume = {48},
+  doi = {10.1029/2021GL093585}
+}
+
+@article{Kreibich2021,
+  author = {Kreibich, H. and Hudson, P. and Merz, B.},
+  title = {Knowing what to do substantially improves the effectiveness of flood early warning},
+  journal = {Bulletin of the American Meteorological Society},
+  year = {2021},
+  volume = {102},
+  pages = {1--38}
+}
+
+@article{Lee2021,
+  author = {Lee, E. and Carrivick, J. L. and Quincey, D. J. and Cook, S. J. and James, W. H. M. and Brown, L. E.},
+  title = {Accelerated mass loss of Himalayan glaciers since the Little Ice Age},
+  journal = {Scientific Reports},
+  year = {2021},
+  volume = {11}
+}
+
+@article{Lehner2021,
+  author = {Lehner, F. and Coats, S.},
+  title = {Does regional hydroclimate change scale linearly with global warming?},
+  journal = {Geophysical Research Letters},
+  year = {2021},
+  volume = {48},
+  doi = {10.1029/2021GL095127}
+}
+
+@article{Merz2021,
+  author = {Merz, Bruno and Blöschl, Günter and Vorogushyn, Sergiy and Dottori, Francesco and Aerts, Jeroen C. J. H. and Bates, Paul and Bertola, Miriam and Kemter, Markus and Kreibich, Heidi and Lall, Upmanu and Macdonald, Elizabeth},
+  title = {Causes, impacts and patterns of disastrous river floods},
+  journal = {Nature Reviews Earth \\& Environment},
+  year = {2021},
+  volume = {2},
+  number = {9},
+  pages = {592--609},
+  doi = {10.1038/s43017-021-00195-3}
+}
+
+@article{Neal2021,
+  author = {Neal, Jeffrey and Hawker, Laurence and Savage, James and Durand, Michael and Bates, Paul and Sampson, Christopher},
+  title = {Estimating river channel bathymetry in large scale flood inundation models},
+  journal = {Water Resources Research},
+  year = {2021},
+  volume = {57},
+  doi = {10.1029/2020WR028301}
+}
+
+@article{Nie2021,
+  author = {Nie, Y. and Pritchard, H. D. and Liu, Q. and Hennig, T. and Wang, W. and Wang, X. and Liu, S. and Nepal, S. and Samyn, D. and Hewitt, K. and Chen, X.},
+  title = {Glacial change and hydrological implications in the Himalaya and Karakoram},
+  journal = {Nature Reviews Earth \\& Environment},
+  year = {2021},
+  volume = {2},
+  pages = {91--106},
+  doi = {10.1038/s43017-020-00124-w}
+}
+
+@article{Parnas2021,
+  author = {Parnas, F. E. Å. and Abdalla, E. M. H. and Muthanna, T. M.},
+  title = {Evaluating three commonly used infiltration methods for permeable surfaces in urban areas using the SWMM and STORM},
+  journal = {Hydrology Research},
+  year = {2021},
+  volume = {52},
+  pages = {160--175}
+}
+
+@article{Robinson2021,
+  author = {Robinson, Alexander and Lehmann, Jascha and Barriopedro, David and Rahmstorf, Stefan and Coumou, Dim},
+  title = {Increasing heat and rainfall extremes now far outside the historical climate},
+  journal = {NPJ Climate and Atmospheric Science},
+  year = {2021},
+  volume = {4},
+  pages = {45},
+  doi = {10.1038/s41612-021-00202-w}
+}
+
+@article{Sattar2021,
+  author = {Sattar, A. and Goswami, A. and Kulkarni, A. V. and Emmer, A. and Haritashya, U. K. and Allen, S. and Frey, H. and Huggel, C.},
+  title = {Future glacial lake outburst flood (GLOF) hazard of the South Lhonak Lake, Sikkim Himalaya},
+  journal = {Geomorphology},
+  year = {2021},
+  volume = {388}
+}
+
+@article{Shugar2021,
+  author = {Shugar, D. H. and Jacquemart, M. and Shean, D. and Bhushan, S. and Upadhyay, K. and Sattar, A. and Schwanghart, W. and McBride, S. and de Vries, M. V. W. and Mergili, M. and Emmer, A. and Deschamps-Berger, C. and McDonnell, M. and Bhambri, R. and Allen, S. and Berthier, E. and Carrivick, J. L. and Clague, J. J. and Dokukin, M. and Dunning, S. A. and Frey, H. and Gascoin, S. and Haritashya, U. K. and Huggel, C. and Kääb, A. and Kargel, J. S. and Kavanaugh, J. L. and Lacroix, P. and Petley, D. and Rupper, S. and Azam, M. F. and Cook, S. J. and Dimri, A. P. and Eriksson, M. and Farinotti, D. and Fiddes, J. and Gnyawali, K. R. and Harrison, S. and Jha, M. and Koppes, M. and Kumar, A. and Leinss, S. and Majeed, U. and Mal, S. and Muhuri, A. and Noetzli, J. and Paul, F. and Rashid, I. and Sain, K. and Steiner, J. and Ugalde, F. and Watson, C. S. and Westoby, M. J.},
+  title = {A massive rock and ice avalanche caused the 2021 disaster at Chamoli, Indian Himalaya},
+  journal = {Science},
+  year = {2021},
+  volume = {373},
+  pages = {300--306},
+  doi = {10.1126/science.abh4455}
+}
+
+@article{Speight2021,
+  author = {Speight, Linda J. and Cole, Steven J. and Moore, Robert J. and Pierce, Charles and Wright, Ben and Golding, Brian and Cranston, Michael and Tavendale, Alison and Dhondia, Jay and Ghimire, Suraj},
+  title = {Operational and emerging capabilities for surface water flood forecasting},
+  journal = {Wiley Interdisciplinary Reviews: Water},
+  year = {2021},
+  volume = {8},
+  doi = {10.1002/wat2.1517}
+}
+
+@article{Toney2021,
+  author = {Toney, L. and Allstadt, K. E.},
+  title = {lsforce: A Python-based single-force seismic inversion framework for massive landslides},
+  journal = {Seismological Research Letters},
+  year = {2021},
+  volume = {92},
+  pages = {2610--2626}
+}
+
+@article{Vaidya2021,
+  author = {Vaidya, R. A. and Molden, D. J. and Shrestha, A. B. and Wagle, N. and Tortajada, C.},
+  title = {The role of hydropower in South Asia’s energy future},
+  journal = {International Journal of Water Resources Development},
+  year = {2021},
+  volume = {37},
+  pages = {367--391}
+}
+
+@article{VanWykdeVries2021,
+  author = {Van Wyk de Vries, M. and Wickert, A. D.},
+  title = {Glacier Image Velocimetry: An open-source toolbox for easy and rapid calculation of high-resolution glacier velocity fields},
+  journal = {The Cryosphere},
+  year = {2021},
+  volume = {15},
+  pages = {2115--2132}
+}
+
+@article{Wasko2021,
+  author = {Wasko, C. and Westra, S. and Nathan, R. and Orr, H. G. and Villarini, G. and Herrera, R. V. and Fowler, H. J.},
+  title = {Incorporating climate change in flood estimation guidance},
+  journal = {Philosophical Transactions of the Royal Society A},
+  year = {2021},
+  volume = {379},
+  doi = {10.1098/rsta.2019.0548}
+}
+
+@article{Zheng2021,
+  author = {Zheng, G. and Allen, S. K. and Bao, A. and Ballesteros-Cánovas, J. A. and Huss, M. and Zhang, G. and Li, J. and Yuan, Y. and Jiang, L. and Yu, T. and Chen, W. and Stoffel, M.},
+  title = {Increasing risk of glacial lake outburst floods from future Third Pole deglaciation},
+  journal = {Nature Climate Change},
+  year = {2021},
+  volume = {11},
+  pages = {411--417},
+  doi = {10.1038/s41558-021-01028-3}
+}
+
+@article{Andreadis2022,
+  author = {Andreadis, K. M. and Wing, O. E. J. and Colven, E. and Gleason, C. J. and Bates, P. D. and Brown, C. M.},
+  title = {Urbanizing the floodplain: Global changes of imperviousness in flood-prone areas},
+  journal = {Environmental Research Letters},
+  year = {2022},
+  volume = {17}
+}
+
+@article{Apel2022,
+  author = {Apel, Heiko and Thieken, Annegret H. and Merz, Bruno and Blöschl, Günter},
+  title = {Impact forecasting could substantially improve the emergency management of deadly floods},
+  journal = {Natural Hazards and Earth System Sciences},
+  year = {2022},
+  volume = {22},
+  pages = {3005--3014},
+  doi = {10.5194/nhess-22-3005-2022}
+}
+
+@article{Bates2022,
+  author = {Bates, P. D.},
+  title = {Flood inundation prediction},
+  journal = {Annual Review of Fluid Mechanics},
+  year = {2022},
+  volume = {54},
+  pages = {287--315},
+  doi = {10.1146/annurev-fluid-030121-113138}
+}
+
+@article{Brun2022,
+  author = {Brun, P. and Zimmermann, N. and Hari, C. and Pellissier, L. and Karger, D.},
+  title = {Global climate-related predictors at kilometer resolution for the past and future},
+  journal = {Earth System Science Data},
+  year = {2022},
+  volume = {14},
+  pages = {5573--5603}
+}
+
+@article{deHaas2022,
+  author = {de Haas, T. and McArdell, B. W. and Nijland, W. and Åberg, A. S. and Hirschberg, J. and Huguenin, P.},
+  title = {Flow and bed conditions jointly control debris-flow erosion and bulking},
+  journal = {Geophysical Research Letters},
+  year = {2022},
+  volume = {49}
+}
+
+@article{Dottori2022,
+  author = {Dottori, F. and Alfieri, L. and Bianchi, A. and Skoien, J. and Salamon, P.},
+  title = {A new dataset of river flood hazard maps for Europe and the Mediterranean Basin},
+  journal = {Earth System Science Data},
+  year = {2022},
+  volume = {14},
+  pages = {1549--1569},
+  doi = {10.5194/essd-14-1549-2022}
+}
+
+@article{Geertsema2022,
+  author = {Geertsema, M. and Menounos, B. and Bullard, G. and Carrivick, J. L. and Clague, J. J. and Dai, C. and Donati, D. and Ekstrom, G. and Jackson, J. M. and Lynett, P. and Pichierri, M. and Pon, A. and Shugar, D. H. and Stead, D. and Del Bel Belluz, J. and Friele, P. and Giesbrecht, I. and Heathfield, D. and Millard, T. and Nasonova, S. and Schaeffer, A. J. and Ward, B. C. and Blaney, D. and Blaney, E. and Brillon, C. and Bunn, C. and Floyd, W. and Higman, B. and Hughes, K. E. and McInnes, W. and Mukherjee, K. and Sharp, M. A.},
+  title = {The 28 November 2020 landslide, tsunami, and outburst flood – a hazard cascade associated with rapid deglaciation at Elliot Creek, British Columbia, Canada},
+  journal = {Geophysical Research Letters},
+  year = {2022},
+  volume = {49},
+  doi = {10.1029/2021GL096716}
+}
+
+@article{Grundemann2022,
+  author = {Gründemann, Gaby Joanne and van de Giesen, Nick and Brunner, Lukas and van der Ent, Ruud},
+  title = {Rarest rainfall events will see the greatest relative increase in magnitude under future climate change},
+  journal = {Communications Earth \\& Environment},
+  year = {2022},
+  volume = {3},
+  pages = {235},
+  doi = {10.1038/s43247-022-00558-8}
+}
+
+@article{Hapuarachchi2022,
+  author = {Hapuarachchi, H. A. P. and Wang, Q. J. and Robertson, D. E. and Shrestha, D. L. and Bennett, J. C. and Lerat, J. and Li, M. and Fo, F. and Perraud, J.-M.},
+  title = {Development of a national 7-day ensemble streamflow forecasting service for Australia},
+  journal = {Hydrology and Earth System Sciences},
+  year = {2022},
+  volume = {26},
+  pages = {4801--4821},
+  doi = {10.5194/hess-26-4801-2022}
+}
+
+@article{Hawker2022,
+  author = {Hawker, Laurence and Uhe, Peter and Paulo, Leandro and Sosa, Josue and Savage, James and Sampson, Christopher and Neal, Jeffrey},
+  title = {A 30 m global map of elevation with forests and buildings removed},
+  journal = {Environmental Research Letters},
+  year = {2022},
+  volume = {17},
+  number = {2},
+  doi = {10.1088/1748-9326/ac4d4f}
+}
+
+@article{Islam2022,
+  author = {Islam, N. and Patel, P. P.},
+  title = {Inventory and GLOF hazard assessment of glacial lakes in the Sikkim Himalayas, India},
+  journal = {Geocarto International},
+  year = {2022},
+  volume = {37},
+  pages = {3840--3876}
+}
+
+@article{Li2022,
+  author = {Li, D. and Lu, X. and Walling, D. E. and Zhang, T. and Steiner, J. F. and Wasson, R. J. and Harrison, S. and Nepal, S. and Nie, Y. and Immerzeel, W. W. and Shugar, D. H. and Koppes, M. and Lane, S. and Zeng, Z. and Sun, X. and Yegorov, A. and Bolch, T.},
+  title = {High Mountain Asia hydropower systems threatened by climate-driven landscape instability},
+  journal = {Nature Geoscience},
+  year = {2022},
+  volume = {15},
+  pages = {520--530},
+  doi = {10.1038/s41561-022-00953-y}
+}
+
+@article{Rentschler2022,
+  author = {Rentschler, J. and Salhab, M. and Jafino, B. A.},
+  title = {Flood exposure and poverty in 188 countries},
+  journal = {Nature Communications},
+  year = {2022},
+  volume = {13},
+  pages = {3527},
+  doi = {10.1038/s41467-022-30727-4}
+}
+
+@article{Sattar2022,
+  author = {Sattar, A. and Haritashya, U. K. and Kargel, J. S. and Karki, A.},
+  title = {Transition of a small Himalayan glacier lake outburst flood to a giant transborder flood and debris flow},
+  journal = {Scientific Reports},
+  year = {2022},
+  volume = {12},
+  doi = {10.1038/s41598-022-16337-6}
+}
+
+@article{Schubert2022,
+  author = {Schubert, Jochen E. and Sanders, Brett F. and Smith, Martin J. and Wright, Nigel G.},
+  title = {A framework for mechanistic flood inundation forecasting at the metropolitan scale},
+  journal = {Water Resources Research},
+  year = {2022},
+  volume = {58},
+  doi = {10.1029/2021WR031279}
+}
+
+@article{Xing2022,
+  author = {Xing, Y. and Shao, D. and Liang, Q. and Chen, H. and Ma, X. and Ullah, I.},
+  title = {Investigation of the drainage loss effects with a street view based drainage calculation method in hydrodynamic modelling of pluvial floods in urbanized area},
+  journal = {Journal of Hydrology},
+  year = {2022},
+  volume = {605}
+}
+
+@article{Allstadt2023,
+  author = {Allstadt, K. E. and Toney, L. and Collins, E. A.},
+  title = {lsforce, Version 1.1},
+  journal = {US Geological Survey Software Release},
+  year = {2023}
+}
+
+@article{Bates2023,
+  author = {Bates, P. D. and Savage, J. and Wing, O. and Quinn, N. and Sampson, C. and Neal, J. and Smith, A.},
+  title = {A climate-conditioned catastrophe risk model for UK flooding},
+  journal = {Natural Hazards and Earth System Sciences},
+  year = {2023},
+  volume = {23},
+  pages = {891--908},
+  doi = {10.5194/nhess-23-891-2023}
+}
+
+@article{Bates2023_NatWater,
+  author = {Bates, P.},
+  title = {Fundamental limits to flood inundation modelling},
+  journal = {Nature Water},
+  year = {2023},
+  volume = {1},
+  pages = {566--567}
+}
+
+@article{Bertola2023,
+  author = {Bertola, Miriam and Blöschl, Günter and Bohac, Milon and Borga, Marco and Castellarin, Attilio and Chirico, Giovanni B. and Claps, Pierluigi and Dallan, Elena and Danilovich, Igor and Ganora, Daniele and Gorbachova, Liudmyla and Ledvinka, Ondřej and Mavrova-Guirguinova, Maria and Montanari, Alberto and Ovcharuk, Valeriia and Viglione, Alberto and Volpi, Elena and Arheimer, Berit and Aronica, Giuseppe T. and Živković, Nenad},
+  title = {Megafloods in Europe can be anticipated from observations in hydrologically similar catchments},
+  journal = {Nature Geoscience},
+  year = {2023},
+  volume = {16},
+  number = {11},
+  pages = {982--988},
+  doi = {10.1038/s41561-023-01300-5}
+}
+
+@article{Durand2023,
+  author = {Durand, M. and Gleason, C. J. and Pavelsky, T. M. and Prata de Moraes Frasson, R. and Turmon, M. and David, C. H.},
+  title = {A framework for estimating global river discharge from the surface water and ocean topography satellite mission},
+  journal = {Water Resources Research},
+  year = {2023},
+  volume = {59}
+}
+
+@article{Fraehr2023,
+  author = {Fraehr, Niels and Wang, Quan J. and Wu, Wenyan and Nathan, Rory},
+  title = {Supercharging hydrodynamic inundation models for instant flood insight},
+  journal = {Nature Water},
+  year = {2023},
+  volume = {1},
+  number = {10},
+  pages = {835--843},
+  doi = {10.1038/s44221-023-00132-2}
+}
+
+@article{Kratzert2023,
+  author = {Kratzert, Frederik and Nearing, Grey S. and Addor, Nans and Erickson, Tyler and Gauch, Martin and Gilon, Oren and Gudmundsson, Lukas and Hassidim, Avinatan and Klotz, Daniel and Nevo, Sella and Shalev, Guy and Matias, Yossi},
+  title = {Caravan—A global community dataset for large-sample hydrology},
+  journal = {Scientific Data},
+  year = {2023},
+  volume = {10},
+  doi = {10.1038/s41597-023-01975-w}
+}
+
+@article{Mani2023,
+  author = {Mani, P. and Allen, S. and Evans, S. G. and Kargel, J. S. and Mergili, M. and Petrakov, D. and Stoffel, M.},
+  title = {Geomorphic process chains in high-mountain regions—a review and classification approach for natural hazards assessment},
+  journal = {Reviews of Geophysics},
+  year = {2023},
+  volume = {61}
+}
+
+@article{Nie2023,
+  author = {Nie, Y. and Deng, Q. and Pritchard, H. D. and Carrivick, J. L. and Ahmed, F. and Huggel, C. and Liu, L. and Wang, W. and Lesi, M. and Wang, J. and Zhang, H. and Zhang, B. and Lü, Q. and Zhang, Y.},
+  title = {Glacial lake outburst floods threaten Asia’s infrastructure},
+  journal = {Science Bulletin},
+  year = {2023},
+  volume = {68},
+  pages = {1361--1365}
+}
+
+@article{Taylor2023,
+  author = {Taylor, C. and Robinson, T. R. and Dunning, S. and Rachel Carr, J. and Westoby, M.},
+  title = {Glacial lake outburst floods threaten millions globally},
+  journal = {Nature Communications},
+  year = {2023},
+  volume = {14},
+  pages = {487},
+  doi = {10.1038/s41467-023-36033-x}
+}
+
+@article{VandenBout2023,
+  author = {Van den Bout, Bastiaan and Jetten, Victor G. and van Westen, Cees J.},
+  title = {A breakthrough in fast flood simulation},
+  journal = {Environmental Modelling \& Software},
+  year = {2023},
+  volume = {168},
+  pages = {105787},
+  doi = {10.1016/j.envsoft.2023.105787}
+}
+
+@article{Westoby2023,
+  author = {Westoby, M. J. and Dunning, S. A. and Carrivick, J. L. and Coulthard, T. J. and Sain, K. and Kumar, A. and Berthier, E. and Haritashya, U. K. and Shean, D. E. and Azam, M. F. and Upadhyay, K. and Koppes, M. and McCourt, H. R. and Shugar, D. H.},
+  title = {Rapid fluvial remobilization of sediments deposited by the 2021 Chamoli disaster, Indian Himalaya},
+  journal = {Geology},
+  year = {2023},
+  volume = {51},
+  pages = {924--928}
+}
+
+@article{Dubey2024,
+  author = {Dubey, S. and Sattar, A. and Gupta, V. and Goyal, M. K. and Haritashya, U. K. and Kargel, J. S.},
+  title = {Transboundary hazard and downstream impact of glacial lakes in Hindu-Kush Karakoram Himalayas},
+  journal = {Science of The Total Environment},
+  year = {2024},
+  volume = {914}
+}
+
+@article{KellererPirklbauer2024,
+  author = {Kellerer-Pirklbauer, A. and Bodin, X. and Delaloye, R. and Lambiel, C. and Gärtner-Roer, I. and Bonnefoy-Demongeot, M. and Carturan, L. and Damm, B. and Eulenstein, J. and Fischer, A. and Hartl, L. and Ikeda, A. and Kaufmann, V. and Krainer, K. and Matsuoka, N. and Morra Di Cella, U. and Noetzli, J. and Seppi, R. and Scapozza, C. and Schoeneich, P. and Stocker-Waldhuber, M. and Thibert, E. and Zumiani, M.},
+  title = {Acceleration and interannual variability of creep rates in mountain permafrost landforms (rock glacier velocities) in the European Alps in 1995–2022},
+  journal = {Environmental Research Letters},
+  year = {2024},
+  volume = {19}
+}
+
+@article{Perrini2024,
+  author = {Perrini, P. and Cea, L. and Chiaravalloti, F. and Gabriele, S. and Manfreda, S. and Fiorentino, M. and Gioia, A. and Iacobellis, V.},
+  title = {A Runoff-On-Grid Approach to Embed Hydrological Processes in Shallow Water Models},
+  journal = {Water Resources Research},
+  year = {2024},
+  volume = {60},
+  doi = {10.1029/2023WR036265}
+}
+
+@article{Singh2024,
+  author = {Singh, A. and Anand, V. and Durga Rao, K. H. V. and S. R. P and Chauhan, P.},
+  title = {Unveiling the catastrophic landslide-induced flash flood in Teesta River, Sikkim: Insight from South Lhonak Glacial Lake},
+  journal = {Landslides},
+  year = {2024}
+}
+
+@article{VanWykdeVries2024,
+  author = {Van Wyk de Vries, M. and Arrell, K. and Basyal, G. K. and Densmore, A. L. and Dunant, A. and Harvey, E. L. and Jimee, G. K. and Kincey, M. E. and Li, S. and Singh Pujara, D. and Shrestha, R. and Rosser, N. J. and Dadson, S. J.},
+  title = {Detection of slow-moving landslides through automated monitoring of surface deformation using Sentinel-2 satellite imagery},
+  journal = {Earth Surface Processes and Landforms},
+  year = {2024},
+  volume = {49},
+  pages = {1397--1410}
+}
+
+@article{Zhang2024,
+  author = {Zhang, T. and Wang, W. and An, B.},
+  title = {A massive lateral moraine collapse triggered the 2023 South Lhonak Lake outburst flood, Sikkim Himalayas},
+  journal = {Landslides},
+  year = {2024},
+  volume = {22},
+  pages = {299--311}
+}
+
+@book{Chow1959,
+  author    = {Chow, V. T.},
+  title     = {Open-channel hydraulics},
+  publisher = {McGraw-Hill},
+  address   = {New York},
+  year      = {1959}
+}
+
+@techreport{Arcement1989,
+  author    = {Arcement, G. J. and Schneider, V. R.},
+  title     = {Guide for selecting Manning's roughness coefficients for natural channels and flood plains},
+  institution = {U.S. Geological Survey},
+  number    = {Water-Supply Paper 2339},
+  year      = {1989},
+  doi       = {10.3133/wsp2339}
+}
+
+@article{Tellman2021,
+  author    = {Tellman, B. and Sullivan, J. A. and Kuhn, C. and Kettner, A. J. and Doyle, C. S. and Brakenridge, G. R. and Erickson, T. and Slayback, D. A.},
+  title     = {Satellite imaging reveals increased proportion of population exposed to floods},
+  journal   = {Nature},
+  volume    = {596},
+  pages     = {80--86},
+  year      = {2021},
+  doi       = {10.1038/s41586-021-03695-w}
+}
+
+% --- New Hydrodynamic Solver & SWE Physics References ---
+@book{Toro2001,
+  author    = {Toro, E. F.},
+  title     = {Shock-Capturing Methods for Free-Surface Shallow Flows},
+  publisher = {John Wiley \& Sons},
+  address   = {Chichester, UK},
+  year      = {2001}
+}
+
+@article{Roe1981,
+  author  = {Roe, P. L.},
+  title   = {Approximate {R}iemann solvers, parameter vectors, and difference schemes},
+  journal = {Journal of Computational Physics},
+  volume  = {43},
+  number  = {2},
+  pages   = {357--372},
+  year    = {1981},
+  doi     = {10.1016/0021-9991(81)90128-5}
+}
+
+@article{Audusse2004,
+  author  = {Audusse, E. and Bristeau, M.-O. and Bouchut, F. and Klein, R. and Perthame, B.},
+  title   = {A fast and stable well-balanced scheme with hydrostatic reconstruction for shallow water flows},
+  journal = {SIAM Journal on Scientific Computing},
+  volume  = {25},
+  number  = {6},
+  pages   = {2050--2065},
+  year    = {2004},
+  doi     = {10.1137/S106482750342422X}
+}
+
+% --- DEM, Geography, & Levee Infrastructure References ---
+@misc{Microsoft2023,
+  author = {{Microsoft}},
+  title  = {Global {ML} Building Footprints},
+  year   = {2023},
+  url    = {https://github.com/microsoft/GlobalMLBuildingFootprints}
+}
+
+@article{Lehner2013,
+  author  = {Lehner, B. and Grill, G.},
+  title   = {Global river hydrography and network routing: Baseline data and new approaches to study the world's large river systems},
+  journal = {Hydrological Processes},
+  volume  = {27},
+  number  = {15},
+  pages   = {2171--2186},
+  year    = {2013},
+  doi     = {10.1002/hyp.9740}
+}
+
+@article{Wing2019,
+  author  = {Wing, O. E. J. and Sampson, C. C. and Bates, P. D. and Quinn, N. and Smith, A. M. and Neal, J. C.},
+  title   = {A flood inundation forecast of Hurricane Harvey using a continental-scale 2D hydrodynamic model},
+  journal = {Journal of Hydrology X},
+  volume  = {4},
+  pages   = {100039},
+  year    = {2019},
+  doi     = {10.1016/j.hydroa.2019.100039}
+}
+
+@misc{ESA_CCI2017,
+  author = {{European Space Agency (ESA)}},
+  title  = {Land Cover {CCI} Product User Guide Version 2},
+  year   = {2017},
+  url    = {https://maps.elie.ucl.ac.be/CCI/viewer/download/ESACCI-LC-Ph2-PUGv2_2.0.pdf}
+}
+
+% --- Flood Inventories & EM-DAT Biases ---
+@misc{Brakenridge2022,
+  author = {Brakenridge, G. R.},
+  title  = {Global Active Archive of Large Flood Events},
+  year   = {2022},
+  publisher = {Dartmouth Flood Observatory},
+  url    = {https://floodobservatory.colorado.edu/}
+}
+
+@misc{EMDAT2024,
+  author = {{EM-DAT}},
+  title  = {The International Disaster Database},
+  year   = {2024},
+  publisher = {Centre for Research on the Epidemiology of Disasters (CRED) / UCLouvain},
+  address = {Brussels, Belgium},
+  url    = {https://www.emdat.be}
+}
+
+@book{Guha-Sapir2004,
+  author    = {Guha-Sapir, D. and Hargitt, D. and Hoyois, P.},
+  title     = {Thirty Years of Natural Disasters 1974-2003: The Numbers},
+  publisher = {Presses universitaires de Louvain},
+  year      = {2004}
+}
+
+@techreport{Tschoegl2006,
+  author      = {Tschoegl, L. and Below, R. and Guha-Sapir, D.},
+  title       = {An Analytical Review of Selected Data Sets on Natural Disasters and Impacts},
+  institution = {Centre for Research on the Epidemiology of Disasters (CRED)},
+  year        = {2006}
+}
+
+@techreport{Below2009,
+  author      = {Below, R. and Wirtz, A. and Guha-Sapir, D.},
+  title       = {Disaster Category Classification and Peril Terminology for Operational Purposes},
+  institution = {CRED and Munich Re},
+  year        = {2009}
+}
+
+@book{Davis2006,
+  author    = {Davis, M.},
+  title     = {Planet of Slums},
+  publisher = {Verso},
+  address   = {London, UK},
+  year      = {2006}
+}
+
+% --- GLOF Case Study References ---
+@article{Sattar2025,
+  author  = {Sattar, A. and Cook, K. L. and Rai, S. K. and Berthier, E. and Allen, S. and others},
+  title   = {The {S}ikkim flood of October 2023: Drivers, causes and impacts of a multihazard cascade},
+  journal = {Science},
+  volume  = {387},
+  pages   = {eads2659},
+  year    = {2025},
+  doi     = {10.1126/science.ads2659}
+}
+
+@article{Shrestha2024,
+  author  = {Shrestha, A. B. and others},
+  title   = {Volume drained and impact of the {S}outh {L}honak lake outburst flood},
+  journal = {Geophysical Research Letters},
+  volume  = {51},
+  year    = {2024}
+}
+
+% --- LSTM & Machine Learning References ---
+@article{Hochreiter1997,
+  author  = {Hochreiter, S. and Schmidhuber, J.},
+  title   = {Long short-term memory},
+  journal = {Neural Computation},
+  volume  = {9},
+  number  = {8},
+  pages   = {1735--1780},
+  year    = {1997}
+}
+
+@article{Kingma2014,
+  author  = {Kingma, D. P. and Ba, J.},
+  title   = {Adam: A method for stochastic optimization},
+  journal = {arXiv preprint arXiv:1412.6980},
+  year    = {2014}
+}
+
+@inproceedings{Lundberg2017,
+  author    = {Lundberg, S. M. and Lee, S. I.},
+  title     = {A unified approach to interpreting model predictions},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {30},
+  pages     = {4765--4774},
+  year      = {2017}
+}
+
+@article{Kratzert2019,
+  author  = {Kratzert, F. and Klotz, D. and Shalev, G. and Klambauer, G. and Hochreiter, S. and Nearing, G.},
+  title   = {Towards learning universal, regional, and local hydrological behaviors via machine learning applied to large-sample datasets},
+  journal = {Hydrology and Earth System Sciences},
+  volume  = {23},
+  number  = {12},
+  pages   = {5089--5110},
+  year    = {2019},
+  doi     = {10.5194/hess-23-5089-2019}
+}
+
+% --- Floodiness and Precipitation Disconnect ---
+@article{Stephens2015,
+  author  = {Stephens, E. and Day, J. J. and Pappenberger, F. and Cloke, H.},
+  title   = {Precipitation and floodiness},
+  journal = {Geophysical Research Letters},
+  volume  = {42},
+  number  = {23},
+  pages   = {10316--10323},
+  year    = {2015},
+  doi     = {10.1002/2015GL066779}
+}
+
+% --- Tree-Based Machine Learning Baselines ---
+@inproceedings{ChenGuestrin2016,
+  author    = {Chen, Tianqi and Guestrin, Carlos},
+  title     = {{XGBoost}: A Scalable Tree Boosting System},
+  booktitle = {Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
+  series    = {KDD '16},
+  year      = {2016},
+  pages     = {785--794},
+  publisher = {ACM},
+  doi       = {10.1145/2939672.2939785}
+}
+
+@incollection{Ke2017,
+  author    = {Ke, Guolin and Meng, Qi and Finley, Thomas and Wang, Taifeng and Chen, Wei and Ma, Weidong and Ye, Qiwei and Liu, Tie-Yan},
+  title     = {{LightGBM}: A Highly Efficient Gradient Boosting Decision Tree},
+  booktitle = {Advances in Neural Information Processing Systems 30},
+  year      = {2017},
+  pages     = {3146--3154},
+  publisher = {Curran Associates, Inc.}
+}
+% --- Population and Exposure Datasets ---
+@article{Stevens2015,
+  author  = {Stevens, F. R. and Gaughan, A. E. and Linard, C. and Tatem, A. J.},
+  title   = {Disaggregating Census Data for Population Mapping Using Random Forests with Remotely-Sensed and Ancillary Data},
+  journal = {PLoS ONE},
+  volume  = {10},
+  number  = {2},
+  pages   = {e0107042},
+  year    = {2015},
+  doi     = {10.1371/journal.pone.0107042}
+}
+
+@techreport{Pesaresi2023,
+  author      = {Pesaresi, M. and Politis, P.},
+  title       = {{GHS-BUILT-V R2023A}—{GHS} built-up volume grids derived from joint assessment of {Sentinel2}, {Landsat}, and global {DEM} data, multitemporal (1975--2030)},
+  institution = {European Commission, Joint Research Centre (JRC)},
+  year        = {2023},
+  doi         = {10.2905/AB2F107A-03CD-47A3-85E5-139D8EC63283}
+}
+
+@article{Dobson2000,
+  author  = {Dobson, J. E. and Bright, E. A. and Coleman, P. R. and Durfee, R. C. and Worley, B. A.},
+  title   = {{LandScan}: A global population database for estimating populations at risk},
+  journal = {Photogrammetric Engineering \& Remote Sensing},
+  volume  = {66},
+  number  = {7},
+  pages   = {849--857},
+  year    = {2000}
+}
+
+% --- Climate Scenarios ---
+@article{Meinshausen2010,
+  author  = {Meinshausen, M. and Smith, S. J. and Calvin, K. and Daniel, J. S. and Kainuma, M. L. T. and Lamarque, J.-F. and Matsumoto, K. and Montzka, S. A. and Raper, S. C. B. and Riahi, K. and Thomson, A. and Velders, G. J. M. and van Vuuren, D. P. P.},
+  title   = {The {RCP} greenhouse gas concentrations and their extensions from 1765 to 2300},
+  journal = {Climatic Change},
+  volume  = {109},
+  number  = {1-2},
+  pages   = {213--241},
+  year    = {2011},
+  doi     = {10.1007/s10584-011-0156-z},
+  note    = {Published online in 2011, occasionally cited as 2010}
+}
+
+% --- Climate Models, Runoff, and Bias Correction ---
+@article{Lange2019,
+  author  = {Lange, Stefan},
+  title   = {Trend-preserving bias adjustment and statistical downscaling with {ISIMIP3BASD} (v1.0)},
+  journal = {Geoscientific Model Development},
+  volume  = {12},
+  number  = {7},
+  pages   = {3055--3070},
+  year    = {2019},
+  doi     = {10.5194/gmd-12-3055-2019}
+}
+
+@article{Gosling2017,
+  author  = {Gosling, Simon N. and Zaherpour, Jamal and Mount, Nick J. and Hattermann, Fred F. and Dankers, Rutger and Arheimer, Berit and Breuer, Lutz and Ding, Jie and Haddeland, Ingjerd and Kumar, Rohini and Kundu, Dipangkar and Liu, Junguo and van Griensven, Ann and Veldkamp, Ted I. E. and Vetter, Tobias and Wang, Xiaoyan and Zhang, Xinxin},
+  title   = {A comparison of changes in river runoff from multiple global and catchment-scale hydrological models under global warming scenarios of 1$^\circ$C, 2$^\circ$C and 3$^\circ$C},
+  journal = {Climatic Change},
+  volume  = {141},
+  number  = {3},
+  pages   = {577--595},
+  year    = {2017},
+  doi     = {10.1007/s10584-016-1773-3}
+}
+
+@article{Kendon2021,
+  author  = {Kendon, E. J. and Prein, A. F. and Senior, C. A. and Stirling, A.},
+  title   = {Challenges and outlook for convection-permitting climate modelling},
+  journal = {Philosophical Transactions of the Royal Society A},
+  volume  = {379},
+  pages   = {20190547},
+  year    = {2021},
+  doi     = {10.1098/rsta.2019.0547}
+}
+
+@article{Nearing2024,
+  author  = {Nearing, Grey and Cohen, Deborah and Dube, Vusumuzi and Gauch, Martin and Gilon, Oren and Harrigan, Shaun and Hassidim, Avinatan and Klotz, Daniel and Kratzert, Frederik and Metzger, Asher and Nevo, Sella and Pappenberger, Florian and Prudhomme, Christel and Shalev, Guy and Shenzis, Shlomo and Tekalign, Tadele Yednkachw and Weitzner, Dana and Matias, Yossi},
+  title   = {Global prediction of extreme floods in ungauged watersheds},
+  journal = {Nature},
+  volume  = {627},
+  pages   = {425--430},
+  year    = {2024},
+  doi     = {10.1038/s41586-024-07145-1}
+}
+
+@inproceedings{Fatima2025,
+  author    = {Fatima, Zuha and Sohaib, Muhammad Anser and Talha, Muhammad and Sultana, Sidra and Kanwal, Ayesha and Perwaiz, Nazia},
+  booktitle = {2025 5th International Conference on Digital Futures and Transformative Technologies (ICoDT2)}, 
+  title     = {{GLOFNet}- A Multimodal Dataset for {GLOF} Monitoring and Prediction}, 
+  year      = {2025},
+  pages     = {1--8},
+  doi       = {10.1109/ICoDT269104.2025.11360730}
+}
+
+@article{Kirschbaum2019,
+  author  = {Kirschbaum, Dalia and Watson, C. Scott and Rounce, David R. and Shugar, Dan H. and Kargel, Jeffrey S. and Haritashya, Umesh K. and Amatya, Pukar and Shean, David and Anderson, Eric R. and Jo, Minjeong},
+  title   = {The State of Remote Sensing Capabilities of Cascading Hazards Over High Mountain Asia},
+  journal = {Frontiers in Earth Science},
+  volume  = {7},
+  pages   = {197},
+  year    = {2019},
+  doi     = {10.3389/feart.2019.00197}
+}
+
+@article{Slater2021,
+  author  = {Slater, L. J. and Anderson, B. and Buechel, M. and Dadson, S. and Han, S. and Harrigan, S. and Kelder, T. and Kowal, K. and Lees, T. and Matthews, T. and Murphy, C. and Osuch, M.},
+  title   = {Nonstationary weather and water extremes: a review of methods for their detection, attribution, and management},
+  journal = {Hydrology and Earth System Sciences},
+  volume  = {25},
+  number  = {7},
+  pages   = {3897--3935},
+  year    = {2021},
+  doi     = {10.5194/hess-25-3897-2021}
+}
+
