@@ -57,12 +57,10 @@ class _PADRBlock(nn.Module if nn else object):
         return self.norm_ffn(x + self.ffn(x))
 
 
-_TORCH_PADR_BASES = (
-    (nn.Module, NNLearner) if nn else (NNLearner,)
-)
+_TORCH_MODULE_BASE = nn.Module if nn else object
 
 
-class TorchPADRNet(*_TORCH_PADR_BASES):
+class TorchPADRNet(NNLearner, _TORCH_MODULE_BASE):
     """Physics-aware attention model for flood forecasting."""
 
     def __init__(
