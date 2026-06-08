@@ -92,10 +92,10 @@ class PADRNetConfig:
                 Interval(Real, 0, None, closed="left")
             ],
             "flood_threshold": [
-                Interval(Real, 0, None, closed="left")
+                Interval(Real, 0, None, closed="neither")
             ],
             "reservoir_tau": [
-                Interval(Real, 0, None, closed="left")
+                Interval(Real, 0, None, closed="neither")
             ],
         },
         prefer_skip_nested_validation=True,
