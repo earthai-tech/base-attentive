@@ -37,6 +37,14 @@ def _can_import_tensorflow() -> bool:
     return result.returncode == 0
 
 
+def _to_numpy(values):
+    if hasattr(values, "detach"):
+        values = values.detach().cpu()
+    if hasattr(values, "numpy"):
+        return values.numpy()
+    return np.asarray(values)
+
+
 def test_padrnet_config_validation_and_update():
     config = PADRNetConfig(input_dim=3, forecast_horizon=2)
     assert config.input_dim == 3
@@ -216,7 +224,7 @@ def test_padrnet_tensorflow_output_shapes():
         outputs["exceedance_probability"].shape
     ) == (2, 3, 1)
     assert tuple(outputs["features"].shape) == (2, 16)
-    assert np.all(outputs["depth"].numpy() >= 0.0)
+    assert np.all(_to_numpy(outputs["depth"]) >= 0.0)
 
     cloned = type(model).from_config(model.get_config())
     cloned_outputs = cloned(

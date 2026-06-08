@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..._bootstrap import KERAS_DEPS
 from ...api.property import NNLearner
 from ...applications.flood.config import PADRNetConfig
 
@@ -188,25 +189,21 @@ class TensorFlowPADRNet(*_TF_PADR_BASES):
             and static_inputs is not None
         ):
             static = self.static_projection(static_inputs)
-            static = tf.expand_dims(static, axis=1)
+            static = KERAS_DEPS.expand_dims(static, axis=1)
             x = x + static
         for block in self.blocks:
             x = block(x, training=training)
 
         features = self.memory_pool(x)
         depth = self.depth_head(features, training=training)
-        depth = tf.expand_dims(depth, axis=-1)
-        threshold = tf.cast(
-            self.config.flood_threshold,
-            depth.dtype,
+        depth = KERAS_DEPS.expand_dims(depth, axis=-1)
+        scale = max(
+            0.004, 0.08 * self.config.flood_threshold
         )
-        scale = tf.cast(
-            max(0.004, 0.08 * self.config.flood_threshold),
-            depth.dtype,
-        )
-        exceedance = tf.math.sigmoid(
-            (depth - threshold) / scale
-        )
+        logits = (
+            depth - self.config.flood_threshold
+        ) / scale
+        exceedance = KERAS_DEPS.sigmoid(logits)
         return {
             "depth": depth,
             "exceedance_probability": exceedance,
