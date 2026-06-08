@@ -33,7 +33,7 @@ Top-level package
 
 .. automodule:: base_attentive
    :members:
-   :exclude-members: __getattr__
+   :exclude-members: __getattr__, PADRNet, PADRNetConfig
 
 Core model
 ----------
@@ -41,6 +41,25 @@ Core model
 .. autoclass:: base_attentive.core.base_attentive.BaseAttentive
    :members:
    :show-inheritance:
+
+PADR-Net flood application
+--------------------------
+
+.. autoclass:: base_attentive.applications.flood.PADRNet
+   :members:
+   :show-inheritance:
+
+.. autoclass:: base_attentive.applications.flood.PADRNetConfig
+   :members:
+   :show-inheritance:
+
+.. autofunction:: base_attentive.applications.flood.create_padrnet
+
+.. automodule:: base_attentive.applications.flood.metrics
+   :members:
+
+.. automodule:: base_attentive.applications.flood.physics
+   :members:
 
 V2 Configuration Schema
 -----------------------

@@ -7,6 +7,7 @@ import re
 __all__ = [
     "DocstringComponents",
     "_halnet_core_params",
+    "_padrnet_params",
 ]
 
 
@@ -155,5 +156,32 @@ vsn_units : int, optional
     Number of units used inside the internal GRNs of the Variable
     Selection Networks. If `None`, the model falls back to a value
     derived from `hidden_units`.
+""",
+)
+
+
+_padrnet_params = dict(
+    config="""
+config : PADRNetConfig
+    Configuration object that defines the PADR-Net input
+    dimensionality, latent capacity, forecast horizon, dropout
+    rate, physics weights, flood threshold, and reservoir
+    response scale. The object is validated with the same
+    :func:`validate_params` style used by the main
+    :class:`BaseAttentive` API.
+""",
+    backend="""
+backend : {'tensorflow', 'tf', 'torch', 'pytorch'} or \
+None, default None
+    Backend used to instantiate the concrete model. ``'tf'``
+    is normalized to ``'tensorflow'`` and ``'pytorch'`` is
+    normalized to ``'torch'``. If ``None``, the TensorFlow
+    implementation is selected by default.
+""",
+    kwargs="""
+**kwargs
+    Additional keyword arguments forwarded to the
+    backend-specific PADR-Net model constructor. These are
+    useful for backend model metadata such as ``name``.
 """,
 )

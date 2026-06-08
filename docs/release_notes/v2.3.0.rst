@@ -1,0 +1,174 @@
+.. _release-v2.3.0:
+
+**v2.3.0** — |MINOR| PADR-Net Flood Forecasting Application
+============================================================
+
+*Released: June 2026*
+
+Summary
+-------
+
+This backward-compatible minor release adds **PADR-Net**, a
+physics-aware flood-forecasting application module built on the
+BaseAttentive API style. It introduces a validated configuration
+object, TensorFlow and PyTorch backend implementations, hydrological
+metrics and physics helpers, a dedicated documentation page, and two
+end-to-end notebooks for standard and advanced flood-forecasting
+workflows.
+
+The existing ``BaseAttentive`` API remains unchanged.
+
+PADR-Net Application API
+------------------------
+
+- |Feature| **New** ``base_attentive.applications.flood`` **package**
+  providing a public flood-forecasting application surface:
+
+  - ``PADRNet`` — backend-neutral public factory.
+  - ``PADRNetConfig`` — validated configuration dataclass.
+  - ``create_padrnet`` — functional factory equivalent to
+    ``PADRNet(...)``.
+  - ``metrics.py`` — hydrological skill metrics.
+  - ``physics.py`` — lightweight hydrological helper functions.
+
+- |Feature| **Top-level lazy exports added** so users can write:
+
+  .. code-block:: python
+
+     from base_attentive import PADRNet, PADRNetConfig
+
+  without forcing eager backend imports during package import.
+
+- |Feature| **Validated PADR-Net parameter handling** follows the same
+  ``validate_params`` style used by the main BaseAttentive API. The
+  configuration checks dimensionality, horizon length, attention-head
+  compatibility, dropout bounds, physics weights, flood threshold, and
+  reservoir-response scale.
+
+Backend Implementations
+-----------------------
+
+- |Feature| **TensorFlow PADR-Net implementation** added under
+  ``base_attentive.implementations.tensorflow.padrnet``.
+
+  The TensorFlow model returns a dictionary with:
+
+  - ``"depth"`` — multi-horizon water-depth forecast.
+  - ``"exceedance_probability"`` — smooth flood-threshold probability.
+  - ``"features"`` — latent event representation.
+
+- |Feature| **PyTorch PADR-Net implementation** added under
+  ``base_attentive.implementations.torch.padrnet`` with the same output
+  contract as TensorFlow.
+
+- |Internal| **Backend models inherit the package learner mixin** where
+  appropriate, preserving the same parameter-management basis used by
+  existing neural learners.
+
+- |Bugfix| **TensorFlow/Keras registration compatibility hardened** for
+  environments where TensorFlow 2.x and Keras packaging differ. The
+  implementation uses compatible registration paths and layer fallbacks
+  where needed.
+
+Hydrological Metrics and Physics Helpers
+----------------------------------------
+
+- |Feature| **Flood metrics added**:
+
+  - ``nash_sutcliffe_efficiency``
+  - ``critical_success_index``
+  - ``true_skill_statistic``
+  - ``delta_mass``
+
+- |Feature| **Backend-neutral physics helpers added**:
+
+  - ``linear_reservoir_response``
+  - ``mass_balance_residual``
+  - ``exceedance_probability``
+
+These helpers are intentionally lightweight. They support examples,
+diagnostics, and custom training loops while allowing real projects to
+replace them with richer hydrodynamic or hydrological operators.
+
+Documentation
+-------------
+
+- |Feature| **Dedicated PADR-Net guide added**:
+  ``docs/padrnet.rst``.
+
+  The guide covers model motivation, input and output tensor contracts,
+  physics-aware mathematical formulation, validated configuration,
+  TensorFlow and PyTorch examples, hydrological diagnostics,
+  interpretation workflow, API reference links, and references.
+
+- |Feature| **API reference updated** with PADR-Net classes, factory,
+  metrics, and physics helpers.
+
+- |Feature| **Main documentation index updated** to include the PADR-Net
+  guide in the user-guide toctree.
+
+- |Internal| **PADR-Net class docstring expanded** with rST math,
+  parameter documentation, examples, notes, see-also entries, and
+  references suitable for Sphinx autodoc.
+
+New Example Notebooks
+---------------------
+
+- |Feature| **14 — PADR-Net Flood Forecasting**
+  (``examples/14_padrnet_flood_forecasting.ipynb``)
+
+  A complete introductory PADR-Net workflow using synthetic regional
+  flood events for WAF, EAF, and SAF:
+
+  - validated ``PADRNetConfig`` setup,
+  - TensorFlow PADR-Net model creation,
+  - custom physics-aware training loop,
+  - NSE, CSI, TSS, and mass-bias evaluation,
+  - hydrograph interpretation plots,
+  - spatial-style 2×3 reference-vs-forecast diagnostic maps,
+  - latent event-space visualization,
+  - optional PyTorch backend smoke test,
+  - exercises for thresholds, physics ablation, transfer, and real data.
+
+- |Feature| **15 — Advanced PADR-Net Workflow**
+  (``examples/15_padrnet_advanced_workflow.ipynb``)
+
+  An advanced experiment notebook focused on model evidence and
+  reviewer-facing diagnostics:
+
+  - leave-one-region-out transfer testing,
+  - physics-loss ablation,
+  - flood-threshold calibration curves,
+  - Monte-Carlo dropout uncertainty intervals,
+  - rainfall-intensification stress testing,
+  - exercises for transfer, calibration, uncertainty, and real scenario
+    forcing.
+
+Testing and Validation
+----------------------
+
+- |Feature| **PADR-Net tests added** in ``tests/test_padrnet_flood.py``.
+  The tests cover configuration validation, invalid attention-head
+  combinations, backend normalization, flood metrics, hydrological
+  physics helpers, and backend smoke paths where available.
+
+- |Internal| **Notebook smoke checks were run** for both PADR-Net
+  notebooks in the TensorFlow environment. The advanced workflow was
+  verified with both reduced and full executions.
+
+Package Metadata
+----------------
+
+- |MINOR| **Package version bumped to 2.3.0**.
+
+- |Feature| **Package keywords expanded** with flood forecasting,
+  hydrology, and physics-informed learning terms.
+
+Compatibility Notes
+-------------------
+
+- Existing ``BaseAttentive`` code remains backward-compatible.
+- PADR-Net requires either the TensorFlow extra or the Torch extra for
+  concrete model execution.
+- The hydrological helper functions depend only on NumPy and can be
+  used without installing a deep-learning backend.

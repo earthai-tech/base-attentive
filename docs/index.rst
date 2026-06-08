@@ -9,11 +9,11 @@ BaseAttentive Documentation
    :target: https://pypi.org/project/base-attentive/
    :alt: PyPI version
 
-.. image:: https://img.shields.io/badge/version-2.0.1-brightgreen.svg
+.. image:: https://img.shields.io/badge/version-2.3.0-brightgreen.svg
    :target: release_notes/index.html
-   :alt: Version 2.0.1
+   :alt: Version 2.3.0
 
-.. image:: https://img.shields.io/badge/semver-2.0.1-blueviolet.svg
+.. image:: https://img.shields.io/badge/semver-2.3.0-blueviolet.svg
    :target: https://semver.org/
    :alt: Semantic Versioning
 
@@ -53,7 +53,7 @@ BaseAttentive Documentation
    :alt: Platform: Linux, macOS, Windows
 
 A modular encoder-decoder architecture for sequence-to-sequence time series
-forecasting with layered attention mechanisms — **version 2.0.1**.
+forecasting with layered attention mechanisms — **version 2.3.0**.
 
 **BaseAttentive** is a modular encoder-decoder architecture designed to process
 three distinct types of inputs:
@@ -141,6 +141,7 @@ Quick Example
    architecture_guide
    configuration_guide
    applications
+   padrnet
 
 .. toctree::
    :maxdepth: 2
