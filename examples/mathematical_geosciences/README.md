@@ -1,6 +1,6 @@
 # PADR-Net — Mathematical Geosciences reproducibility
 
-**Paper:** A Physics-Informed Deep Learning Framework for African Flood Impact Prediction  
+**Paper:** Physics-Informed Reservoir Learning for Shallow-Water Flood Modelling  
 **Journal:** Mathematical Geosciences (submitted 2026)  
 **Author:** Kouao Laurent Kouadio — [etanoyau@gmail.com](mailto:etanoyau@gmail.com)
 
@@ -126,8 +126,8 @@ can be run without downloading any raw data.
 ```bibtex
 @article{Kouadio2026padrnet,
   author  = {Kouadio, Kouao Laurent},
-  title   = {A Physics-Informed Deep Learning Framework for
-             African Flood Impact Prediction},
+  title   = {Physics-Informed Reservoir Learning for
+             Shallow-Water Flood Modelling},
   journal = {Mathematical Geosciences},
   year    = {2026},
   note    = {Submitted. DOI: 10.5281/zenodo.XXXXXXX}
