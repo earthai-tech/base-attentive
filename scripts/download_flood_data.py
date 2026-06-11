@@ -20,7 +20,6 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOT = Path(os.environ.get("FLOOD_DATA_ROOT", ROOT / "data" / "flood")).resolve()
 RAW = DATA_ROOT / "raw"

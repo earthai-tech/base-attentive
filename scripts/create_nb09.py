@@ -3,7 +3,10 @@ Create 09_attention_interpretability.ipynb:
 Deep dive into attention patterns and feature importance for BaseAttentive.
 Scenario: smart building energy demand forecasting with known feature importances.
 """
-import json, uuid, os
+import json
+import os
+import uuid
+
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 NOTEBOOK_PATH = 'examples/09_attention_interpretability.ipynb'

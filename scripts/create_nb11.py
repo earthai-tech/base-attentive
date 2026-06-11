@@ -15,7 +15,10 @@ Novel scientific contributions:
   5. Interpretable failure-plane identification — gradient saliency on depth
      layers reveals which stratigraphic interface drives each failure type.
 """
-import json, uuid, os
+import json
+import os
+import uuid
+
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 NOTEBOOK_PATH = 'examples/11_landslide_susceptibility.ipynb'

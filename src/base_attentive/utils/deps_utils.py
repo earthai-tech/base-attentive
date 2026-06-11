@@ -46,7 +46,9 @@ def ensure_pkg(
         def wrapper(*args, **kwargs):
             if name == "keras":
                 try:
-                    from base_attentive._bootstrap import ensure_runtime_backend
+                    from base_attentive._bootstrap import (
+                        ensure_runtime_backend,
+                    )
 
                     module_name = getattr(func, "__module__", "base_attentive")
                     ensure_runtime_backend(module_name)

@@ -3,7 +3,10 @@ Create 08_financial_forecasting.ipynb:
 Multi-asset return forecasting with walk-forward validation,
 regime analysis, Sharpe/IC/drawdown metrics, and strategy simulation.
 """
-import json, uuid, os
+import json
+import os
+import uuid
+
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 NOTEBOOK_PATH = 'examples/08_financial_forecasting.ipynb'

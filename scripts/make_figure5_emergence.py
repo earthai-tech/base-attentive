@@ -49,8 +49,9 @@ except ImportError:
     _HAS_CARTOPY = False
 
 try:
-    import geopandas as gpd
     import warnings
+
+    import geopandas as gpd
     _HAS_GPD = True
 except ImportError:
     _HAS_GPD = False
@@ -354,7 +355,7 @@ def _plot_change_map(fig: plt.Figure,
             cmap=cmap, norm=norm, zorder=1,
         )
         # Cross-hatching: model agreement < 75 %
-        hatch_mask = np.where(agree < 0.75, 1.0, np.nan)
+        np.where(agree < 0.75, 1.0, np.nan)
         ax.contourf(
             LON, LAT, np.where(agree < 0.75, 1, 0).astype(float),
             levels=[0.5, 1.5],

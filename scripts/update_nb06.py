@@ -11,7 +11,10 @@ Changes:
   4. CRPS comparison bar chart across all 3 modes
   5. Calibration (coverage) plot for quantile mode
 """
-import json, uuid, os
+import json
+import os
+import uuid
+
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 with open('examples/06_crps_probabilistic_forecasting.ipynb', encoding='utf-8') as f:
@@ -380,7 +383,7 @@ if i >= 0:
 i = find('CRPSLoss(mode="quantile"', 'code')
 if i >= 0:
     del cells[i]
-    print(f"Removed old crps_q compile cell (merged into Q_TRAIN)")
+    print("Removed old crps_q compile cell (merged into Q_TRAIN)")
 
 # 4. Replace reading quantile predictions cell
 i = find('Reading quantile', None)

@@ -16,12 +16,12 @@ import sys
 from types import SimpleNamespace
 from typing import Any
 
+import numpy as np
+
 from ._runtime_requirements import (
     backend_install_command,
     backend_packages,
 )
-
-import numpy as np
 
 __all__ = [
     "KERAS_BACKEND",

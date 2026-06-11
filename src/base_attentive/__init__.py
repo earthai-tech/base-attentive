@@ -10,7 +10,7 @@ try:
 
     __version__ = _meta_version("base_attentive")
 except PackageNotFoundError:
-    __version__ = "2.2.3"
+    __version__ = "2.3.0"
 
 __author__ = "Laurent Kouadio"
 __email__ = "etanoyau@gmail.com"
@@ -20,6 +20,8 @@ __all__ = [
     "BaseAttentive",
     "KERAS_BACKEND",
     "KERAS_DEPS",
+    "PADRNet",
+    "PADRNetConfig",
     "dependency_message",
     "get_backend",
     "set_backend",
@@ -38,6 +40,8 @@ __all__ = [
 
 for _cached_name in (
     "BaseAttentive",
+    "PADRNet",
+    "PADRNetConfig",
     "make_fast_predict_fn",
     "keras_runtime",
     "get_backend",
@@ -60,6 +64,14 @@ _LAZY_EXPORTS = {
     "BaseAttentive": (
         "base_attentive.core.base_attentive",
         "BaseAttentive",
+    ),
+    "PADRNet": (
+        "base_attentive.applications.flood",
+        "PADRNet",
+    ),
+    "PADRNetConfig": (
+        "base_attentive.applications.flood",
+        "PADRNetConfig",
     ),
     "make_fast_predict_fn": (
         "base_attentive.runtime",

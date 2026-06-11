@@ -12,8 +12,11 @@ import subprocess
 import sys
 from typing import Optional, Type
 
+from .._runtime_requirements import (
+    backend_install_command,
+    backend_packages,
+)
 from .base import Backend
-from .._runtime_requirements import backend_install_command, backend_packages
 from .implementations import (
     JaxBackend,
     PyTorchBackend,

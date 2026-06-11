@@ -8,7 +8,6 @@ import sys
 import urllib.request
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ENV_FILE = ROOT / "data" / "flood" / ".env.local"
 

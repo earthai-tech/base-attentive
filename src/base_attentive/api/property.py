@@ -12,7 +12,32 @@ from collections import defaultdict
 from typing import Any
 
 
-class NNLearner:
+class _NNLearnerMeta(type):
+    """Treat compatible learner objects as NNLearner instances."""
+
+    @staticmethod
+    def _has_learner_api(obj: Any) -> bool:
+        return all(
+            callable(getattr(obj, name, None))
+            for name in (
+                "get_params",
+                "set_params",
+                "_get_param_names",
+            )
+        )
+
+    def __instancecheck__(cls, instance: Any) -> bool:
+        if type.__instancecheck__(cls, instance):
+            return True
+        return cls._has_learner_api(instance)
+
+    def __subclasscheck__(cls, subclass: type) -> bool:
+        if type.__subclasscheck__(cls, subclass):
+            return True
+        return cls._has_learner_api(subclass)
+
+
+class NNLearner(metaclass=_NNLearnerMeta):
     """Base class for neural network learners.
 
     Provides parameter management, introspection, and

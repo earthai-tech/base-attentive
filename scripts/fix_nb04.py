@@ -5,7 +5,8 @@ Fix the partial update of 04_standalone_applications.ipynb:
 - EN viz cells [22-24] are misplaced (after traffic section) → remove + re-insert after [13]
 - Add TR viz cells after TR_MODEL
 """
-import json, uuid
+import json
+import uuid
 
 with open('examples/04_standalone_applications.ipynb', encoding='utf-8') as f:
     nb = json.load(f)

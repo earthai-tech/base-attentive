@@ -5,7 +5,11 @@ from __future__ import annotations
 from dataclasses import asdict, is_dataclass
 from typing import Any, Mapping
 
-from ..compat.sklearn import Interval, StrOptions, validate_params
+from ..compat.sklearn import (
+    Interval,
+    StrOptions,
+    validate_params,
+)
 from .defaults import (
     DEFAULT_BASE_ATTENTIVE_RUNTIME,
     DEFAULT_LEGACY_ARCHITECTURE,

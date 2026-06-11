@@ -8,7 +8,9 @@ Update 05_kernel_robust_networks.ipynb:
   3. Transfer Learning: convergence curves pre-train vs fine-tune vs scratch
   4. Multi-Task: 3-panel outputs
 """
-import json, uuid, os
+import json
+import os
+import uuid
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

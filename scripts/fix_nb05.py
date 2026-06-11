@@ -3,7 +3,9 @@ Fix 05_kernel_robust_networks.ipynb:
 - ENS_TRAIN ended up at [22] (last cell, Python -1 indexing) → move to after [04]
 - Missing: MT_TRAIN cell, MT viz cells, summary cell
 """
-import json, uuid, os
+import json
+import os
+import uuid
 
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

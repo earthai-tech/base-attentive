@@ -92,6 +92,12 @@ folder in the repository.  Each one can be run interactively on Binder
    * - 13b
      - :doc:`13b_flood_real_data`
      - **Flood EWS — Real Data Integration Guide** — drop-in loaders for CAMELS-US, USGS NWIS, ERA5-Land, GloFAS, GRDC, and UK NRFA; unified ``build_nb13_arrays()`` pipeline; demo-mode fallback; comparison table vs published CAMELS LSTM baseline
+   * - 14
+     - :doc:`14_padrnet_flood_forecasting`
+     - **PADR-Net Flood Forecasting** — validated ``PADRNetConfig``, TensorFlow training loop, physics-aware residuals, regional WAF/EAF/SAF synthetic events, NSE/CSI/TSS/mass-bias evaluation, hydrograph and spatial-style interpretation maps
+   * - 15
+     - :doc:`15_padrnet_advanced_workflow`
+     - **Advanced PADR-Net Workflow** — leave-one-region-out transfer, physics-loss ablation, threshold calibration, MC-dropout uncertainty, and rainfall-intensification stress testing
 
 .. admonition:: Run on Binder
 
@@ -120,3 +126,5 @@ folder in the repository.  Each one can be run interactively on Binder
    12b_icu_sepsis_real_data
    13_flood_early_warning
    13b_flood_real_data
+   14_padrnet_flood_forecasting
+   15_padrnet_advanced_workflow

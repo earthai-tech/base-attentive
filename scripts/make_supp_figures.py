@@ -667,7 +667,9 @@ def _pr_curve_from_auc(auc: float, prevalence: float, n: int = 200) -> tuple:
     # Sigmoid-like decay anchored at (0,1) and (1, prevalence)
     # Use exponential shape: prec = prevalence + (1-prevalence)*exp(-k*recall)
     # Integrate ≈ auc by choosing k so area = auc
-    from scipy.optimize import brentq  # graceful: fallback to linear if absent
+    from scipy.optimize import (
+        brentq,  # graceful: fallback to linear if absent
+    )
     try:
         def _area(k):
             prec = prevalence + (1 - prevalence) * np.exp(-k * recall)

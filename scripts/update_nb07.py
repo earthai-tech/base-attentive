@@ -4,7 +4,10 @@ Update 07_v2_spec_registry.ipynb:
 - Add spec-vs-keyword comparison section
 - Add registry visualization (list registered keys, show component graph)
 """
-import json, uuid, os
+import json
+import os
+import uuid
+
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 with open('examples/07_v2_spec_registry.ipynb', encoding='utf-8') as f:
