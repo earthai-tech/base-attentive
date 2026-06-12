@@ -1,0 +1,4 @@
+region,label,n_events,n_train,n_val,n_test,sev_mean,sev_p90,precip_mean
+east_africa_nile_headwaters,East Africa: Nile headwaters / Sudan-Ethiopia corridor,197,136,20,41,51.317192074117,74.25840697885391,334.6188061604636
+southern_africa_limpopo_zambezi,Southern Africa: Limpopo / Zambezi,107,81,9,17,39.474803344187265,64.94147777314416,271.57411815562733
+west_africa_niger_benue,West Africa: Niger / Benue basin,138,95,7,36,45.63448542597866,73.13635353201273,295.62914074426067

@@ -333,8 +333,10 @@ def fig03_architecture() -> None:
     # Output layer
     box(10.2, 3.5, 1.8, 2.0, "#C8E6C9", "$W_{\\mathrm{out}}$\nRidge +\nphysics\npenalty", fontsize=7.5)
 
-    # Output
-    box(12.8, 3.5, 1.8, 1.8, "#E8F5E9", "$\\hat{y}^{(t)}$\nDepth /\nSeverity", fontsize=7.5)
+    # Output: W_out raw readout (eta_h, uh, vh), then softplus on depth
+    box(12.8, 3.5, 1.8, 2.2, "#E8F5E9",
+        "$\\hat{h}=\\mathrm{softplus}(\\eta^h)$\n$(\\widehat{uh},\\,\\widehat{vh})$\nSeverity",
+        fontsize=6.8)
 
     # Total loss
     box(10.2, 0.9, 1.8, 1.4, "#FFECB3",
@@ -344,7 +346,7 @@ def fig03_architecture() -> None:
     # Arrows
     arrow(2.1, 3.5, 2.8, 3.5)
     arrow(4.2, 3.5, 5.2, 3.5, "$W_{\\mathrm{in}} \\mathbf{x}$")
-    arrow(7.8, 3.5, 9.3, 3.5, "$\\mathbf{h}^{(t)}$")
+    arrow(7.8, 3.5, 9.3, 3.5, "$(\\eta^h,\\widehat{uh},\\widehat{vh})$")
     arrow(11.1, 3.5, 11.9, 3.5)
     arrow(7.8, 0.9, 9.3, 0.9)
     arrow(11.1, 0.9, 13.0, 0.9)

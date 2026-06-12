@@ -1,0 +1,109 @@
+.. _release-v2.3.1:
+
+**v2.3.1** — |PATCH| PADR-Net revision experiments and documentation update
+=============================================================================
+
+*Released: June 2026*
+
+Summary
+-------
+
+This patch release updates the PADR-Net documentation to reflect the
+ESN reservoir architecture and adds three reviewer-requested experiments
+from the *Mathematical Geosciences* revision: source-closure sensitivity,
+random-weight LSTM/GRU baseline, and reliability/calibration curve.
+
+PADR-Net Documentation
+----------------------
+
+- |Feature| **``docs/padrnet.rst`` rewritten** to reflect the Echo State
+  Network (ESN) backbone:
+
+  - Architecture section with ESN reservoir update equation and
+    contractivity condition.
+  - Updated ``PADRNetConfig`` parameter table replacing the old
+    attention-based fields (``num_heads``, ``num_layers``) with the
+    current ESN fields (``reservoir_dim``, ``spectral_radius``,
+    ``input_scaling``, etc.).
+  - Updated input/output contract table: added ``momentum_x``,
+    ``momentum_y``, ``velocity_x``, ``velocity_y``,
+    ``reservoir_states``, and ``severity`` output keys.
+  - Updated backend examples using the correct ESN config parameters.
+
+- |Feature| **Metrics section expanded** with three new metric classes:
+
+  - *Impact ranking and classification*: Spearman ρ\ :sub:`s` and
+    PR-AUC.
+  - *Source-closure sensitivity*: NSE\ :sub:`depth`, CSI, Δ\ *M* (%)
+    under friction and infiltration perturbations.
+  - *Calibration*: Brier score and Brier Skill Score (BSS) after
+    isotonic regression.
+
+- |Feature| **New section: Source-Closure Sensitivity** — documents
+  results from ``07_source_closure_sensitivity.py``.  Friction
+  perturbations of ±20 % change NSE\ :sub:`depth` by at most ±0.054;
+  unmodelled lateral inflow is detectable through elevated mass error.
+
+- |Feature| **New section: Architectural Baseline Comparison** —
+  documents results from ``08_lstm_gru_baseline.py``.  RAND-LSTM,
+  RAND-GRU, and PADR-Net share the same fixed-weight readout paradigm;
+  all three differ only in memory architecture, isolating it from the
+  SWE penalty comparison.
+
+- |Feature| **New section: Reliability and Calibration** — documents
+  isotonic calibration and the Brier score/BSS from
+  ``09_reliability_curve.py`` (BS = 0.086, BSS = 0.550).
+
+- |Feature| **New section: Reproducibility Archive** — documents the
+  ``earthai-tech/padrnet`` pipeline, Zenodo DOI, and ``run_all.py``
+  entry points for the three new scripts.
+
+- |Feature| **References updated**:
+
+  - Added Lukoševičius and Jaeger (2009) reservoir computing review.
+  - Added Gallicchio and Micheli (2017) echo state property paper.
+  - Added Kouadio (2026) Mathematical Geosciences paper with Zenodo DOI.
+  - Removed duplicate attention/transformer references not relevant to
+    the ESN architecture.
+
+Reproducibility Scripts (padrnet repo)
+---------------------------------------
+
+- |Feature| **``scripts/07_source_closure_sensitivity.py``** added:
+  trains M6 once; evaluates NSE\ :sub:`depth`, CSI, and Δ\ *M* under
+  six perturbation scenarios without refitting.
+
+- |Feature| **``scripts/08_lstm_gru_baseline.py``** added: pure-NumPy
+  random-weight LSTM and GRU baselines with Ridge readout, matching the
+  PADR-Net training paradigm.
+
+- |Feature| **``scripts/09_reliability_curve.py``** added: isotonic
+  calibration, equal-frequency reliability bins, and Brier score
+  computation with matplotlib reliability diagram.
+
+- |Feature| **``scripts/00_generate_synthetic_events.py``** added:
+  generates the 442-event synthetic African flood archive for offline
+  reproducibility without ERA5 data access.
+
+- |Feature| **``scripts/run_all.py`` updated**: pipeline extended to
+  include scripts 00 and 07–09 with docstring entries.
+
+- |Feature| **Result tables added** to ``results/tables/``:
+  ``source_closure_sensitivity.csv``, ``lstm_gru_baseline.csv``,
+  ``reliability_curve.csv``, ``model_discretisation.csv``,
+  ``runtime_comparison.csv``, ``stratified_metrics.csv``.
+
+- |Feature| **Result figures added** to ``results/figures/``:
+  ``fig_reliability_curve.{png,svg,eps}``,
+  ``fig03_architecture_v2.{eps,png,svg}``,
+  ``fig04d_residual_stability.{eps,png,svg}``.
+
+Compatibility Notes
+-------------------
+
+- Existing ``PADRNet`` and ``PADRNetConfig`` API unchanged.
+- ``padrnet.rst`` now accurately reflects the ESN backbone instead of
+  the previous attention-based description.
+- All new reproducibility scripts require only NumPy, scikit-learn, and
+  matplotlib; no PyTorch or TensorFlow is needed to run the paper
+  experiments.

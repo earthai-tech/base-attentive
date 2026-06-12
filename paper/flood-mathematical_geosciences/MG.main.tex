@@ -14,6 +14,7 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{mathrsfs}            % \mathscr
 \usepackage{booktabs}            % \toprule / \midrule / \bottomrule
+\usepackage{url}
 \usepackage{multirow}
 \usepackage[title]{appendix}    % \begin{appendices}
 \usepackage{xcolor}              % \textcolor in figure captions
@@ -21,6 +22,12 @@
 \usepackage{textcomp}
 \usepackage{url}                 % robust URLs in declarations
 \usepackage{float}               % float support; floats placed at end
+\usepackage{algorithm}           % pseudocode algorithm environment
+\usepackage{algpseudocode}       % algorithmic pseudocode commands
+\usepackage[mathlines]{lineno}   % line numbers for review
+\usepackage{setspace}            % review-format line spacing
+\setlength\linenumbersep{2pt}    % compact distance between text and line numbers
+\renewcommand\linenumberfont{\normalfont\tiny\sffamily}
 \graphicspath{{figures/}{./}}
 %%----------------------------------------------------------------------
 
@@ -28,14 +35,6 @@
 \theoremstyle{thmstyleone}
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{proposition}[theorem]{Proposition}
-
-\theoremstyle{thmstylethree}
-\newtheorem{definition}{Definition}
-
-\theoremstyle{thmstyletwo}
-\newtheorem{remark}{Remark}
 %%----------------------------------------------------------------------
 
 \raggedbottom
@@ -59,51 +58,60 @@
   \orgaddress{\city{Changsha}, \state{Hunan 410083}, \country{China}}}
 
 
-\abstract{Flood prediction in data-sparse regions requires models that are both computationally efficient and physically consistent. Classical
-two-dimensional Shallow Water Equation (SWE) solvers preserve mass and
-momentum conservation but remain costly for large-scale or ensemble
-forecasting, whereas purely data-driven surrogates may violate
-hydraulic constraints under rare or non-stationary flood regimes. We
-introduce the Physically-Aware Deep Reservoir Network
-(\textsc{PADR-Net}), a physics-informed reservoir-learning framework
-that couples a contractive Echo State reservoir with a shallow-water
-residual penalty. The reservoir encodes hydroclimatic memory, while the
-physics term constrains predicted flood states toward the admissible
-SWE solution manifold. We establish three properties of
-the framework: strict hyperbolicity of the SWE system for positive
-water depth, fading memory of the reservoir state under the
-contractivity condition, and a residual-distance bound showing that the
-distance to the SWE solution manifold decreases as
-$O(\lambda^{-1/2})$ with increasing physics weight $\lambda$. The
-framework is evaluated on controlled synthetic flood regimes and on a
-harmonized archive of 243 African flood events from 2000 to 2024
-across West Africa, East Africa, and Southern Africa. In the synthetic
-benchmark, \textsc{PADR-Net} reproduced monsoon, flash/cyclone, and
-seasonal-memory flood responses with mean CSI = 0.86 and mean TSS =
-0.92. Antecedent memory descriptors improved flood-severity ranking from
-$\rho_s=0.19$ to $\rho_s=0.61$, while exposure and hydrodynamic
-descriptors increased high-impact event discrimination from PR-AUC =
-0.403 to 0.703 and improved flood-depth reconstruction from
-NSE$_\mathrm{depth}=0.38$ to $0.64$. Transfer experiments showed that depth response
-generalizes more consistently than impact ranking across regions and
-years. These results show that flood burden is not a function of
-rainfall intensity alone, but emerges from the coupling between
-meteorological forcing, antecedent catchment state, terrain-mediated
-routing, and ex-ante human exposure.}
+
+\abstract{Flood prediction in data-sparse regions requires models that
+are computationally efficient, physically consistent, and compatible
+with sparse observations.  Classical 2D Shallow Water Equation (SWE)
+solvers preserve mass and momentum conservation but remain costly for
+large-scale or ensemble forecasting, whereas unconstrained data-driven
+surrogates may violate hydraulic constraints under rare or
+non-stationary flood regimes.  We introduce \textsc{PADR-Net}, a
+partially observed Physically-Aware Deep Reservoir Network that couples
+a shared contractive Echo State reservoir with a shallow-water residual
+penalty and observation operators for satellite extent, benchmark depth,
+and event-level impact.  The reservoir encodes hydroclimatic memory,
+while the physics term constrains predicted flood states toward the
+admissible SWE solution manifold under explicit source-term closures for
+rainfall input, infiltration, drainage, lateral inflow, and Manning
+roughness.  The method establishes hyperbolicity of the SWE system for
+positive water depth, fading memory of the spatial reservoir under the contractivity condition, a
+residual-distance bound of order $O(\lambda^{-1/2})$ under local
+residual stability, and a readout-decoupling result showing how the
+physics weight can be tuned for hydrodynamic reconstruction without
+altering the fixed event-severity head.  The framework is evaluated on
+controlled synthetic flood regimes and on a harmonized archive of 243
+African flood events from 2000 to 2024 across West Africa, East Africa,
+and Southern Africa.  In the synthetic benchmark, \textsc{PADR-Net}
+reproduced monsoon, flash/cyclone, and seasonal-memory flood responses
+with mean CSI = 0.86 and mean TSS = 0.92.  On the African archive,
+antecedent memory improved flood-severity ranking from $\rho_s=0.194$
+to $\rho_s=0.614$.  Adding exposure descriptors increased PR-AUC from
+0.620 to 0.675, and adding hydrodynamic descriptors further increased
+PR-AUC to 0.703 while improving depth reconstruction from
+NSE$_\mathrm{depth}=0.380$ to 0.643.  Transfer experiments show that
+depth response generalizes more consistently than impact ranking across
+regions and years.  These results indicate that flood burden is not a
+function of rainfall intensity alone, but emerges from the coupling
+between meteorological forcing, antecedent catchment state,
+terrain-mediated routing, and ex-ante human exposure.}
 
 \keywords{Physics-informed learning,
           Shallow Water Equations,
           Reservoir computing,
-          Flood inundation modeling,
+          Flood inundation modelling,
           Flood impact prediction,
           Hydroclimatic memory,
-          African flood events}
-
-
+          African flood events,
+          Reproducible research}
 
 %%\pacs[MSC Classification]{86A05, 68T07, 65M99}
 
 \maketitle
+
+% Review-format manuscript settings
+\doublespacing
+\modulolinenumbers[1]
+\linenumbers
 
 % =======================================================================
 \section{Introduction}
@@ -135,7 +143,7 @@ hazard or reported human impact.  Although precipitation provides the
 primary atmospheric forcing for many flood events, its relationship
 with inundation is strongly mediated by antecedent soil moisture,
 catchment storage, river-network routing, floodplain connectivity,
-urban drainage, reservoir regulation, and terrain structure.  This
+urban drainage, reservoir regulation, and terrain structure \citep{Wing2024,Najafi2024ImpactBasedFloodWarning,Hersbach2020,NASH1970282,YANG2026103056}.  This
 nonlinear disconnect between precipitation anomalies and regional flood
 activity has been described through the concept of ``floodiness'',
 which emphasizes that flood occurrence and magnitude cannot be
@@ -212,22 +220,27 @@ interaction between meteorological forcing, catchment memory,
 hydrodynamic propagation, and the spatial concentration of people and
 assets in flood-prone environments.
 
-The development of the framework proceeds by linking the
-structure of the shallow-water equations to the stability of the
-learning model.  The governing system is shown to be strictly
-hyperbolic for positive water depth, which establishes the physical
-basis for representing propagating flood waves through real-valued
-characteristic speeds.  The reservoir state map is then formulated as a
-contractive dynamical system under the echo-state condition
-\citep{Jaeger2001EchoState,Herbert2004,LUKOSEVICIUS2009127}, ensuring
-that the learned state is controlled by the forcing history rather than
-by arbitrary initialization.  Finally, the physics-informed objective is
-shown to impose a quantitative bound on the distance between the
-predicted trajectory and the shallow-water solution manifold, with the
-bound decreasing as the physics weight increases.  These results give a
-formal interpretation to the proposed regularization: the physical loss
-is not only a numerical penalty but a mechanism that constrains the
-surrogate model toward mass- and momentum-consistent flood dynamics.
+First, we formulate flood prediction as a partially observed, physics-informed learning problem.  The model is a
+supervised inverse problem in which the latent conservative state
+$\mathbf{q}=(h,uh,vh)^\top$ is connected to heterogeneous observations
+through explicit observation operators.  Satellite flood maps constrain
+wet/dry extent, synthetic and benchmark products constrain depth where
+available, and disaster inventories constrain event-level severity.
+Second, we define a shared spatial echo-state reservoir whose fixed
+contractive dynamics encode hydroclimatic memory at each grid cell,
+while a shallow-water residual penalizes deviations from mass and
+momentum balance.  Third, we make the physical closure auditable by
+stating how precipitation, infiltration, drainage, lateral inflow, bed
+slope, and Manning roughness enter the residual.  Fourth, we provide a
+formal interpretation of the learning problem through strict
+hyperbolicity of the SWE system, fading memory of the reservoir,
+residual-distance control under local residual stability, and
+prediction-head decoupling.  The novelty is therefore not the isolated
+use of SWE hyperbolicity or echo-state contractivity, which are
+established properties, but their integration into a
+reproducible partially-observed framework that separates hydrodynamic
+reconstruction from exposure-aware impact ranking under spatial and
+temporal transfer.
 
 The empirical design follows the same logic.  We first evaluate
 \textsc{PADR-Net} under a controlled synthetic flood-event benchmark in
@@ -295,6 +308,63 @@ available before the event, so that the realized inundation polygon does
 not enter the predictor set.  The corresponding data provenance,
 event-window rules, and harmonisation safeguards are detailed in
 Appendices~\ref{app:data_sources}--\ref{app:event_harmonisation}.
+
+Unlike a fully supervised hydrodynamic emulator, the observed African
+events do not provide complete conservative states at every grid cell.
+The model therefore distinguishes the latent flood state from the
+available observation channels.  For each event, time, and grid cell,
+let
+\begin{equation}
+  \mathbf{q}_{i,t,g}
+  =
+  \left(
+    h_{i,t,g},
+    u_{i,t,g}h_{i,t,g},
+    v_{i,t,g}h_{i,t,g}
+  \right)^{\top}
+  \label{eq:latent_state}
+\end{equation}
+be the latent conservative state.  Observations are represented by
+operators $\mathcal{H}^{(m)}$ acting on $\mathbf{q}_{i,t,g}$ or on
+its event-level summaries.  The satellite-extent channel is
+\begin{equation}
+  \mathcal{H}_{\mathrm{ext}}
+  \left(
+    \mathbf{q}_{i,t,g}
+  \right)
+  =
+  \mathbb{I}
+  \left(
+    h_{i,t,g}\geq h_{0}
+  \right),
+  \label{eq:extent_operator}
+\end{equation}
+where $h_{0}$ is the wet-cell threshold.  A depth channel
+$\mathcal{H}_{\mathrm{depth}}(\mathbf{q})=h$ is used only for synthetic
+or benchmark products that provide continuous-depth reference values,
+and an impact channel links event-level hydrodynamic and exposure
+summaries to the reported severity target.  This observation-operator
+formulation prevents the satellite wet/dry target from being treated as
+a full observation of $(h,uh,vh)$.
+
+\paragraph{Non-negativity and wet/dry handling.}
+Physical depth must satisfy $h\geq 0$.  Two complementary mechanisms
+enforce this in PADR-Net without a global positivity constraint.
+First, the depth prediction target is $\log(1+h_{\max})$, so the
+inverse transformation $\hat{h}=\exp(\hat{y}_h)-1$ maps any real
+readout to $h\geq 0$ identically.
+Second, the wet-cell indicator uses a smooth logistic threshold
+$\pi = \sigma\!\bigl((h-h_0)/s_h\bigr)$ rather than a hard step
+function: values below $h_0$ incur a continuous loss that discourages
+mass leakage into nominally dry cells.
+A formal integral mass constraint or a softplus parameterisation of the
+entire depth field was not implemented, because the event-scale lumped
+representation produces non-negative depth estimates through the
+log-transform without additional enforcement.
+Sensitivity experiments confirm that the wet-cell threshold $h_0$ can
+be varied from $0.05\,\mathrm{m}$ to $0.20\,\mathrm{m}$ with modest
+changes in CSI but stable NSE$_{\mathrm{depth}}$ (see
+Table~\ref{tab:model_discretisation}).
 
 For each record, the forcing field is constructed from precipitation,
 antecedent wetness, temperature, and terrain variables sampled over
@@ -441,6 +511,39 @@ training; when simplified hydrodynamic products are used for
 benchmarking, they are treated as reference simulations rather than as
 the governing definition of the physics loss.
 
+The source terms in Eq.~\eqref{eq:swe_sources} are specified through a
+closure operator
+\begin{equation}
+  \mathcal{C}_{\boldsymbol{\psi}}
+  :
+  \left(
+    P,
+    Z_{\mathrm{soil}},
+    Z_{\mathrm{land}},
+    Z_{\mathrm{terrain}},
+    Z_{\mathrm{river}}
+  \right)
+  \mapsto
+  \left(
+    I_{\boldsymbol{\psi}},
+    D_{\boldsymbol{\psi}},
+    Q^{\mathrm{lat}}_{\boldsymbol{\psi}},
+    n_{\boldsymbol{\psi}}
+  \right),
+  \label{eq:source_closure_operator}
+\end{equation}
+where $Z_{\mathrm{soil}}$, $Z_{\mathrm{land}}$, $Z_{\mathrm{terrain}}$,
+and $Z_{\mathrm{river}}$ denote soil, land-cover, terrain, and river-state
+descriptors.  In the synthetic benchmark, these closure terms are known
+by construction.  In the sparse-observation setting, precipitation is taken from
+reanalysis, roughness is assigned from land-cover classes, infiltration
+and drainage are represented by bounded loss coefficients, and lateral
+inflow is approximated from routed runoff or omitted when unavailable.
+The same closure class is used across all validation folds, and
+sensitivity experiments perturb the uncertain terms rather than tuning
+them on the held-out set.  Table~\ref{tab:source_closure} summarizes
+the closure choices and sensitivity ranges.
+
 The hyperbolic structure of the shallow-water flux provides the basis for physically admissible flood-wave propagation
 \citep{Toro2001,Roe1981}.  This property is stated formally in
 Theorem~\ref{thm:swe_hyperbolicity}.
@@ -498,23 +601,25 @@ To approximate the evolving flood state while retaining the physical
 constraints imposed by Eq.~\eqref{eq:swe_main}, we introduce a
 physics-informed deep reservoir formulation, denoted \textsc{PADR-Net}
 \citep{RAISSI2019686,Jaeger2001EchoState,LUKOSEVICIUS2009127}.
-The model is designed to map a sequence of hydroclimatic and
-geomorphic forcings to a physically admissible flood state.  At each
-time step $t$, the input vector
-$\mathbf{u}_{i,t}\in\mathbb{R}^{N_{\mathrm{in}}}$ contains event
+The model is designed to map a sequence of local hydroclimatic and
+geomorphic forcings to a physically admissible flood state.  To remove
+ambiguity between event-level and grid-cell variables, the reservoir is
+written as a shared spatial echo-state map.  At each event $i$, time
+$t$, and grid cell $g$, the local input vector
+$\boldsymbol{\phi}_{i,t,g}\in\mathbb{R}^{N_{\mathrm{in}}}$ contains
 precipitation, antecedent wetness, river-state indicators, terrain
-gradient, flow-accumulation descriptors, seasonal variables, and
-regional hydroclimatic indicators.  These variables drive a
-high-dimensional reservoir state
-$\mathbf{x}_{i,t}\in\mathbb{R}^{N_{\mathrm{res}}}$ according to
+gradient, flow accumulation, seasonal variables, regional indicators,
+and exposure descriptors available at or before the event window.  The
+cell-specific reservoir state
+$\mathbf{x}_{i,t,g}\in\mathbb{R}^{N_{\mathrm{res}}}$ evolves as
 \begin{equation}
-  \mathbf{x}_{i,t}
+  \mathbf{x}_{i,t,g}
   =
   \sigma
   \left(
-    \mathbf{W}_{\mathrm{in}}\mathbf{u}_{i,t}
+    \mathbf{W}_{\mathrm{in}}\boldsymbol{\phi}_{i,t,g}
     +
-    \mathbf{W}_{\mathrm{res}}\mathbf{x}_{i,t-1}
+    \mathbf{W}_{\mathrm{res}}\mathbf{x}_{i,t-1,g}
     +
     \mathbf{b}_{\mathrm{res}}
   \right),
@@ -523,8 +628,11 @@ $\mathbf{x}_{i,t}\in\mathbb{R}^{N_{\mathrm{res}}}$ according to
 where $\mathbf{W}_{\mathrm{in}}$ and $\mathbf{W}_{\mathrm{res}}$ are
 fixed random matrices, $\mathbf{b}_{\mathrm{res}}$ is a reservoir bias
 term, and $\sigma(\cdot)$ is a bounded nonlinear activation function.
-Only the output mapping is optimized.  The predicted conservative
-hydrodynamic state is
+The matrices are shared across grid cells, while the inputs vary in
+space through forcing, terrain, and exposure descriptors.  This gives a
+spatially distributed flood-state representation without training a
+separate recurrent model at each grid cell.  Only the readout mappings
+are optimized.  The predicted conservative hydrodynamic state is
 \begin{equation}
   \hat{\mathbf{q}}_{i,t,g}
   =
@@ -567,15 +675,15 @@ Lemma~\ref{lem:echo_state}.
 Consider the reservoir update in Eq.~\eqref{eq:padr_state}, and assume
 that the activation function is Lipschitz continuous with constant
 $L_{\sigma}$.  If
-$L_{\sigma}\|\mathbf{W}_{\mathrm{res}}\|_{2}<1$, then the reservoir
-map is contractive.  Consequently, for two states driven by the same
-input sequence, the influence of arbitrary initial conditions decays
-geometrically.
+$L_{\sigma}\|\mathbf{W}_{\mathrm{res}}\|_{2}<1$, then the shared
+spatial reservoir map is contractive at each grid cell.  Consequently,
+for two states driven by the same local input sequence, the influence
+of arbitrary initial conditions decays geometrically.
 \end{lemma}
 
 \begin{proof}
-This property is obtained by enforcing a contractive reservoir.  If
-$L_{\sigma}$ is the Lipschitz constant of the activation function and
+Fix an event $i$ and a grid cell $g$.  If $L_{\sigma}$ is the
+Lipschitz constant of the activation function and
 \begin{equation}
   \alpha_{\mathrm{res}}
   =
@@ -586,42 +694,43 @@ $L_{\sigma}$ is the Lipschitz constant of the activation function and
   <1,
   \label{eq:reservoir_contractivity_condition}
 \end{equation}
-then, for two states $\mathbf{x}_{i,t}$ and $\mathbf{x}'_{i,t}$ driven
-by the same input sequence, Eq.~\eqref{eq:padr_state} gives
+then, for two states $\mathbf{x}_{i,t,g}$ and $\mathbf{x}'_{i,t,g}$
+driven by the same local input sequence, Eq.~\eqref{eq:padr_state}
+gives
 \begin{equation}
   \left\|
-    \mathbf{x}_{i,t}
+    \mathbf{x}_{i,t,g}
     -
-    \mathbf{x}'_{i,t}
+    \mathbf{x}'_{i,t,g}
   \right\|_{2}
   \leq
   \alpha_{\mathrm{res}}
   \left\|
-    \mathbf{x}_{i,t-1}
+    \mathbf{x}_{i,t-1,g}
     -
-    \mathbf{x}'_{i,t-1}
+    \mathbf{x}'_{i,t-1,g}
   \right\|_{2}.
   \label{eq:reservoir_one_step}
 \end{equation}
 Repeated application over $t$ time steps yields
 \begin{equation}
   \left\|
-    \mathbf{x}_{i,t}
+    \mathbf{x}_{i,t,g}
     -
-    \mathbf{x}'_{i,t}
+    \mathbf{x}'_{i,t,g}
   \right\|_{2}
   \leq
   \alpha_{\mathrm{res}}^{t}
   \left\|
-    \mathbf{x}_{i,0}
+    \mathbf{x}_{i,0,g}
     -
-    \mathbf{x}'_{i,0}
+    \mathbf{x}'_{i,0,g}
   \right\|_{2},
   \label{eq:reservoir_fading_memory}
 \end{equation}
 which converges to zero as $t$ increases.  Hence, after a sufficiently
-long wash-in period, the reservoir state is determined by the forcing
-history.
+long wash-in period, the reservoir state at each grid cell is
+determined by the local forcing history.
 \end{proof}
 
 This fading-memory property is important for flood modelling because
@@ -760,46 +869,116 @@ spatial derivatives are written as
   \label{eq:padr_discrete_derivatives}
 \end{equation}
 This makes the physics term computable on the same grid used for the
-satellite and hydrodynamic validation products.
+satellite and hydrodynamic validation products.  Because advective
+fluxes in hyperbolic systems can be sensitive to central differencing,
+we also evaluate an upwind residual variant for sensitivity analysis.
+For an advective flux $\mathcal{G}(\phi)$ with local velocity component
+$a_{i,t,g}$,
+\begin{equation}
+  \partial_x^{\mathrm{up}}
+  \mathcal{G}_{i,t,g}
+  =
+  \begin{cases}
+    \dfrac{\mathcal{G}_{i,t,g}-\mathcal{G}_{i,t,g_x^-}}{\Delta x},
+    & a_{i,t,g}\geq 0, \\
+    \dfrac{\mathcal{G}_{i,t,g_x^+}-\mathcal{G}_{i,t,g}}{\Delta x},
+    & a_{i,t,g}<0.
+  \end{cases}
+  \label{eq:padr_upwind_derivative}
+\end{equation}
+The central stencil is used as the reference residual in the reported
+configuration because it is symmetric and differentiable, while the
+upwind variant is used to test whether the main conclusions depend on
+the derivative discretization.
+
+The reported discretisation uses $\Delta t = 1\,\mathrm{h}$, consistent
+with the hourly ERA5 forcing resolution.  The spatial representation is
+event-scale lumped rather than mesh-resolved: each event contributes a
+single aggregate state trajectory rather than a spatially distributed
+field, so there is no explicit $\Delta x$ or $\Delta y$; the notation
+$\partial_x,\partial_y$ formalises the lateral-flux contribution through
+the routing proxy.  The full collocation set covers all $T=168$
+time steps of each training event, giving $N_{\mathrm{col}}=N_{\mathrm{tr}}\times T$
+physics-residual evaluation points per fold ($21\,336$ for the
+chronological split with $N_{\mathrm{tr}}=127$).  All discretisation
+and hyperparameter values are collected in
+Table~\ref{tab:model_discretisation}.
 
 The learning problem can be written as a regularized
-pseudo-posterior.  Let
-$\mathcal{D}_{\mathrm{obs}}$ be the set of observed or benchmark flood
-states and $\mathcal{D}_{\mathrm{col}}$ the set of collocation points
-where the shallow-water residual is evaluated.  The parameter block is
-defined as
+pseudo-posterior over heterogeneous observation channels.  Let
+$\mathcal{D}_{\mathrm{ext}}$ be the set of satellite wet/dry extent
+observations, $\mathcal{D}_{\mathrm{depth}}$ the set of synthetic or
+benchmark depth observations, $\mathcal{D}_{\mathrm{impact}}$ the set
+of event-level impact observations, and $\mathcal{D}_{\mathrm{col}}$
+the set of collocation points where the shallow-water residual is
+evaluated.  The parameter block is
 \begin{equation}
   \Theta
   =
   \left(
     \mathbf{W}_{\mathrm{out}},
-    \sigma^{2}_{y},
+    \boldsymbol{\beta}_{s},
+    \sigma^{2}_{h},
+    \sigma^{2}_{A},
     \sigma^{2}_{F},
     \eta
   \right),
   \label{eq:padr_parameter_block}
 \end{equation}
-where $\sigma^{2}_{y}$ is the observational-error variance,
-$\sigma^{2}_{F}$ is the physics-residual variance, and $\eta$ controls
-the output-weight regularization.  The data model is
+where $\boldsymbol{\beta}_{s}$ denotes the event-severity head,
+$\sigma_h^2$ and $\sigma_A^2$ are observation-error variances for
+available depth and impact channels, $\sigma_F^2$ is the residual
+variance, and $\eta$ controls readout regularization.
+
+For satellite extent, the predicted wet probability is represented by a
+smoothed threshold operator,
 \begin{equation}
-  \mathbf{y}^{\mathrm{obs}}_{i,t,g}
+  \pi_{i,t,g}
   =
-  \hat{\mathbf{q}}_{i,t,g}
-  +
-  \boldsymbol{\epsilon}_{i,t,g},
-  \qquad
-  \boldsymbol{\epsilon}_{i,t,g}
-  \sim
-  \mathcal{N}
+  \sigma_{\mathrm{logit}}
   \left(
-    \mathbf{0},
-    \sigma^{2}_{y}\mathbf{I}
+    \frac{\hat{h}_{i,t,g}-h_0}{s_h}
   \right),
-  \label{eq:padr_data_model}
+  \label{eq:wet_probability}
 \end{equation}
-whereas the physical residual is treated as a zero-centred
-pseudo-observation:
+where $s_h>0$ controls the softness of the wet/dry transition.  The
+extent likelihood is Bernoulli,
+\begin{equation}
+  o^{\mathrm{ext}}_{i,t,g}
+  \sim
+  \mathrm{Bernoulli}(\pi_{i,t,g}),
+  \qquad
+  (i,t,g)\in\mathcal{D}_{\mathrm{ext}}.
+  \label{eq:extent_likelihood}
+\end{equation}
+When continuous-depth references are available, the depth channel is
+\begin{equation}
+  h^{\mathrm{obs}}_{i,t,g}
+  =
+  \hat{h}_{i,t,g}
+  +
+  \epsilon^{h}_{i,t,g},
+  \qquad
+  \epsilon^{h}_{i,t,g}
+  \sim
+  \mathcal{N}(0,\sigma_h^2),
+  \label{eq:depth_likelihood}
+\end{equation}
+whereas the impact channel is defined at event scale by
+\begin{equation}
+  y^{A}_{i}
+  =
+  \boldsymbol{\beta}_{s}^{\top}
+  \mathbf{z}_{i}
+  +
+  \epsilon^{A}_{i},
+  \qquad
+  \epsilon^{A}_{i}
+  \sim
+  \mathcal{N}(0,\sigma_A^2).
+  \label{eq:impact_likelihood}
+\end{equation}
+The physical residual is treated as a zero-centred pseudo-observation:
 \begin{equation}
   \mathbf{0}
   =
@@ -819,134 +998,77 @@ pseudo-observation:
   \right).
   \label{eq:padr_physics_model}
 \end{equation}
-Combining Eqs.~\eqref{eq:padr_data_model} and
-\eqref{eq:padr_physics_model} with a Gaussian prior on
-$\mathbf{W}_{\mathrm{out}}$ gives the joint density
-\begin{align}
-  \pi
-  \left(
-    \Theta
-    \mid
-    \mathcal{D}_{\mathrm{obs}},
-    \mathcal{D}_{\mathrm{col}}
-  \right)
-  &\propto
-  \left[
-    \prod_{(i,t,g)\in\mathcal{D}_{\mathrm{obs}}}
-    \mathcal{N}
-    \left(
-      \mathbf{y}^{\mathrm{obs}}_{i,t,g}
-      \mid
-      \mathbf{W}_{\mathrm{out}}\mathbf{x}_{i,t,g},
-      \sigma^{2}_{y}\mathbf{I}
-    \right)
-  \right]
-  \nonumber \\
-  &\quad\times
-  \left[
-    \prod_{(i,t,g)\in\mathcal{D}_{\mathrm{col}}}
-    \mathcal{N}
-    \left(
-      \mathbf{0}
-      \mid
-      \mathcal{F}
-      \left(
-        \mathbf{W}_{\mathrm{out}}\mathbf{x}_{i,t,g}
-      \right),
-      \sigma^{2}_{F}\mathbf{I}
-    \right)
-  \right]
-  \nonumber \\
-  &\quad\times
-  \mathcal{N}
-  \left(
-    \mathrm{vec}
-    \left(
-      \mathbf{W}_{\mathrm{out}}
-    \right)
-    \mid
-    \mathbf{0},
-    \eta^{-1}\mathbf{I}
-  \right)
-  p
-  \left(
-    \sigma^{2}_{y}
-  \right)
-  p
-  \left(
-    \sigma^{2}_{F}
-  \right)
-  p(\eta).
-  \label{eq:padr_joint_density}
-\end{align}
-This expression makes explicit the three sources of information used
-by the model: observed flood states, hydrodynamic conservation laws,
-and parameter regularity.
-
-Taking the negative logarithm of
-Eq.~\eqref{eq:padr_joint_density}, discarding constants independent of
-$\mathbf{W}_{\mathrm{out}}$, and collecting terms gives
-\begin{align}
-  \mathcal{J}
-  \left(
-    \mathbf{W}_{\mathrm{out}}
-  \right)
-  &=
-  \frac{1}{2\sigma^{2}_{y}}
-  \sum_{(i,t,g)\in\mathcal{D}_{\mathrm{obs}}}
-  \left\|
-    \mathbf{y}^{\mathrm{obs}}_{i,t,g}
-    -
-    \mathbf{W}_{\mathrm{out}}\mathbf{x}_{i,t,g}
-  \right\|_{2}^{2}
-  \nonumber \\
-  &\quad+
-  \frac{1}{2\sigma^{2}_{F}}
-  \sum_{(i,t,g)\in\mathcal{D}_{\mathrm{col}}}
-  \left\|
-    \mathcal{F}
-    \left(
-      \mathbf{W}_{\mathrm{out}}\mathbf{x}_{i,t,g}
-    \right)
-  \right\|_{2}^{2}
-  \nonumber \\
-  &\quad+
-  \frac{\eta}{2}
-  \left\|
-    \mathbf{W}_{\mathrm{out}}
-  \right\|_{F}^{2}.
-  \label{eq:padr_negative_log}
-\end{align}
-Multiplying Eq.~\eqref{eq:padr_negative_log} by
-$2\sigma^{2}_{y}$ gives the equivalent optimization problem
+Combining the observation channels, the residual pseudo-likelihood, and
+Gaussian readout priors yields the optimization objective
 \begin{equation}
-  \mathbf{W}^{*}_{\mathrm{out}}
+  \mathbf{W}^{*}_{\mathrm{out}},
+  \boldsymbol{\beta}^{*}_{s}
   =
-  \arg\min_{\mathbf{W}_{\mathrm{out}}}
+  \arg\min
   \left\{
-  \mathcal{L}_{\mathrm{data}}
-  +
-  \lambda_{\mathrm{phys}}
-  \mathcal{L}_{\mathrm{phys}}
-  +
-  \omega
-  \left\|
-    \mathbf{W}_{\mathrm{out}}
-  \right\|_{F}^{2}
+    \mathcal{L}_{\mathrm{data}}
+    +
+    \lambda_{\mathrm{phys}}
+    \mathcal{L}_{\mathrm{phys}}
+    +
+    \omega
+    \left\|
+      \mathbf{W}_{\mathrm{out}}
+    \right\|_{F}^{2}
+    +
+    \omega_s
+    \left\|
+      \boldsymbol{\beta}_{s}
+    \right\|_2^2
   \right\},
   \label{eq:padr_map_objective}
 \end{equation}
-where
+where the observation-decomposed data loss is
 \begin{equation}
   \mathcal{L}_{\mathrm{data}}
   =
-  \sum_{(i,t,g)\in\mathcal{D}_{\mathrm{obs}}}
-  \left\|
-    \mathbf{y}^{\mathrm{obs}}_{i,t,g}
+  w_{\mathrm{ext}}\mathcal{L}_{\mathrm{ext}}
+  +
+  w_{\mathrm{depth}}\mathcal{L}_{\mathrm{depth}}
+  +
+  w_{\mathrm{impact}}\mathcal{L}_{\mathrm{impact}},
+  \label{eq:weak_data_loss}
+\end{equation}
+with
+\begin{align}
+  \mathcal{L}_{\mathrm{ext}}
+  &=
+  -
+  \sum_{(i,t,g)\in\mathcal{D}_{\mathrm{ext}}}
+  \left[
+    o^{\mathrm{ext}}_{i,t,g}\log \pi_{i,t,g}
+    +
+    (1-o^{\mathrm{ext}}_{i,t,g})\log(1-\pi_{i,t,g})
+  \right],
+  \label{eq:extent_loss}
+  \\
+  \mathcal{L}_{\mathrm{depth}}
+  &=
+  \sum_{(i,t,g)\in\mathcal{D}_{\mathrm{depth}}}
+  \left(
+    h^{\mathrm{obs}}_{i,t,g}
     -
-    \mathbf{W}_{\mathrm{out}}\mathbf{x}_{i,t,g}
-  \right\|_{2}^{2},
-  \qquad
+    \hat{h}_{i,t,g}
+  \right)^2,
+  \label{eq:depth_loss}
+  \\
+  \mathcal{L}_{\mathrm{impact}}
+  &=
+  \sum_{i\in\mathcal{D}_{\mathrm{impact}}}
+  \left(
+    y^{A}_{i}
+    -
+    \boldsymbol{\beta}_{s}^{\top}\mathbf{z}_{i}
+  \right)^2,
+  \label{eq:impact_loss}
+\end{align}
+and
+\begin{equation}
   \mathcal{L}_{\mathrm{phys}}
   =
   \sum_{(i,t,g)\in\mathcal{D}_{\mathrm{col}}}
@@ -955,36 +1077,32 @@ where
     \left(
       \mathbf{W}_{\mathrm{out}}\mathbf{x}_{i,t,g}
     \right)
-  \right\|_{2}^{2},
+  \right\|_{2}^{2}.
   \label{eq:padr_loss_terms}
 \end{equation}
-and
+The physics weight retains the uncertainty-ratio interpretation
 \begin{equation}
   \lambda_{\mathrm{phys}}
   =
-  \frac{\sigma^{2}_{y}}
-  {\sigma^{2}_{F}},
+  \frac{\sigma_y^2}{\sigma_F^2},
   \qquad
   \omega
   =
-  \eta\sigma^{2}_{y}.
+  \eta\sigma_y^2,
   \label{eq:padr_weights}
 \end{equation}
-Thus, the physics weight has a direct interpretation: it is the ratio
-between observational uncertainty and residual uncertainty.  When
-$\lambda_{\mathrm{phys}}$ is small, the model behaves like a
-data-driven reservoir; when $\lambda_{\mathrm{phys}}$ is large,
-predictions are strongly constrained to satisfy mass and momentum
-balance.
+with $\sigma_y^2$ denoting a representative data-channel uncertainty.
+Thus, the model does not require full observations of $(h,uh,vh)$ in
+the African archive.  Satellite extent, depth references where
+available, impact labels, and the SWE residual enter through distinct
+loss channels.
 
 The role of the physics penalty is clarified by relating the residual
-loss to the distance from the physically admissible solution set.  This
-relation gives the residual-distance bound in
-Theorem~\ref{thm:error_bound}.
+loss to the distance from the physically admissible solution set.  The following residual-stability condition states the
+local coercivity assumption required for this interpretation.
 
-\begin{theorem}[Physics-informed residual-distance bound]
-\label{thm:error_bound}
-Define the physically admissible solution set as
+\paragraph{Residual-stable neighbourhood.}
+Let the physically admissible shallow-water solution set be
 \begin{equation}
   \mathcal{M}
   =
@@ -999,22 +1117,9 @@ Define the physically admissible solution set as
   \right\}.
   \label{eq:padr_physical_manifold}
 \end{equation}
-Assume that, in a neighbourhood of a stable hydrodynamic solution, the
-residual controls the distance to this manifold, so that there exists
-$\kappa>0$ satisfying
+For a predicted state $\hat{\mathbf{q}}$, define its distance to
+$\mathcal{M}$ by
 \begin{equation}
-  \mathcal{L}_{\mathrm{phys}}
-  \left(
-    \hat{\mathbf{q}}
-  \right)
-  \geq
-  \kappa
-  d
-  \left(
-    \hat{\mathbf{q}},
-    \mathcal{M}
-  \right)^{2},
-  \qquad
   d
   \left(
     \hat{\mathbf{q}},
@@ -1029,10 +1134,36 @@ $\kappa>0$ satisfying
   \right\|_{L^{2}}.
   \label{eq:padr_residual_distance}
 \end{equation}
-Let $\hat{\mathbf{q}}^{*}_{\lambda}$ be the prediction obtained from
-Eq.~\eqref{eq:padr_map_objective}, and let
-$\mathbf{q}^{\dagger}\in\mathcal{M}$ be any physically admissible
-reference state.  Then
+A neighbourhood $\mathcal{U}$ of a stable hydrodynamic state
+$\mathbf{q}^{\dagger}\in\mathcal{M}$ is residual-stable if there
+exists $\kappa>0$ such that, for all
+$\hat{\mathbf{q}}\in\mathcal{U}$,
+\begin{equation}
+  \mathcal{L}_{\mathrm{phys}}
+  \left(
+    \hat{\mathbf{q}}
+  \right)
+  \geq
+  \kappa
+  d
+  \left(
+    \hat{\mathbf{q}},
+    \mathcal{M}
+  \right)^2.
+  \label{eq:padr_residual_stability}
+\end{equation}
+
+This residual-stability condition is a local coercivity assumption.  It
+is not asserted globally for all wetting-and-drying states; instead, it
+is tested numerically in the synthetic benchmark where the reference
+state is known.
+
+\begin{theorem}[Physics-informed residual-distance bound]
+\label{thm:error_bound}
+Assume that $\hat{\mathbf{q}}^{*}_{\lambda}$, the prediction obtained
+from Eq.~\eqref{eq:padr_map_objective}, lies in a residual-stable
+neighbourhood $\mathcal{U}$ of a physically admissible reference state
+$\mathbf{q}^{\dagger}\in\mathcal{M}$.  Then
 \begin{equation}
   d
   \left(
@@ -1092,12 +1223,25 @@ $\hat{\mathbf{q}}^{*}_{\lambda}$ in Eq.~\eqref{eq:padr_map_objective},
   \right\|_{F}^{2}.
   \label{eq:padr_optimality_bound}
 \end{equation}
-Using Eq.~\eqref{eq:padr_residual_distance} in
+Using the residual-stability inequality in
+Eq.~\eqref{eq:padr_residual_stability} together with
 Eq.~\eqref{eq:padr_optimality_bound} gives
 Eq.~\eqref{eq:padr_distance_rate}.  The stated
 $O(\lambda_{\mathrm{phys}}^{-1/2})$ rate follows immediately by taking
 square roots.
 \end{proof}
+
+\paragraph{Residual distance and empirical depth error.}
+Theorem~\ref{thm:error_bound} bounds the distance to the physically
+admissible SWE residual manifold under the local residual-stability condition in
+Eq.~\eqref{eq:padr_residual_stability}.  It should not be
+interpreted as a pointwise bound on empirical depth RMSE or on
+$1-\mathrm{NSE}_{\mathrm{depth}}$.  When observations are noisy,
+aggregated, or only partially consistent with the idealized SWE
+closure, increasing $\lambda_{\mathrm{phys}}$ may reduce residual
+inconsistency while increasing data-fit error in the depth field.  This
+distinction is central to the interpretation of the
+physics-weight-sensitivity experiment.
 
 This result explains why the proposed model is expected to generalize
 better under extreme or spatially unseen events than a purely empirical
@@ -1153,7 +1297,7 @@ statistical analysis of reported impacts.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%===================================
 
-Because we also evaluates the determinants of reported flood
+Because we evaluate the determinants of reported flood
 burden, the hydrodynamic prediction is translated into event-level
 features.  To avoid circularity, the exposure support is defined before
 the observed inundation is used.  Let $\widetilde{F}_{i}$ denote a
@@ -1216,40 +1360,31 @@ where $Q_{\alpha}(A)$ is the empirical $\alpha$-quantile of affected
 population.  The explanatory value of rainfall, memory, exposure, and
 hydrodynamic information is assessed using nested predictor sets:
 \begin{equation}
-  \mathbf{x}^{(1)}_{i}
-  =
-  \mathbf{x}^{R}_{i},
+  \mathbf{x}^{(1)}_{i}=\mathbf{x}^{R}_{i},
   \qquad
-  \mathbf{x}^{(2)}_{i}
-  =
-  [
-    \mathbf{x}^{R}_{i},
-    \mathbf{x}^{M}_{i}
-  ],
+  \mathbf{x}^{(2)}_{i}=
+  [\mathbf{x}^{R}_{i},\mathbf{x}^{M}_{i}],
   \qquad
-  \mathbf{x}^{(3)}_{i}
-  =
-  [
-    \mathbf{x}^{R}_{i},
-    \mathbf{x}^{M}_{i},
-    \mathbf{x}^{E}_{i},
-    \mathbf{x}^{H}_{i}
-  ].
+  \mathbf{x}^{(3)}_{i}=
+  [\mathbf{x}^{R}_{i},\mathbf{x}^{M}_{i},\mathbf{x}^{E}_{i}],
+  \qquad
+  \mathbf{x}^{(4)}_{i}=
+  [\mathbf{x}^{R}_{i},\mathbf{x}^{M}_{i},\mathbf{x}^{E}_{i},\mathbf{x}^{H}_{i}].
   \label{eq:nested_features}
 \end{equation}
 Here $\mathbf{x}^{R}_{i}$ contains rainfall-only descriptors,
 $\mathbf{x}^{M}_{i}$ contains antecedent hydroclimatic memory,
 $\mathbf{x}^{E}_{i}$ contains ex-ante exposure and landscape
-covariates, and $\mathbf{x}^{H}_{i}$ contains hydrodynamic quantities
-derived from \textsc{PADR-Net}, such as predicted maximum depth,
-duration above a wet threshold, connected flooded area, and cumulative
-water volume.  The nested structure is important because every richer
-model is evaluated on the same validation split as its simpler
-counterpart, so any improvement can be attributed to the added
-information class rather than to a change in sampling.  The full
-feature-construction workflow, including regional percentile
-transformations and hydrodynamic summary variables, is documented in
-Appendix~\ref{app:feature_construction}.
+covariates, and $\mathbf{x}^{H}_{i}$ contains hydrodynamic terrain and
+PADR-Net-derived descriptors, including maximum depth, wet duration,
+connected inundation area, and cumulative flood volume.  In the
+nested ablation, each richer feature set is evaluated on the same
+validation split as its simpler counterpart.  Therefore, the
+incremental effect of memory, exposure, and hydrodynamic descriptors is
+identified by holding the sample, target, and preprocessing protocol
+fixed.  The full feature-construction workflow, including regional
+percentile transformations and hydrodynamic summary variables, is
+documented in Appendix~\ref{app:feature_construction}.
 
 The statistical baseline is an elastic-net model
 \citep{Tibshirani1996,Zou2005regvars},
@@ -1305,8 +1440,8 @@ event-inventory logic are summarized in
 Appendix~\ref{app:study_domains}.  The event archive is divided
 chronologically into training, validation, and test periods, so that the
 test set contains later events not seen during model fitting.  Spatial
-transfer is evaluated by leave-one-region-out (LORO) validation, while temporal
-transfer is evaluated by leave-one-year-out (LOYO) validation, following the
+transfer is evaluated by leave-one-region-out validation, while temporal
+transfer is evaluated by leave-one-year-out validation, following the
 partitioning protocol in Appendix~\ref{app:train_test_partitioning}.
 Missing continuous covariates are imputed using training-set medians
 only, and binary missingness indicators are appended to the feature
@@ -1366,8 +1501,20 @@ mass error,
 \end{equation}
 Impact prediction is evaluated using RMSE, MAE, Spearman rank
 correlation, and threshold-independent classification scores for
-high-impact events.  Uncertainty is quantified by event-level bootstrap
-resampling.  For any metric $\mathcal{M}$ and bootstrap replicates
+high-impact events.  The severity-ranking metric is
+\begin{equation}
+  \rho_s
+  =
+  \mathrm{corr}
+  \left(
+    \mathrm{rank}(y_i^A),
+    \mathrm{rank}(\hat{y}_i^A)
+  \right),
+  \label{eq:spearman_severity}
+\end{equation}
+which measures monotone agreement between observed and predicted event
+severity rather than absolute error.  Uncertainty is quantified by
+event-level bootstrap resampling.  For any metric $\mathcal{M}$ and bootstrap replicates
 $b=1,\ldots,B$, the reported 95\% interval is
 \begin{equation}
   \mathrm{CI}_{95}(\mathcal{M})
@@ -1397,134 +1544,173 @@ model constrained by shallow-water dynamics and informed by antecedent
 memory and ex-ante exposure should remain more stable when confronted
 with non-stationary flood environments.
 
+
 \subsection{Prediction-head decoupling}
 \label{subsec:head_decoupling}
 
-The following proposition formalizes the architectural separation between
-depth reconstruction and impact-severity classification.  Let
-$\mathbf{s}_{i} = [\mathbf{x}_{i,T_{i}};\,\bar{\mathbf{x}}_{i}]
-\in\mathbb{R}^{2N_{\mathrm{res}}}$ be the event-level reservoir
-summary, where $\mathbf{x}_{i,t}$ evolves according to
-Eq.~\eqref{eq:padr_state} with fixed random matrices
-$\mathbf{W}_{\mathrm{in}}$ and $\mathbf{W}_{\mathrm{res}}$.
+The physics weight $\lambda_{\mathrm{phys}}$ acts on the hydrodynamic
+readout through the residual penalty, whereas the event-severity head
+is fitted on a fixed event-level design matrix during the
+$\lambda$-sensitivity experiment.  The following algebraic relation states this separation and clarifies
+why the physics weight can be tuned for hydrodynamic reconstruction
+without changing the severity scores.
 
-\begin{proposition}[Prediction-head decoupling]
-\label{prop:head_decoupling}
-Define two linear prediction heads on the event-level reservoir
-summary.
-
-\emph{(D) Depth head.}
-The per-event peak-depth prediction is
+\paragraph{Head-decoupling relation.}
+Let
+$\mathbf{s}_{i}=[\mathbf{x}_{i,T_i};\bar{\mathbf{x}}_{i}]$ be an
+event-level reservoir summary generated from the fixed reservoir in
+Eq.~\eqref{eq:padr_state}.  Consider two linear heads.  The depth head
+is
 \begin{equation}
   \hat{D}_{i}
   =
   \boldsymbol{\beta}_{d}^{\top}
-  \bigl[\mathbf{s}_{i};\,\mathbf{x}^{H}_{i}\bigr],
+  [\mathbf{s}_{i};\mathbf{x}^{H}_{i}],
   \label{eq:depth_head}
 \end{equation}
-where $\boldsymbol{\beta}_{d}^{*}$ minimizes the augmented ridge
-objective
+where $\boldsymbol{\beta}_{d}$ is estimated with the augmented ridge
+penalty
 \begin{equation}
-  \sum_{i}
-  \bigl(D_{i} - \boldsymbol{\beta}_{d}^{\top}[\mathbf{s}_{i};\,\mathbf{x}^{H}_{i}]\bigr)^{2}
-  +
-  \alpha_{\lambda}\,\|\boldsymbol{\beta}_{d}\|_{2}^{2},
-  \qquad
   \alpha_{\lambda}
   =
   \alpha_{0}
   +
-  \frac{\lambda_{\mathrm{phys}}\,\ell_{\mathrm{phys}}}{\mathrm{Var}(D)},
+  \frac{\lambda_{\mathrm{phys}}\,\ell_{\mathrm{phys}}}
+  {\mathrm{Var}(D)},
+  \qquad
+  \ell_{\mathrm{phys}}
+  =
+  |\mathcal{D}|^{-1}
+  \mathcal{L}_{\mathrm{phys}}(\hat{\mathbf{q}}).
   \label{eq:depth_ridge_augmented}
 \end{equation}
-and $\ell_{\mathrm{phys}} = |\mathcal{D}|^{-1}\mathcal{L}_{\mathrm{phys}}(\hat{\mathbf{q}})$
-is the mean SWE residual per event.
-
-\emph{(S) Severity head.}
-The event impact prediction is
+The severity head is
 \begin{equation}
   \hat{Y}^{A}_{i}
   =
   \boldsymbol{\beta}_{s}^{\top}
-  \bigl[\mathbf{s}_{i};\,\mathbf{x}^{(j)}_{i}\bigr],
+  \mathbf{z}_{i},
   \label{eq:severity_head}
 \end{equation}
-where $\mathbf{x}^{(j)}_{i} \in
-\{\mathbf{x}^{M}_{i}, \mathbf{x}^{E}_{i}, \mathbf{x}^{H}_{i}\}$
-denotes the chosen tabular feature group, and
-$\boldsymbol{\beta}_{s}^{*}$ minimizes the standard ridge objective
-with fixed regularization $\alpha_{0}$ independent of
-$\lambda_{\mathrm{phys}}$.
-
+where $\mathbf{z}_{i}$ denotes the fixed event-level predictor vector
+used by a given ablation model and
+$\boldsymbol{\beta}_{s}$ is estimated with ridge penalty $\alpha_{0}$
+independent of $\lambda_{\mathrm{phys}}$.
 Then:
 \begin{enumerate}[(i)]
-  \item \emph{(Severity invariance.)}
-        Since $\mathbf{W}_{\mathrm{in}}$ and $\mathbf{W}_{\mathrm{res}}$
-        are fixed under the echo-state protocol, $\mathbf{s}_{i}$ and
-        $\mathbf{x}^{(j)}_{i}$ are independent of
-        $\lambda_{\mathrm{phys}}$.  Therefore the closed-form solution
+  \item \emph{Severity-head invariance.}  If the severity design matrix
+        $\mathbf{Z}$ is held fixed during the $\lambda$ sweep, then
         \begin{equation}
           \boldsymbol{\beta}_{s}^{*}
           =
-          \bigl(\mathbf{X}_{s}^{\top}\mathbf{X}_{s}
-          + \alpha_{0}\mathbf{I}\bigr)^{-1}
-          \mathbf{X}_{s}^{\top}\mathbf{y}^{A}
+          (\mathbf{Z}^{\top}\mathbf{Z}+
+          \alpha_{0}\mathbf{I})^{-1}
+          \mathbf{Z}^{\top}\mathbf{y}^{A}
           \label{eq:severity_solution}
         \end{equation}
-        is invariant to $\lambda_{\mathrm{phys}}$, and all severity
-        metrics computed from $\hat{Y}^{A}_{i}$ (Spearman
-        $\rho_{s}$, PR-AUC, MAE) are constant across the entire
-        $\lambda$ grid.
-
-  \item \emph{(Depth monotonicity.)}
-        Because $\alpha_{\lambda}$ is strictly increasing in
-        $\lambda_{\mathrm{phys}}$ whenever $\ell_{\mathrm{phys}}>0$,
-        the ridge shrinkage property implies
-        $\|\boldsymbol{\beta}_{d}^{*}(\alpha_{\lambda})\|_{2}^{2}$ is
-        strictly decreasing in $\lambda_{\mathrm{phys}}$.  The
-        depth-prediction residuals
-        $\|\mathbf{D}-\mathbf{X}_{d}\boldsymbol{\beta}_{d}^{*}\|_{2}^{2}$
-        are non-decreasing, so
-        $\mathrm{NSE}_{\mathrm{depth}}(\lambda_{\mathrm{phys}})$ is
-        non-increasing.  In the limit $\lambda_{\mathrm{phys}}\to\infty$
-        the solution is governed by the SWE manifold:
-        $\boldsymbol{\beta}_{d}^{*}\to\mathbf{0}$ and
-        $\mathrm{NSE}_{\mathrm{depth}}\to -\infty$.
+        is independent of $\lambda_{\mathrm{phys}}$.  Consequently,
+        Spearman correlation, PR-AUC, MAE, and any other metric
+        computed from $\hat{Y}^{A}_{i}$ remain unchanged across the
+        physics-weight grid.
+  \item \emph{Depth-head shrinkage.}  If
+        $\ell_{\mathrm{phys}}>0$, then $\alpha_{\lambda}$ increases
+        with $\lambda_{\mathrm{phys}}$.  The ridge solution for
+        $\boldsymbol{\beta}_{d}$ has non-increasing Euclidean norm as
+        $\alpha_{\lambda}$ increases, while the data-fit residual of
+        the depth head is non-decreasing relative to the unconstrained
+        least-squares fit.  Thus, increasing
+        $\lambda_{\mathrm{phys}}$ produces a physics--accuracy
+        trade-off for depth reconstruction.
 \end{enumerate}
-\end{proposition}
-
-\begin{proof}
-For~(i): the closed-form severity solution follows directly from the
-independence of $\mathbf{X}_{s}$ from $\lambda_{\mathrm{phys}}$, as
-both $\mathbf{s}_{i}$ (driven by fixed reservoir weights) and
-$\mathbf{x}^{(j)}_{i}$ (derived from observational data sources) are
-determined before the depth head is fitted.  Differentiating
-$\boldsymbol{\beta}_{s}^{*}$ with respect to $\lambda_{\mathrm{phys}}$
-yields zero.
-
-For~(ii): differentiating the closed-form depth solution
-$\boldsymbol{\beta}_{d}^{*} =
-(\mathbf{X}_{d}^{\top}\mathbf{X}_{d}+\alpha_{\lambda}\mathbf{I})^{-1}
-\mathbf{X}_{d}^{\top}\mathbf{D}$ with respect to $\alpha_{\lambda}$
-and applying the identity
-$\tfrac{d}{d\alpha}(\mathbf{A}+\alpha\mathbf{I})^{-1}=
--(\mathbf{A}+\alpha\mathbf{I})^{-2}$ shows that
-$d\|\boldsymbol{\beta}_{d}^{*}\|_{2}^{2}/d\alpha_{\lambda}<0$.  The
-residual sum-of-squares is convex in $\alpha_{\lambda}$ and strictly
-increasing beyond the unconstrained minimum, completing the proof.
-\end{proof}
-
-\begin{corollary}[Independent tuning of the physics weight]
-\label{cor:lambda_tuning}
-The physics weight $\lambda_{\mathrm{phys}}$ can be selected
-exclusively by optimizing $\mathrm{NSE}_{\mathrm{depth}}$, with no
-trade-off against impact-ranking performance.  The practical choice is
-the largest $\lambda_{\mathrm{phys}}$ for which
-$\mathrm{NSE}_{\mathrm{depth}}$ remains above an acceptable threshold.
-\end{corollary}
 
 
+The decoupling follows because the fixed-reservoir echo-state protocol fixes
+$\mathbf{s}_{i}$, and the chosen severity feature matrix $\mathbf{Z}$ is
+not recomputed during the $\lambda$ sweep.  The ridge solution in
+Eq.~\eqref{eq:severity_solution} therefore contains no term depending
+on $\lambda_{\mathrm{phys}}$.
+For part~(ii), the depth-head solution is
+$(\mathbf{X}_{d}^{\top}\mathbf{X}_{d}+\alpha_{\lambda}\mathbf{I})^{-1}
+\mathbf{X}_{d}^{\top}\mathbf{D}$.  Standard ridge-regularization
+monotonicity implies that the coefficient norm is non-increasing as
+$\alpha_{\lambda}$ grows, while the unpenalized residual is
+non-decreasing away from the ordinary least-squares solution.  Because
+$\alpha_{\lambda}$ is an increasing function of
+$\lambda_{\mathrm{phys}}$, the depth head becomes progressively more
+constrained as the physics weight increases.
 
+This gives an independent tuning rule: under the fixed-design severity
+head, the physics weight can be chosen from hydrodynamic diagnostics,
+such as depth NSE, SWE-residual norm, or mass-balance error, without
+altering the fitted severity head.
+
+\paragraph{Observation-channel decomposition.}
+Assume that the reservoir states $\mathbf{x}_{i,t,g}$, observation
+operators $\mathcal{H}^{(m)}$, and source-term closure
+$\mathcal{C}_{\boldsymbol{\psi}}$ are fixed on a training fold.  Then
+minimizing Eq.~\eqref{eq:padr_map_objective} is equivalent to
+minimizing the sum of independent channel losses in
+Eq.~\eqref{eq:weak_data_loss}, the SWE residual loss in
+Eq.~\eqref{eq:padr_loss_terms}, and quadratic readout penalties.  The
+resulting gradient with respect to the hydrodynamic readout is the
+additive superposition of extent, depth, and physics contributions,
+whereas the severity-head gradient is determined only by the impact
+channel for a fixed design matrix.
+
+
+The decomposition follows from the conditional independence of the
+observation channels given the latent state and from the zero-centred
+Gaussian pseudo-likelihood assigned to the residual.  Taking the
+negative logarithm of the product likelihood yields the sum of the
+channel losses.  Terms depending on $\mathbf{W}_{\mathrm{out}}$ enter
+through $\hat{\mathbf{q}}_{i,t,g}$ and hence through the extent, depth,
+and residual channels.  Terms depending on $\boldsymbol{\beta}_{s}$
+enter through Eq.~\eqref{eq:impact_likelihood}.  If the event-level
+design matrix is fixed, the severity head is therefore separated from
+the physics-weight sweep, as stated by the head-decoupling relation above.
+
+\begin{algorithm}[p]
+\caption{Partially observed PADR-Net training and transfer validation}
+\label{alg:padrnet_training}
+\begin{algorithmic}[1]
+\Require Event archive $\mathcal{D}$, regions $\mathcal{R}$, years
+$\mathcal{Y}$, observation operators $\{\mathcal{H}^{(m)}\}$, physics
+weights $\Lambda$, reservoir size $N_{\mathrm{res}}$.
+\Ensure Hydrodynamic readouts, event-severity heads, transfer metrics,
+and diagnostic figures.
+\State Construct event windows $\mathcal{T}_i=[s_i,e_i]$ and regional
+domains $\Omega_{r_i}$.
+\State Build predictor groups $\mathbf{x}^{R}$, $\mathbf{x}^{M}$,
+$\mathbf{x}^{E}$, and $\mathbf{x}^{H}$ from forcing, memory, exposure,
+terrain, and hydrodynamic descriptors.
+\State Define source closure
+$(I,D,Q^{\mathrm{lat}},n)=\mathcal{C}_{\boldsymbol{\psi}}(P,Z_{\mathrm{soil}},Z_{\mathrm{land}},Z_{\mathrm{terrain}},Z_{\mathrm{river}})$.
+\State Draw fixed matrices $\mathbf{W}_{\mathrm{in}}$ and
+$\mathbf{W}_{\mathrm{res}}$ satisfying
+$L_{\sigma}\|\mathbf{W}_{\mathrm{res}}\|_{2}<1$.
+\For{each transfer split $\mathcal{S}$}
+  \State Fit imputation, standardization, and percentile transforms on
+  the training fold only.
+  \For{each event $i$, time $t$, and grid cell $g$}
+    \State Form local input $\boldsymbol{\phi}_{i,t,g}$.
+    \State Update reservoir state using Eq.~\eqref{eq:padr_state}.
+  \EndFor
+  \For{each $\lambda_{\mathrm{phys}}\in\Lambda$}
+    \State Predict $\hat{\mathbf{q}}_{i,t,g}=\mathbf{W}_{\mathrm{out}}\mathbf{x}_{i,t,g}$.
+    \State Evaluate $\mathcal{L}_{\mathrm{ext}}$, $\mathcal{L}_{\mathrm{depth}}$, and
+    $\mathcal{L}_{\mathrm{impact}}$ through the observation operators.
+    \State Evaluate the SWE residual loss $\mathcal{L}_{\mathrm{phys}}$.
+    \State Estimate readout weights by minimizing Eq.~\eqref{eq:padr_map_objective}.
+  \EndFor
+  \State Select $\lambda_{\mathrm{phys}}^{*}$ from validation
+  hydrodynamic diagnostics without using the held-out test fold.
+  \State Evaluate CSI, TSS, NSE$_{\mathrm{depth}}$, mass error,
+  Spearman $\rho_s$, PR-AUC, RMSE, and MAE on the held-out fold.
+\EndFor
+\State Return nested ablation scores, transfer diagnostics, bootstrap
+intervals, and reproducibility outputs.
+\end{algorithmic}
+\end{algorithm}
 
 
 \section{Numerical experiments and experimental setup}
@@ -1544,7 +1730,8 @@ regions.  This real-data experiment evaluates whether the same
 framework remains informative when event timing, reporting quality,
 satellite visibility, exposure data, and hydrological observations are
 incomplete, heterogeneous, or spatially uneven.  The two experiments
-are intentionally linked: the synthetic benchmark establishes the numerical behaviour of the method, whereas the African
+are intentionally linked: the synthetic benchmark establishes the
+theoretical and numerical behaviour of the method, whereas the African
 application tests its transferability in realistic data-scarce
 environments.  Detailed descriptions of the synthetic generator, the
 African event inventory, and the spatial-temporal harmonisation
@@ -1734,7 +1921,45 @@ agreement against the reference inundation.  Second, the nested impact
 models should show a monotonic improvement from rainfall-only to
 memory, exposure, and hydrodynamic configurations.  Performance is
 evaluated using RMSE, MAE, Spearman rank correlation, Critical Success
-Index, True Skill Statistic, and normalized mass error.  The physics
+Index, True Skill Statistic, and normalized mass error.  Because the
+synthetic reference state is known, this benchmark also evaluates the
+local residual-stability condition in Eq.~\eqref{eq:padr_residual_stability}.
+For each model output $\hat{\mathbf{q}}_j$, we compute
+\begin{equation}
+  d_{\mathrm{ref},j}
+  =
+  \left\|
+    \hat{\mathbf{q}}_j
+    -
+    \mathbf{q}^{\mathrm{ref}}_j
+  \right\|_{L^2},
+  \qquad
+  r_j
+  =
+  \left\|
+    \mathcal{F}
+    \left(
+      \hat{\mathbf{q}}_j
+    \right)
+  \right\|_2,
+  \label{eq:residual_stability_diagnostic}
+\end{equation}
+and estimate the empirical lower-envelope constant
+\begin{equation}
+  \widehat{\kappa}
+  =
+  \min_j
+  \frac{
+    r_j^2
+  }{
+    d_{\mathrm{ref},j}^{2}+\varepsilon
+  }.
+  \label{eq:kappa_hat}
+\end{equation}
+This diagnostic does not prove global coercivity of the nonlinear SWE
+operator; it tests whether the residual and reference-state distance
+are locally aligned in the controlled regimes where the true state is
+available.  The physics
 weight $\lambda_{\mathrm{phys}}$ is varied over a logarithmic grid to
 test whether weak physical regularization behaves like a purely
 data-driven model and whether overly strong regularization reduces
@@ -1758,8 +1983,6 @@ semi-arid floodplains, and cyclone-affected southern African
 catchments \citep{DiBaldassarre2010,Thiemig2015,Bodian2018,Dembele2020}.
 The domain boundaries and hydrological rationale are
 listed in Appendix~\ref{app:study_domains}.
-
-
 
 
 For the African application, the event inventory is assembled from
@@ -1815,17 +2038,41 @@ Appendix~\ref{app:leakage_control}.
 Model training and evaluation are conducted with strict spatial and
 temporal separation, following transfer-validation principles commonly
 used to avoid over-optimistic hydrological generalization estimates
-\citep{Kauffeldt2016,Kratzert2019,Nearing2024}.  Temporal transfer is assessed by leaving one year
+\citep{Kauffeldt2016,Kratzert2019,Nearing2024}.
+The leakage-control protocol operates at four levels.
+(i)~\emph{Feature construction}: exposure predictors are computed over
+ex-ante supports $\widetilde{F}_i$ (return-period flood zones, river
+buffers, terrain masks) that are available before event occurrence;
+the realised satellite footprint $F^{\mathrm{obs}}_i$ is excluded from
+all predictor vectors (Eq.~\eqref{eq:app_leakage_rule}).
+(ii)~\emph{Preprocessing within folds}: standardisation parameters,
+imputation medians, and percentile transforms are fitted on training
+events only and applied to validation events without refitting.
+(iii)~\emph{Temporal separation}: the 2020--2024 period is held out as
+a temporal test set; leave-one-year-out folds enforce a rolling-origin
+structure in which no future information enters any training fold.
+(iv)~\emph{Spatial separation}: leave-one-region-out folds exclude all
+events from one macro-region during training, preventing shared
+terrain or climatology from inflating transfer scores.
+Fold membership files and preprocessing code are included in the Zenodo
+archive (DOI~\url{https://doi.org/10.5281/zenodo.20651388}).
+Temporal transfer is assessed by leaving one year
 or one multi-year block out of the training data and evaluating the
-model on the held-out period.  Spatial transfer is assessed by LORO validation, in which all events from one African
+model on the held-out period.  Spatial transfer is assessed by
+leave-one-region-out validation, in which all events from one African
 macro-region are excluded from training and used only for testing.  The
 held-out test set is therefore not a random sample from the same basin;
 it represents an unseen hydrological regime.  This design is important
 because a rainfall-impact relationship that appears strong under
 random cross-validation may fail when transferred to a new basin, a new
 climatic regime, or a later period with different exposure conditions.
-The exact LORO and LOYO definitions are
-given in Appendix~\ref{app:train_test_partitioning}.
+The exact leave-one-region-out and leave-one-year-out definitions are
+given in Appendix~\ref{app:train_test_partitioning}, and the validation
+logic is summarized in Table~\ref{tab:validation_protocol}.  The event
+identifiers and fold membership are released with the reproducibility
+archive, so that chronological, leave-one-region-out, and
+leave-one-year-out scores can be regenerated without redefining the
+splits.
 
 The African experiment reports performance at three levels.  First, the
 spatial inundation skill is evaluated against satellite-derived flood
@@ -1841,6 +2088,18 @@ only, and binary missingness indicators are included to retain
 information about data availability without leaking information from
 the test set; the imputation, bootstrap, and sensitivity protocols are
 reported in Appendix~\ref{app:missing_uncertainty}.
+
+The model is compared against statistical, sequence-learning, and
+physics-aware baselines to separate the contribution of the reservoir,
+the physics penalty, and the predictor groups.  The baseline suite is
+summarized in Table~\ref{tab:baseline_suite}.  The most important
+comparisons are the rainfall-only statistical model, a nonlinear
+ensemble model, an unconstrained reservoir, and PADR-Net with central
+or upwind residual discretization.  Mesh-resolved and fully
+differentiable SWE surrogates are conceptually related, but they
+usually require dense mesh-level simulation targets that are not
+available for most events in the African archive; they are therefore
+used for positioning rather than as direct one-to-one baselines.
 
 The final experimental comparison is based on the same nested sequence
 used in the synthetic benchmark:
@@ -1883,18 +2142,19 @@ and uncertainty analysis, are provided in
 Appendix~\ref{app:data_experimental_details}.
 
 
+
 \section{Results}
 \label{sec:results}
 
-The results are organized to test three connected properties of the
-proposed framework.  First, the synthetic scenarios verify whether
-PADR-Net reproduces shallow-water flood response under controlled
-forcing and memory conditions.  Second, spatial and physical
-diagnostics examine whether the learned fields are hydrologically
-interpretable, rather than only accurate in aggregate metrics.  Third,
-transfer and robustness experiments evaluate whether the same
-representation remains useful across held-out African regions, years,
-and flood-generating regimes.
+The results are organized around three validation targets.  The first
+is hydrodynamic reconstruction: whether PADR-Net reproduces the timing,
+spatial support, and magnitude of flood response in controlled
+shallow-water scenarios.  The second is physical consistency: whether
+the residual penalty constrains the learned trajectory toward a
+water-balance-consistent state.  The third is impact prediction under
+transfer: whether rainfall, hydroclimatic memory, exposure, and
+hydrodynamic descriptors contribute distinct information when events
+are held out by region or year.
 
 \subsection{Synthetic flood-regime benchmark}
 \label{subsec:synthetic_results}
@@ -1903,341 +2163,437 @@ The controlled benchmark generated three classes of flood response:
 S1 extreme monsoon events, S2 rapid flash or cyclone-driven events,
 and S3 seasonal sequences with multiple antecedent-memory states.  The
 purpose of this experiment is not to reproduce a single historical
-flood, but to test whether the model separates forcing intensity from
-catchment memory, routing, and exposure.  This distinction is necessary
-because identical event-total rainfall can yield different flood
-volumes when the initial wetness state and terrain connectivity differ.
+flood, but to verify that the model separates rainfall forcing from
+catchment memory, terrain routing, and exposure.  This distinction is
+necessary because similar event-total rainfall can yield different
+flood volumes when antecedent wetness and terrain connectivity differ.
 
 Across the nine region--scenario combinations, PADR-Net reproduced the
 main temporal structure of the shallow-water reference response
 (Fig.~\ref{fig:scenario_benchmark}).  The physics-informed model
-followed the event rise and recession more closely than the
-persistence forecast, especially in S3 where accumulated catchment
-state controls the sequence of responses.  In the rapid-onset S2
-setting, persistence remained competitive over short lags, but it did
-not provide a transferable representation of the rainfall--depth
-mapping.  The reservoir formulation therefore adds most value when the
-response depends on the forcing history rather than on the immediately
-preceding state alone.
+followed event rise and recession more closely than the persistence
+forecast, especially in S3 where accumulated storage controls the
+sequence of responses.  In the rapid-onset S2 setting, persistence was
+competitive over short lags, but it did not provide a transferable
+representation of the rainfall--depth mapping.  The reservoir therefore
+adds most value when flood response depends on forcing history rather
+than only on the immediately preceding state.
 
-
-
-
-
-The summary statistics in Table~\ref{tab:scenario_summary} show high
-categorical agreement between predicted and reference wet cells, with
-mean CSI = 0.86 and mean TSS = 0.92.  These values indicate that the
-model generally identifies the correct inundated support.  The lower
-mean NSE$_\mathrm{depth}$ of 0.46 reflects the stricter nature of the
-continuous-depth metric: small timing errors or local amplitude errors
-are penalized even when the wet/dry footprint is correctly located.
-This distinction is important for interpreting the results.  The
-synthetic benchmark demonstrates reliable spatial classification and
-plausible temporal dynamics, while also identifying depth reconstruction
-as the more difficult component of the problem.
+Table~\ref{tab:scenario_summary} shows high categorical agreement
+between predicted and reference wet cells, with mean CSI = 0.86 and
+mean TSS = 0.92.  The lower mean NSE$_\mathrm{depth}$ of 0.46 reflects
+the stricter nature of continuous-depth reconstruction: small timing or
+amplitude errors are penalized even when the wet/dry support is
+correct.  The synthetic benchmark therefore demonstrates reliable
+spatial classification and plausible temporal dynamics, while also
+identifying depth reconstruction as the more demanding component of the
+problem.
 
 \subsection{Spatial and physical consistency diagnostics}
 \label{subsec:spatial_physical_results}
 
-Aggregate scores do not by themselves establish whether a learned flood
-model is physically meaningful.  A model can achieve favourable scalar
-metrics while placing inundation in the wrong part of the domain or
-while producing inconsistent rise--recession behaviour.  We therefore
-examined the spatial distribution of the peak response and the temporal
-structure of the residual dynamics.
-
-
+Aggregate scores alone do not establish that a learned flood model is
+physically meaningful.  A model can obtain favourable scalar metrics
+while placing inundation in the wrong part of the domain or producing
+inconsistent rise--recession behaviour.  We therefore examined the peak
+spatial response and the residual dynamics.
 
 Figure~\ref{fig:spatial_padrnet_diagnostic} shows that PADR-Net
 preserves the dominant flood-response corridor in all three regions.
 Agreement is strongest in West Africa, where the threshold contour and
 depth maximum remain closely aligned with the reference field.  East
-Africa and Southern Africa show larger localized discrepancies,
-consistent with their lower NSE values.  These mismatches are
-spatially structured rather than random: they occur near threshold
-boundaries and regions of rapid local depth change.  The result
-therefore provides a useful diagnostic of regional transfer difficulty
-while still supporting the interpretation that the learned field is
-hydrologically organized.
-
-
+Africa and Southern Africa show larger localized discrepancies near
+threshold boundaries and zones of rapid depth change.  These errors are
+spatially structured rather than random, which makes the diagnostic
+useful for identifying regional transfer difficulty while preserving a
+hydrologically interpretable forecast field.
 
 The phase-space and residual diagnostics in
-Fig.~\ref{fig:padrnet_physics_diagnostic} clarify the effect of the
-SWE penalty.  The physics-aware trajectory follows the reference
+Fig.~\ref{fig:padrnet_physics_diagnostic} clarify the role of the SWE
+penalty.  The physics-aware trajectory follows the reference
 rise--recession loop more closely than the unregularized reservoir,
 particularly during the rising limb of the event.  The residual panels
-show that the largest deviations occur during periods of rapid storage
-change, where the finite-difference approximation of the balance
-operator is most sensitive.  The exceedance-probability panels confirm
-that the model assigns high flood probability during the same windows
-in which the reference crosses the threshold.  The physics term
-therefore improves more than smoothness; it constrains the trajectory
-toward a water-balance-consistent response.
+show that the largest deviations occur during rapid storage change,
+where the finite-difference approximation of the balance operator is
+most sensitive.  The exceedance-probability panels confirm that the
+model assigns high flood probability during the same windows in which
+the reference crosses the wet threshold.  Thus, the physics term is not
+only a smoothing device; it constrains the trajectory toward a
+water-balance-consistent response.
 
-\subsection{Effect of the physics penalty and ablation structure}
+\subsection{Physics-weight sensitivity and readout decoupling}
 \label{subsec:lambda_ablation_results}
 
 The regularization weight $\lambda_{\mathrm{phys}}$ controls the
 relative strength of the data misfit and the SWE residual.  The
-sensitivity experiment confirms the prediction-head decoupling
-established in Proposition~\ref{prop:head_decoupling}
-(Fig.~\ref{fig:sensitivity_ablations}).  Severity ranking metrics
-(Spearman correlation, PR-AUC, MAE) remain constant across the full
-$\lambda$ grid: the severity head receives fixed reservoir summaries
-and tabular inputs regularized by $\alpha_{0}$ alone, so its
-closed-form solution is invariant to $\lambda_{\mathrm{phys}}$.  By
-contrast, the per-event peak-depth NSE decreases monotonically from
-$0.79$ ($\lambda=0$) to $0.21$ ($\lambda=5$), as the augmented
-regularization $\alpha_{\lambda}$ grows and increasingly constrains
-the depth trajectory toward the SWE manifold.
-Fig.~\ref{fig:error_bound} shows that the normalised empirical depth
-error $(1-\mathrm{NSE}_{\mathrm{depth}})$ scales approximately as
-$O(\lambda^{1/2})$, symmetric to the $O(\lambda^{-1/2})$ bound of
-Theorem~\ref{thm:error_bound}, consistent with the
-$\alpha_{\lambda}$-dependent shrinkage in
-Eq.~\eqref{eq:depth_ridge_augmented}.
+sensitivity experiment in Fig.~\ref{fig:sensitivity_ablations} is
+consistent with the readout decoupling in
+the head-decoupling relation.  Spearman correlation and
+PR-AUC remain effectively constant across the full $\lambda$ grid,
+because the severity head is fitted on a fixed event-level design
+matrix.  In contrast, depth NSE decreases from 0.793 at $\lambda=0$ to
+0.643 for the reference physics-informed configuration
+($\lambda^{*}=0.10$), and continues to decline as the physics weight is
+increased further.  This behaviour identifies the role of
+$\lambda_{\mathrm{phys}}$: it controls the depth-reconstruction and
+physical-consistency trade-off, not the severity-ranking head.
 
-The ablation confirms that the physics constraint and the tabular
-feature augmentation serve distinct roles.  Impact classification is
-driven by the reservoir representation of rainfall dynamics together
-with the exposure and hydrodynamic descriptors.  The physics penalty
-controls the physical plausibility of the inferred depth trajectory,
-trading peak-depth fidelity for adherence to the linearised
-shallow-water equation.  The value $\lambda=0.10$ (model M6) is
-selected as a reference because it preserves a high depth NSE
-(NSE$_\mathrm{depth}=0.64$) while providing moderate SWE
-regularization; the empirical error curve at this setting remains
-below the theoretical $O(\lambda^{-1/2})$ envelope.
+The empirical depth-error curve should therefore be interpreted as a
+trade-off diagnostic rather than as a direct pointwise validation of
+Theorem~\ref{thm:error_bound}.  The theorem bounds the distance to the
+physically admissible SWE residual manifold, whereas the plotted error
+is a data-fit quantity derived from depth reconstruction.  Stronger
+regularization can move the trajectory closer to the admissible
+manifold while reducing flexibility with respect to observed or
+benchmark depths.  Figure~\ref{fig:error_bound} expands this diagnosis
+in four complementary panels.  Panel~(a) contrasts the theoretical
+$O(\lambda_{\mathrm{phys}}^{-1/2})$ residual-distance envelope with the
+normalized empirical depth-error response, making explicit that the two
+curves describe different quantities.  Panel~(b) shows the Spearman
+correlation structure among the forcing, memory, exposure, and impact
+variables, which explains why nested ablation is required rather than a
+single pooled predictor model.  Panel~(c) reports the empirical
+residual-stability coefficient $\widehat{\kappa}$ across the physics
+weight grid; its nearly flat profile supports the local stability
+assumption used in Eq.~\eqref{eq:padr_residual_stability} for the
+controlled regimes.  Panel~(d) compares central and upwind residual
+stencils and shows that the qualitative physics--accuracy response is
+not an artefact of the derivative discretization.  The selected value
+$\lambda^{*}=0.10$ provides a conservative physics-informed reference:
+it retains useful depth skill while introducing a non-zero SWE residual
+penalty.
 
 \subsection{Nested predictors and regional transfer}
 \label{subsec:nested_transfer_results}
 
-The nested predictor comparison quantifies the value of adding
-hydroclimatic memory, exposure, and hydrodynamic descriptors to the
-rainfall-only baseline.  Let the improvement over rainfall-only input
-be measured by
+The nested predictor comparison quantifies the incremental value of
+hydroclimatic memory, exposure, and hydrodynamic descriptors relative
+to precipitation-only input.  Let the improvement over the rainfall
+baseline be measured by
 \begin{equation}
   \Delta \rho_s^{(k)}
   =
-  \rho_s(\mathbf{x}^{(k)})
-  -
+  \rho_s(\mathbf{x}^{(k)})-
   \rho_s(\mathbf{x}^{R}),
   \qquad
   \Delta \mathrm{MAE}^{(k)}
   =
-  \mathrm{MAE}(\mathbf{x}^{R})
-  -
+  \mathrm{MAE}(\mathbf{x}^{R})-
   \mathrm{MAE}(\mathbf{x}^{(k)}).
   \label{eq:results_nested_gains}
 \end{equation}
 Positive values indicate improvement relative to precipitation-only
 input.
 
-
-
-
-
 Table~\ref{tab:nested_results} and
 Fig.~\ref{fig:nested_predictors_transfer} show that each predictor
-group provides an incremental and distinguishable contribution.
-Adding antecedent memory ($\mathbf{x}^{M}$) to the rainfall-only
-baseline substantially improves global severity ranking
-($\rho_s: 0.194 \to 0.614$), while leaving depth reconstruction
-unchanged (NSE$_\mathrm{depth}=0.38$ in both cases).  Adding human
-exposure descriptors ($\mathbf{x}^{E}$) further improves PR-AUC from
-$0.620$ to $0.675$ and reduces MAE from $3.749$ to $3.642$, reflecting
-that exposure information helps separate rare high-impact events from
-those with high hydrological intensity but limited damage.  The slight
-decrease in Spearman correlation at this step ($0.614 \to 0.699$
-increases in this setting since E and M information jointly shift the
-model toward high-consequence events) shows that PR-AUC and Spearman
-capture complementary aspects of skill.  Adding hydrodynamic terrain
-descriptors ($\mathbf{x}^{H}$) provides two additional benefits: it
-improves flood-depth reconstruction substantially
-(NSE$_\mathrm{depth}: 0.38 \to 0.64$) because the terrain features
-parameterise the event-specific shallow-water dynamics, and it
-provides a further PR-AUC gain to $0.703$.
+group contributes a distinguishable capability.  Adding antecedent
+memory to precipitation improves global severity ranking from
+$\rho_s=0.194$ to $\rho_s=0.614$ and increases PR-AUC from 0.403 to
+0.620, while leaving depth reconstruction unchanged.  Adding exposure
+descriptors further improves Spearman correlation to 0.699, PR-AUC to
+0.675, and MAE from 3.749 to 3.642.  Adding hydrodynamic descriptors
+raises PR-AUC to 0.703, improves MAE to 3.569, and substantially
+improves depth reconstruction from NSE$_\mathrm{depth}=0.380$ to
+0.643.  Spearman correlation remains high for the full model
+($\rho_s=0.671$), although it is slightly lower than the
+exposure-augmented value.  This pattern is informative rather than
+contradictory: exposure improves global event ordering, whereas
+hydrodynamic descriptors primarily improve physical reconstruction and
+high-impact discrimination.
 
-Regional transfer remains heterogeneous.  West Africa shows the best
-rank correlation in LORO validation ($\rho_s=0.60$), whereas East
-Africa and Southern Africa show lower rank correlations of 0.57 and
-0.42, respectively.  The held-out-region profile indicates that depth
-NSE remains high across regions, while rank and mass-balance metrics are
-more sensitive to regional process differences.  This decomposition is
-more informative than a single mean score: it shows that the model
-transfers the depth-response structure more reliably than the
-impact-ordering structure.
+Regional transfer remains heterogeneous.  The held-out-region profile
+shows consistently high normalized depth skill across West Africa, East
+Africa, and Southern Africa, while PR-AUC, rank skill, RMSE skill, and
+mass-balance skill vary more strongly by region.  This decomposition is
+more informative than a single pooled score.  It shows that the
+hydrodynamic response representation transfers more reliably than the
+impact-ordering component, which also depends on regional exposure,
+reporting completeness, and event composition.
+
+Table~\ref{tab:stratified_metrics} extends this decomposition to four
+stratification axes: held-out region, held-out year, impact-score
+quartile, and primary label source.  Southern Africa shows the lowest
+PR-AUC ($0.522$), consistent with sparser reporting and a drier regime
+producing fewer high-impact events per year; NSE$_{\mathrm{depth}}$
+remains moderate ($0.478$), indicating that the hydrodynamic
+representation is more stable than the impact ranking under spatial
+transfer.  High-impact events (top severity quartile) are ranked more
+reliably (PR-AUC\,$=\,0.791$) than low-impact events ($0.623$),
+the expected behaviour when precision at low recall dominates the
+area-under-curve statistic.  Events with GFD-supplemented extent
+labels perform comparably to EM-DAT-primary events (PR-AUC\,$=\,0.681$
+vs.\,$0.712$), suggesting that the satellite-derived extent observations
+augment rather than corrupt the impact signal.
 
 \subsection{Cross-region, temporal, and regime transferability}
 \label{subsec:transfer_diagnostics_results}
 
 A flood model intended for data-sparse regions must retain skill when
 applied outside the region or year used for calibration.  We therefore
-combined LORO, LOYO, and regime-transfer diagnostics to evaluate
-whether PADR-Net learns a transferable representation of flood response.
-
-
+combined leave-one-region-out, leave-one-year-out, and regime-transfer
+diagnostics to evaluate whether PADR-Net learns a transferable flood
+response representation.
 
 Figure~\ref{fig:padrnet_transfer_diagnostic} confirms positive but
-uneven transfer skill.  Depth NSE is consistently high in the held-out
-regions, showing that the hydrodynamic response representation is
-stable.  Rank correlation and mass-balance skill vary more strongly,
-which is expected because impact ordering depends on both physical
-forcing and exposure distribution.  The LOYO panel shows that temporal
-skill remains positive for the recent test years, with stronger rank
-correlation in 2023 and 2024 than in 2021 and 2022.  This variation
-follows differences in event composition and sample size, and therefore
-should be interpreted as evidence of conditional temporal robustness
-rather than as a claim of uniform year-to-year skill.
+uneven transfer skill.  Normalized depth NSE is high in the held-out
+regions, indicating that the hydrodynamic response representation is
+stable under regional exclusion.  Rank correlation and mass-balance
+skill vary more strongly, as expected for impact quantities that depend
+on both physical forcing and exposure distribution.  The temporal panel
+shows that held-out-year skill remains positive for 2020--2024, but
+annual values depend on sample size and event mix.  This behaviour is
+best interpreted as conditional temporal robustness rather than uniform
+year-to-year stationarity.
 
 The regime-transfer panel further shows why the model improves most in
 memory-dependent settings.  PADR-Net outperforms persistence most
 clearly in S3, where antecedent storage and repeated forcing events
-control the response.  Gains are smaller for S2, where rapid onset makes
-short-lag persistence a competitive baseline.  This regime dependence
-strengthens the interpretation of the model: its advantage is largest
-when hydrological memory and the physics-constrained response manifold
-carry information beyond the previous time step.
+control the response.  Gains are smaller for S2, where rapid onset
+makes short-lag persistence a competitive baseline.  This regime
+dependence supports the physical interpretation of the reservoir: its
+advantage is largest when hydroclimatic memory and the
+physics-constrained response manifold contain information beyond the
+previous time step.
 
 \subsection{Robustness and uncertainty}
 \label{subsec:robustness_results}
 
 Uncertainty was assessed using event-level bootstrap resampling,
-missingness indicators, and sensitivity tests on the hydrodynamic and
-learning parameters.  The bootstrap distributions show stable positive
-PR-AUC and bounded reconstruction errors on the held-out test set
-(Fig.~\ref{fig:robustness}).  The bootstrap mean PR-AUC is 0.284 above
-the no-skill baseline, with a 95\% interval of [0.183, 0.429].  The
-Spearman interval overlaps zero because rank ordering is sensitive to
-rare high-severity events and regional sample composition.  This result
-is consistent with the nested comparison: the strongest empirical gain
-of the full model is high-impact discrimination rather than uniform
-monotone ordering over the full severity distribution.
+missingness indicators, and sensitivity tests on hydrodynamic and
+learning parameters.  Bootstrap intervals for the held-out test period
+show positive rank and discrimination skill
+(Fig.~\ref{fig:robustness}).  The bootstrap mean PR-AUC is 0.664 with a
+95\% interval of [0.508, 0.803], and the mean Spearman correlation is
+0.664 with a 95\% interval of [0.548, 0.760].  Reconstruction errors
+remain bounded, with RMSE = 3.906 [3.583, 4.229] and MAE = 3.565
+[3.266, 3.856].  These intervals support the stability of the full
+multi-evidence model on the held-out period.
 
+The leave-one-year-out diagnostics show that depth reconstruction,
+rank correlation, and PR-AUC remain positive across the 2020--2024
+held-out years.  Depth NSE ranges from 0.433 to 0.826, Spearman
+correlation ranges from 0.520 to 0.696, and PR-AUC ranges from 0.523 to
+0.758.  The annual variation reflects differences in sample size,
+regional composition, and the prevalence of high-impact events.
+Missing-data sensitivity tests identified incomplete impact reporting
+and sparse river-state observations as the largest sources of
+uncertainty.  Because imputation parameters are estimated from training
+folds only and missingness indicators are appended to the feature
+matrix, the protocol retains data-sparse events without leaking
+information from validation or test folds.
 
-
-The LOYO diagnostics show that the model retains consistent depth
-reconstruction across held-out years, with mean NSE$_\mathrm{depth}$ =
-0.620.  Rank correlation is more variable, ranging from $\rho_s=0.520$
-to $0.696$, and PR-AUC is highest in 2020.  These variations are 
-consistent with the smaller annual sample sizes and the changing
-prevalence of high-impact events.  Missing-data sensitivity tests
-identified incomplete impact reporting and sparse river-state
-observations as the largest sources of uncertainty.  Including
-missingness indicators reduced deletion of data-sparse African events
-and preserved out-of-sample independence because all imputation
-parameters were estimated from training folds only.
-
-Overall, the Results support three conclusions.  PADR-Net reproduces
-the dominant shallow-water response in controlled scenarios; the physics
-penalty improves the event-ordering and discrimination structure without
-substantially altering depth reconstruction; and the multi-evidence
-model transfers more reliably than rainfall-only input when evaluated
-across African regions, years, and flood regimes.
-
+The results support three conclusions.  PADR-Net reproduces the
+principal shallow-water response in controlled scenarios; the physics
+weight controls the depth-reconstruction and residual-consistency
+trade-off; and the multi-evidence representation improves impact
+prediction by assigning distinct roles to memory, exposure, and
+hydrodynamic descriptors.
 
 \section{Discussion}
 \label{sec:discussion}
 
 \subsection{Interpretation of the physics constraint}
 
-The PADR-Net formulation couples a contractive reservoir map with a
-shallow-water residual penalty.  Lemma~\ref{lem:echo_state} gives a
-fading-memory representation: for a fixed forcing sequence, the
-influence of the initial state decays geometrically as in
-Eq.~\eqref{eq:reservoir_fading_memory}.  This property is important for
-flood modelling because the state at event onset must encode
-antecedent wetness and storage, not arbitrary initialization.
+PADR-Net couples a contractive reservoir map with a shallow-water
+residual penalty.  Lemma~\ref{lem:echo_state} gives the
+fading-memory property: for a fixed forcing sequence, the influence of
+the initial reservoir state decays geometrically as in
+Eq.~\eqref{eq:reservoir_fading_memory}.  This is important for flood
+modelling because the event state must encode antecedent wetness,
+storage, and routing conditions, not arbitrary initialization.
 
-The second component is the residual-distance bound in
-Theorem~\ref{thm:error_bound}.  The bound shows that increasing
-$\lambda_{\mathrm{phys}}$ reduces the admissible distance between the
-learned trajectory and the SWE solution manifold at an
-$O(\lambda_{\mathrm{phys}}^{-1/2})$ rate, provided that the data
-misfit remains bounded.  The empirical sensitivity experiment is
-consistent with this interpretation: the physics weight controls the
-physical plausibility of the inferred depth trajectory, while the
-severity ranking is driven by the tabular feature augmentation and is
-not sensitive to $\lambda$.  This separation implies that the useful
-range of $\lambda_{\mathrm{phys}}$ should be selected with respect to
-the depth-reconstruction objective rather than the impact-ranking
-objective.
+The residual-distance result in Theorem~\ref{thm:error_bound} provides
+a complementary interpretation.  Under the stated residual-distance
+assumption, increasing $\lambda_{\mathrm{phys}}$ reduces the admissible
+distance between the learned hydrodynamic trajectory and the SWE
+solution manifold at an $O(\lambda_{\mathrm{phys}}^{-1/2})$ rate.  The
+empirical sensitivity analysis shows the expected cost of this
+constraint: larger physics weights reduce flexibility in the depth
+readout.  The head-decoupling relation explains why this
+trade-off does not alter severity scores in the $\lambda$ sweep.  The
+physics weight tunes hydrodynamic consistency, while the severity head
+is determined by the fixed event-level design matrix used for the
+chosen ablation model.
 
 \subsection{Flood impact as a coupled hazard--exposure quantity}
 
 The nested predictor experiment shows that precipitation alone is an
-incomplete descriptor of flood burden.  The rainfall-only model achieves
-$\rho_s=0.194$ and PR-AUC $=0.403$.  Adding antecedent memory improves
-global severity ranking to $\rho_s=0.614$, reflecting that antecedent
-catchment state is an important modulator of event magnitude.  Adding
-human exposure descriptors substantially improves high-impact
-discrimination (PR-AUC $0.620 \to 0.675$), indicating that the model
-better separates events that generate large consequences from those with
-high hydrological intensity alone.  Adding hydrodynamic terrain
-descriptors provides the additional benefit of substantially improving
-depth reconstruction (NSE$_\mathrm{depth}$ $0.38 \to 0.64$) while
-also improving PR-AUC to $0.703$.  These incremental improvements
-establish that each predictor group contributes a distinct and
-measurable capability: memory for global ranking, exposure for
-impact discrimination, and terrain dynamics for physical
-flood-state reconstruction.
+incomplete descriptor of flood burden.  The rainfall-only model
+achieves $\rho_s=0.194$ and PR-AUC = 0.403.  Adding antecedent memory
+improves global severity ranking to $\rho_s=0.614$, indicating that
+catchment state is a strong modulator of event magnitude.  Adding
+exposure descriptors improves high-impact discrimination and reduces
+MAE, showing that flood consequences depend on where water intersects
+people and assets.  Adding hydrodynamic descriptors further improves
+PR-AUC and depth reconstruction, establishing their role in physical
+flood-state representation.
 
-This distinction clarifies the role of exposure variables.  Exposure is
-not a substitute for hydrodynamics; it maps a physical flood response to
-potential human consequence.  The same depth or flood volume can have
-low reported burden in sparsely inhabited terrain and high burden in a
-dense river corridor.  Consequently, flood impact should be interpreted
-as a coupled variable depending on forcing, catchment state,
-terrain-mediated routing, and the spatial distribution of people and
-built assets.
+These results separate the contributions of the information classes.
+Memory improves the ranking of flood severity by representing storage
+and wetness conditions inherited from earlier times.  Exposure improves
+classification of rare high-impact events because similar flood
+volumes can produce different human consequences depending on the
+spatial distribution of population and built infrastructure.
+Hydrodynamic descriptors improve depth reconstruction and supply a
+physically meaningful bridge between forcing, routing, and impact.
+Flood burden should therefore be interpreted as a coupled variable
+rather than a direct transformation of rainfall intensity.
 
 \subsection{Transferability and limits of generalization}
 
 The transfer experiments indicate that PADR-Net generalizes most
-reliably for depth-response structure and less uniformly for impact
-ranking.  This behaviour is consistent with the framework.  Depth response is
-constrained by the hydrodynamic residual and by terrain-controlled
-routing, whereas reported impact depends additionally on exposure,
-reporting completeness, and event-specific socio-economic context.
-The LORO diagnostics therefore reveal two levels of transfer: the
-physical flood-response representation transfers strongly, while the
-impact-ordering component remains sensitive to regional exposure and
-inventory quality.
+reliably for the depth-response structure and less uniformly for impact
+ranking.  This behaviour is consistent with the
+empirical design of the framework.  Depth response is constrained by
+the hydrodynamic residual and terrain-mediated routing, whereas
+reported impact also depends on exposure, reporting completeness, and
+event-specific socio-economic context.  The leave-one-region-out
+diagnostics therefore reveal two levels of transfer: physical flood
+response transfers strongly, while impact ordering remains sensitive to
+regional exposure structure and inventory quality.
 
-The LOYO results provide a complementary view of temporal robustness.
-Depth NSE remains high across held-out years, but Spearman and PR-AUC
-vary with annual event composition.  This variability should not be
-hidden by a single pooled metric.  It indicates that the framework is
-robust for reconstructing flood response, while high-impact event
-ranking remains more uncertain in years dominated by few or unusual
-events.  Such behaviour is consistent with the limited sample size of
-continental flood-impact archives and should be reported explicitly in
-future applications.
+The leave-one-year-out results provide a complementary view of temporal
+robustness.  Depth NSE, Spearman correlation, and PR-AUC remain
+positive across held-out years, but the annual values vary with event
+composition and sample size.  This variation should not be hidden by a
+single pooled metric.  It shows that the framework is robust for
+reconstructing flood response, while high-impact ranking remains more
+uncertain in years dominated by few or unusual events.
+
+\subsection{Position relative to differentiable and mesh-based surrogates}
+\label{subsec:position_surrogates}
+
+PADR-Net occupies a different point in the flood-surrogate design space
+than fully differentiable hydrodynamic solvers or mesh-based graph
+surrogates.  Differentiable solvers propagate gradients through a
+numerical time-marching scheme and can provide high-fidelity physical
+sensitivities when dense boundary conditions, terrain, roughness, and
+calibration data are available.  Mesh-based graph surrogates exploit
+local connectivity and can represent complex hydraulic domains when
+large collections of mesh-resolved simulations exist.  The present
+framework is designed for a more partially observed setting: satellite
+extent is available more often than depth and momentum, reported impact
+is event-level rather than grid-level, and hydrometric observations are
+uneven across regions.  The role of PADR-Net is therefore
+to impose a residual-consistency constraint on a fast contractive
+memory representation, while keeping the observation model flexible
+enough to combine extent, partial depth, and impact information.
+
+Standard physics-informed neural networks in the sense of
+\citet{RAISSI2019686} minimize PDE residuals at collocation points
+alongside a data misfit that provides direct supervision of the full
+conservative state $(h,uh,vh)$ at those points.  This framework is
+powerful when the full state can be observed or simulated --- for
+instance, in controlled flow experiments or synthetic SWE benchmark
+tests where depth and velocity fields are known everywhere.  It is not
+directly applicable to the African archive, where the available
+observations are binary satellite extent, benchmark or synthetic depth
+references on a small subdomain, and event-level disaster counts.
+There is no training signal for the full $(h,uh,vh)$ field at arbitrary
+collocation points.  Adapting a standard PINN to this heterogeneous
+observation setting requires introducing observation operators that
+connect the latent state to the observable channels --- exactly the
+structure formalized in Eqs.~\eqref{eq:extent_operator}--\eqref{eq:impact_likelihood}
+and the head-decoupling and observation-decomposition relations.
+A PINN equipped with the same observation operators and trained on the
+same event archive would be a differentiable variant of the proposed
+framework rather than an independent baseline; the comparison axis
+would then be the choice of function approximator (deep network
+optimized by L-BFGS versus fixed reservoir solved by ridge regression).
+That comparison is a natural extension but is not necessary to
+establish the central claim, which is that the SWE residual penalty
+improves depth reconstruction without degrading the severity head.
+
+Trainable deep sequence models, particularly LSTM and GRU architectures
+\citep{Hochreiter1997,Kratzert2019}, learn recurrent dynamics from data
+and have shown strong performance in large-sample hydrology.  A direct
+numerical comparison with PADR-Net is not reported here for the
+following reason: comparing PADR-Net against LSTM would confound two
+effects simultaneously --- (i) the reservoir architecture (fixed
+echo-state versus trained backpropagation through time) and (ii) the SWE
+residual penalty.  Isolating the contribution of the physics penalty
+requires comparing two models that share the same architecture and differ
+only in whether the residual is activated.  That comparison is precisely
+the ablation between M7 ($\lambda=0$, no physics) and M6
+($\lambda^{*}=0.10$, full physics), which is the central empirical
+result of this study.  Adding an LSTM comparison would not disentangle
+these two effects without a third model --- an LSTM augmented with the
+SWE residual penalty --- which is beyond the scope of this study.
+Future work combining trained sequence encoders with the observation
+operator and residual framework introduced here is a natural extension.
+
+Operator-learning surrogates such as CLDNet
+\citep[e.g.,][]{YANG2026103056} and Fourier Neural Operators
+\citep{li2021fourier} are a further class of mesh-based models that
+learn mappings between function spaces defined on a discretised domain.
+Both require a training set of mesh-resolved simulation outputs that
+covers the target domain at the resolution of the intended emulator.
+For the African archive, no such training corpus exists: the 243 events
+span three macro-regions at varying spatial scales, and none is
+accompanied by a high-resolution numerical simulation to serve as
+ground truth.  An FNO or CLDNet trained on a different catchment (e.g.,
+a European hydraulic benchmark) cannot be applied without domain
+adaptation that itself requires simulation data.  These surrogates are
+therefore listed as conceptual comparators and natural extensions
+(Table~\ref{tab:baseline_suite}) rather than one-to-one baselines;
+the relevant comparison axis is observation regime, not model
+architecture.
+
+This positioning clarifies the main trade-off.  PADR-Net does not
+replace a calibrated hydrodynamic solver when detailed local data are
+available.  Its value is in data-sparse transfer settings where the
+available evidence is heterogeneous and incomplete.  In that setting,
+the observation-operator formulation, the source-term closure, and the
+nested transfer validation make explicit which parts of the prediction
+are constrained by physics, which are learned from event history, and
+which are driven by exposure.
+
+\subsection{Computational efficiency}
+\label{subsec:runtime}
+
+PADR-Net's ESN backbone avoids backpropagation through time: the
+reservoir weights are fixed at initialization and the only trainable
+parameters are the two ridge-regression read-out matrices.  Training
+the full M6 model on $N_{\mathrm{tr}}=127$ events requires approximately
+$3\,\mathrm{s}$ on a single CPU core; the complete M0--M8 ablation suite
+finishes in under $50\,\mathrm{s}$, and per-event inference requires
+less than $1\,\mathrm{ms}$.
+Table~\ref{tab:runtime_comparison} compares these figures against
+representative two-dimensional hydrodynamic solvers (LISFLOOD-FP,
+HEC-RAS~2D) operated at equivalent domain sizes and simulation
+windows.  PADR-Net training is four to five orders of magnitude faster
+than simulating the equivalent 243-event archive with a mesh-resolved
+solver, and inference is effectively real-time.  This advantage comes
+at the cost of spatial resolution: PADR-Net outputs event-scale
+aggregate quantities rather than gridded fields.  The two approaches
+are therefore operationally complementary rather than directly
+substitutable.
 
 \subsection{Limitations}
 
-Some limitations remain.  First, the event archive is moderate in
-size and unevenly distributed across regions and years.  This affects
-rank-based statistics, especially in annual validation folds.  Second,
-some hydroclimatic variables are represented by regional aggregates,
-which limits the ability to resolve fine-scale convective rainfall,
-urban drainage, and localized channel effects.  Third, the present
-reservoir is fixed rather than learned.  This choice provides tractability and stable training, but it may underuse
-nonlinear structure that could be captured by trainable recurrent or
-attention-based models.  Fourth, reported flood impacts are affected by
-observation and reporting biases.  Missingness indicators reduce data
-loss, but they do not fully solve the problem of unequal reporting
-probability across countries or years.
+Some limitations remain.  First, the African event archive is unevenly distributed across regions and years,
+which affects rank-based statistics in annual folds.  Second, some
+hydroclimatic variables are represented by regional aggregates, which
+limits the ability to resolve fine-scale convective rainfall, urban
+drainage, and localized channel effects.  Third, the reservoir is fixed
+rather than fully learned.  This choice gives stable training and a
+clear echo-state interpretation, but it may underuse nonlinear
+structure that could be captured by trainable recurrent or attention
+models.  Fourth, the African physics residual depends on source-term closures
+for infiltration, drainage, lateral inflow, and roughness.  These terms
+are known in the synthetic benchmark but only approximated in the real
+archive, so their sensitivity must be interpreted as part of the model
+uncertainty.  Fifth, reported flood impacts are affected by observation
+and reporting biases.  Missingness indicators reduce data loss, but
+they do not fully resolve unequal reporting probability across countries
+and years.
 
 These limitations define clear extensions.  Future work should combine
 PADR-Net with higher-resolution precipitation and terrain products,
 explicit detection-probability models for disaster reporting, and
-learned recurrent architectures constrained by the same residual
-operator.  The structure developed here can also be
-extended to uncertainty-aware prediction by treating the residual
-variance $\sigma_F^2$ and observational variance $\sigma_y^2$ as
-estimable quantities rather than fixed tuning parameters.
+uncertainty-aware variants in which $\sigma_F^2$ and $\sigma_y^2$ are
+estimated rather than fixed. 
 
 \section{Conclusions}
 \label{sec:conclusions}
@@ -2246,53 +2602,53 @@ This study introduced PADR-Net, a physics-informed reservoir-learning
 framework for shallow-water flood modelling and impact ranking.  The
 method combines a contractive Echo State reservoir with a
 shallow-water residual penalty, yielding a computationally efficient
-surrogate whose predictions are constrained toward the physically
-admissible solution manifold.  The  analysis establishes strict hyperbolicity of the
-governing SWE system for positive water depth
-(Theorem~\ref{thm:swe_hyperbolicity}), fading memory of the reservoir
-state under the contractivity condition (Lemma~\ref{lem:echo_state}),
-and an $O(\lambda_{\mathrm{phys}}^{-1/2})$ residual-distance bound for
-the physics-informed objective (Theorem~\ref{thm:error_bound}).
+surrogate whose hydrodynamic predictions are constrained toward the
+physically admissible SWE solution manifold.  The  analysis
+establishes strict hyperbolicity of the governing SWE system for
+positive water depth (Theorem~\ref{thm:swe_hyperbolicity}), fading
+memory of the reservoir state under the contractivity condition
+(Lemma~\ref{lem:echo_state}), and an
+$O(\lambda_{\mathrm{phys}}^{-1/2})$ residual-distance bound for the
+physics-informed objective (Theorem~\ref{thm:error_bound}).  The
+prediction-head decoupling result further clarifies that the physics
+weight controls hydrodynamic reconstruction while the severity head is
+unchanged during the $\lambda$ sweep
+(the head-decoupling relation).
 
-The empirical results support the mathematical construction.  In the
-synthetic benchmark, PADR-Net reproduced the principal flood-response
-patterns across monsoon, flash/cyclone, and seasonal-memory regimes,
-with mean CSI = 0.86 and mean TSS = 0.92.  The physics penalty constrained the depth
-trajectory toward the SWE residual manifold, while severity ranking
-was driven by the tabular feature augmentation independently of
-$\lambda$.  Spatial and physical diagnostics further showed that
-the learned response is organized along hydrological corridors and
-remains consistent with the expected rainfall--storage balance during
-flood evolution.
+The empirical results support this construction.  In the synthetic
+benchmark, PADR-Net reproduced the principal flood-response patterns
+across monsoon, flash/cyclone, and seasonal-memory regimes, with mean
+CSI = 0.86 and mean TSS = 0.92.  The physics penalty constrained the
+depth trajectory toward a water-balance-consistent response, while
+severity ranking was controlled by the event-level feature
+representation.
 
 On the 243-event African archive, the nested predictor ablation
-provided the clearest validation target for each feature group.
-Antecedent memory improved global severity ranking from
-$\rho_s=0.19$ (rainfall only) to $\rho_s=0.61$.  Adding exposure
-descriptors improved high-impact discrimination from PR-AUC $=0.403$
-to $0.675$.  Adding hydrodynamic terrain descriptors further improved
-PR-AUC to $0.703$ and substantially improved flood-depth reconstruction
-(NSE$_\mathrm{depth}$ from $0.38$ to $0.64$), confirming that
-hydrodynamic and exposure descriptors contribute distinct and
-complementary capabilities.  Leave-one-region-out and
+provided a clear validation target for each feature group.  Antecedent
+memory improved global severity ranking from $\rho_s=0.194$ to
+$\rho_s=0.614$.  Adding exposure descriptors increased PR-AUC from
+0.620 to 0.675 and reduced MAE from 3.749 to 3.642.  Adding
+hydrodynamic descriptors further increased PR-AUC to 0.703, reduced
+MAE to 3.569, and improved depth reconstruction from
+NSE$_\mathrm{depth}=0.380$ to 0.643.  Leave-one-region-out and
 leave-one-year-out experiments showed positive but heterogeneous
-transfer skill.  Depth response transferred most consistently, whereas
+transfer skill: depth response transferred most consistently, whereas
 impact ranking remained sensitive to regional exposure structure,
 annual event composition, and reporting uncertainty.
 
 The central conclusion is that flood burden cannot be represented as a
 function of rainfall intensity alone.  It is a coupled outcome of
 meteorological forcing, antecedent catchment state, terrain-mediated
-water routing, and ex-ante human exposure.  PADR-Net provides a grounded way to encode this coupling in a
-computationally tractable flood-modelling framework suitable for
-transfer experiments in data-sparse geoscientific settings.
+water routing, and ex-ante human exposure.  PADR-Net provides a grounded and reproducible way to encode this coupling in
+a computationally tractable flood-modelling framework for data-sparse
+geoscientific settings.
+
 
 \section*{Declarations}
 
 \begin{itemize}
 \item \textbf{Funding.}
-  The authors received no specific funding for this work.
-  (Grant numbers to be confirmed upon acceptance.)
+  The author received no specific funding for this work.
 
 \item \textbf{Conflict of interest.}
   The author declares no competing interests.
@@ -2305,36 +2661,30 @@ transfer experiments in data-sparse geoscientific settings.
 
 \item \textbf{Data availability.}
   The harmonized African flood-event archive, ERA5 covariate table,
-  pre-computed result tables, and all publication figures are publicly
+  pre-computed result tables, and publication figures are publicly
   available in the reproducibility archive deposited on Zenodo
-  (\url{https://doi.org/10.5281/zenodo.20642121}, CC-BY~4.0).
-  ERA5 reanalysis data are freely accessible via the Copernicus
-  Climate Data Store (\url{https://cds.climate.copernicus.eu}).
-  The Global Flood Database used for satellite validation is
-  available at \url{https://global-flood-database.cloudtostreet.ai}.
-  EM-DAT flood event records are available on request from
-  \url{https://www.emdat.be}.
+  (\url{https://doi.org/10.5281/zenodo.20651388}, CC-BY~4.0).  ERA5
+  reanalysis data are freely accessible via the Copernicus Climate Data
+  Store (\url{https://cds.climate.copernicus.eu}).  The Global Flood
+  Database used for satellite validation is available at
+  \url{https://global-flood-database.cloudtostreet.ai}.  EM-DAT flood
+  event records are available through \url{https://www.emdat.be}.
 
 \item \textbf{Code availability.}
-  All scripts used to produce the results, tables, and figures in
-  this manuscript are available at
-  \url{https://github.com/earthai-tech/padrnet} (tagged release
-  \texttt{v1.0.0-matg-resubmission}) and archived on Zenodo
-  (\url{https://doi.org/10.5281/zenodo.20642121}).
-  The full Base-Attentive/PADR-Net framework and API documentation
-  are available at
+  All scripts used to generate the results, tables, and figures are
+  available at \url{https://github.com/earthai-tech/padrnet} under the
+  tagged release \texttt{v1.1.0-matg-rebuild} and are archived on
+  Zenodo (\url{https://doi.org/10.5281/zenodo.20651388}).  The
+  Base-Attentive/PADR-Net API documentation is available at
   \url{https://base-attentive.readthedocs.io/en/latest/padrnet.html}.
 
 \item \textbf{Author contribution.}
   K.\,L.\,Kouadio conceived the study, developed the PADR-Net
-  framework, performed all numerical experiments and analyses, and
-  wrote the manuscript.
+  framework, performed the numerical experiments and analyses, prepared
+  the reproducibility archive, and wrote the manuscript.
 \end{itemize}
 
-% -----------------------------------------------------------------------
 
-
-% -----------------------------------------------------------------------
 \clearpage
 \section*{Tables}
 
@@ -2342,11 +2692,11 @@ transfer experiments in data-sparse geoscientific settings.
 \centering
 \small
 \caption{%
-  Synthetic benchmark performance for the three scenario classes
-  across the African study regions.  Metrics are the Critical Success
-  Index (CSI), True Skill Statistic (TSS), and NSE of per-event maximum
-  depth (NSE$_\mathrm{depth}$) for the physics-informed PADR-Net
-  configuration used for severity ranking ($\lambda=1.0$).}
+  Synthetic benchmark performance for the three scenario classes across
+  the African study regions.  Metrics are the Critical Success Index
+  (CSI), True Skill Statistic (TSS), and NSE of per-event maximum depth
+  (NSE$_\mathrm{depth}$) for the reference PADR-Net configuration used
+  in the synthetic flood-regime benchmark.}
 \label{tab:scenario_summary}
 \begin{tabular}{llccc}
 \toprule
@@ -2371,12 +2721,12 @@ Southern Africa & S3 Seasonal sequence & 0.94 & 0.96 & 0.71 \\
 \centering
 \small
 \caption{%
-  Nested predictor-set comparison on the held-out test set (116 events,
-  2020--2024).  Feature sets are nested from precipitation only
-  ($\mathbf{x}^{R}$), to precipitation plus antecedent memory
-  ($[\mathbf{x}^{R},\mathbf{x}^{M}]$), to exposure-augmented input
-  ($[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E}]$), and finally to
-  the full hydrodynamic representation
+  Nested predictor-set comparison on the held-out test set
+  (116 events, 2020--2024).  Feature sets are nested from
+  precipitation only ($\mathbf{x}^{R}$), to precipitation plus
+  antecedent memory ($[\mathbf{x}^{R},\mathbf{x}^{M}]$), to exposure
+  augmentation ($[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E}]$), and
+  finally to the full hydrodynamic representation
   ($[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$).}
 \label{tab:nested_results}
 \begin{tabular}{lcccc}
@@ -2391,27 +2741,209 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
 \end{tabular}
 \end{table}
 
+\begin{table}[p]
+\centering
+\small
+\caption{Source-term closure used in the shallow-water residual.  The
+synthetic benchmark uses known closure parameters, whereas the African
+archive uses reproducible approximations derived from public forcing,
+terrain, land-cover, and hydrological products.  Sensitivity
+perturbations are applied within training folds and evaluated on held-out
+folds.}
+\label{tab:source_closure}
+\begin{tabular}{p{0.12\linewidth}p{0.24\linewidth}p{0.34\linewidth}p{0.20\linewidth}}
+\toprule
+Term & Physical meaning & Closure in the African archive & Sensitivity check \\
+\midrule
+$P$ & Atmospheric water input & ERA5 precipitation aggregated over the event window and antecedent windows. & Rainfall perturbation and percentile transformation. \\
+$I$ & Infiltration loss & Bounded loss coefficient informed by soil and land-cover class where available. & Low, reference, and high loss fractions. \\
+$D$ & Drainage or unresolved sink & Lumped event-scale drainage loss used when urban drainage or groundwater exchange is unresolved. & Zero-loss, reference-loss, and high-loss settings. \\
+$Q^{\mathrm{lat}}$ & Lateral inflow or routed runoff contribution & Routed runoff or river-state proxy when available; otherwise set to zero and flagged by missingness indicators. & Included versus omitted lateral-flow proxy. \\
+$n$ & Manning roughness & Land-cover-based roughness lookup applied consistently across folds. & $\pm 20\%$ roughness perturbation. \\
+\botrule
+\end{tabular}
+\end{table}
+
+\begin{table}[p]
+\centering
+\small
+\caption{Validation protocol used to separate interpolation,
+spatial transfer, temporal transfer, and process-regime transfer.  Exact
+event identifiers and fold memberships are released in the
+reproducibility archive.}
+\label{tab:validation_protocol}
+\begin{tabular}{p{0.21\linewidth}p{0.30\linewidth}p{0.30\linewidth}p{0.11\linewidth}}
+\toprule
+Protocol & Training and validation rule & Held-out target & Purpose \\
+\midrule
+Chronological split & Fit transformations and model parameters on earlier events only; select hyperparameters on validation events. & 2020--2024 test period, 116 events. & Temporal extrapolation. \\
+Leave-one-region-out & Train on two African macro-regions and evaluate on the excluded macro-region. & WAF, EAF, or SAF in turn. & Spatial transfer to unseen hydrological regimes. \\
+Leave-one-year-out & Train on all years except the target year, with preprocessing fitted only on the training fold. & Individual held-out years from 2020 to 2024. & Annual robustness and event-composition sensitivity. \\
+Synthetic regime transfer & Train and test across S1, S2, and S3 controlled scenario classes. & Monsoon, flash/cyclone, and seasonal-memory regimes. & Process generalization under known truth. \\
+\botrule
+\end{tabular}
+\end{table}
+
+\begin{table}[p]
+\centering
+\small
+\caption{Empirical ablation suite and conceptual comparators.  The
+upper block (rows 1--4) lists the model variants reported in
+Sects.~\ref{subsec:lambda_ablation_results}--\ref{subsec:robustness_results}.
+The lower block (rows 5--7) describes conceptual comparators that
+motivate the design but whose numerical results are beyond the scope
+of this study; they are discussed in
+Sect.~\ref{subsec:position_surrogates} and deferred to follow-on
+work.}
+\label{tab:baseline_suite}
+\begin{tabular}{p{0.22\linewidth}p{0.34\linewidth}p{0.34\linewidth}}
+\toprule
+Model class & Configuration & Diagnostic role \\
+\midrule
+\multicolumn{3}{l}{\emph{Reported comparisons (numerical results in Sects.~\ref{subsec:lambda_ablation_results}--\ref{subsec:robustness_results})}} \\[2pt]
+Reservoir baseline (M7) & Echo-state reservoir without SWE residual penalty ($\lambda_{\mathrm{phys}}=0$). & Isolates the contribution of reservoir memory without physical regularization. \\
+Physics-aware reservoir (M6) & PADR-Net with central residual stencil ($\lambda^{*}=0.10$). & Reference physics-informed configuration. \\
+Stencil sensitivity & PADR-Net with upwind residual stencil. & Tests whether conclusions depend on the finite-difference residual operator. \\
+Nested feature ablation (M0--M6) & $\mathbf{x}^{R}$, $[\mathbf{x}^{R},\mathbf{x}^{M}]$, $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E}]$, and full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$. & Quantifies incremental contributions of memory, exposure, and hydrodynamics. \\
+\midrule
+\multicolumn{3}{l}{\emph{Conceptual comparators (discussed in Sect.~\ref{subsec:position_surrogates}; numerical comparison deferred)}} \\[2pt]
+Linear statistical baseline & Elastic net on nested predictor sets \citep{Tibshirani1996,Zou2005regvars}. & Tests whether a sparse linear event-scale model explains severity without reservoir memory. \\
+Nonlinear tabular baseline & Random forest or gradient-boosted trees on the same predictors \citep{Breiman2001RandomForests,ChenGuestrin2016}. & Tests nonlinear interactions among forcing, memory, exposure, and terrain without physics constraints. \\
+Sequence baseline & Trainable LSTM/GRU using the same hydroclimatic forcing history \citep{Hochreiter1997,Kratzert2019}. & Benchmarks trained recurrence against the fixed echo-state protocol; deferred because this comparison conflates architecture and physics-penalty effects (see Sect.~\ref{subsec:position_surrogates}). \\
+\botrule
+\end{tabular}
+\end{table}
+
+\begin{table}[p]
+\centering
+\small
+\caption{PADR-Net model discretisation and hyperparameter settings.  Parameters are grouped by
+  category.  The wet-cell threshold $h_0$ is reported at the reference value and the two sensitivity
+  levels used for CSI/$\mathrm{NSE}_\mathrm{depth}$ experiments
+  (Appendix~\ref{app:data_sources}).}
+\label{tab:model_discretisation}
+\begin{tabular}{p{0.22\linewidth}p{0.12\linewidth}p{0.13\linewidth}p{0.41\linewidth}}
+\toprule
+Parameter & Value & Units & Description \\
+\midrule
+\multicolumn{4}{l}{\emph{Reservoir (ESN)}} \\[2pt]
+$N_{\mathrm{res}}$ & 200 & neurons & Reservoir size \\
+$\rho$ & 0.90 & --- & Spectral radius; echo-state condition $\rho<1$ \\
+$\alpha_{\mathrm{lr}}$ & 0.25 & --- & Leaky-integration rate \\
+Sparsity & 0.12 & --- & Fraction of non-zero reservoir connections \\
+\midrule
+\multicolumn{4}{l}{\emph{Temporal discretisation}} \\[2pt]
+$T$ & 168 & h & Event window (7-day window centred on peak) \\
+$\Delta t$ & 1 & h & SWE residual time step (matches ERA5 hourly resolution) \\
+\midrule
+\multicolumn{4}{l}{\emph{Physics (SWE residual)}} \\[2pt]
+$c_f$ & 0.05 & h$^{-1}$ & Linearised SWE friction coefficient (default) \\
+$p_{\mathrm{s}}$ & $10^{-3}$ & --- & Precipitation-to-depth scaling factor \\
+$\lambda^{*}$ & 0.10 & --- & Optimal physics weight selected by validation NSE$_\mathrm{depth}$ \\
+\midrule
+\multicolumn{4}{l}{\emph{Collocation}} \\[2pt]
+$N_{\mathrm{col}}^{\mathrm{event}}$ & 168 & timesteps & All $T$ steps per event are used as collocation points \\
+$N_{\mathrm{col}}^{\mathrm{train}}$ & 21\,336 & timesteps & $127\times168$; chronological training fold \\
+\midrule
+\multicolumn{4}{l}{\emph{Wet-cell threshold and logistic scale}} \\[2pt]
+$h_0$ (reference) & 0.10 & m & Default wet-cell depth threshold \\
+$h_0$ (low) & 0.05 & m & Low-threshold sensitivity experiment \\
+$h_0$ (high) & 0.20 & m & High-threshold sensitivity experiment \\
+$s_h$ & 0.05 & m & Logistic scale for smooth wet/dry indicator \\
+\midrule
+\multicolumn{4}{l}{\emph{Regularisation}} \\[2pt]
+$\alpha_0$ & $10^{-3}$ & --- & Base ridge coefficient ($\lambda_{\mathrm{phys}}=0$ baseline) \\
+\botrule
+\end{tabular}
+\end{table}
+
+\begin{table}[p]
+\centering
+\small
+\caption{Stratified performance of PADR-Net (M6, $\lambda^{*}=0.10$) across four evaluation axes:
+  leave-one-region-out (LORO), leave-one-year-out (LOYO), impact-severity quartile, and primary
+  label source.  All strata use out-of-sample events.
+  $\rho_s$: Spearman rank correlation; PR-AUC: precision-recall area under curve;
+  NSE$_\mathrm{depth}$: Nash-Sutcliffe efficiency for per-event maximum depth; $n$: test-set size.}
+\label{tab:stratified_metrics}
+\begin{tabular}{p{0.22\linewidth}p{0.23\linewidth}rrrr}
+\toprule
+Stratification & Stratum & $n$ & $\rho_s$ & PR-AUC & NSE$_\mathrm{depth}$ \\
+\midrule
+\multicolumn{6}{l}{\emph{Region (LORO)}} \\[2pt]
+Region & West Africa & 73 & 0.604 & 0.834 & 0.658 \\
+Region & East Africa & 96 & 0.565 & 0.818 & 0.688 \\
+Region & Southern Africa & 74 & 0.421 & 0.522 & 0.478 \\
+\midrule
+\multicolumn{6}{l}{\emph{Year (LOYO)}} \\[2pt]
+Year & 2020 & 32 & 0.587 & 0.758 & 0.653 \\
+Year & 2021 & 15 & 0.696 & 0.596 & 0.445 \\
+Year & 2022 & 25 & 0.685 & 0.694 & 0.744 \\
+Year & 2023 & 21 & 0.679 & 0.620 & 0.826 \\
+Year & 2024 & 23 & 0.520 & 0.523 & 0.433 \\
+\midrule
+\multicolumn{6}{l}{\emph{Impact quartile (chronological test set, $n=116$)}} \\[2pt]
+Impact & High ($\geq$Q3) & 61 & 0.712 & 0.791 & 0.671 \\
+Impact & Low ($\leq$Q1) & 55 & 0.589 & 0.623 & 0.598 \\
+\midrule
+\multicolumn{6}{l}{\emph{Label source (chronological test set, $n=116$)}} \\[2pt]
+Label source & EM-DAT primary & 89 & 0.658 & 0.712 & 0.637 \\
+Label source & GFD supplemented & 27 & 0.631 & 0.681 & 0.618 \\
+\botrule
+\end{tabular}
+\end{table}
+
+\begin{table}[p]
+\centering
+\small
+\caption{Computational runtime for PADR-Net components and representative 2D hydrodynamic solvers
+  (single CPU core throughout).  LISFLOOD-FP and HEC-RAS~2D estimates assume a 250\,m resolution
+  mesh over a 10\,000\,km\textsuperscript{2} domain for the 168-h event window; mesh setup time
+  is excluded.  PADR-Net training includes all ESN forward passes over the training fold.}
+\label{tab:runtime_comparison}
+\begin{tabular}{p{0.30\linewidth}p{0.14\linewidth}p{0.10\linewidth}p{0.34\linewidth}}
+\toprule
+Component & Time & $n_{\mathrm{events}}$ & Notes \\
+\midrule
+PADR-Net training (M6) & $\approx$3\,s & 127 & Ridge regression on 127 events $\times$ 400 features \\
+PADR-Net ablation (M0--M8) & $\approx$47\,s & 243 & 9 variants $\times$ chronological fold \\
+PADR-Net LORO (3 folds) & $\approx$38\,s & 243 & ${\approx}12.8$\,s per fold \\
+PADR-Net inference (single event) & $<$1\,ms & 1 & ESN state update (168 steps) + ridge dot product \\
+\midrule
+LISFLOOD-FP 2D (single event) & ${\approx}25$\,min & 1 & Estimate; 2D shallow-water solver \\
+HEC-RAS 2D (single event) & ${\approx}45$\,min & 1 & Estimate; 2D unsteady-flow solver \\
+LISFLOOD-FP full archive & ${\approx}4.3$\,d & 243 & Sequential; no parallelism assumed \\
+\botrule
+\end{tabular}
+\end{table}
+
 \clearpage
 \section*{Figures}
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=\linewidth]{fig_architecture}
+  \includegraphics[width=\linewidth]{fig_architecture_updated}
   \caption{%
-    Architecture of the Physically-Aware Deep Reservoir Network
-    (PADR-Net).  \textbf{(a)} Event-scale hydroclimatic,
-    exposure, and hydrodynamic descriptors are transformed into a
-    forcing sequence.  \textbf{(b)} A fixed Echo State reservoir maps
-    the forcing history to a high-dimensional state; contractivity of
-    the reservoir ensures fading memory of arbitrary initial
-    conditions.  \textbf{(c)} The output layer is estimated by an
-    augmented ridge problem that combines the data misfit with a
-    shallow-water residual penalty.  \textbf{(d)} The predicted
-    hydrodynamic response is calibrated to event severity and
-    evaluated under spatial and temporal transfer.  The diagram
-    separates data flow, physics regularization, and calibration so
-    that the role of each information source is explicit.
-  }
+    PADR-Net architecture after observation-aware reformulation.  The
+    pipeline is organized into five blocks: inputs and source closures,
+    a fixed shared spatial reservoir, readout mappings and latent flood
+    state, observation operators with physics losses, and validation
+    outputs.  The reservoir uses fixed random matrices
+    $\mathbf{W}_{\mathrm{in}}$ and $\mathbf{W}_{\mathrm{res}}$; only
+    the readout mappings are optimized.  The hydrodynamic readout
+    predicts a coarse latent flood state, while the event-level severity
+    head is fitted separately.  The observation operators connect this
+    latent state to satellite wet/dry extent, benchmark or synthetic
+    depth, and event-level impact labels.  The source-term closure maps
+    precipitation, soil, land cover, terrain, and river-state
+    descriptors to infiltration, drainage, lateral inflow, and Manning
+    roughness terms used in the SWE residual.  The figure also shows
+    the two maincontrols used for reservoir
+    fading memory (Lemma~\ref{lem:echo_state}) and the residual-distance
+    bound (Theorem~\ref{thm:error_bound}).  The abbreviated Prop. labels
+    in the diagram refer to the unframed head-decoupling and
+    observation-channel decomposition relations stated in the
+    methodology.}
   \label{fig:architecture}
 \end{figure}
 
@@ -2419,16 +2951,15 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
   \centering
   \includegraphics[width=\linewidth]{fig_regional_map}
   \caption{%
-    African flood-study domains used for spatial-transfer
-    evaluation.  The map shows the three macro-regions considered in
-    the observed-data experiment: West Africa (WAF; Niger--Benue),
-    East Africa (EAF; Nile headwaters and Sudan--Ethiopia corridor),
-    and Southern Africa (SAF; Limpopo--Zambezi).  Event locations are
-    displayed relative to the principal basin systems and regional
-    boundaries.  The figure defines the geographical support of the
-    leave-one-region-out transfer experiments and separates the
-    hydrological domains used for training and testing.
-  }
+    African flood-study domains used for spatial-transfer evaluation.
+    The map defines the three macro-regions used throughout the
+    observed-data experiment: West Africa (WAF; Niger--Benue), East
+    Africa (EAF; Nile headwaters and Sudan--Ethiopia corridor), and
+    Southern Africa (SAF; Limpopo--Zambezi).  The insets illustrate
+    representative flood contexts and the time-series panels summarize
+    regional event occurrence across the study period.  These domains
+    define the geographical support for the leave-one-region-out
+    transfer experiments.}
   \label{fig:regional_map}
 \end{figure}
 
@@ -2436,16 +2967,15 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
   \centering
   \includegraphics[width=\linewidth]{fig_flood_inventory_by_region}
   \caption{%
-    Regional flood-event inventory used for temporal and severity
-    analysis.  The figure summarizes the harmonized 2000--2024
-    African flood archive by region, year, and severity class.  The
-    chronological split separates training, validation, and test
-    periods, allowing the model to be evaluated on recent events not
-    used during fitting.  The inventory highlights that the benchmark
-    is not a random pooled sample but a heterogeneous transfer dataset
-    with uneven event density, regional imbalance, and temporally
-    varying flood severity.
-  }
+    Harmonized flood-event inventory by region, year, and severity
+    class.  Rows correspond to West Africa, East Africa, and Southern
+    Africa, while columns represent event years from 2000 to 2024.  The
+    colour scale distinguishes no event, low, moderate, and extreme
+    severity classes.  The vertical shading indicates the chronological
+    training, validation, and test periods used in the main transfer
+    experiment.  The inventory highlights regional imbalance,
+    temporally clustered extremes, and the data-sparse structure of the
+    African flood benchmark.}
   \label{fig:flood_inventory}
 \end{figure}
 
@@ -2453,20 +2983,18 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
   \centering
   \includegraphics[width=\linewidth]{fig_scenarios}
   \caption{%
-    Synthetic flood-regime benchmark.  \textbf{(a)} Extreme-monsoon
-    scenario (S1) for West Africa, East Africa, and Southern Africa,
-    showing reconstructed precipitation forcing and the corresponding
-    water-depth response for the shallow-water reference, PADR-Net with
-    physics regularization, PADR-Net without the physics penalty, and a
-    persistence forecast.  \textbf{(b)} Rapid-onset flash/cyclone
-    scenario (S2), where short response times make persistence a strong
-    local competitor but do not provide a physical transfer model.
-    \textbf{(c)} Seasonal-sequence scenario (S3), where repeated events
-    and antecedent storage produce memory-dependent depth trajectories.
-    The comparison verifies that PADR-Net encodes forcing history and
-    reproduces the principal shallow-water response patterns across
-    different hydrological regimes.
-  }
+    Controlled synthetic flood-regime benchmark.  \textbf{(a)} S1
+    extreme-monsoon scenario, showing high-frequency precipitation and
+    depth responses for West Africa, East Africa, and Southern Africa.
+    \textbf{(b)} S2 rapid-onset flash/cyclone scenario, comparing the
+    analytical SWE reference, PADR-Net with physics regularization,
+    PADR-Net without the physics penalty, and a persistence forecast;
+    the shaded band denotes the physics-informed prediction envelope.
+    \textbf{(c)} S3 seasonal-memory scenario, where repeated events and
+    antecedent storage produce multi-peak depth trajectories.  The
+    benchmark tests whether the reservoir encodes forcing history and
+    whether the physics-informed readout reproduces the principal
+    shallow-water response patterns across contrasting flood regimes.}
   \label{fig:scenario_benchmark}
 \end{figure}
 
@@ -2475,18 +3003,15 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
   \includegraphics[width=\linewidth]{fig_spatial_padrnet_diagnostic}
   \caption{%
     Spatial diagnostic of peak flood response for the S1
-    extreme-monsoon scenario.  Columns correspond to West Africa (WAF),
-    East Africa (EAF), and Southern Africa (SAF).  The upper row shows
-    the hydrodynamic reference at the regional peak-response time; the
-    lower row shows the corresponding PADR-Net forecast.  Water depth
-    is plotted on a common colour scale in metres.  Solid black
-    contours denote the flood-threshold boundary, and dashed red
-    contours indicate the largest forecast-error regions.  Inset
-    metrics report NSE, CSI, and mass-balance deviation for each
-    regional forecast.  The diagnostic evaluates whether the model
-    places the flood response in the correct hydrological corridor, not
-    only whether it matches event-mean depth.
-  }
+    extreme-monsoon scenario.  Columns correspond to West Africa, East
+    Africa, and Southern Africa.  The upper row shows the synthetic
+    hydrodynamic reference at peak response, and the lower row shows the
+    corresponding PADR-Net forecast at the indicated lead time.  Water
+    depth is plotted on a common scale.  Solid contours denote the
+    reference flood-boundary contour, and dashed contours identify the
+    forecast-error contour.  Inset metrics report NSE, CSI, and
+    mass-balance deviation, allowing spatial placement error to be
+    assessed separately from event-mean depth skill.}
   \label{fig:spatial_padrnet_diagnostic}
 \end{figure}
 
@@ -2494,17 +3019,16 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
   \centering
   \includegraphics[width=\linewidth]{fig_padrnet_physics_diagnostic}
   \caption{%
-    Physics-consistency diagnostics during the S1 flood response.
-    \textbf{(a)} Phase-space response between rainfall forcing and
-    water depth for the hydrodynamic reference, PADR-Net with physics
+    Physics-consistency diagnostics for the S1 flood response.
+    \textbf{(a)} Phase-space relation between rainfall forcing and water
+    depth for the analytical SWE reference, PADR-Net with physics
     regularization, and PADR-Net without the physics penalty.
-    \textbf{(b)} Discrete water-balance residual through event time.
-    Residuals close to zero indicate consistency with the simplified
+    \textbf{(b)} Discrete water-balance residual through event time;
+    smaller residuals indicate closer agreement with the simplified
     rainfall--storage balance.  \textbf{(c)} Probability of exceeding
-    the regional flood threshold.  The threshold panels evaluate the
-    timing and probability structure of flood detection, which is more
-    relevant for warning decisions than pointwise depth alone.
-  }
+    the regional flood threshold.  These diagnostics evaluate the
+    timing, residual consistency, and detection probability of the
+    learned trajectory, rather than only its pointwise depth error.}
   \label{fig:padrnet_physics_diagnostic}
 \end{figure}
 
@@ -2512,20 +3036,21 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
   \centering
   \includegraphics[width=\linewidth]{fig_sensitivity_and_ablations}
   \caption{%
-    Sensitivity and ablation analysis for the physics penalty.
-    \textbf{(a)} Spearman rank correlation as a function of
-    $\lambda_{\mathrm{phys}}$, with the rank-optimal value near
-    $\lambda=1.0$.  \textbf{(b)} Depth NSE and PR-AUC as functions of
-    $\lambda_{\mathrm{phys}}$, showing that depth reconstruction and
-    event discrimination have different optimal regularization
-    strengths.  \textbf{(c)} Empirical comparison with the
-    $O(\lambda^{-1/2})$ theoretical scaling implied by
-    Eq.~\eqref{eq:padr_distance_rate}.  \textbf{(d)} Ablation between
-    PADR-Net without physics ($\lambda=0$) and PADR-Net with a positive
-    physics penalty.  The physics penalty mainly improves severity
-    ranking and PR-AUC while leaving depth reconstruction nearly
-    unchanged.
-  }
+    Physics-weight sensitivity and ablation diagnostics.
+    \textbf{(a)} Spearman rank correlation remains invariant across the
+    non-zero $\lambda_{\mathrm{phys}}$ grid because the severity head is
+    fitted on a fixed event-level design matrix during the
+    physics-weight sweep.  The marked value indicates one rank-optimal
+    grid point; because the curve is flat, the rank optimum is not
+    unique.  \textbf{(b)} Depth NSE decreases as the physics weight
+    increases, whereas PR-AUC remains constant, illustrating the
+    separation between hydrodynamic reconstruction and event-level
+    severity ranking.  \textbf{(c)} Direct ablation between the
+    unconstrained reservoir ($\lambda=0$) and the reference
+    physics-informed configuration ($\lambda^{*}=0.10$).  The physics
+    penalty reduces depth flexibility but leaves severity ranking,
+    PR-AUC, RMSE, and MAE unchanged under the fixed severity-head
+    design.}
   \label{fig:sensitivity_ablations}
 \end{figure}
 
@@ -2534,18 +3059,16 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
   \includegraphics[width=\linewidth]{fig_nested_predictors_regional_transfers}
   \caption{%
     Nested predictor performance and regional transfer.  \textbf{(a)}
-    Rank-discrimination metrics for the nested feature sets.  Adding
-    exposure increases PR-AUC from 0.620 to 0.675, while adding
-    hydrodynamic terrain descriptors provides a further gain to 0.703
-    and substantially improves depth reconstruction
-    (NSE$_\mathrm{depth}$: 0.38 $\to$ 0.64), indicating distinct
-    incremental contributions from each predictor group.  \textbf{(b)} Regression
-    skill for the same predictor sets, with depth NSE and RMSE reported
-    on the held-out test period.  \textbf{(c)} Leave-one-region-out
-    transfer skill for West Africa, East Africa, and Southern Africa.
-    All radar axes are normalized to $[0,1]$ so that larger radial
-    values indicate better transfer performance.
-  }
+    Rank-discrimination metrics for the nested feature sets, showing
+    the gain from precipitation-only input to memory, exposure, and the
+    full hydrodynamic representation.  \textbf{(b)} Regression and
+    depth-reconstruction skill for the same predictor sets; hydrodynamic
+    descriptors increase NSE$_\mathrm{depth}$ from 0.380 to 0.643 and
+    reduce depth error.  \textbf{(c)} Leave-one-region-out transfer
+    radar for West Africa, East Africa, and Southern Africa.  Radar axes
+    are normalized to $[0,1]$, with larger radial values indicating
+    better transfer skill.  The figure separates the roles of memory,
+    exposure, hydrodynamics, and regional transfer.}
   \label{fig:nested_predictors_transfer}
 \end{figure}
 
@@ -2554,15 +3077,14 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
   \includegraphics[width=\linewidth]{fig_padrnet_transfer_diagnostic}
   \caption{%
     Cross-region, temporal, and regime-transfer diagnostics.
-    \textbf{(a)} Leave-one-region-out design: each African region is
-    held out in turn while the model is trained on the other two.
-    \textbf{(b)} Held-out-region skill profile using normalized depth
-    NSE, PR-AUC, rank correlation, RMSE skill, and mass-balance skill.
+    \textbf{(a)} Leave-one-region-out design, in which each African
+    macro-region is held out while the model is trained on the other two
+    regions.  \textbf{(b)} Held-out-region skill profile for depth NSE,
+    PR-AUC, rank correlation, RMSE skill, and mass-balance skill.
     \textbf{(c)} Leave-one-year-out temporal robustness for 2020--2024.
     \textbf{(d)} Regime robustness against persistence for the S1, S2,
-    and S3 scenario classes.  The panels distinguish regional transfer,
-    temporal extrapolation, and process-regime transfer.
-  }
+    and S3 synthetic scenario classes.  The panels distinguish spatial
+    transfer, temporal extrapolation, and process-regime transfer.}
   \label{fig:padrnet_transfer_diagnostic}
 \end{figure}
 
@@ -2573,13 +3095,43 @@ Full $[\mathbf{x}^{R},\mathbf{x}^{M},\mathbf{x}^{E},\mathbf{x}^{H}]$ & 0.671 & 0
     Robustness diagnostics for the held-out test period.
     \textbf{(a)} Bootstrap 95\% confidence intervals for rank and
     discrimination skill (Spearman $\rho$ and PR-AUC) and for
-    reconstruction errors (RMSE and MAE).  Error metrics are plotted on
-    their natural scale, where lower values are better.  \textbf{(b)}
-    Leave-one-year-out temporal transfer for 2020--2024, reporting
-    depth NSE, Spearman rank correlation, PR-AUC, and RMSE for each
-    held-out year.  Dashed horizontal lines indicate year means.
-  }
+    reconstruction errors (RMSE and MAE).  Skill metrics are higher when
+    larger, whereas error metrics are lower when smaller.  \textbf{(b)}
+    Leave-one-year-out temporal transfer for 2020--2024, reporting depth
+    NSE, Spearman rank correlation, PR-AUC, and RMSE for each held-out
+    year.  The figure summarizes uncertainty due to event sampling and
+    annual event composition.}
   \label{fig:robustness}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\linewidth]{fig_error_bounds_feature_corr}
+  \caption{%
+    Residual-distance, residual-stability, stencil-sensitivity, and
+    feature-correlation diagnostics.
+    \textbf{(a)} Theoretical $O(\lambda_{\mathrm{phys}}^{-1/2})$
+    residual-distance envelope from Theorem~\ref{thm:error_bound}
+    compared with normalized empirical depth error.  The increasing
+    empirical depth-error curve reflects the data-fit cost of stronger
+    physics regularization, whereas the theorem concerns distance to the
+    admissible SWE residual manifold under the local condition in
+    Eq.~\eqref{eq:padr_residual_stability}.  \textbf{(b)} Spearman
+    rank-correlation matrix for principal covariates and impact
+    variables.  The matrix shows correlated rainfall and runoff-memory
+    groups and supports the nested ablation design used to separate
+    forcing, memory, exposure, and hydrodynamic information.
+    \textbf{(c)} Empirical residual-stability coefficient
+    $\widehat{\kappa}=\mathcal{L}_{\mathrm{phys}}/d_{\mathrm{ref}}^2$
+    across the physics-weight grid.  The nearly flat profile indicates
+    that, in the controlled benchmark, the residual magnitude and the
+    reference-state distance remain locally aligned, supporting the
+    residual-stability condition used to interpret Theorem~\ref{thm:error_bound}.
+    \textbf{(d)} Central- and upwind-stencil sensitivity.  Both
+    derivative discretizations produce the same qualitative
+    physics--accuracy response, indicating that the residual-distance
+    interpretation is not driven by a single finite-difference stencil.}
+  \label{fig:error_bound}
 \end{figure}
 
 \begin{appendices}
@@ -2592,11 +3144,16 @@ harmonisation rules, feature-construction steps, and validation
 safeguards used in the numerical experiments.  These details are kept
 outside the main text to preserve the flow of the methodological
 argument while ensuring that the experimental design remains
-transparent and reproducible.  The central principle followed
-throughout the data preparation is that predictors must be available
-before or during the flood-event window.  Observed or satellite-derived
-flood footprints are therefore used only as validation targets and are
-never used to construct exposure predictors.
+transparent and reproducible.  The companion archive deposited on
+Zenodo (\url{https://doi.org/10.5281/zenodo.20651388}, CC-BY~4.0) and
+the tagged code release at \url{https://github.com/earthai-tech/padrnet}
+provide the processed tables, split definitions, scripts, environment
+files, and figure-generation workflow used in this study.  The central
+principle followed throughout the data preparation is that predictors
+must be available before or during the flood-event window.  Observed or
+satellite-derived flood footprints are therefore used only as
+validation targets and are never used to construct exposure
+predictors.
 
 \subsection{African study domains and event inventory}
 \label{app:study_domains}
@@ -2639,7 +3196,28 @@ realised flood footprint to construct predictive exposure variables
 would introduce circularity in exposure-based flood-risk inference
 \citep{Tellman2021,Rentschler2022}.
 
-
+\paragraph{Satellite extent preprocessing.}
+Satellite flood-extent composites from the Global Flood Database
+\citep{Tellman2021} are preprocessed in three steps before use as
+observation-operator targets.
+First, permanent and seasonal water bodies are masked using the
+JRC Global Surface Water occurrence layer
+\citep{Pekel2016}: pixels with water occurrence
+$\geq 50\%$ in the non-flood reference period are excluded from the
+inundation indicator to avoid conflating permanent open water with
+flood-induced inundation.
+Second, a 3$\times$3 pixel morphological opening filter is applied to
+remove isolated single-pixel detections likely caused by specular
+reflection or cloud shadow artefacts, and a closing filter of the same
+kernel size is applied to fill gaps caused by cloud cover over
+coherent wet areas.
+Third, the wet-cell threshold $h_0 = 0.10\,\mathrm{m}$ converts
+the model depth field to a binary extent map for CSI/TSS evaluation;
+sensitivity runs at $h_0\in\{0.05,0.20\}\,\mathrm{m}$ show modest
+CSI changes ($\pm 0.03$) with stable NSE$_{\mathrm{depth}}$
+(Table~\ref{tab:model_discretisation}).
+The logistic scale $s_h = 0.05\,\mathrm{m}$ controls the softness of
+the wet/dry transition in the smooth observation operator.
 
 The flood-inventory and impact data provide the reported human
 consequences used in the impact models.  Because disaster databases
@@ -2659,6 +3237,26 @@ therefore
 where $A_i$ is the reported affected population.  Fatalities and
 economic damages are retained for descriptive analysis and sensitivity
 checks when their reporting completeness is sufficient.
+
+\subsection{Source-term closure for the SWE residual}
+\label{app:source_term_closure}
+
+The SWE residual requires closure terms that are not equally observed
+across all events.  The synthetic benchmark uses prescribed
+infiltration, drainage, lateral inflow, and Manning roughness fields,
+so the residual is evaluated against known source terms.  In the
+African archive, the same residual form is retained, but the uncertain
+terms are represented by reproducible approximations.  Infiltration and
+drainage are treated as bounded loss terms derived from land-cover,
+soil, and event-scale hydroclimatic descriptors where available.
+Lateral inflow is represented by routed runoff or river-state proxies
+when those products are available; otherwise it is set to zero and the
+missingness is recorded in the feature matrix.  Manning roughness is
+assigned from land-cover classes and perturbed in sensitivity tests.
+These closures are not fitted to the held-out folds.  Their purpose is
+to provide a consistent residual regularizer and to quantify the
+sensitivity of the physics term to uncertain hydrological source
+components.
 
 \subsection{Event harmonisation and temporal windows}
 \label{app:event_harmonisation}
@@ -2915,11 +3513,11 @@ The evaluation protocol is designed to test both interpolation within
 the historical event archive and transfer to unseen times or regions.
 Three complementary partitions are used.  First, a chronological split
 is used so that later events are held out from model fitting.  Second,
-leave-one-year-out (LOYO) validation tests whether the model transfers to
-unseen years.  Third, leave-one-region-out (LORO) validation tests whether
+leave-one-year-out validation tests whether the model transfers to
+unseen years.  Third, leave-one-region-out validation tests whether
 the model transfers to a hydrological regime excluded from training.
 
-For LORO validation, the test set for region $r$ is
+For leave-one-region-out validation, the test set for region $r$ is
 \begin{equation}
   \mathcal{D}^{\mathrm{test}}_{r}
   =
@@ -2934,7 +3532,7 @@ For LORO validation, the test set for region $r$ is
   \right\}.
   \label{eq:app_loro}
 \end{equation}
-For LOYO validation, the test set for year $y$ is
+For leave-one-year-out validation, the test set for year $y$ is
 \begin{equation}
   \mathcal{D}^{\mathrm{test}}_{y}
   =
@@ -3049,9 +3647,6 @@ result is considered robust only if the full physics-informed model
 outperforms the rainfall-only and unconstrained baselines across the
 main validation splits and remains stable under these perturbations.
 
-
-
-
 % -----------------------------------------------------------------------
 \clearpage
 \section*{Appendix Tables and Figures}
@@ -3060,10 +3655,7 @@ main validation splits and remains stable under these perturbations.
 \centering
 \small
 \caption{
-African flood-study domains used for transfer evaluation.  Event
-counts refer to the harmonised flood-event archive after quality
-control.  Final values should be updated after the last event-screening
-step.
+African flood-study domains used for transfer evaluation.  The domains define the spatial supports used for leave-one-region-out transfer evaluation.
 }
 \label{tab:app_study_domains}
 \begin{tabular}{p{0.22\linewidth}p{0.24\linewidth}

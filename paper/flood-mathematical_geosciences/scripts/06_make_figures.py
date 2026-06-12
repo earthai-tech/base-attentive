@@ -1970,10 +1970,10 @@ def supp01_loyo() -> None:
             col="NSE_depth",
             title=r"Depth-NSE  ($NSE_\mathrm{depth}$)",
             ylabel=r"$NSE_\mathrm{depth}$",
-            y_lo=0.82, y_hi=1.008,
+            y_lo=None, y_hi=None,   # auto-scale from data
             refs=[
-                dict(y=0.95, lc="#27AE60", ls=":", lw=1.0, label="excellent  (0.95)"),
-                dict(y=0.90, lc="#E07B39", ls=":", lw=0.8, label="good  (0.90)"),
+                dict(y=0.90, lc="#27AE60", ls=":", lw=1.0, label="good  (0.90)"),
+                dict(y=0.50, lc="#E07B39", ls=":", lw=0.8, label="moderate  (0.50)"),
             ],
             note=None,
         ),
@@ -2015,8 +2015,6 @@ def supp01_loyo() -> None:
 
         for ax, spec in zip(axes.flat, specs):
             col  = spec["col"]
-            y_lo = spec["y_lo"]
-            y_hi = spec["y_hi"]
 
             if col not in loyo.columns:
                 ax.set_visible(False)
@@ -2024,7 +2022,16 @@ def supp01_loyo() -> None:
 
             vals     = loyo[col].values.astype(float)
             mean_val = float(np.nanmean(vals))
-            rng      = y_hi - y_lo        # axis range for proportional offsets
+
+            # Auto-scale if y_lo/y_hi not specified
+            if spec["y_lo"] is None or spec["y_hi"] is None:
+                pad  = max(np.ptp(vals) * 0.15, 0.05)
+                y_lo = max(float(np.nanmin(vals)) - pad, 0.0)
+                y_hi = float(np.nanmax(vals)) + pad
+            else:
+                y_lo = spec["y_lo"]
+                y_hi = spec["y_hi"]
+            rng  = max(y_hi - y_lo, 1e-6)   # axis range for proportional offsets
 
             # ── Bars ──────────────────────────────────────────────────────
             ax.bar(
