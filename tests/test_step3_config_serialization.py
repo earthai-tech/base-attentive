@@ -15,11 +15,13 @@ from base_attentive.experimental.base_attentive_v2 import (
 )
 
 
-
 @pytest.fixture
 def fresh_resolver_registries(monkeypatch):
     import base_attentive.registry as registry_mod
-    from base_attentive.registry import ComponentRegistry, ModelRegistry
+    from base_attentive.registry import (
+        ComponentRegistry,
+        ModelRegistry,
+    )
     from base_attentive.resolver import registrars
 
     component_registry = ComponentRegistry()

@@ -164,11 +164,14 @@ _padrnet_params = dict(
     config="""
 config : PADRNetConfig
     Configuration object that defines the PADR-Net input
-    dimensionality, latent capacity, forecast horizon, dropout
-    rate, physics weights, flood threshold, and reservoir
-    response scale. The object is validated with the same
-    :func:`validate_params` style used by the main
-    :class:`BaseAttentive` API.
+    dimensionality, echo-state reservoir dimension and spectral
+    radius, physics weights (lambda_physics, lambda_readout,
+    lambda_severity), loss-channel weights (w_ext, w_depth,
+    w_impact), shallow-water constants (gravity, manning_n),
+    flood threshold, logistic slope, and numerical stability
+    parameters (slope_h, epsilon_h). The object is validated
+    with the same :func:`validate_params` style used by the
+    main :class:`BaseAttentive` API.
 """,
     backend="""
 backend : {'tensorflow', 'tf', 'torch', 'pytorch'} or \

@@ -594,8 +594,8 @@ def test_versioning_rules_cover_transforms_and_warnings():
 
 
 def test_api_property_and_experimental_helpers_cover_extra_branches():
-    from base_attentive.api.property import NNLearner
     import base_attentive.experimental as experimental_pkg
+    from base_attentive.api.property import NNLearner
 
     class _RaisingLen:
         def __len__(self):

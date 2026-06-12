@@ -14,6 +14,8 @@ from .physics import (
     exceedance_probability,
     linear_reservoir_response,
     mass_balance_residual,
+    recover_velocity,
+    swe_residual,
 )
 
 __all__ = [
@@ -26,5 +28,7 @@ __all__ = [
     "linear_reservoir_response",
     "mass_balance_residual",
     "nash_sutcliffe_efficiency",
+    "recover_velocity",
+    "swe_residual",
     "true_skill_statistic",
 ]

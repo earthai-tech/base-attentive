@@ -9,7 +9,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-
 PKG_PREFIX = "base_attentive"
 
 

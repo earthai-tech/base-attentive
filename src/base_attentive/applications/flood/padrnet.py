@@ -100,77 +100,89 @@ __all__ = ["PADRNet", "create_padrnet"]
 _PADRNET_DOC = r"""
 PADR-Net physics-aware flood forecasting model.
 
-``PADRNet`` is the public factory for the Physics-Aware
-Depth-Response Network used by the flood-forecasting
-application module. The factory returns a backend-specific
-model while keeping one stable user-facing API. TensorFlow
-backends return a ``TensorFlowPADRNet`` model and PyTorch
-backends return a ``TorchPADRNet`` module.
+``PADRNet`` is the public factory for the Physics-Aware Deep
+Reservoir Network used by the flood-forecasting application
+module.  The factory returns a backend-specific model while
+keeping one stable user-facing API.  TensorFlow backends
+return a ``TensorFlowPADRNet`` model and PyTorch backends
+return a ``TorchPADRNet`` module.
 
-PADR-Net maps a dynamic forcing sequence
-:math:`\mathbf{X}_{1:T}` and optional static descriptors
-:math:`\mathbf{s}` to a multi-step water-depth forecast
-:math:`\hat{\mathbf{h}}_{1:H}`. In compact form,
-
-.. math::
-
-  \mathbf{z}_{1:T}
-  = f_{\theta}(\mathbf{X}_{1:T}, \mathbf{s}),
-  \qquad
-  \hat{\mathbf{h}}_{1:H}
-   = \operatorname{softplus}
-     (g_{\theta}(\mathbf{z}_{1:T})).
-
-The flood-exceedance head converts depth to a smooth threshold
-probability,
+Architecture
+~~~~~~~~~~~~
+PADR-Net is an Echo State Network (ESN) with a physics-
+informed readout.  At each event :math:`i`, time :math:`t`,
+and grid cell :math:`g`, the local input vector
+:math:`\boldsymbol{\phi}_{i,t,g}` (dynamic forcings plus
+static descriptors) drives a contractive shared reservoir:
 
 .. math::
 
-   p_t
+   \mathbf{x}_{i,t,g}
    =
-   \sigma\left(
-   \frac{\hat{h}_t - h_{\mathrm{crit}}}{\alpha}
-   \right),
+   \tanh\!\bigl(
+     \mathbf{W}_{\mathrm{in}}\boldsymbol{\phi}_{i,t,g}
+     +
+     \mathbf{W}_{\mathrm{res}}\mathbf{x}_{i,t-1,g}
+     +
+     \mathbf{b}_{\mathrm{res}}
+   \bigr),
 
-where :math:`h_{\mathrm{crit}}` is the configured flood
-threshold and :math:`\alpha` controls the transition
-sharpness.
+where :math:`\mathbf{W}_{\mathrm{in}}` and
+:math:`\mathbf{W}_{\mathrm{res}}` are **fixed** at
+initialisation.  The contractivity condition
+:math:`\|\mathbf{W}_{\mathrm{res}}\|_2 < 1` (tanh has
+Lipschitz constant 1) guarantees fading memory.
 
-The physics-aware training objective is intended to combine a
-forecasting loss with hydrological consistency terms. The
-diagnostics follow common hydrological skill measures [PADR1]_
-and rainfall-runoff response concepts [PADR2]_, while the
-temporal encoder follows the attention formulation [PADR3]_.
+Only the linear readout and the event-severity head are
+optimised.  The readout produces the conservative
+shallow-water state:
+
+.. math::
+
+   \hat{\mathbf{q}}_{i,t,g}
+   =
+   \mathbf{W}_{\mathrm{out}}\,\mathbf{x}_{i,t,g}
+   =
+   \bigl(\hat{h},\,\widehat{uh},\,\widehat{vh}\bigr)^\top.
+
+Depth is recovered via the log-transform inverse
+:math:`h = \exp(\hat{y}_h) - 1 \ge 0`, and velocities via
+:math:`u = \widehat{uh}/(h + \varepsilon_h)`.
+
+The smooth wet/dry exceedance probability is
+
+.. math::
+
+   \pi_t
+   =
+   \sigma\!\left(
+     \frac{h_t - h_0}{s_h}
+   \right).
+
+Training objective
+~~~~~~~~~~~~~~~~~~
+The composite loss combines data channels and the SWE
+residual penalty:
 
 .. math::
 
    \mathcal{L}
    =
-   \mathcal{L}_{\mathrm{pred}}
-   + \lambda_{\mathrm{phys}}
-     \lVert r_{\mathrm{phys}} \rVert_2^2
-   + \lambda_{\mathrm{mass}}
-     \lvert \Delta M \rvert
-   + \lambda_{\mathrm{smooth}}
-     \lVert \nabla_t \hat{\mathbf{h}} \rVert_2^2 .
+   w_{\mathrm{ext}}\mathcal{L}_{\mathrm{ext}}
+   +
+   w_{\mathrm{depth}}\mathcal{L}_{\mathrm{depth}}
+   +
+   w_{\mathrm{impact}}\mathcal{L}_{\mathrm{impact}}
+   +
+   \lambda_{\mathrm{phys}}\mathcal{L}_{\mathrm{phys}}
+   +
+   \omega\lVert\mathbf{W}_{\mathrm{out}}\rVert_F^2
+   +
+   \omega_s\lVert\boldsymbol{\beta}_s\rVert_2^2,
 
-For a simple rainfall-storage diagnostic, the residual can be
-written as
-
-.. math::
-
-   r_t
-   =
-   \frac{d h_t}{d t}
-   -
-   \left(
-   \gamma P_t - \frac{h_t}{\tau}
-   \right),
-
-with rainfall forcing :math:`P_t`, gain :math:`\gamma`, and
-response time scale :math:`\tau`. This style of regularization
-is closely related to regional rainfall-runoff learning
-[PADR4]_ and physics-informed learning [PADR5]_.
+where :math:`\mathcal{L}_{\mathrm{phys}}` is the sum of
+squared shallow-water residuals evaluated at collocation
+points [PADR5]_.
 
 Parameters
 ----------
@@ -181,39 +193,55 @@ __PADRNET_KWARGS_DOC__
 Returns
 -------
 TensorFlowPADRNet or TorchPADRNet
-    Backend-specific PADR-Net model. Calling it produces a
+    Backend-specific PADR-Net model.  Calling it produces a
     dictionary with the following keys:
 
     ``"depth"``
-        Forecast water depth with shape
-        ``(batch, forecast_horizon, 1)``.
+        Predicted water depth h ≥ 0; shape (B, T, 1).
+
+    ``"momentum_x"``
+        x-momentum component uh; shape (B, T, 1).
+
+    ``"momentum_y"``
+        y-momentum component vh; shape (B, T, 1).
+
+    ``"velocity_x"``
+        Depth-averaged x-velocity; shape (B, T, 1).
+
+    ``"velocity_y"``
+        Depth-averaged y-velocity; shape (B, T, 1).
 
     ``"exceedance_probability"``
-        Smooth probability of exceeding the configured flood
-        threshold, with the same shape as ``"depth"``.
+        Smooth wet/dry probability π in [0, 1]; shape
+        (B, T, 1).
 
-    ``"features"``
-        Latent event representation produced by the temporal
-        encoder.
+    ``"reservoir_states"``
+        Full reservoir state sequence; shape (B, T, N_res).
+        Used to evaluate the SWE readout loss.
+
+    ``"severity"``
+        Event-level impact prediction from the severity head;
+        shape (B, 1).
 
 Notes
 -----
-PADR-Net is implemented as a backend factory rather than a
-single framework class. This allows the same application API
-to support native TensorFlow and PyTorch implementations while
-preserving the parameter-management behaviour inherited from
+PADR-Net is implemented as a backend factory.  This allows
+the same application API to support native TensorFlow and
+PyTorch implementations while preserving the parameter-
+management behaviour inherited from
 :class:`~base_attentive.api.property.NNLearner`.
 
-The current module provides the model architecture and
-reusable physics/metric helpers. Full training loops may
-choose how to combine the prediction loss and physics
-penalties depending on available observations, flood
-thresholds, and hydrodynamic constraints.
+Input tensors use shape ``(batch, time, input_dim)``.  If
+static descriptors are configured, ``static_inputs`` should
+have shape ``(batch, static_dim)``; they are replicated at
+each time step and concatenated to the dynamic input before
+the reservoir update.
 
-Input tensors are expected to use shape
-``(batch, time, input_dim)``. If static descriptors are
-configured, ``static_inputs`` should have shape
-``(batch, static_dim)``.
+The physics helpers
+:func:`~base_attentive.applications.flood.physics.swe_residual`
+and
+:func:`~base_attentive.applications.flood.physics.recover_velocity`
+operate on the readout outputs and are backend-neutral.
 
 Examples
 --------
@@ -223,21 +251,22 @@ Create a PyTorch PADR-Net model:
 >>> config = PADRNetConfig(
 ...     input_dim=8,
 ...     static_dim=3,
-...     hidden_dim=64,
-...     num_heads=4,
-...     forecast_horizon=24,
+...     reservoir_dim=64,
+...     spectral_radius=0.9,
 ...     flood_threshold=0.05,
 ... )
 >>> model = PADRNet(config, backend="torch")
 
-Run a forward pass with PyTorch tensors:
+Run a forward pass:
 
 >>> import torch
 >>> x = torch.zeros(2, 48, 8)
 >>> s = torch.zeros(2, 3)
 >>> outputs = model(x, s)
 >>> outputs["depth"].shape
-torch.Size([2, 24, 1])
+torch.Size([2, 48, 1])
+>>> outputs["reservoir_states"].shape
+torch.Size([2, 48, 64])
 
 Create the TensorFlow implementation:
 
@@ -245,13 +274,15 @@ Create the TensorFlow implementation:
 >>> model = PADRNet(config, backend="tensorflow")
 >>> outputs = model(tf.zeros((2, 48, 8)), tf.zeros((2, 3)))
 >>> tuple(outputs["depth"].shape)
-(2, 24, 1)
+(2, 48, 1)
 
 Use the hydrological helper functions:
 
 >>> from base_attentive.applications.flood import (
 ...     critical_success_index,
 ...     delta_mass,
+...     recover_velocity,
+...     swe_residual,
 ... )
 >>> score = critical_success_index(
 ...     [0.0, 0.1, 0.2],
@@ -267,7 +298,7 @@ PADRNetConfig
 create_padrnet
     Functional factory equivalent to ``PADRNet(...)``.
 base_attentive.applications.flood.physics
-    Hydrological residual and exceedance-probability helpers.
+    SWE residual, velocity recovery, and exceedance helpers.
 base_attentive.applications.flood.metrics
     Flood metrics such as NSE, CSI, TSS, and mass bias.
 BaseAttentive
@@ -281,25 +312,23 @@ References
    of principles. *Journal of Hydrology*, 10(3), 282--290.
 
 .. [PADR2] Beven, K. J. (2012). *Rainfall-Runoff Modelling:
-   The Primer*.
-   Wiley-Blackwell.
+   The Primer*.  Wiley-Blackwell.
 
-.. [PADR3] Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J.,
-   Jones, L., Gomez, A. N., Kaiser, L., and Polosukhin, I.
-   (2017).
-   Attention is all you need. *Advances in Neural Information
-   Processing Systems*, 30.
+.. [PADR3] Jaeger, H. (2001). The ``echo state'' approach to
+   analysing and training recurrent neural networks. *GMD
+   Report 148*, German National Research Center for
+   Information Technology.
 
 .. [PADR4] Kratzert, F., Klotz, D., Brenner, C., Schulz, K.,
-   and
-   Herrnegger, M. (2018). Rainfall-runoff modelling using
+   and Herrnegger, M. (2018). Rainfall-runoff modelling using
    Long Short-Term Memory networks. *Hydrology and Earth
    System Sciences*, 22, 6005--6022.
 
-.. [PADR5] Karniadakis, G. E., Kevrekidis, I. G., Lu, L.,
-   Perdikaris, P., Wang, S., and Yang, L. (2021).
-   Physics-informed machine learning. *Nature Reviews
-   Physics*, 3, 422--440.
+.. [PADR5] Raissi, M., Perdikaris, P., and Karniadakis, G. E.
+   (2019). Physics-informed neural networks: A deep learning
+   framework for solving forward and inverse problems
+   involving nonlinear partial differential equations.
+   *Journal of Computational Physics*, 378, 686--707.
 """
 
 PADRNet.__doc__ = (
